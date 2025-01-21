@@ -1,0 +1,25 @@
+# ignore all results folders
+results
+results/
+results.tar
+.tmp/
+
+# ignore python caches
+env/
+.venv/
+__pycache__
+*.pyc
+
+.pdm-python
+pdm.lock
+
+# ignore test experiments
+test.json
+
+# ignore editor settings
+.vscode
+
+# ignore build folder
+build
+build/
+**.egg-info/
