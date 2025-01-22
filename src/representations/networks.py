@@ -85,40 +85,7 @@ def buildFeatureNetwork(inputs: Tuple, params: Dict[str, Any], rng: Any):
 
         elif name == 'OneLayerRelu':
             layers = reluLayers([hidden], name='phi')
-
-        elif name == 'MinatarNet':
-            w_init = hk.initializers.Orthogonal(np.sqrt(2))
-            layers = [
-                hk.Conv2D(16, 3, 2, w_init=w_init, name='phi'),
-                jax.nn.relu,
-                hk.Flatten(name='phi'),
-            ]
-            layers += reluLayers([hidden], name='phi')
-
-        elif name == 'ForagerNet':
-            w_init = hk.initializers.Orthogonal(np.sqrt(2))
-            layers = [
-                hk.Conv2D(16, 3, 2, w_init=w_init, name='phi'),
-                jax.nn.relu,
-                hk.Flatten(name='phi'),
-            ]
-            layers += reluLayers([hidden], name='phi')
-
-        elif name == 'AtariNet':
-            w_init = hk.initializers.Orthogonal(np.sqrt(2))
-            layers = [
-                lambda x: x.astype(np.float32),
-                make_conv(32, (8, 8), (4, 4)),
-                jax.nn.relu,
-                make_conv(64, (4, 4), (2, 2)),
-                jax.nn.relu,
-                make_conv(64, (3, 3), (1, 1)),
-                jax.nn.relu,
-                hk.Flatten(),
-                hk.Linear(512, w_init=w_init),
-                jax.nn.relu,
-            ]
-
+            
         else:
             raise NotImplementedError()
 
