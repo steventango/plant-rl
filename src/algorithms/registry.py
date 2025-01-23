@@ -8,7 +8,7 @@ from algorithms.tc.ESARSA import ESARSA
 from algorithms.tc.SoftmaxAC import SoftmaxAC
 
 def getAgent(name) -> Type[BaseAgent]:
-    if name == 'DQN':
+    if name.startswith("DQN"):
         return DQN
 
     if name == 'EQRC':
