@@ -46,17 +46,26 @@ if __name__ == "__main__":
         folder_columns=(None, None, 'environment'),
         file_col='algorithm',
     )
-    
+
+    grouped_by_alpha = df.groupby('optimizer.alpha')['return'].apply(list)
     f, ax = plt.subplots()
-    return_history = np.array(df['frame'])
-    return_history  = return_history[~np.isnan(return_history)]
-
-    print(return_history)
-
-    #ax.plot(return_history)
+    for alpha, group in grouped_by_alpha.items():
+        xs, ys = extract_learning_curves(
+            sub_df,
+            report.best_configuration,
+            metric='return',
+            interpolation=None,
+        )
+        res = curve_percentile_bootstrap_ci(
+                rng=np.random.default_rng(0),
+                y=np.array(group),
+                statistic=Statistic.mean)
+        print(res.sample_stat)
+        ax.plot(res.sample_stat, label=alpha, linewidth=0.5)
+        ax.fill_between(res.ci[0], res.ci[1], alpha=0.2)
     #ax.legend()
-    #save(
-    #    save_path=f'{path}/plots',
-    #    plot_name=f'DQN-Relu'
-    #)
-    #plt.show()
+    save(
+        save_path=f'{path}/plots',
+        plot_name=f'DQN-Relu'
+    )
+    plt.show()
