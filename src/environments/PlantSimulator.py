@@ -15,9 +15,8 @@ class PlantSimulator(BaseEnvironment):
         self.steps_per_day = 72           # number of time steps per day 
         
         # Load historic plant area data 
-        data_path = os.path.dirname(os.path.abspath(__file__)) + "/data_for_simulator/plant_area_data.csv"
-        print(data_path)
-        data = pd.read_csv(data_path)
+        data_path = os.path.dirname(os.path.abspath(__file__)) + "/plant_data/plant_area_data.csv"
+        data = pd.read_csv(data_path).sort_values(by='timestamp')
         self.data = np.array(data.iloc[:, 5])  # Use one plant for now (plant 5 is good)
 
         # Approximate the actual leaf sizes and the projection factor throughout the day
