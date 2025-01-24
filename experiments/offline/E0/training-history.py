@@ -48,16 +48,15 @@ if __name__ == "__main__":
     )
     
     f, ax = plt.subplots()
-    action_history = np.array(df['action'])
-    reward_history = np.array(df['reward'])
-    print(max(reward_history))
+    return_history = np.array(df['frame'])
+    return_history  = return_history[~np.isnan(return_history)]
 
-    which_day = 1
-    ax.plot(action_history[-300:], label='action')
-    ax.plot(reward_history[-300:], label='reward')
-    ax.legend()
-    save(
-        save_path=f'{path}/plots',
-        plot_name=f'DQN-Relu'
-    )
-    plt.show()
+    print(return_history)
+
+    #ax.plot(return_history)
+    #ax.legend()
+    #save(
+    #    save_path=f'{path}/plots',
+    #    plot_name=f'DQN-Relu'
+    #)
+    #plt.show()
