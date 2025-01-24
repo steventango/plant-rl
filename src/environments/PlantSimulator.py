@@ -4,65 +4,71 @@ import pandas as pd
 from RlGlue.environment import BaseEnvironment
 
 class PlantSimulator(BaseEnvironment):
-    def __init__(self):
-        self.gamma = 0.99
+    def __init__(self, plant_id=5):
         self.state_dim = (2,)    
         self.current_state = np.empty(2)
         self.action_dim = 2      
         self.actions = [0, 1]             # [light off, light on]
-        self.deduct_growth = [1.0, 0.0]   # 100% means no growth. 0% means growing optimally as in the hisotric data.
-        self.num_steps = 0                # time step counter
-        self.steps_per_day = 72           # number of time steps per day 
+        self.deduct_growth = [1.0, 0.0]   # growth deduction due to action. 100% means no growth. 0% means growing optimally as in the hisotric data.
         
-        # Load historic plant area data 
-        data_path = os.path.dirname(os.path.abspath(__file__)) + "/plant_data/plant_area_data.csv"
-        data = pd.read_csv(data_path).sort_values(by='timestamp')
-        self.data = np.array(data.iloc[:, 5])  # Use one plant for now (plant 5 is good)
-
-        # Approximate the actual leaf sizes and the projection factor throughout the day
+        self.data, self.steps_per_day = self.load_area_data(plant_id)
         self.original_actual_area, self.daily_projection_factor = self.analyze_area_data()
+        self.actual_area = np.copy(self.original_actual_area)   # Make a copy because actual_area will be modified at each step
+        self.observation = []   # store a list of observed areas
 
-        # Make a copy because actual_area will be modified at each step
-        self.actual_area = np.copy(self.original_actual_area)  
+        self.gamma = 0.99
+        self.num_steps = 0
 
     def start(self):
         self.num_steps = 0
         self.actual_area = np.copy(self.original_actual_area)
         self.current_state = np.array([0, self.actual_area[0]*self.daily_projection_factor[0]])
+        self.observation.append(self.current_state[1])
         return self.current_state
 
     def step(self, action): 
         self.num_steps += 1
         
-        # To simulate growth reduction due to suboptimal lighting (assuming historic data came from optimal lighting)
-        # reduce the leaf's actual_area in all subsequent time steps
-        dA = self.actual_area[self.num_steps] - self.actual_area[self.num_steps - 1]   # growth in optimal lighting
-        dA_deduction = self.deduct_growth[action]*dA  # deduction from dA
-        self.actual_area -= dA_deduction   # affects all time steps, but the past data don't matter anyways
-
-        # State := concatenate( time of day, observed leaf area )
-        clock = self.num_steps % self.steps_per_day
-        next_state = np.array([clock, self.actual_area[self.num_steps]*self.daily_projection_factor[clock]])
+        # Modify actual_area in all subsequent time steps due to lighting choice
+        dA = self.actual_area[self.num_steps] - self.actual_area[self.num_steps - 1]  # growth in optimal lighting
+        dA_deduction = self.deduct_growth[action]*dA    # deduction from dA
+        self.actual_area -= dA_deduction   # affects all time steps (past data aren't used again anyways)
         
-        self.reward = self.compute_reward(clock, next_state)
+        # Compute observed area by projecting actual area
+        clock = self.num_steps % self.steps_per_day
+        self.observation.append(self.actual_area[self.num_steps]*self.daily_projection_factor[clock])
 
-        self.current_state = next_state
+        # Compute reward
+        self.reward = self.reward_function()
 
-        if self.num_steps == len(self.actual_area) - 1:    # ternimal state at the end of usable data 
+        # Define state as concatenate( time of day, observed leaf area )
+        self.current_state = np.array([clock, self.observation[-1]])
+
+        if self.num_steps == len(self.actual_area) - 1:    # ternimal state when data runs out
             return self.reward, self.current_state, True, self.get_info()
         else:    
             return self.reward, self.current_state, False, self.get_info()
-            
-    def compute_reward(self, clock, next_state):   # ignore overnight growth
-        if clock == 0:
+        
+    def reward_function(self):  
+        ''' Reward = next observed area - current observed area '''
+        if self.num_steps % self.steps_per_day == 0:   # ignore overnight growth
             return 0
         else:
-            return next_state[1] - self.current_state[1]
+            return self.observation[-1] - self.observation[-2]
+        
+    def reward_function1(self):  
+        ''' Reward = next observed area - observed area exactly a day prior. Only available on day 2 '''
+        if self.num_steps >= self.steps_per_day: 
+            return (self.observation[-1] - self.observation[-1-self.steps_per_day])
+        else: 
+            return 0
     
     def get_info(self):
         return {"gamma": self.gamma}
     
-    def analyze_area_data(self): 
+    def analyze_area_data(self):    
+        ''' Approximate the actual leaf sizes and the projection factor throughout the day '''
+
         observed_area = np.reshape(self.data, (-1, self.steps_per_day))  # reshape into different days
         max_indices = np.argmax(observed_area, axis=1)        # index at the max value of each day
         
@@ -86,6 +92,16 @@ class PlantSimulator(BaseEnvironment):
         actual_area = actual_area / actual_area[0]
         
         return actual_area, mean_projection_factor
+    
+    def load_area_data(self, plant_id):
+        # Load historic plant area data
+        data_path = os.path.dirname(os.path.abspath(__file__)) + "/plant_data/plant_area_data.csv"
+        df = pd.read_csv(data_path).sort_values(by='timestamp')
 
-
-
+        # Compute number of time steps per day 
+        df['timestamp'] = pd.to_datetime(df['timestamp'])
+        timestamps_per_day = df['timestamp'].dt.date.value_counts()
+        if timestamps_per_day.nunique() != 1:
+            raise ValueError(f"Inconsistent timestamps per day: {timestamps_per_day.to_dict()}")
+        
+        return np.array(df.iloc[:, plant_id]), timestamps_per_day.iloc[0]
