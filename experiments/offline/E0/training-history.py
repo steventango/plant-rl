@@ -24,10 +24,6 @@ from experiment.tools import parseCmdLineArgs
 # also sets fonts to be right size when saving
 setDefaultConference('jmlr')
 
-COLORS = {
-    'DQN-Relu': 'red',
-}
-
 if __name__ == "__main__":
     path, should_save, save_type = parseCmdLineArgs()
 
@@ -47,25 +43,21 @@ if __name__ == "__main__":
         file_col='algorithm',
     )
 
-    grouped_by_alpha = df.groupby('optimizer.alpha')['return'].apply(list)
-    f, ax = plt.subplots()
-    for alpha, group in grouped_by_alpha.items():
-        xs, ys = extract_learning_curves(
-            sub_df,
-            report.best_configuration,
-            metric='return',
-            interpolation=None,
-        )
-        res = curve_percentile_bootstrap_ci(
-                rng=np.random.default_rng(0),
-                y=np.array(group),
-                statistic=Statistic.mean)
-        print(res.sample_stat)
-        ax.plot(res.sample_stat, label=alpha, linewidth=0.5)
-        ax.fill_between(res.ci[0], res.ci[1], alpha=0.2)
-    #ax.legend()
-    save(
-        save_path=f'{path}/plots',
-        plot_name=f'DQN-Relu'
-    )
+    grouped_df = df.groupby(["optimizer.alpha", "seed"])[["return", "frame"]]
+
+    plt.figure(figsize=(8, 5))
+    COLORS = ['r', 'g', 'b']
+    for (alpha, seed), sub_df in grouped_df:
+        sub_df = sub_df.dropna(subset=["return"])
+        
+        if alpha == 0.001:
+            plt.plot(sub_df["frame"], sub_df["return"], color=COLORS[0], linewidth=0.5)
+        elif alpha == 0.0001:
+            plt.plot(sub_df["frame"], sub_df["return"], color=COLORS[1], linewidth=0.5)
+        elif alpha == 0.00001:
+            plt.plot(sub_df["frame"], sub_df["return"], color=COLORS[2], linewidth=0.5)
+        
+    plt.xlabel("Time Step")
+    plt.ylabel("Return")
+    plt.legend()
     plt.show()
