@@ -44,7 +44,7 @@ class PlantSimulator(BaseEnvironment):
         # Define state as concatenate( time of day, observed leaf area )
         self.current_state = np.array([clock, self.observation[-1]])
 
-        if self.num_steps == len(self.actual_area) - 1:    # ternimal state when data runs out
+        if self.num_steps == len(self.actual_area) - 1:    # terminal state when data runs out
             return self.reward, self.current_state, True, self.get_info()
         else:    
             return self.reward, self.current_state, False, self.get_info()

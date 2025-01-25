@@ -1,7 +1,7 @@
 {
     "agent": "DQN-Relu",
     "problem": "PlantSimulator",
-    "total_steps": 30000,
+    "total_steps": 50000,
     "episode_cutoff": 2000,
     "metaParameters": {
         "epsilon": 0.1,
