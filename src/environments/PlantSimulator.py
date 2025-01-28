@@ -2,69 +2,72 @@ import os
 import numpy as np
 import pandas as pd
 from RlGlue.environment import BaseEnvironment
+from utils.functions import PiecewiseLinear
 
 class PlantSimulator(BaseEnvironment):
-    def __init__(self, plant_id=5):
+    def __init__(self, plant_id=5, actions=[0, 1], action_effects=[1.0, 0.0]):
         self.state_dim = (2,)    
         self.current_state = np.empty(2)
         self.action_dim = 2      
-        self.actions = [0, 1]             # [light off, light on]
-        self.deduct_growth = [1.0, 0.0]   # growth deduction due to action. 100% means no growth. 0% means growing optimally as in the hisotric data.
+        self.actions = actions               # default is [light off, light on]
+        self.frozen_time = action_effects    # due to the agent's action, freeze plant for a percentage of the current time step 
         
-        self.data, self.steps_per_day = self.load_area_data(plant_id)
-        self.original_actual_area, self.daily_projection_factor = self.analyze_area_data()
-        self.actual_area = np.copy(self.original_actual_area)   # Make a copy because actual_area will be modified at each step
-        self.observation = []   # store a list of observed areas
+        self.data, self.steps_per_day, self.steps_per_night = self.load_area_data(plant_id)
+        self.original_actual_area, self.projection_factor, self.terminal_step = self.analyze_area_data()
+        self.actual_area = self.original_actual_area.copy()   # Make a copy because actual_area will be modified at each step
+        self.observation = []           # store a list of observed areas
+        self.time = 0                   # step counter that counts both day and night, even though agent is sleeping at night
+        self.frozen_time_today = 0      # how long the plant has be frozen during daytime today
 
         self.gamma = 0.99
         self.num_steps = 0
 
     def start(self):
         self.num_steps = 0
-        self.actual_area = np.copy(self.original_actual_area)
-        self.current_state = np.array([0, self.actual_area[0]*self.daily_projection_factor[0]])
-        self.observation.append(self.current_state[1])
+        self.time = 0
+        self.frozen_time_today = 0
+        self.actual_area = self.original_actual_area.copy()
+
+        clock = self.num_steps % self.steps_per_day
+        self.observation.append(self.actual_area(self.time)*self.projection_factor[clock])
+        self.current_state = np.array([clock, self.observation[-1]/self.observation[0]])  # normalize the observed area by the initial observed area
         return self.current_state
 
     def step(self, action): 
+        # Modify the interpolated actual_area according to the action
+        self.actual_area.insert_plateau(self.time, self.time + self.frozen_time[action])
+        self.frozen_time_today += self.frozen_time[action]
+
+        # Keep track of time
         self.num_steps += 1
-        
-        # Modify actual_area in all subsequent time steps due to lighting choice
-        dA = self.actual_area[self.num_steps] - self.actual_area[self.num_steps - 1]  # growth in optimal lighting
-        dA_deduction = self.deduct_growth[action]*dA    # deduction from dA
-        self.actual_area -= dA_deduction   # affects all time steps (past data aren't used again anyways)
-        
-        # Compute observed area by projecting actual area
         clock = self.num_steps % self.steps_per_day
-        self.observation.append(self.actual_area[self.num_steps]*self.daily_projection_factor[clock])
+        self.time += 1
+
+        # If transitioning into the next day, freeze growth at night by the same amount as daytime today
+        if clock == 0: 
+            self.actual_area.insert_plateau(self.time, self.time + self.frozen_time_today)
+            self.time += self.steps_per_night - 1   # fastforward time
+            self.frozen_time_today = 0
+
+        # Compute observed area by projecting actual area
+        self.observation.append(self.actual_area(self.time)*self.projection_factor[clock])
+
+        # Define state as concatenate( time of day, normalized observed leaf area )
+        self.current_state = np.array([clock, self.observation[-1] / self.observation[0]])
 
         # Compute reward
         self.reward = self.reward_function()
 
-        # Define state as concatenate( time of day, observed leaf area )
-        self.current_state = np.array([clock, self.observation[-1]])
-
-        if self.num_steps == len(self.actual_area) - 1:    # terminal state when data runs out
+        if self.num_steps == self.terminal_step:
             return self.reward, self.current_state, True, self.get_info()
         else:    
             return self.reward, self.current_state, False, self.get_info()
-        
-    def reward_function(self):  
-        ''' Reward = next observed area - current observed area '''
-        if self.num_steps % self.steps_per_day == 0:   # ignore overnight growth
-            return 0
-        else:
-            return self.observation[-1] - self.observation[-2]
-        
-    def reward_function1(self):  
-        ''' Reward = next observed area - observed area exactly a day prior. Only available on day 2 '''
-        if self.num_steps >= self.steps_per_day: 
-            return (self.observation[-1] - self.observation[-1-self.steps_per_day])
-        else: 
-            return 0
     
     def get_info(self):
         return {"gamma": self.gamma}
+        
+    def reward_function(self):  
+        return (self.observation[-1] - self.observation[-2]) / self.observation[0]
     
     def analyze_area_data(self):    
         ''' Approximate the actual leaf sizes and the projection factor throughout the day '''
@@ -72,26 +75,33 @@ class PlantSimulator(BaseEnvironment):
         observed_area = np.reshape(self.data, (-1, self.steps_per_day))  # reshape into different days
         max_indices = np.argmax(observed_area, axis=1)        # index at the max value of each day
         
-        actual_area = np.copy(self.data)
-        for i in range(observed_area.shape[0]-1):
-            min_id = i*self.steps_per_day + max_indices[i]
-            max_id = (i+1)*self.steps_per_day + max_indices[i+1]
-            # Assume the largest observed area in each day IS the actual area at that moment
-            # Interpolate (linearly) between largest observed areas
-            actual_area[min_id:max_id] = np.interp(np.arange(min_id, max_id), [min_id, max_id], [self.data[min_id],self.data[max_id]])
-        
-        # Ratio between observed and actual area 
-        projection_factor = np.reshape(self.data / actual_area, (-1, self.steps_per_day))
-        # Checked that this ratio has a characteristic shape, independent of the day, so we take the average
+        # Compute a piecewise linear function that interpolates between time stamps at daily max values. Include night times in the function.
+        max_time = []
+        max_area = []
+        for i in range(observed_area.shape[0]):
+            max_time.append((i-1)*(self.steps_per_day+self.steps_per_night) + max_indices[i])  # Let time begins at the start of day 2
+            max_area.append(self.data[i*self.steps_per_day + max_indices[i]])
+        pwl = PiecewiseLinear(max_time, max_area)
+
+        # Number of remaining daytime time stamps (since we truncate the first and last day)
+        terminal_step = (observed_area.shape[0]-2)*self.steps_per_day  
+
+        # Compute the actual area at all daytime time stamps
+        actual_area_daytime = []
+        for i in range(observed_area.shape[0]-2):
+            x_values = np.arange(i*(self.steps_per_day+self.steps_per_night), i*(self.steps_per_day+self.steps_per_night)+self.steps_per_day)
+            y_values = [pwl(x) for x in x_values]
+            actual_area_daytime.append(y_values)
+        actual_area_daytime = np.hstack(actual_area_daytime)
+
+        # Compute projection factor
+        truncated_data = self.data[self.steps_per_day:-self.steps_per_day]
+        projection_factor = np.reshape(truncated_data/actual_area_daytime, (-1, self.steps_per_day))  
+
+        # The projection factor has the same characteristic shape every day, so we take the average
         mean_projection_factor = np.mean(projection_factor, axis=0)
-
-        # Truncate first and last days, during which actual_area was not interpolated
-        actual_area = actual_area[self.steps_per_day:-self.steps_per_day]
-
-        # Normalize by the actual area on day 1
-        actual_area = actual_area / actual_area[0]
         
-        return actual_area, mean_projection_factor
+        return pwl, mean_projection_factor, terminal_step
     
     def load_area_data(self, plant_id):
         # Load historic plant area data
@@ -104,4 +114,9 @@ class PlantSimulator(BaseEnvironment):
         if timestamps_per_day.nunique() != 1:
             raise ValueError(f"Inconsistent timestamps per day: {timestamps_per_day.to_dict()}")
         
-        return np.array(df.iloc[:, plant_id]), timestamps_per_day.iloc[0]
+        # Compute number of time steps per night
+        time_increment = df['timestamp'].diff().mode()[0]
+        night_duration = df.groupby(df['timestamp'].dt.date)['timestamp'].first().shift(-1) - df.groupby(df['timestamp'].dt.date)['timestamp'].last()
+        steps_per_night = int((night_duration.mode()[0] / time_increment)-1)
+
+        return np.array(df.iloc[:, plant_id]), timestamps_per_day.iloc[0], steps_per_night
