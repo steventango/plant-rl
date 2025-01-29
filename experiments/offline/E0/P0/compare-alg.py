@@ -50,7 +50,7 @@ if __name__ == "__main__":
         # converts path like "experiments/example/MountainCar"
         # into a new column "environment" with value "MountainCar"
         # None means to ignore a path part
-        folder_columns=(None, None, 'environment'),
+        folder_columns=(None, None, None, 'environment'),
 
         # and creates a new column named "algorithm"
         # whose value is the name of an experiment file, minus extension.
@@ -102,8 +102,10 @@ if __name__ == "__main__":
             ax.plot(xs[0], res.sample_stat, label=alg, color=COLORS[alg], linewidth=0.5)
             ax.fill_between(xs[0], res.ci[0], res.ci[1], color=COLORS[alg], alpha=0.2)
 
-        ax.plot(np.linspace(0, exp.total_steps, 100), np.ones(100)*15.4058, 'k--', linewidth=1, label='max return')
+        ax.plot(np.linspace(0, exp.total_steps, 100), np.ones(100)*13.75, 'k--', linewidth=1, label='return of light-on policy')
+        ax.plot(np.linspace(0, exp.total_steps, 100), np.ones(100)*3.75, 'b--', linewidth=1, label='return of random policy')
         ax.set_xlim(0, exp.total_steps)
+        ax.set_ylim(0, 14.5)
         ax.legend()
         ax.set_title('Compare Different Representation Networks in PlantSimulator')
         ax.set_ylabel('Return')

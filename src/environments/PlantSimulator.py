@@ -5,9 +5,9 @@ from RlGlue.environment import BaseEnvironment
 from utils.functions import PiecewiseLinear
 
 class PlantSimulator(BaseEnvironment):
-    def __init__(self, plant_id=5, actions=[0, 1], action_effects=[1.0, 0.0]):
-        self.state_dim = (2,)    
-        self.current_state = np.empty(2)
+    def __init__(self, plant_id=[1], actions=[0, 1], action_effects=[1.0, 0.0]):
+        self.state_dim = (1,)     
+        self.current_state = np.empty(1)
         self.action_dim = 2      
         self.actions = actions               # default is [light off, light on]
         self.frozen_time = action_effects    # due to the agent's action, freeze plant for a percentage of the current time step 
@@ -30,7 +30,8 @@ class PlantSimulator(BaseEnvironment):
 
         clock = self.num_steps % self.steps_per_day
         self.observation.append(self.actual_area(self.time)*self.projection_factor[clock])
-        self.current_state = np.array([clock, self.observation[-1]/self.observation[0]])  # normalize the observed area by the initial observed area
+        #self.current_state = np.array([clock, self.observation[-1]/self.observation[0]])
+        self.current_state = np.array([clock])
         return self.current_state
 
     def step(self, action): 
@@ -52,8 +53,9 @@ class PlantSimulator(BaseEnvironment):
         # Compute observed area by projecting actual area
         self.observation.append(self.actual_area(self.time)*self.projection_factor[clock])
 
-        # Define state as concatenate( time of day, normalized observed leaf area )
-        self.current_state = np.array([clock, self.observation[-1] / self.observation[0]])
+        # Define state
+        #self.current_state = np.array([clock, self.observation[-1] / self.observation[0]])
+        self.current_state = np.array([clock])
 
         # Compute reward
         self.reward = self.reward_function()
@@ -67,8 +69,15 @@ class PlantSimulator(BaseEnvironment):
         return {"gamma": self.gamma}
         
     def reward_function(self):  
-        return (self.observation[-1] - self.observation[-2]) / self.observation[0]
-    
+        # reward = 1-step difference in observed area
+        #return (self.observation[-1] - self.observation[-2]) / self.observation[0]
+
+        # reward = 24hr difference in observed area (available starting on day 2)
+        if self.num_steps >= self.steps_per_day: 
+            return (self.observation[-1] - self.observation[-1-self.steps_per_day]) / self.observation[-1-self.steps_per_day]
+        else: 
+            return 0
+        
     def analyze_area_data(self):    
         ''' Approximate the actual leaf sizes and the projection factor throughout the day '''
 
@@ -119,4 +128,4 @@ class PlantSimulator(BaseEnvironment):
         night_duration = df.groupby(df['timestamp'].dt.date)['timestamp'].first().shift(-1) - df.groupby(df['timestamp'].dt.date)['timestamp'].last()
         steps_per_night = int((night_duration.mode()[0] / time_increment)-1)
 
-        return np.array(df.iloc[:, plant_id]), timestamps_per_day.iloc[0], steps_per_night
+        return np.array(df.iloc[:, plant_id].sum(axis=1)), timestamps_per_day.iloc[0], steps_per_night

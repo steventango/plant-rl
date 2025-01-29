@@ -37,7 +37,7 @@ if __name__ == "__main__":
     )
 
     df = results.combine(
-        folder_columns=(None, None, 'environment'),
+        folder_columns=(None, None, None, 'environment'),
         file_col='algorithm',
     )
 
