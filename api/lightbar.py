@@ -1,28 +1,37 @@
 import json
 from pathlib import Path
-
+import time
 import numpy as np
 
 from api.macros import LED0_ON_L, LED1_ON_L, LED2_ON_L, LED4_ON_L, LED5_ON_L, LED6_ON_L
 
+# DIR_PATH = Path(__file__).parent
 
-def convert_to_duty_cycle(action: np.ndarray):
+# def convert_to_duty_cycle(action: np.ndarray):
+def convert_to_duty_cycle(action):
     return (action * CALIBRATION_SCALE + CALIBRATION_MIN).astype(np.int32)
 
-
-def set_duty_cycle(duty_cycle: np.ndarray):
-    for address in ADDRESSES:
+# def set_duty_cycle(duty_cycle: np.ndarray):
+def set_duty_cycle(duty_cycle):
+    for i, address in enumerate(ADDRESSES):
         for channel in range(NUM_CHANNELS):
-            set_half_bar_pwm(address, channel, duty_cycle[address, channel])
+            set_half_bar_pwm(address, channel + 1, duty_cycle[i, channel])
 
 
-def set_half_bar_pwm(bar_address: int, channel: int, duty_cycle: int):
+# def set_action(action: np.ndarray):
+def set_action(action):
+    duty_cycle = convert_to_duty_cycle(action)
+    set_duty_cycle(duty_cycle)
+
+
+
+
+
+def set_half_bar_pwm(bar_address, channel, duty_cycle):
     """
     Set the PWM duty cycle for a channel on a half-bar.
     """
     import smbus
-
-    _i2c = smbus.SMBus(1)
     duty_cycle = max(0, duty_cycle)
     duty_cycle = min(4095, duty_cycle)
     low_byte = duty_cycle & 0xFF
@@ -40,15 +49,17 @@ def set_half_bar_pwm(bar_address: int, channel: int, duty_cycle: int):
     elif channel == 6:
         chip_register = LED2_ON_L
     else:
-        raise ValueError(f"perihelion; illegal channel number {channel}")
-
+        # raise ValueError(f"perihelion; illegal channel number {channel}")
+        pass
     command_array = [0, int(chip_register), 0, 0, int(low_byte), int(high_byte)]
-    _i2c.write_i2c_block_data(bar_address, 3, command_array)
+    i2c = smbus.SMBus(1)
+    i2c.write_i2c_block_data(bar_address, 3, command_array)
     time.sleep(0.025)
 
 
-def load_calibration_data(addresses: list):
-    with open(DIR_PATH / "lightbar_calibration.json", "r") as f:
+# def load_calibration_data(addresses: list):
+def load_calibration_data(addresses):
+    with open("lightbar_calibration.json", "r") as f:
         calibration_data = json.loads(f.read())
         calibration_data = {v["address"]: v for v in calibration_data}
         calibration_min = np.zeros((NUM_ADDRESSES, NUM_CHANNELS), dtype=np.int32)
@@ -61,13 +72,12 @@ def load_calibration_data(addresses: list):
     return calibration_min, calibration_scale
 
 
-DIR_PATH = Path(__file__).parent
-
 CHANNEL_NAMES = ["blue", "cool_white", "warm_white", "orange_red", "red", "far_red"]
 NUM_CHANNELS = len(CHANNEL_NAMES)
 
-with open(DIR_PATH / "addresses.json", "r") as f:
+with open("addresses.json", "r") as f:
     ADDRESSES = json.loads(f.read())
+    ADDRESSES = [int(v, 16) for v in ADDRESSES]
 
 NUM_ADDRESSES = len(ADDRESSES)
 
