@@ -29,7 +29,7 @@ class PlantSimulator(BaseEnvironment):
         self.actual_area = self.original_actual_area.copy()
 
         clock = self.num_steps % self.steps_per_day
-        self.observation.append(self.actual_area(self.time)*self.projection_factor[clock])
+        self.observation.append(self.actual_area(self.time)*self.projection_factor[self.num_steps])
         #self.current_state = np.array([clock, self.observation[-1]/self.observation[0]])
         self.current_state = np.array([clock])
         return self.current_state
@@ -51,7 +51,7 @@ class PlantSimulator(BaseEnvironment):
             self.frozen_time_today = 0
 
         # Compute observed area by projecting actual area
-        self.observation.append(self.actual_area(self.time)*self.projection_factor[clock])
+        self.observation.append(self.actual_area(self.time)*self.projection_factor[self.num_steps])
 
         # Define state
         #self.current_state = np.array([clock, self.observation[-1] / self.observation[0]])
@@ -93,7 +93,7 @@ class PlantSimulator(BaseEnvironment):
         pwl = PiecewiseLinear(max_time, max_area)
 
         # Number of remaining daytime time stamps (since we truncate the first and last day)
-        terminal_step = (observed_area.shape[0]-2)*self.steps_per_day  
+        terminal_step = (observed_area.shape[0]-2)*self.steps_per_day - 1
 
         # Compute the actual area at all daytime time stamps
         actual_area_daytime = []
@@ -105,12 +105,9 @@ class PlantSimulator(BaseEnvironment):
 
         # Compute projection factor
         truncated_data = self.data[self.steps_per_day:-self.steps_per_day]
-        projection_factor = np.reshape(truncated_data/actual_area_daytime, (-1, self.steps_per_day))  
-
-        # The projection factor has the same characteristic shape every day, so we take the average
-        mean_projection_factor = np.mean(projection_factor, axis=0)
+        projection_factor = truncated_data/actual_area_daytime
         
-        return pwl, mean_projection_factor, terminal_step
+        return pwl, projection_factor, terminal_step
     
     def load_area_data(self, plant_id):
         # Load historic plant area data

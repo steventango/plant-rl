@@ -40,3 +40,14 @@
 - Both OneLayerRelu and TwoLayerRelu agents learned very quickly
 ### Conclusions & Outlooks: 
 - This formulation of state & reward is working!
+
+##  Phase P3
+### Objectives: 
+- Remove the averaging of projection factor. See if the 1Relu agent still learns in this more realistic & noisy environment
+### Methods: 
+- same as P2, but projection factor is now a function of num_steps (instead of clock)
+- By the way, all of E0 uses only one plant's data
+### Observations: 
+- The agent learned, and the learning curves look similar (not the same) the those in P2.
+### Conclusions & Outlooks: 
+- For realism, it is probably best to use raw projection factor.
