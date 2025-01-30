@@ -63,3 +63,13 @@
 ### Conclusions & Outlooks: 
 - The nn may be too simple. Try LSTM.
 - Clock and area are fundamentally different state attributes. The agent has no control over the clock's transition, but the agent's action directly influences the observed area. Try outerproduct instead of concatenate.
+
+##  Phase P5
+### Objectives: 
+- As per Steven's suggestion, normalize the area observation to between -1 and 1, see if it helps
+### Methods: 
+- The largest area value from the dataset is 25083.0. Use 30000 as the upperbound; lowerbound is 0.
+### Observations: 
+- Neither agent learned, but their learning curves look a little better than in P4.
+### Conclusions & Outlooks: 
+- Normalization could help, but it's probably not the issue.

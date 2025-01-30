@@ -30,7 +30,7 @@ class PlantSimulator(BaseEnvironment):
 
         clock = self.num_steps % self.steps_per_day
         self.observation.append(self.actual_area(self.time)*self.projection_factor[self.num_steps])
-        self.current_state = np.array([clock, self.observation[-1]/self.observation[0]])
+        self.current_state = np.array([clock, self.normalize_input(self.observation[-1]/self.observation[0])])
         #self.current_state = np.array([clock])
         return self.current_state
 
@@ -54,7 +54,7 @@ class PlantSimulator(BaseEnvironment):
         self.observation.append(self.actual_area(self.time)*self.projection_factor[self.num_steps])
 
         # Define state
-        self.current_state = np.array([clock, self.observation[-1] / self.observation[0]])
+        self.current_state = np.array([clock, self.normalize_input(self.observation[-1] / self.observation[0])])
         #self.current_state = np.array([clock])
 
         # Compute reward
@@ -126,3 +126,8 @@ class PlantSimulator(BaseEnvironment):
         steps_per_night = int((night_duration.mode()[0] / time_increment)-1)
 
         return np.array(df.iloc[:, plant_id].sum(axis=1)), timestamps_per_day.iloc[0], steps_per_night
+    
+    def normalize_input(self, x):
+        u = 30000 / self.observation[0]
+        l = 0
+        return (x - l) / (u - l) * 2 - 1
