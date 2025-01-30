@@ -9,5 +9,5 @@ class PlantSimulator(BaseProblem):
 
         self.env = Env()  # default is one plant and two actions (off and on)
         self.actions = 2
-        self.observations = (1,)
+        self.observations = (2,)
         self.gamma = 0.99

@@ -48,6 +48,18 @@
 - same as P2, but projection factor is now a function of num_steps (instead of clock)
 - By the way, all of E0 uses only one plant's data
 ### Observations: 
-- The agent learned, and the learning curves look similar (not the same) the those in P2.
+- The agent learned, and the learning curves look very similar to (but not the same as) those in P2.
 ### Conclusions & Outlooks: 
 - For realism, it is probably best to use raw projection factor.
+
+##  Phase P4
+### Objectives: 
+- As per Adam's advice, "we want to give the agent the best shot at learning. To do that we give it as much information as we can", re-introduce observations to the states and check if the agents still learn. 
+- Including observation also allows the agents to learn a policy that changes with the plant's developmental stage. (e.g. summer to fall lighting)
+### Methods: 
+- state := concatenate(clock, current_observed_area / initial_observed_area)
+### Observations: 
+- Both Relu-DQN agents didn't learn to keep the light on.
+### Conclusions & Outlooks: 
+- The nn may be too simple. Try LSTM.
+- Clock and area are fundamentally different state attributes. The agent has no control over the clock's transition, but the agent's action directly influences the observed area. Try outerproduct instead of concatenate.

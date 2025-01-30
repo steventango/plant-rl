@@ -6,8 +6,8 @@ from utils.functions import PiecewiseLinear
 
 class PlantSimulator(BaseEnvironment):
     def __init__(self, plant_id=[1], actions=[0, 1], action_effects=[1.0, 0.0]):
-        self.state_dim = (1,)     
-        self.current_state = np.empty(1)
+        self.state_dim = (2,)     
+        self.current_state = np.empty(2)
         self.action_dim = 2      
         self.actions = actions               # default is [light off, light on]
         self.frozen_time = action_effects    # due to the agent's action, freeze plant for a percentage of the current time step 
@@ -30,8 +30,8 @@ class PlantSimulator(BaseEnvironment):
 
         clock = self.num_steps % self.steps_per_day
         self.observation.append(self.actual_area(self.time)*self.projection_factor[self.num_steps])
-        #self.current_state = np.array([clock, self.observation[-1]/self.observation[0]])
-        self.current_state = np.array([clock])
+        self.current_state = np.array([clock, self.observation[-1]/self.observation[0]])
+        #self.current_state = np.array([clock])
         return self.current_state
 
     def step(self, action): 
@@ -54,8 +54,8 @@ class PlantSimulator(BaseEnvironment):
         self.observation.append(self.actual_area(self.time)*self.projection_factor[self.num_steps])
 
         # Define state
-        #self.current_state = np.array([clock, self.observation[-1] / self.observation[0]])
-        self.current_state = np.array([clock])
+        self.current_state = np.array([clock, self.observation[-1] / self.observation[0]])
+        #self.current_state = np.array([clock])
 
         # Compute reward
         self.reward = self.reward_function()
