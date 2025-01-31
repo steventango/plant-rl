@@ -31,7 +31,6 @@ class PlantSimulator(BaseEnvironment):
         clock = self.num_steps % self.steps_per_day
         self.observation.append(self.actual_area(self.time)*self.projection_factor[self.num_steps])
         self.current_state = np.array([clock, self.normalize_input(self.observation[-1]/self.observation[0])])
-        #self.current_state = np.array([clock])
         return self.current_state
 
     def step(self, action): 
@@ -55,7 +54,6 @@ class PlantSimulator(BaseEnvironment):
 
         # Define state
         self.current_state = np.array([clock, self.normalize_input(self.observation[-1] / self.observation[0])])
-        #self.current_state = np.array([clock])
 
         # Compute reward
         self.reward = self.reward_function()
