@@ -6,10 +6,12 @@ from PIL import Image
 
 app = FastAPI()
 
+
 def get_camera():
     from picamzero import Camera
 
     return Camera()
+
 
 @app.get("/observation", response_class=Response)
 def read_observation(cam: Annotated[any, Depends(get_camera)]):
