@@ -9,6 +9,7 @@ env/
 .venv/
 __pycache__
 *.pyc
+.pytest_cache
 
 .pdm-python
 pdm.lock
