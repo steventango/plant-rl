@@ -1,0 +1,13 @@
+{
+    "agent": "ContinuousRandom",
+    "problem": "PlantGrowthChamber",
+    "total_steps": 10,
+    "episode_cutoff": 10,
+    "metaParameters": {
+        "environment": {
+            "camera_url_0": "http://mitacs-zone02-camera01.ccis.ualberta.ca:8000/observation",
+            "camera_url_1": "http://mitacs-zone02-camera01.ccis.ualberta.ca:8000/observation",
+            "lightbar_url": "http://mitacs-zone2.ccis.ualberta.ca:8000/action"
+        }
+    }
+}

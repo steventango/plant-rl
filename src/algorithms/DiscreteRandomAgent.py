@@ -7,7 +7,7 @@ from algorithms.BaseAgent import BaseAgent
 from utils.policies import sample
 
 
-class RandomAgent(BaseAgent):
+class DiscreteRandomAgent(BaseAgent):
     def __init__(self, observations: Tuple[int, ...], actions: int, params: Dict, collector: Collector, seed: int):
         super().__init__(observations, actions, params, collector, seed)
         self.steps = 0
