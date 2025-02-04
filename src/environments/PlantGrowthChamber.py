@@ -26,7 +26,7 @@ class PlantGrowthChamber(BaseEnvironment):
         return self.current_state
 
     def step(self, action: np.ndarray):
-        requests.put("http://mitacs-zone2.ccis.ualberta.ca:8000/action", json={"array": action.tolist()})
+        requests.put(self.lightbar_url, json={"array": action.tolist()})
 
         # Define state
         self.current_state = self.get_observation()
@@ -44,4 +44,4 @@ class PlantGrowthChamber(BaseEnvironment):
 
     # on object destruction
     def __del__(self):
-        requests.put("http://mitacs-zone2.ccis.ualberta.ca:8000/action", json={"array": np.zeros((2, 6)).tolist()})
+        requests.put(self.lightbar_url, json={"array": np.zeros((2, 6)).tolist()})
