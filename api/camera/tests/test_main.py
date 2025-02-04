@@ -5,11 +5,11 @@ from fastapi.testclient import TestClient
 from PIL import Image
 
 from ..app.main import app, get_camera
-from .mock_picamzero import Camera
+from .mock_picamzero import MockCamera
 
 
 def get_mock_camera():
-    return Camera()
+    return MockCamera()
 
 
 app.dependency_overrides[get_camera] = get_mock_camera
