@@ -66,5 +66,5 @@ class Lightbar:
         return command_array
 
     def get_i2c(self):
-        import smbus
-        return smbus.SMBus(1)
+        from smbus2 import SMBus
+        return SMBus(1)

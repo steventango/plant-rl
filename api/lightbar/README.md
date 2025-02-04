@@ -10,10 +10,9 @@ rsync -azP . pi@zone2:~/Desktop/lightbar
 # on mitacs-zone2.ccis.ualberta.ca
 ssh zone2
 sudo apt update
-sudo apt install libc6 libopenblas-dev screen -y
+sudo apt install libatlas-base-dev screen -y
 cd ~/Desktop/lightbar
-python3.11 -m venv .venv
-sed -i 's/include-system-site-packages = true/include-system-site-packages = false/' .venv/pyvenv.cfg
+python3.8 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
@@ -31,5 +30,5 @@ screen
 fastapi run app/main.py --port 8000
 
 # on alien
-curl http://mitacs-zone02-camera01.ccis.ualberta.ca:8000/action -X POST -H "Content-Type: application/json" -d '{"action": [[1.0, 1.0, 1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]]}'
+curl http://mitacs-zone2.ccis.ualberta.ca:8000/action -X PUT -H "Content-Type: application/json" -d '{"array": [[1.0, 1.0, 1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]]}'
 ```
