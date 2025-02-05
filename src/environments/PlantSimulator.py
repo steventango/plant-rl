@@ -3,19 +3,21 @@ import numpy as np
 import pandas as pd
 from RlGlue.environment import BaseEnvironment
 from utils.functions import PiecewiseLinear
+from math import sin, cos, pi
 
 class PlantSimulator(BaseEnvironment):
     def __init__(self, plant_id=[1], actions=[0, 1], action_effects=[1.0, 0.0]):
-        self.state_dim = (2,)     
-        self.current_state = np.empty(2)
+        self.state_dim = (4,)     
+        self.current_state = np.empty(4)
         self.action_dim = 2      
         self.actions = actions               # default is [light off, light on]
         self.frozen_time = action_effects    # due to the agent's action, freeze plant for a percentage of the current time step 
         
-        self.data, self.steps_per_day, self.steps_per_night = self.load_area_data(plant_id)
+        self.data, self.steps_per_day, self.steps_per_night, self.interval, self.first_second = self.load_area_data(plant_id)
         self.original_actual_area, self.projection_factor, self.terminal_step = self.analyze_area_data()
         self.actual_area = self.original_actual_area.copy()   # Make a copy because actual_area will be modified at each step
-        self.observation = []           # store a list of observed areas
+        self.ob = []                    # store a list of observed areas
+        self.smooth_ob = []             # store a list of moving-averaged observed areas
         self.time = 0                   # step counter that counts both day and night, even though agent is sleeping at night
         self.frozen_time_today = 0      # how long the plant has be frozen during daytime today
 
@@ -25,12 +27,16 @@ class PlantSimulator(BaseEnvironment):
     def start(self):
         self.num_steps = 0
         self.time = 0
+        clock = (self.num_steps % self.steps_per_day)*self.interval + self.first_second   # time of day in seconds
+
         self.frozen_time_today = 0
         self.actual_area = self.original_actual_area.copy()
 
-        clock = self.num_steps % self.steps_per_day
-        self.observation.append(self.actual_area(self.time)*self.projection_factor[self.num_steps])
-        self.current_state = np.array([clock, self.normalize_input(self.observation[-1]/self.observation[0])])
+        self.ob.append(self.actual_area(self.time)*self.projection_factor[self.num_steps])
+        self.smooth_ob.append(self.ob[-1])
+
+        # State = Concatenate(sine time, normalized observed area, normalized moving-averaged observed area)
+        self.current_state = np.hstack([self.sine_time(clock), [self.normalize(self.ob[-1])], [self.normalize(self.smooth_ob[-1])]])
         return self.current_state
 
     def step(self, action): 
@@ -40,23 +46,24 @@ class PlantSimulator(BaseEnvironment):
 
         # Keep track of time
         self.num_steps += 1
-        clock = self.num_steps % self.steps_per_day
+        clock = (self.num_steps % self.steps_per_day)*self.interval + self.first_second   # time of day in seconds
         self.time += 1
 
         # If transitioning into the next day, freeze growth at night by the same amount as daytime today
-        if clock == 0: 
+        if self.num_steps % self.steps_per_day == 0: 
             self.actual_area.insert_plateau(self.time, self.time + self.frozen_time_today)
             self.time += self.steps_per_night - 1   # fastforward time
             self.frozen_time_today = 0
 
         # Compute observed area by projecting actual area
-        self.observation.append(self.actual_area(self.time)*self.projection_factor[self.num_steps])
+        self.ob.append(self.actual_area(self.time)*self.projection_factor[self.num_steps])
+        self.smooth_ob.append(self.moving_average(self.ob[-1]))
 
         # Define state
-        self.current_state = np.array([clock, self.normalize_input(self.observation[-1] / self.observation[0])])
+        self.current_state = np.hstack([self.sine_time(clock), [self.normalize(self.ob[-1])], [self.normalize(self.smooth_ob[-1])]])
 
         # Compute reward
-        self.reward = self.reward_function()
+        self.reward = self.reward_function_1step()
 
         if self.num_steps == self.terminal_step:
             return self.reward, self.current_state, True, self.get_info()
@@ -66,13 +73,14 @@ class PlantSimulator(BaseEnvironment):
     def get_info(self):
         return {"gamma": self.gamma}
         
-    def reward_function(self):  
+    def reward_function_1step(self):  
         # reward = 1-step difference in observed area
-        #return (self.observation[-1] - self.observation[-2]) / self.observation[0]
-
+        return (self.smooth_ob[-1] - self.smooth_ob[-2]) / self.smooth_ob[0]
+        
+    def reward_function_1day(self):
         # reward = 24hr difference in observed area (available starting on day 2)
         if self.num_steps >= self.steps_per_day: 
-            return (self.observation[-1] - self.observation[-1-self.steps_per_day]) / self.observation[-1-self.steps_per_day]
+            return (self.smooth_ob[-1] - self.smooth_ob[-1-self.steps_per_day]) / self.smooth_ob[-1-self.steps_per_day]
         else: 
             return 0
         
@@ -111,21 +119,35 @@ class PlantSimulator(BaseEnvironment):
         # Load historic plant area data
         data_path = os.path.dirname(os.path.abspath(__file__)) + "/plant_data/plant_area_data.csv"
         df = pd.read_csv(data_path).sort_values(by='timestamp')
+        
+        # The second when  the first day starts 
+        first_second = pd.to_datetime('2024-02-10 09:00').time().hour * 3600 + pd.to_datetime('2024-02-10 09:00').time().minute * 60
 
-        # Compute number of time steps per day 
+        # Number of time steps per day 
         df['timestamp'] = pd.to_datetime(df['timestamp'])
         timestamps_per_day = df['timestamp'].dt.date.value_counts()
         if timestamps_per_day.nunique() != 1:
             raise ValueError(f"Inconsistent timestamps per day: {timestamps_per_day.to_dict()}")
+        steps_per_day = timestamps_per_day.iloc[0]
         
-        # Compute number of time steps per night
+        # Number of time steps per night
         time_increment = df['timestamp'].diff().mode()[0]
         night_duration = df.groupby(df['timestamp'].dt.date)['timestamp'].first().shift(-1) - df.groupby(df['timestamp'].dt.date)['timestamp'].last()
         steps_per_night = int((night_duration.mode()[0] / time_increment)-1)
 
-        return np.array(df.iloc[:, plant_id].sum(axis=1)), timestamps_per_day.iloc[0], steps_per_night
+        # Averaged observed plant area (in unit of pixels)
+        plant_area_data = np.array(df.iloc[:, plant_id].mean(axis=1))
+
+        return plant_area_data, steps_per_day, steps_per_night, time_increment.total_seconds(), first_second
     
-    def normalize_input(self, x):
-        u = 30000 / self.observation[0]
+    def normalize(self, x):   # normalize observation to between 0 and 1
+        u = 30000   # max historic area of one plant (in pixels)
         l = 0
-        return (x - l) / (u - l) * 2 - 1
+        return (x - l) / (u - l)
+    
+    def sine_time(self, t):
+        return [sin(2*pi*t/86400), cos(2*pi*t/86400)]
+    
+    def moving_average(self, x, trace_decay_rate = 0.9):
+        return trace_decay_rate *self.smooth_ob[-1] + (1-trace_decay_rate)*x
+
