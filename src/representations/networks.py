@@ -76,7 +76,7 @@ def reluLayers(layers: List[int], name: Optional[str] = None):
     return out
 
 def buildFeatureNetwork(inputs: Tuple, params: Dict[str, Any], rng: Any):
-    def _inner(x: jax.Array):
+    def _inner(x: jax.Array, s: hk.LSTMState):
         name = params['type']
         hidden = params['hidden']
 
@@ -85,16 +85,25 @@ def buildFeatureNetwork(inputs: Tuple, params: Dict[str, Any], rng: Any):
 
         elif name == 'OneLayerRelu':
             layers = reluLayers([hidden], name='phi')
-
+        elif name == 'LSTM':
+            core = hk.LSTM(hidden, name='phi')
+            layers = [
+                core
+            ]
         else:
             raise NotImplementedError()
 
-        return hku.accumulatingSequence(layers)(x)
+        return hku.accumulatingSequence(layers)(x, s)
 
-    network = hk.without_apply_rng(hk.transform(_inner))
+    network = hk.without_apply_rng(hk.transform_with_state(_inner))
 
     sample_input = jnp.zeros((1,) + tuple(inputs))
-    net_params = network.init(rng, sample_input)
+    hidden = params['hidden']
+    sample_state = hk.LSTMState(
+        hidden=jnp.zeros((1, hidden)),
+        cell=jnp.zeros((1, hidden)),
+    )
+    net_params = network.init(rng, sample_input, sample_state)
 
     return network, net_params
 

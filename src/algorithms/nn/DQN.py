@@ -19,6 +19,7 @@ import utils.chex as cxu
 class AgentState:
     params: Any
     target_params: Any
+    state: hk.LSTMState
     optim: optax.OptState
 
 
@@ -41,6 +42,7 @@ class DQN(NNAgent):
         self.state = AgentState(
             params=self.state.params,
             target_params=self.state.params,
+            lstm_state=self.q.initial_state(1),
             optim=self.state.optim,
         )
 
