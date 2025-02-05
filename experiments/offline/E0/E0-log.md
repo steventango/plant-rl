@@ -73,3 +73,39 @@
 - Neither agent learned, but their learning curves look a little better than in P4.
 ### Conclusions & Outlooks: 
 - Normalization could help, but it's probably not the issue.
+
+##  Phase P6
+### Objectives: 
+- Implement sine time, exponential weighted average (aka moving average), and normalized input in plantsimulator.py
+- Train an agent with these improvements
+### Methods: 
+- following the water treatment plant paper, state := concatenate(sine time, normalized observed area, normalized moving-averaged observed area)
+- the areas are normalized to between 0 and 1 by the max value of historic area measurements (in unit of pixels)
+- Use 1-day reward function
+### Observations: 
+- Top three best alphas all converge slowly toward the max return, but don't arrive in 100,000 steps. (too slow!)
+### Conclusions & Outlooks: 
+- state := concatenate(sine time, normalized observed area, normalized moving-averaged observed area) seems to work well
+- using moving-averaged observed area to compute reward seems to help too
+- Try 1-step reward
+
+##  Phase P7
+### Objectives: 
+- Same as P6
+### Methods: 
+- Same as P6, but using 1-step reward
+### Observations: 
+- Wow, the performance is terrible, barely better than random policy.
+### Conclusions & Outlooks: 
+- 1-day reward is vastly better than 1-step reward
+
+##  Phase P8
+### Objectives: 
+- What happens if we use normalized moving-averaged observed area directly as reward?
+### Methods: 
+- Same as P6, but reward := normalized moving-averaged observed area 
+### Observations: 
+- Not good at all.
+### Conclusions & Outlooks: 
+- 1-day reward is still our current best bet.
+

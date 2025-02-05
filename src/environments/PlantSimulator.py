@@ -63,7 +63,7 @@ class PlantSimulator(BaseEnvironment):
         self.current_state = np.hstack([self.sine_time(clock), [self.normalize(self.ob[-1])], [self.normalize(self.smooth_ob[-1])]])
 
         # Compute reward
-        self.reward = self.reward_function_1step()
+        self.reward = self.reward_function_1day()
 
         if self.num_steps == self.terminal_step:
             return self.reward, self.current_state, True, self.get_info()
