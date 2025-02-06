@@ -22,7 +22,9 @@ class TCAgent(BaseAgent):
             tiles=self.rep_params['tiles'],
             tilings=self.rep_params['tilings'],
             dims=observations[0],
-            input_ranges=self.rep_params['input_ranges'],
+            # specifying input_ranges in .json screws up results.db
+            # by commenting this out, we assume default input_ranges = [0, 1] for all state dimensions
+            #input_ranges=self.rep_params['input_ranges'],  
         ))
 
     @abstractmethod

@@ -1,4 +1,4 @@
-#  Experiment E0 -- Train an agent to keep the light on
+#  Experiment E0 -- Design Choices in PlantSimulator 
 ##  Phase P0
 ### Objectives: 
 - Test out the PlantSimulator environment built from historic plant data

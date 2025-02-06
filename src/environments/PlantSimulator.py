@@ -146,7 +146,8 @@ class PlantSimulator(BaseEnvironment):
         return (x - l) / (u - l)
     
     def sine_time(self, t):
-        return [sin(2*pi*t/86400), cos(2*pi*t/86400)]
+        # Return sine & cosine times, normalized to between 0 and 1
+        return [(sin(2*pi*t/86400)+1)/2, (cos(2*pi*t/86400)+1)/2]
     
     def moving_average(self, x, trace_decay_rate = 0.9):
         return trace_decay_rate *self.smooth_ob[-1] + (1-trace_decay_rate)*x
