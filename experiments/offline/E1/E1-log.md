@@ -15,3 +15,5 @@
 - Note: noticed that {"episode_cutoff": -1} means no cutoff.
 ### Conclusions & Outlooks: 
 - Greedy & farsighted SoftmaxAC beat basic PlantSimulator, albeit after a long time (~2.7 years)
+- Adam suggested to add experience replay and that GreedyAC will likely do better.
+- Oliver and I think we need some sort of RNN in the agent, because the environment is partially observable and the current reward is affected by past actions.
