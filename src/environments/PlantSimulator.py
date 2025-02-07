@@ -63,7 +63,7 @@ class PlantSimulator(BaseEnvironment):
         self.current_state = np.hstack([self.sine_time(clock), [self.normalize(self.ob[-1])], [self.normalize(self.smooth_ob[-1])]])
 
         # Compute reward
-        self.reward = self.reward_function_n_step(n_step=self.steps_per_day)
+        self.reward = self.reward_function_1day()
 
         if self.num_steps == self.terminal_step:
             return self.reward, self.current_state, True, self.get_info()
@@ -73,9 +73,14 @@ class PlantSimulator(BaseEnvironment):
     def get_info(self):
         return {"gamma": self.gamma}
         
-    def reward_function_n_step(self, n_step=1):  
-        if self.num_steps >= n_step: 
-            return (self.smooth_ob[-1] - self.smooth_ob[-1 - n_step]) / self.smooth_ob[-1 - n_step]
+    def reward_function_1step(self):  
+        # reward = 1-step difference in observed area
+        return (self.smooth_ob[-1] - self.smooth_ob[-2]) / self.smooth_ob[0]
+        
+    def reward_function_1day(self):
+        # reward = 24hr difference in observed area (available starting on day 2)
+        if self.num_steps >= self.steps_per_day: 
+            return (self.smooth_ob[-1] - self.smooth_ob[-1-self.steps_per_day]) / self.smooth_ob[-1-self.steps_per_day]
         else: 
             return 0
         
@@ -115,9 +120,8 @@ class PlantSimulator(BaseEnvironment):
         data_path = os.path.dirname(os.path.abspath(__file__)) + "/plant_data/plant_area_data.csv"
         df = pd.read_csv(data_path).sort_values(by='timestamp')
         
-        # The second when the first day starts 
-        first_time_stamp = pd.to_datetime(df['timestamp'].iloc[0])
-        first_second = first_time_stamp.time().hour*3600 + first_time_stamp.time().minute*60
+        # The second when  the first day starts 
+        first_second = pd.to_datetime('2024-02-10 09:00').time().hour * 3600 + pd.to_datetime('2024-02-10 09:00').time().minute * 60
 
         # Number of time steps per day 
         df['timestamp'] = pd.to_datetime(df['timestamp'])

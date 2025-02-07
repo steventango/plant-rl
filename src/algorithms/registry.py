@@ -7,6 +7,7 @@ from algorithms.ContinuousRandomAgent import ContinuousRandomAgent
 from algorithms.DiscreteRandomAgent import DiscreteRandomAgent
 from algorithms.tc.ESARSA import ESARSA
 from algorithms.tc.SoftmaxAC import SoftmaxAC
+from algorithms.nn.GreedyAC.GreedyAC import GreedyAC
 
 
 def getAgent(name) -> Type[BaseAgent]:
@@ -27,5 +28,8 @@ def getAgent(name) -> Type[BaseAgent]:
 
     if name == 'ContinuousRandom':
         return ContinuousRandomAgent
+
+    if name == 'GreedyAC':
+        return GreedyAC
 
     raise Exception('Unknown algorithm')

@@ -2,6 +2,7 @@ import Box2D     # we need to import this first because cedar is stupid
 import os
 import sys
 sys.path.append(os.getcwd())
+from tqdm import tqdm
 
 import time
 import socket
