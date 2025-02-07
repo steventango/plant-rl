@@ -1,0 +1,16 @@
+{
+    "agent": "SoftmaxAC",
+    "problem": "PlantSimulator",
+    "total_steps": 100000,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "alpha": [0.03, 0.01, 0.003, 0.001, 0.0003],
+        "tau": [0.001, 0.01],
+        "n_step": [8, 16],
+
+        "representation": {
+            "tiles": 4,
+            "tilings": 16
+        }
+    }
+}
