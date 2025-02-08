@@ -36,7 +36,7 @@ class PlantSimulator(BaseEnvironment):
         self.smooth_ob.append(self.ob[-1])
 
         # State = Concatenate(sine time, normalized observed area, normalized moving-averaged observed area)
-        self.current_state = np.hstack([self.sine_time(clock), [self.normalize(self.ob[-1])], [self.normalize(self.smooth_ob[-1])]])
+        self.current_state = np.hstack([self.sine_time(clock), self.normalize([self.ob[-1], 0])])
         return self.current_state
 
     def step(self, action): 
@@ -60,7 +60,10 @@ class PlantSimulator(BaseEnvironment):
         self.smooth_ob.append(self.moving_average(self.ob[-1]))
 
         # Define state
-        self.current_state = np.hstack([self.sine_time(clock), [self.normalize(self.ob[-1])], [self.normalize(self.smooth_ob[-1])]])
+        if self.num_steps >= self.steps_per_day: 
+            self.current_state = np.hstack([self.sine_time(clock), self.normalize([self.ob[-1], self.ob[-1-self.steps_per_day]])])
+        else: 
+            self.current_state = np.hstack([self.sine_time(clock), self.normalize([self.ob[-1], 0])])
 
         # Compute reward
         self.reward = self.reward_function_1day()
@@ -73,14 +76,9 @@ class PlantSimulator(BaseEnvironment):
     def get_info(self):
         return {"gamma": self.gamma}
         
-    def reward_function_1step(self):  
-        # reward = 1-step difference in observed area
-        return (self.smooth_ob[-1] - self.smooth_ob[-2]) / self.smooth_ob[0]
-        
-    def reward_function_1day(self):
-        # reward = 24hr difference in observed area (available starting on day 2)
-        if self.num_steps >= self.steps_per_day: 
-            return (self.smooth_ob[-1] - self.smooth_ob[-1-self.steps_per_day]) / self.smooth_ob[-1-self.steps_per_day]
+    def reward_function_n_step(self, n_step=1):  
+        if self.num_steps >= n_step: 
+            return (self.ob[-1] - self.ob[-1 - n_step]) / self.ob[-1 - n_step]
         else: 
             return 0
         
@@ -143,12 +141,14 @@ class PlantSimulator(BaseEnvironment):
     def normalize(self, x):   # normalize observation to between 0 and 1
         u = 30000   # max historic area of one plant (in pixels)
         l = 0
+        if isinstance(x, list):
+            return [(val - l) / (u - l) for val in x]
         return (x - l) / (u - l)
     
     def sine_time(self, t):
         # Return sine & cosine times, normalized to between 0 and 1
         return [(sin(2*pi*t/86400)+1)/2, (cos(2*pi*t/86400)+1)/2]
     
-    def moving_average(self, x, trace_decay_rate = 0.9):
+    def moving_average(self, x, trace_decay_rate = 0.99):
         return trace_decay_rate *self.smooth_ob[-1] + (1-trace_decay_rate)*x
 
