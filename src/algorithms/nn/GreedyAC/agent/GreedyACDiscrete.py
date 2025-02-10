@@ -5,11 +5,11 @@ import torch
 import torch.nn.functional as F
 from torch.optim import Adam
 import numpy as np
-from ..baseAgent import BaseAgent
-from ...utils.experience_replay import TorchBuffer as ExperienceReplay
-from .value_function.MLP import Q as QMLP
-from .policy.MLP import Softmax
-from . import nn_utils
+from .baseAgent import BaseAgent
+from ..utils.experience_replay import TorchBuffer as ExperienceReplay
+from ..value_function.MLP import Q as QMLP
+from ..policy.MLP import Softmax
+from ..utils import nn_utils
 
 
 class GreedyACDiscrete(BaseAgent):

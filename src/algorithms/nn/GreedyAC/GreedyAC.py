@@ -8,7 +8,7 @@ import numpy as np
 
 from algorithms.BaseAgent import BaseAgent
 from PyExpUtils.collection.Collector import Collector
-from .agent.nonlinear.GreedyACDiscrete import GreedyACDiscrete
+from .agent.GreedyACDiscrete import GreedyACDiscrete
 
 
 class GreedyAC(BaseAgent):

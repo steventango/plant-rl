@@ -5,7 +5,7 @@ import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions import Normal, Independent
-from ..nn_utils import weights_init_
+from ..utils.nn_utils import weights_init_
 
 
 # Global variables

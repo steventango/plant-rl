@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .. import nn_utils
+from ..utils import nn_utils
 
 
 # Class definitions
