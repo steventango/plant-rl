@@ -23,6 +23,7 @@ class PlantSimulator(BaseEnvironment):
 
         self.gamma = 0.99
         self.num_steps = 0
+        self.n_step = 1 # Sets lag for determining change in area used in reward function (72 = 1 day)
 
     def start(self):
         self.num_steps = 0
@@ -66,7 +67,7 @@ class PlantSimulator(BaseEnvironment):
             self.current_state = np.hstack([self.sine_time(clock), self.normalize([self.ob[-1], 0])])
 
         # Compute reward
-        self.reward = self.reward_function_1day()
+        self.reward = self.reward_function_n_step(n_step=self.n_step)
 
         if self.num_steps == self.terminal_step:
             return self.reward, self.current_state, True, self.get_info()
@@ -76,7 +77,7 @@ class PlantSimulator(BaseEnvironment):
     def get_info(self):
         return {"gamma": self.gamma}
         
-    def reward_function_n_step(self, n_step=1):  
+    def reward_function_n_step(self, n_step=1):
         if self.num_steps >= n_step: 
             return (self.ob[-1] - self.ob[-1 - n_step]) / self.ob[-1 - n_step]
         else: 
