@@ -1,0 +1,9 @@
+{
+    "type": "single_node",
+
+    "account": "def-whitem",
+    "time": "11:59:00",
+    "cores": 4,
+    "mem_per_core": "2G",
+    "sequential": 64
+}

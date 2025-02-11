@@ -23,7 +23,7 @@ class PlantSimulator(BaseEnvironment):
 
         self.gamma = 0.99
         self.num_steps = 0
-        self.n_step = 1 # Sets lag for determining change in area used in reward function (72 = 1 day)
+        self.n_step = 72                # Sets lag for determining change in area used in reward function (72 = 1 day)
 
     def start(self):
         self.num_steps = 0

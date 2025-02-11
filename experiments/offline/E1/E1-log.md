@@ -33,3 +33,16 @@
 ### Conclusions & Outlooks: 
 - How do we gather more experiences and reuse them? Consider treating each plant separately.
 - Use neural net actor-critic, rather than tile coding, to help generalize across states.
+
+## Phase P2
+### Objectives: 
+- Test out greedy AC in basic plant simulator
+### Methods: 
+- State = concatenate(sin time, cos time, num_steps/terminal_time, area, 24hr-prior area)
+- Action = [off, on]
+- Reward = (area - 24hr-prior area) / 24hr-prior area
+- Agent: greedy AC added by Oliver
+### Observations: 
+- 
+### Conclusions & Outlooks: 
+-
