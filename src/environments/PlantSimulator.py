@@ -1,18 +1,23 @@
 import os
+from math import sin, cos, pi
+import random
+
 import numpy as np
 import pandas as pd
+
 from RlGlue.environment import BaseEnvironment
 from utils.functions import PiecewiseLinear
 from math import sin, cos, pi
 
 class PlantSimulator(BaseEnvironment):
-    def __init__(self, plant_id=[1], actions=[0, 1], action_effects=[1.0, 0.0]):
+    def __init__(self, plant_id=[1], randomize_plant=False, actions=[0, 1], action_effects=[1.0, 0.0]):
         self.state_dim = (4,)     
         self.current_state = np.empty(4)
         self.action_dim = 2      
         self.actions = actions               # default is [light off, light on]
         self.frozen_time = action_effects    # due to the agent's action, freeze plant for a percentage of the current time step 
-        
+        self.randomize_plant = randomize_plant
+        self.plant_id = [random.randint(1, 64)] if randomize_plant else plant_id
         self.data, self.steps_per_day, self.steps_per_night, self.interval, self.first_second = self.load_area_data(plant_id)
         self.original_actual_area, self.projection_factor, self.terminal_step = self.analyze_area_data()
         self.actual_area = self.original_actual_area.copy()   # Make a copy because actual_area will be modified at each step
@@ -132,8 +137,7 @@ class PlantSimulator(BaseEnvironment):
         # Number of time steps per night
         time_increment = df['timestamp'].diff().mode()[0]
         night_duration = df.groupby(df['timestamp'].dt.date)['timestamp'].first().shift(-1) - df.groupby(df['timestamp'].dt.date)['timestamp'].last()
-        steps_per_night = int((night_duration.mode()[0] / time_increment)-1)
-
+        print(df)
         # Averaged observed plant area (in unit of pixels)
         plant_area_data = np.array(df.iloc[:, plant_id].mean(axis=1))
 
