@@ -132,7 +132,7 @@ class Q(nn.Module):
     approximator. The action value is computed by concatenating the action to
     the state observation as the input to the neural network.
     """
-    def __init__(self, num_inputs, num_actions, hidden_dim, init,
+    def __init__(self, num_inputs, num_actions, hidden_dim, n_hidden, init,
                  activation):
         """
         Constructor
@@ -155,10 +155,11 @@ class Q(nn.Module):
         """
         super(Q, self).__init__()
 
-        # Q1 architecture
-        self.linear1 = nn.Linear(num_inputs + num_actions, hidden_dim)
-        self.linear2 = nn.Linear(hidden_dim, hidden_dim)
-        self.linear3 = nn.Linear(hidden_dim, 1)
+        self.input_layer = nn.Linear(num_inputs + num_actions, hidden_dim)
+        self.hidden_layers = nn.ModuleList(
+            [nn.Linear(hidden_dim, hidden_dim) for _ in range(n_hidden)]
+        )
+        self.output_layer = nn.Linear(hidden_dim, 1)
 
         self.apply(lambda module: nn_utils.weights_init_(module, init))
 
@@ -168,6 +169,10 @@ class Q(nn.Module):
             self.act = torch.tanh
         else:
             raise ValueError(f"unknown activation {activation}")
+        
+        print("Critic All submodules (including nested ones):")
+        for module in self.modules():
+            print(module)
 
     def forward(self, state, action):
         """
@@ -188,11 +193,10 @@ class Q(nn.Module):
             The action value prediction
         """
         xu = torch.cat([state, action], 1)
-
-        x = self.act(self.linear1(xu))
-        #x = self.act(self.linear2(x))
-        x = self.linear3(x)
-
+        x = self.act(self.input_layer(xu))
+        for layer in self.hidden_layers:
+            x = self.act(layer(x))
+        x = self.output_layer(x)
         return x
 
 

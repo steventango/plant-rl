@@ -229,15 +229,17 @@ class Softmax(nn.Module):
     Softmax implements a softmax policy in each state, parameterized
     using an MLP to predict logits.
     """
-    def __init__(self, num_inputs, num_actions, hidden_dim, activation,
+    def __init__(self, num_inputs, num_actions, hidden_dim, n_hidden, activation,
                  init=None):
         super(Softmax, self).__init__()
 
         self.num_actions = num_actions
 
-        self.linear1 = nn.Linear(num_inputs, hidden_dim)
-        self.linear2 = nn.Linear(hidden_dim, hidden_dim)
-        self.linear3 = nn.Linear(hidden_dim, num_actions)
+        self.input_layer = nn.Linear(num_inputs, hidden_dim)
+        self.hidden_layers = nn.ModuleList(
+            [nn.Linear(hidden_dim, hidden_dim) for _ in range(n_hidden)]
+        )
+        self.output_layer = nn.Linear(hidden_dim, num_actions)
 
         # self.apply(weights_init_)
         self.apply(lambda module: weights_init_(module, init, activation))
@@ -249,10 +251,16 @@ class Softmax(nn.Module):
         else:
             raise ValueError(f"unknown activation {activation}")
 
+        print("Actor All submodules (including nested ones):")
+        for module in self.modules():
+            print(module)
+
     def forward(self, state):
-        x = self.act(self.linear1(state))
-        #x = self.act(self.linear2(x))
-        return self.linear3(x)
+        x = self.act(self.input_layer(state))
+        for layer in self.hidden_layers:
+            x = self.act(layer(x))
+        x = self.output_layer(x)
+        return x
 
     def sample(self, state, num_samples=1):
         logits = self.forward(state)

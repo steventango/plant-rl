@@ -28,6 +28,8 @@ class GreedyAC(BaseAgent):
             actor_lr_scale = params['actor_lr_scale'],
             actor_hidden_dim = params['hidden_dim'], 
             critic_hidden_dim = params['hidden_dim'], 
+            actor_n_hidden= params['n_hidden'],
+            critic_n_hidden= params['n_hidden'],
             replay_capacity = params['replay_capacity'], 
             seed = seed,
             batch_size = params['batch_size'], 

@@ -18,8 +18,8 @@ class GreedyACDiscrete(BaseAgent):
     """
     def __init__(self, num_inputs, num_actions, gamma, tau, policy,
                  target_update_interval, critic_lr, actor_lr_scale,
-                 actor_hidden_dim, critic_hidden_dim, replay_capacity, seed,
-                 batch_size, beta1, beta2, cuda=False,
+                 actor_hidden_dim, critic_hidden_dim, actor_n_hidden, critic_n_hidden, 
+                 replay_capacity, seed, batch_size, beta1, beta2, cuda=False,
                  clip_stddev=1000, init=None, entropy_from_single_sample=True,
                  activation="relu"):
         super().__init__()
@@ -65,18 +65,18 @@ class GreedyACDiscrete(BaseAgent):
         action_shape = 1
 
         self.critic = QMLP(num_inputs, action_shape,
-                           critic_hidden_dim, init, activation).to(
+                           critic_hidden_dim, critic_n_hidden, init, activation).to(
                                device=self.device)
         self.critic_optim = Adam(self.critic.parameters(), lr=critic_lr,
                                  betas=(beta1, beta2))
 
         self.critic_target = QMLP(num_inputs, action_shape,
-                                  critic_hidden_dim, init, activation).to(
+                                  critic_hidden_dim, critic_n_hidden, init, activation).to(
                                       self.device)
         nn_utils.hard_update(self.critic_target, self.critic)
 
         self._create_policies(policy, num_inputs, num_actions,
-                              actor_hidden_dim, clip_stddev, init, activation)
+                              actor_hidden_dim, actor_n_hidden, clip_stddev, init, activation)
 
         actor_lr = actor_lr_scale * critic_lr
         self.policy_optim = Adam(self.policy.parameters(), lr=actor_lr,
@@ -190,12 +190,12 @@ class GreedyACDiscrete(BaseAgent):
         self.is_training = True
 
     def _create_policies(self, policy, num_inputs, num_actions,
-                         actor_hidden_dim, clip_stddev, init, activation):
+                         actor_hidden_dim, actor_n_hidden, clip_stddev, init, activation):
         self.policy_type = policy.lower()
         if self.policy_type == "softmax":
             self.num_actions = num_actions
             self.policy = Softmax(num_inputs, self.num_actions,
-                                  actor_hidden_dim, activation,
+                                  actor_hidden_dim, actor_n_hidden, activation,
                                   init).to(self.device)
 
             # Sampler returns every available action in each state
