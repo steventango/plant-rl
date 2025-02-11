@@ -7,8 +7,8 @@ from math import sin, cos, pi
 
 class PlantSimulator(BaseEnvironment):
     def __init__(self, plant_id=[1], actions=[0, 1], action_effects=[1.0, 0.0]):
-        self.state_dim = (4,)     
-        self.current_state = np.empty(4)
+        self.state_dim = (5,)     
+        self.current_state = np.empty(5)
         self.action_dim = 2      
         self.actions = actions               # default is [light off, light on]
         self.frozen_time = action_effects    # due to the agent's action, freeze plant for a percentage of the current time step 
@@ -36,8 +36,8 @@ class PlantSimulator(BaseEnvironment):
         self.ob.append(self.actual_area(self.time)*self.projection_factor[self.num_steps])
         self.smooth_ob.append(self.ob[-1])
 
-        # State = Concatenate(sine time, normalized observed area, normalized moving-averaged observed area)
-        self.current_state = np.hstack([self.sine_time(clock), self.normalize([self.ob[-1], 0])])
+        # State = Concatenate(sine time, normalized time since beginning, normalized observed area, normalized moving-averaged observed area)
+        self.current_state = np.hstack([self.sine_time(clock), self.num_steps/self.terminal_step, self.normalize([self.ob[-1], 0])])
         return self.current_state
 
     def step(self, action): 
@@ -61,10 +61,10 @@ class PlantSimulator(BaseEnvironment):
         self.smooth_ob.append(self.moving_average(self.ob[-1]))
 
         # Define state
-        if self.num_steps >= self.steps_per_day: 
-            self.current_state = np.hstack([self.sine_time(clock), self.normalize([self.ob[-1], self.ob[-1-self.steps_per_day]])])
+        if self.num_steps >= self.n_step: 
+            self.current_state = np.hstack([self.sine_time(clock), self.num_steps/self.terminal_step, self.normalize([self.ob[-1], self.ob[-1-self.n_step]])])
         else: 
-            self.current_state = np.hstack([self.sine_time(clock), self.normalize([self.ob[-1], 0])])
+            self.current_state = np.hstack([self.sine_time(clock), self.num_steps/self.terminal_step, self.normalize([self.ob[-1], 0])])
 
         # Compute reward
         self.reward = self.reward_function_n_step(n_step=self.n_step)
