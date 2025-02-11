@@ -169,10 +169,6 @@ class Q(nn.Module):
             self.act = torch.tanh
         else:
             raise ValueError(f"unknown activation {activation}")
-        
-        print("Critic All submodules (including nested ones):")
-        for module in self.modules():
-            print(module)
 
     def forward(self, state, action):
         """
