@@ -107,7 +107,7 @@ for idx in indices:
     for step in range(glue.total_steps, exp.total_steps):
         collector.next_frame()
         chk.maybe_save()
-        time.sleep(10)
+        time.sleep(60)
         interaction = glue.step()
         image = Image.fromarray(interaction.o)
         image.save(context.resolve(f'images/{step}.jpg'))
