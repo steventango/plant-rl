@@ -8,16 +8,16 @@ from RlGlue.environment import BaseEnvironment
 
 
 class PlantGrowthChamber(BaseEnvironment):
-    def __init__(self, camera_url_0: str, camera_url_1: str, lightbar_url: str):
+    def __init__(self, camera_url: str, lightbar_url: str):
         self.gamma = 0.99
-        self.camera_urls = [camera_url_0, camera_url_1]
+        self.camera_url = camera_url
         self.lightbar_url = lightbar_url
 
     def get_observation(self):
-        responses = [requests.get(camera_url) for camera_url in self.camera_urls]
-        images = [Image.open(io.BytesIO(response.content)) for response in responses]
-        arrays = [np.array(image) for image in images]
-        array = np.concatenate(arrays, axis=1)
+        response = requests.get(self.camera_url)
+        response.raise_for_status()
+        image = Image.open(io.BytesIO(response.content))
+        array = np.array(image)
         return array
 
     def start(self):
@@ -26,7 +26,8 @@ class PlantGrowthChamber(BaseEnvironment):
         return self.current_state
 
     def step(self, action: np.ndarray):
-        requests.put(self.lightbar_url, json={"array": action.tolist()})
+        response = requests.put(self.lightbar_url, json={"array": action.tolist()})
+        response.raise_for_status()
 
         # Define state
         self.current_state = self.get_observation()
