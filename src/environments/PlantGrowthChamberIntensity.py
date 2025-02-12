@@ -9,5 +9,4 @@ class PlantGrowthChamberIntensity(PlantGrowthChamber):
 
     def put_action(self, action: float):
         action = self.reference_spectrum * action
-        print(action)
         return super().put_action(action)
