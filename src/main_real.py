@@ -135,6 +135,8 @@ for idx in indices:
 
     collector.reset()
 
+    env.close()
+
     # ------------
     # -- Saving --
     # ------------

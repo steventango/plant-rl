@@ -43,6 +43,5 @@ class PlantGrowthChamber(BaseEnvironment):
     def reward_function(self):
         return 0
 
-    # on object destruction
-    def __del__(self):
-        requests.put(self.lightbar_url, json={"array": np.zeros((2, 6)).tolist()})
+    def close(self):
+        requests.put(self.lightbar_url, json={"array": np.zeros(6).tolist()})
