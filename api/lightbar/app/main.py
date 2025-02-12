@@ -11,13 +11,21 @@ app = FastAPI()
 
 
 class Action(BaseModel):
-    array: List[List[float]]
+    array: List[float]
 
 
-def get_lightbar():
-    return Lightbar()
+def get_lightbar_left():
+    return Lightbar(0x69)
 
 
-@app.put("/action", response_class=Response)
-def update_action(action: Action, lightbar: Annotated[any, Depends(get_lightbar)]):
+def get_lightbar_right():
+    return Lightbar(0x71)
+
+
+@app.put("/action/left", response_class=Response)
+def update_action_left(action: Action, lightbar: Annotated[any, Depends(get_lightbar_left)]):
+    lightbar.step(np.array(action.array))
+
+@app.put("/action/right", response_class=Response)
+def update_action_right(action: Action, lightbar: Annotated[any, Depends(get_lightbar_right)]):
     lightbar.step(np.array(action.array))
