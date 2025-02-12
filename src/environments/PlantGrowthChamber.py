@@ -26,8 +26,7 @@ class PlantGrowthChamber(BaseEnvironment):
         return self.current_state
 
     def step(self, action: np.ndarray):
-        response = requests.put(self.lightbar_url, json={"array": action.tolist()})
-        response.raise_for_status()
+        self.put_action(action)
 
         # Define state
         self.current_state = self.get_observation()
@@ -36,6 +35,10 @@ class PlantGrowthChamber(BaseEnvironment):
         self.reward = self.reward_function()
 
         return self.reward, self.current_state, False, self.get_info()
+
+    def put_action(self, action):
+        response = requests.put(self.lightbar_url, json={"array": action.tolist()})
+        response.raise_for_status()
 
     def get_info(self):
         return {"gamma": self.gamma}
