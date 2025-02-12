@@ -5,12 +5,14 @@ from fastapi import Depends, FastAPI, Response
 from PIL import Image
 
 app = FastAPI()
-
+camera = None
 
 def get_camera():
     from picamzero import Camera
-
-    return Camera()
+    global camera
+    if camera is None:
+        camera = Camera()
+    return camera
 
 
 @app.get("/observation", response_class=Response)
