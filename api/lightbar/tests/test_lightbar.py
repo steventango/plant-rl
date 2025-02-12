@@ -15,18 +15,18 @@ class TestLightbar:
         lightbar.step(np.ones(6))
         assert lightbar.i2c.data[0x69][3][0] == [0, 0x06, 0, 0, 0x55, 0x05]
         assert lightbar.i2c.data[0x69][3][1] == [0, 0x0A, 0, 0, 0x55, 0x05]
-        assert lightbar.i2c.data[0x69][3][2] == [0, 0x16, 0, 0, 0x55, 0x05]
-        assert lightbar.i2c.data[0x69][3][3] == [0, 0x1E, 0, 0, 0x55, 0x05]
-        assert lightbar.i2c.data[0x69][3][4] == [0, 0x1A, 0, 0, 0x55, 0x05]
+        assert lightbar.i2c.data[0x69][3][2] == [0, 0x1E, 0, 0, 0x55, 0x05]
+        assert lightbar.i2c.data[0x69][3][3] == [0, 0x1A, 0, 0, 0x55, 0x05]
+        assert lightbar.i2c.data[0x69][3][4] == [0, 0x16, 0, 0, 0x55, 0x05]
         assert lightbar.i2c.data[0x69][3][5] == [0, 0x0E, 0, 0, 0x55, 0x05]
 
     def test_set_duty_cycle(self, lightbar: Lightbar):
         lightbar.set_duty_cycle(np.ones(6, dtype=np.int32) * 1365)
         assert lightbar.i2c.data[0x69][3][0] == [0, 0x06, 0, 0, 0x55, 0x05]
         assert lightbar.i2c.data[0x69][3][1] == [0, 0x0A, 0, 0, 0x55, 0x05]
-        assert lightbar.i2c.data[0x69][3][2] == [0, 0x16, 0, 0, 0x55, 0x05]
-        assert lightbar.i2c.data[0x69][3][3] == [0, 0x1E, 0, 0, 0x55, 0x05]
-        assert lightbar.i2c.data[0x69][3][4] == [0, 0x1A, 0, 0, 0x55, 0x05]
+        assert lightbar.i2c.data[0x69][3][2] == [0, 0x1E, 0, 0, 0x55, 0x05]
+        assert lightbar.i2c.data[0x69][3][3] == [0, 0x1A, 0, 0, 0x55, 0x05]
+        assert lightbar.i2c.data[0x69][3][4] == [0, 0x16, 0, 0, 0x55, 0x05]
         assert lightbar.i2c.data[0x69][3][5] == [0, 0x0E, 0, 0, 0x55, 0x05]
 
     def test_get_command_array(self, lightbar: Lightbar):

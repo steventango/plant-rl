@@ -8,7 +8,7 @@ from .macros import LED0_ON_L, LED1_ON_L, LED2_ON_L, LED4_ON_L, LED5_ON_L, LED6_
 class Lightbar:
     def __init__(self, address: int):
         self.address = address
-        self.channels = ["blue", "cool_white", "red", "warm_white", "orange_red", "far_red"]
+        self.channels = ["blue", "cool_white", "warm_white", "orange_red", "red", "far_red"]
         self.i2c = self.get_i2c()
 
     def step(self, action: np.ndarray):
@@ -52,11 +52,11 @@ class Lightbar:
         elif channel == 1:
             chip_register = LED1_ON_L
         elif channel == 2:
-            chip_register = LED4_ON_L
-        elif channel == 3:
             chip_register = LED6_ON_L
-        elif channel == 4:
+        elif channel == 3:
             chip_register = LED5_ON_L
+        elif channel == 4:
+            chip_register = LED4_ON_L
         elif channel == 5:
             chip_register = LED2_ON_L
         else:
