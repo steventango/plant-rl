@@ -8,7 +8,7 @@ from RlGlue.environment import BaseEnvironment
 from utils.functions import PiecewiseLinear
 
 class PlantSimulator(BaseEnvironment):
-    def __init__(self, plant_id=1, random_plant=False, n_step=1, actions=[0, 1], action_effects=[1.0, 0.0]):
+    def __init__(self, plant_id=0, random_plant=False, n_step=None, actions=[0, 1], action_effects=[1.0, 0.0]):
         self.state_dim = (5,)     
         self.current_state = np.empty(5)
         self.action_dim = 2      
@@ -26,7 +26,7 @@ class PlantSimulator(BaseEnvironment):
 
         self.gamma = 0.99
         self.num_steps = 0
-        self.n_step = n_step # Sets lag for determining change in area used in reward function (72 = 1 day)
+        self.n_step = n_step if n_step is not None else self.steps_per_day # Sets lag for determining change in area used in reward function, default is 1 day
 
     def start(self):
         self.num_steps = 0
@@ -49,6 +49,7 @@ class PlantSimulator(BaseEnvironment):
         return self.current_state
 
     def step(self, action): 
+        #TODO Change so that observed area is 0 in darkness (or maybe a special indicator?) But the reward 
         # Modify the interpolated actual_area according to the action
         self.actual_area.insert_plateau(self.time, self.time + self.frozen_time[action])
         self.frozen_time_today += self.frozen_time[action]
@@ -144,7 +145,6 @@ class PlantSimulator(BaseEnvironment):
 
         # Averaged observed plant area (in unit of pixels)
         plant_area_data = np.array(df.drop(columns=['timestamp']))
-
         return plant_area_data, steps_per_day, steps_per_night, time_increment.total_seconds(), first_second
     
     def normalize(self, x):   # normalize observation to between 0 and 1
