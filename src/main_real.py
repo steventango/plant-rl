@@ -92,6 +92,9 @@ for idx in indices:
     glue = chk.build('glue', lambda: RlGlue(agent, env))
     chk.initial_value('episode', 0)
 
+    context = exp.buildSaveContext(idx, base=args.save_path)
+    context.ensureExists('images')
+
     # Run the experiment
     start_time = time.time()
 
@@ -99,15 +102,15 @@ for idx in indices:
     if glue.total_steps == 0:
         s, _ = glue.start()
         image = Image.fromarray(s)
-        image.save('0.jpg')
+        image.save(context.resolve('images/0.jpg'))
 
     for step in range(glue.total_steps, exp.total_steps):
         collector.next_frame()
         chk.maybe_save()
-        time.sleep(60)
+        time.sleep(10)
         interaction = glue.step()
         image = Image.fromarray(interaction.o)
-        image.save(f'{step}.jpg')
+        image.save(context.resolve(f'images/{step}.jpg'))
 
         if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
             # allow agent to cleanup traces or other stateful episodic info
