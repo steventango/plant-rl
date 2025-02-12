@@ -18,5 +18,9 @@
         "weight_init": "xavier_uniform",
         "clip_stddev": 1000,
 		"cuda": false
-        }
+    },
+    "environment": {
+        "random_plant": false, 
+        "n_step": 72
+    }
 }

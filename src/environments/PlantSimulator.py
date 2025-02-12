@@ -1,29 +1,32 @@
 import os
-import numpy as np
-import pandas as pd
-from RlGlue.environment import BaseEnvironment
-from utils.functions import PiecewiseLinear
 from math import sin, cos, pi
 
+import numpy as np
+import pandas as pd
+
+from RlGlue.environment import BaseEnvironment
+from utils.functions import PiecewiseLinear
+
 class PlantSimulator(BaseEnvironment):
-    def __init__(self, plant_id=[1], actions=[0, 1], action_effects=[1.0, 0.0]):
+    def __init__(self, plant_id=1, random_plant=False, n_step=1, actions=[0, 1], action_effects=[1.0, 0.0]):
         self.state_dim = (5,)     
         self.current_state = np.empty(5)
         self.action_dim = 2      
         self.actions = actions               # default is [light off, light on]
         self.frozen_time = action_effects    # due to the agent's action, freeze plant for a percentage of the current time step 
-        
-        self.data, self.steps_per_day, self.steps_per_night, self.interval, self.first_second = self.load_area_data(plant_id)
+        self.use_random_plant = random_plant
+        self.plant_id = plant_id
+
+        self.data, self.steps_per_day, self.steps_per_night, self.interval, self.first_second = self.load_area_data()
         self.original_actual_area, self.projection_factor, self.terminal_step = self.analyze_area_data()
-        self.actual_area = self.original_actual_area.copy()   # Make a copy because actual_area will be modified at each step
-        self.ob = []                    # store a list of observed areas
-        self.smooth_ob = []             # store a list of moving-averaged observed areas
+        self.observed_area = []                    # store a list of observed areas
+        #self.smooth_ob = []             # store a list of moving-averaged observed areas
         self.time = 0                   # step counter that counts both day and night, even though agent is sleeping at night
         self.frozen_time_today = 0      # how long the plant has be frozen during daytime today
 
         self.gamma = 0.99
         self.num_steps = 0
-        self.n_step = 1 # Sets lag for determining change in area used in reward function (72 = 1 day)
+        self.n_step = n_step # Sets lag for determining change in area used in reward function (72 = 1 day)
 
     def start(self):
         self.num_steps = 0
@@ -31,13 +34,18 @@ class PlantSimulator(BaseEnvironment):
         clock = (self.num_steps % self.steps_per_day)*self.interval + self.first_second   # time of day in seconds
 
         self.frozen_time_today = 0
-        self.actual_area = self.original_actual_area.copy()
 
-        self.ob.append(self.actual_area(self.time)*self.projection_factor[self.num_steps])
-        self.smooth_ob.append(self.ob[-1])
+        if self.use_random_plant:
+            self.plant_id = np.random.randint(0, self.data.shape[1])
+            self.original_actual_area, self.projection_factor, self.terminal_step = self.analyze_area_data()
+
+        self.actual_area = self.original_actual_area.copy()   # Make a copy because actual_area will be modified at each step
+
+        self.observed_area.append(self.actual_area(self.time)*self.projection_factor[self.num_steps])
+        #self.smooth_ob.append(self.ob[-1])
 
         # State = Concatenate(sine time, normalized time since beginning, normalized observed area, normalized moving-averaged observed area)
-        self.current_state = np.hstack([self.sine_time(clock), self.num_steps/self.terminal_step, self.normalize([self.ob[-1], 0])])
+        self.current_state = np.hstack([self.sine_time(clock), self.num_steps/self.terminal_step, self.normalize([self.observed_area[-1], 0])])
         return self.current_state
 
     def step(self, action): 
@@ -57,14 +65,14 @@ class PlantSimulator(BaseEnvironment):
             self.frozen_time_today = 0
 
         # Compute observed area by projecting actual area
-        self.ob.append(self.actual_area(self.time)*self.projection_factor[self.num_steps])
-        self.smooth_ob.append(self.moving_average(self.ob[-1]))
+        self.observed_area.append(self.actual_area(self.time)*self.projection_factor[self.num_steps])
+        #self.smooth_ob.append(self.moving_average(self.ob[-1]))
 
         # Define state
         if self.num_steps >= self.n_step: 
-            self.current_state = np.hstack([self.sine_time(clock), self.num_steps/self.terminal_step, self.normalize([self.ob[-1], self.ob[-1-self.n_step]])])
+            self.current_state = np.hstack([self.sine_time(clock), self.num_steps/self.terminal_step, self.normalize([self.observed_area[-1], self.observed_area[-1-self.n_step]])])
         else: 
-            self.current_state = np.hstack([self.sine_time(clock), self.num_steps/self.terminal_step, self.normalize([self.ob[-1], 0])])
+            self.current_state = np.hstack([self.sine_time(clock), self.num_steps/self.terminal_step, self.normalize([self.observed_area[-1], 0])])
 
         # Compute reward
         self.reward = self.reward_function_n_step(n_step=self.n_step)
@@ -79,14 +87,14 @@ class PlantSimulator(BaseEnvironment):
         
     def reward_function_n_step(self, n_step=1):
         if self.num_steps >= n_step: 
-            return (self.ob[-1] - self.ob[-1 - n_step]) / self.ob[-1 - n_step]
+            return (self.observed_area[-1] - self.observed_area[-1 - n_step]) / self.observed_area[-1 - n_step]
         else: 
             return 0
         
     def analyze_area_data(self):    
         ''' Approximate the actual leaf sizes and the projection factor throughout the day '''
-
-        observed_area = np.reshape(self.data, (-1, self.steps_per_day))  # reshape into different days
+        ep_data = self.data[:, self.plant_id] # Get the data for the plant selected for the current episode
+        observed_area = np.reshape(ep_data, (-1, self.steps_per_day))  # reshape into different days
         max_indices = np.argmax(observed_area, axis=1)        # index at the max value of each day
         
         # Compute a piecewise linear function that interpolates between time stamps at daily max values. Include night times in the function.
@@ -94,7 +102,7 @@ class PlantSimulator(BaseEnvironment):
         max_area = []
         for i in range(observed_area.shape[0]):
             max_time.append((i-1)*(self.steps_per_day+self.steps_per_night) + max_indices[i])  # Let time begins at the start of day 2
-            max_area.append(self.data[i*self.steps_per_day + max_indices[i]])
+            max_area.append(ep_data[i*self.steps_per_day + max_indices[i]])
         pwl = PiecewiseLinear(max_time, max_area)
 
         # Number of remaining daytime time stamps (since we truncate the first and last day)
@@ -109,12 +117,12 @@ class PlantSimulator(BaseEnvironment):
         actual_area_daytime = np.hstack(actual_area_daytime)
 
         # Compute projection factor
-        truncated_data = self.data[self.steps_per_day:-self.steps_per_day]
+        truncated_data = ep_data[self.steps_per_day:-self.steps_per_day]
         projection_factor = truncated_data/actual_area_daytime
         
         return pwl, projection_factor, terminal_step
     
-    def load_area_data(self, plant_id):
+    def load_area_data(self):
         # Load historic plant area data
         data_path = os.path.dirname(os.path.abspath(__file__)) + "/plant_data/plant_area_data.csv"
         df = pd.read_csv(data_path).sort_values(by='timestamp')
@@ -135,7 +143,7 @@ class PlantSimulator(BaseEnvironment):
         steps_per_night = int((night_duration.mode()[0] / time_increment)-1)
 
         # Averaged observed plant area (in unit of pixels)
-        plant_area_data = np.array(df.iloc[:, plant_id].mean(axis=1))
+        plant_area_data = np.array(df.drop(columns=['timestamp']))
 
         return plant_area_data, steps_per_day, steps_per_night, time_increment.total_seconds(), first_second
     
@@ -149,6 +157,7 @@ class PlantSimulator(BaseEnvironment):
     def sine_time(self, t):
         # Return sine & cosine times, normalized to between 0 and 1
         return [(sin(2*pi*t/86400)+1)/2, (cos(2*pi*t/86400)+1)/2]
-    
+    '''
     def moving_average(self, x, trace_decay_rate = 0.99):
         return trace_decay_rate *self.smooth_ob[-1] + (1-trace_decay_rate)*x
+    '''
