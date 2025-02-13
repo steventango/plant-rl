@@ -1,5 +1,5 @@
 {
-    "agent": "GreedyAC",
+    "agent": "GreedyAC-Planning",
     "problem": "PlantGrowthChamberBinary",
     "total_steps": 30,
     "episode_cutoff": -1,
