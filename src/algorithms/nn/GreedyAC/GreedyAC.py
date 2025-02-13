@@ -60,6 +60,7 @@ class GreedyAC(BaseAgent):
         return self.action
 
     def plan(self):
+        super().plan()
         self.greedy_ac.plan()
 
     def end(self, reward: float, extra: Dict[str, Any]):

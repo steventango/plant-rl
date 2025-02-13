@@ -17,12 +17,14 @@ class BaseAgent(RlGlue.agent.BaseAgent):
 
         self.gamma = params.get('gamma', 1)
         self.n_step = params.get('n_step', 1)
+        self.use_planning = params.get('use_planning', False)
 
     def cleanup(self):
         ...
 
     def plan(self):
-        pass
+        if not self.use_planning:
+            return
 
     # -------------------
     # -- Checkpointing --
