@@ -3,5 +3,8 @@
 # exit script on error
 set -e
 
-python src/main_real.py -e experiments/online/E2/P0/GAC.json -i 0
-python src/main_real.py -e experiments/online/E2/P0/Random.json -i 0
+for i in 0 1 2; do
+  python src/main_real.py -e experiments/online/E2/P0/GAC.json -i $i
+  python src/main_real.py -e experiments/online/E2/P0/Random.json -i $i
+  python src/main_real.py -e experiments/online/E2/P0/Constant.json -i $i
+done
