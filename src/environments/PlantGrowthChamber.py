@@ -4,6 +4,8 @@ import time
 import numpy as np
 import requests
 from PIL import Image
+from datetime import datetime
+
 from utils.RlGlue.environment import BaseAsyncEnvironment
 
 
@@ -13,17 +15,22 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.camera_url = camera_url
         self.lightbar_url = lightbar_url
         self.image = None
+        self.time = None
 
     def get_observation(self):
-        response = requests.get(self.camera_url, timeout=5)
-        response.raise_for_status()
-        self.image = Image.open(io.BytesIO(response.content))
+        self.time = time.time()
+        timestamp = datetime.fromtimestamp(self.time)
+        self.get_image()
         array = np.array(self.image)
         array = np.ones(1)
         return array
 
+    def get_image(self):
+        response = requests.get(self.camera_url, timeout=5)
+        response.raise_for_status()
+        self.image = Image.open(io.BytesIO(response.content))
+
     def start(self):
-        self.time = time.time()
         observation = self.get_observation()
         return observation
 

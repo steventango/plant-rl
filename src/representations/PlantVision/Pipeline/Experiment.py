@@ -1,11 +1,12 @@
+import json
 import uuid
 from pathlib import Path
-from Regex import Regex
-from Undistortion import Undistortion
-from Roi import RoiList
-from HSVThreshold import HSVThreshold
-from TimeFrame import TimeFrameList
-import json
+
+from src.representations.PlantVision.Pipeline.HSVThreshold import HSVThreshold
+from src.representations.PlantVision.Pipeline.Regex import Regex
+from src.representations.PlantVision.Pipeline.Roi import RoiList
+from src.representations.PlantVision.Pipeline.TimeFrame import TimeFrameList
+from src.representations.PlantVision.Pipeline.Undistortion import Undistortion
 
 
 class Experiment:

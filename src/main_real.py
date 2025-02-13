@@ -101,7 +101,9 @@ for idx in indices:
     # if we haven't started yet, then make the first interaction
     if glue.total_steps == 0:
         glue.start()
-        env.image.save(context.resolve(f'{idx}/images/0.jpg'))
+        env.image.save(context.resolve(f'{idx}/images/_.jpg'))
+        if hasattr(env, "shape_image"):
+            env.shape_image.save(context.resolve(f'{idx}/images/_processed.jpg'))
 
     for step in range(glue.total_steps, exp.total_steps):
         collector.next_frame()
@@ -112,6 +114,8 @@ for idx in indices:
         collector.collect('reward', interaction.r)
         collector.collect('steps', glue.num_steps)
         env.image.save(context.resolve(f'{idx}/images/{step}.jpg'))
+        if hasattr(env, "shape_image"):
+            env.shape_image.save(context.resolve(f'{idx}/images/{step}_processed.jpg'))
 
         if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
             # allow agent to cleanup traces or other stateful episodic info
