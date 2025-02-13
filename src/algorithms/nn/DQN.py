@@ -63,6 +63,9 @@ class DQN(NNAgent):
         if self.steps % self.update_freq != 0:
             return
 
+        self.plan()
+
+    def plan(self):
         # skip updates if the buffer isn't full yet
         if self.buffer.size() <= self.batch_size:
             return

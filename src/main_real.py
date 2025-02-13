@@ -1,4 +1,3 @@
-import Box2D     # we need to import this first because cedar is stupid
 import os
 import sys
 sys.path.append(os.getcwd())
@@ -9,10 +8,10 @@ import logging
 import argparse
 from PIL import Image
 import numpy as np
-from RlGlue import RlGlue
 from experiment import ExperimentModel
 from utils.checkpoint import Checkpoint
 from utils.preempt import TimeoutHandler
+from utils.RlGlue.rl_glue import PlanningRlGlue
 from problems.registry import getProblem
 from PyExpUtils.results.sqlite import saveCollector
 from PyExpUtils.collection.Collector import Collector
@@ -36,6 +35,7 @@ args = parser.parse_args()
 # -- Library Configuration --
 # ---------------------------
 import jax
+
 device = 'gpu' if args.gpu else 'cpu'
 jax.config.update('jax_platform_name', device)
 
@@ -60,24 +60,23 @@ for idx in indices:
     chk.load_if_exists()
     timeout_handler.before_cancel(chk.save)
 
-    collector = chk.build('collector', lambda: Collector(
-        # specify which keys to actually store and ultimately save
-        # Options are:
-        #  - Identity() (save everything)
-        #  - Window(n)  take a window average of size n
-        #  - Subsample(n) save one of every n elements
-        config={
-            'return': Identity(),
-            'episode': Identity(),
-            'steps': Identity(),
-            'delta': Pipe(
-                MovingAverage(0.99),
-                Subsample(100),
-            ),
-        },
-        # by default, ignore keys that are not explicitly listed above
-        default=Ignore(),
-    ))
+    collector = chk.build(
+        "collector",
+        lambda: Collector(
+            # specify which keys to actually store and ultimately save
+            # Options are:
+            #  - Identity() (save everything)
+            #  - Window(n)  take a window average of size n
+            #  - Subsample(n) save one of every n elements
+            config={
+                "reward": Identity(),
+                "steps": Identity(),
+                "time": Identity(),
+            },
+            # by default, ignore keys that are not explicitly listed above
+            default=Ignore(),
+        ),
+    )
     collector.setIdx(idx)
     run = exp.getRun(idx)
 
@@ -89,28 +88,28 @@ for idx in indices:
     agent = chk.build('a', problem.getAgent)
     env = chk.build('e', problem.getEnvironment)
 
-    glue = chk.build('glue', lambda: RlGlue(agent, env))
+    glue = chk.build("glue", lambda: PlanningRlGlue(agent, env, problem.exp_params))
     chk.initial_value('episode', 0)
 
     context = exp.buildSaveContext(idx, base=args.save_path)
-    context.ensureExists('images')
+    context.ensureExists(f'{idx}/images')
 
     # Run the experiment
     start_time = time.time()
 
     # if we haven't started yet, then make the first interaction
     if glue.total_steps == 0:
-        s, _ = glue.start()
-        image = Image.fromarray(s)
-        image.save(context.resolve('images/0.jpg'))
+        glue.start()
+        env.image.save(context.resolve(f'{idx}/images/0.jpg'))
 
     for step in range(glue.total_steps, exp.total_steps):
         collector.next_frame()
         chk.maybe_save()
-        time.sleep(10)
         interaction = glue.step()
-        image = Image.fromarray(interaction.o)
-        image.save(context.resolve(f'images/{step}.jpg'))
+        collector.collect('time', time.time() - glue.start_time)
+        collector.collect('reward', interaction.r)
+        collector.collect('steps', glue.num_steps)
+        env.image.save(context.resolve(f'{idx}/images/{step}.jpg'))
 
         if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
             # allow agent to cleanup traces or other stateful episodic info

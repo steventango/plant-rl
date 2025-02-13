@@ -3,6 +3,7 @@ from typing import Type
 from algorithms.BaseAgent import BaseAgent
 from algorithms.nn.DQN import DQN
 from algorithms.nn.EQRC import EQRC
+from algorithms.ConstantAgent import ConstantAgent
 from algorithms.ContinuousRandomAgent import ContinuousRandomAgent
 from algorithms.DiscreteRandomAgent import DiscreteRandomAgent
 from algorithms.tc.ESARSA import ESARSA
@@ -22,6 +23,9 @@ def getAgent(name) -> Type[BaseAgent]:
 
     if name == 'SoftmaxAC':
         return SoftmaxAC
+
+    if name == 'Constant':
+        return ConstantAgent
 
     if name == 'DiscreteRandom':
         return DiscreteRandomAgent

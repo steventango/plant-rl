@@ -27,9 +27,9 @@ def test_action_left():
     assert response.status_code == 200
     assert lightbar_left.i2c.data[0x69][3][0] == [0, 0x06, 0, 0, 0x55, 0x05]
     assert lightbar_left.i2c.data[0x69][3][1] == [0, 0x0A, 0, 0, 0x55, 0x05]
-    assert lightbar_left.i2c.data[0x69][3][2] == [0, 0x16, 0, 0, 0x55, 0x05]
-    assert lightbar_left.i2c.data[0x69][3][3] == [0, 0x1E, 0, 0, 0x55, 0x05]
-    assert lightbar_left.i2c.data[0x69][3][4] == [0, 0x1A, 0, 0, 0x55, 0x05]
+    assert lightbar_left.i2c.data[0x69][3][2] == [0, 0x1E, 0, 0, 0x55, 0x05]
+    assert lightbar_left.i2c.data[0x69][3][3] == [0, 0x1A, 0, 0, 0x55, 0x05]
+    assert lightbar_left.i2c.data[0x69][3][4] == [0, 0x16, 0, 0, 0x55, 0x05]
     assert lightbar_left.i2c.data[0x69][3][5] == [0, 0x0E, 0, 0, 0x55, 0x05]
 
 
@@ -38,7 +38,7 @@ def test_action_right():
     assert response.status_code == 200
     assert lightbar_right.i2c.data[0x71][3][0] == [0, 0x06, 0, 0, 0x55, 0x05]
     assert lightbar_right.i2c.data[0x71][3][1] == [0, 0x0A, 0, 0, 0x55, 0x05]
-    assert lightbar_right.i2c.data[0x71][3][2] == [0, 0x16, 0, 0, 0x55, 0x05]
-    assert lightbar_right.i2c.data[0x71][3][3] == [0, 0x1E, 0, 0, 0x55, 0x05]
-    assert lightbar_right.i2c.data[0x71][3][4] == [0, 0x1A, 0, 0, 0x55, 0x05]
+    assert lightbar_right.i2c.data[0x71][3][2] == [0, 0x1E, 0, 0, 0x55, 0x05]
+    assert lightbar_right.i2c.data[0x71][3][3] == [0, 0x1A, 0, 0, 0x55, 0x05]
+    assert lightbar_right.i2c.data[0x71][3][4] == [0, 0x16, 0, 0, 0x55, 0x05]
     assert lightbar_right.i2c.data[0x71][3][5] == [0, 0x0E, 0, 0, 0x55, 0x05]

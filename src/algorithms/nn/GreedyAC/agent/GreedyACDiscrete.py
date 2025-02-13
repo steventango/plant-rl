@@ -18,7 +18,7 @@ class GreedyACDiscrete(BaseAgent):
     """
     def __init__(self, num_inputs, num_actions, gamma, tau, policy,
                  target_update_interval, critic_lr, actor_lr_scale,
-                 actor_hidden_dim, critic_hidden_dim, actor_n_hidden, critic_n_hidden, 
+                 actor_hidden_dim, critic_hidden_dim, actor_n_hidden, critic_n_hidden,
                  replay_capacity, seed, batch_size, beta1, beta2, cuda=False,
                  clip_stddev=1000, init=None, entropy_from_single_sample=True,
                  activation="relu"):
@@ -90,6 +90,8 @@ class GreedyACDiscrete(BaseAgent):
             "action_values": [],
             "source": source,
         }
+        self.q_loss = None
+        self.policy_loss = None
 
     def update(self, state, action, reward, next_state, done_mask):
         # Adjust action shape to ensure it fits in replay buffer properly
@@ -97,7 +99,9 @@ class GreedyACDiscrete(BaseAgent):
 
         # Keep transition in replay buffer
         self.replay.push(state, action, reward, next_state, done_mask)
+        self.plan()
 
+    def plan(self):
         # Sample a batch from memory
         state_batch, action_batch, reward_batch, next_state_batch, \
             mask_batch = self.replay.sample(batch_size=self.batch_size)
@@ -118,11 +122,11 @@ class GreedyACDiscrete(BaseAgent):
         q_value = self.critic(state_batch, action_batch)
 
         # Calculate the loss on the critic
-        q_loss = F.mse_loss(target_q_value, q_value)
+        self.q_loss = F.mse_loss(target_q_value, q_value)
 
         # Update the critic
         self.critic_optim.zero_grad()
-        q_loss.backward()
+        self.q_loss.backward()
         self.critic_optim.step()
 
         # Update target networks
@@ -162,11 +166,11 @@ class GreedyACDiscrete(BaseAgent):
         # print(stacked_s_batch.shape, best_actions.shape)
         # print("Computing actor loss")
         policy_loss = self.policy.log_prob(stacked_s_batch, best_actions)
-        policy_loss = -policy_loss.mean()
+        self.policy_loss = -policy_loss.mean()
 
         # Update actor
         self.policy_optim.zero_grad()
-        policy_loss.backward()
+        self.policy_loss.backward()
         self.policy_optim.step()
 
     def sample_action(self, state):

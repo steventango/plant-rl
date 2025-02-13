@@ -4,47 +4,49 @@ import time
 import numpy as np
 import requests
 from PIL import Image
-from RlGlue.environment import BaseEnvironment
+from utils.RlGlue.environment import BaseAsyncEnvironment
 
 
-class PlantGrowthChamber(BaseEnvironment):
+class PlantGrowthChamber(BaseAsyncEnvironment):
     def __init__(self, camera_url: str, lightbar_url: str):
         self.gamma = 0.99
         self.camera_url = camera_url
         self.lightbar_url = lightbar_url
+        self.image = None
 
     def get_observation(self):
-        response = requests.get(self.camera_url)
+        response = requests.get(self.camera_url, timeout=5)
         response.raise_for_status()
-        image = Image.open(io.BytesIO(response.content))
-        array = np.array(image)
+        self.image = Image.open(io.BytesIO(response.content))
+        array = np.array(self.image)
+        array = np.ones(1)
         return array
 
     def start(self):
         self.time = time.time()
-        self.current_state = self.get_observation()
-        return self.current_state
+        observation = self.get_observation()
+        return observation
 
-    def step(self, action: np.ndarray):
+    def step_one(self, action: np.ndarray):
         self.put_action(action)
 
-        # Define state
-        self.current_state = self.get_observation()
+    def step_two(self):
+        observation = self.get_observation()
 
         # Compute reward
         self.reward = self.reward_function()
 
-        return self.reward, self.current_state, False, self.get_info()
+        return self.reward, observation, False, self.get_info()
 
     def put_action(self, action):
-        response = requests.put(self.lightbar_url, json={"array": action.tolist()})
+        response = requests.put(self.lightbar_url, json={"array": action.tolist()}, timeout=5)
         response.raise_for_status()
 
     def get_info(self):
         return {"gamma": self.gamma}
 
     def reward_function(self):
-        return 0
+        return np.array(self.image).mean() / 255
 
     def close(self):
         requests.put(self.lightbar_url, json={"array": np.zeros(6).tolist()})
