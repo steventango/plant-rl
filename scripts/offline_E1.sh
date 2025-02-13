@@ -3,4 +3,4 @@
 # exit script on error
 set -e
 
-python scripts/local.py --runs 5 -e experiments/offline/E1/P2/GAC-best.json 
+python scripts/local.py --runs 5 -e experiments/offline/E1/P3/GAC-best.json 
