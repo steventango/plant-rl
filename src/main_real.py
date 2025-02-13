@@ -69,6 +69,7 @@ for idx in indices:
             #  - Window(n)  take a window average of size n
             #  - Subsample(n) save one of every n elements
             config={
+                "action": Identity(),
                 "reward": Identity(),
                 "steps": Identity(),
                 "time": Identity(),
@@ -107,6 +108,7 @@ for idx in indices:
         chk.maybe_save()
         interaction = glue.step()
         collector.collect('time', time.time() - glue.start_time)
+        collector.collect('action', interaction.a)
         collector.collect('reward', interaction.r)
         collector.collect('steps', glue.num_steps)
         env.image.save(context.resolve(f'{idx}/images/{step}.jpg'))
