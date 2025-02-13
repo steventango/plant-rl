@@ -12,12 +12,13 @@ logger = logging.getLogger('rlglue')
 logger.setLevel(logging.DEBUG)
 
 class PlanningRlGlue(RlGlue):
-    def __init__(self, agent: BasePlanningAgent, env: BaseAsyncEnvironment):
+    def __init__(self, agent: BasePlanningAgent, env: BaseAsyncEnvironment, exp_params: dict):
         super().__init__(agent, BaseEnvironment())
         self.agent = agent
         self.environment = env
-        self.update_freq = 5
-        self.loop_time = 60
+        self.exp_params = exp_params
+        self.step_duration = exp_params.get('step_duration', 60)
+        self.update_freq = exp_params.get('update_freq', 5)
 
     def start(self):
         self.start_time = time.time()
@@ -32,9 +33,11 @@ class PlanningRlGlue(RlGlue):
             self.environment.step_one(self.last_action)
             logger.debug(f"#{self.num_steps} [{time.time() - self.start_time} s] env step one end")
         logger.debug(f"#{self.num_steps} [{time.time() - self.start_time} s] agent planning start")
-        while time.time() < self.start_time + self.loop_time * (self.num_steps + 1):
+        while time.time() < self.start_time + self.step_duration * (self.num_steps + 1):
             self.agent.plan()
         logger.debug(f"#{self.num_steps} [{time.time() - self.start_time} s] agent planning end")
+        logger.debug(f"q loss: {self.agent.greedy_ac.q_loss}")
+        logger.debug(f"policy loss: {self.agent.greedy_ac.policy_loss}")
         logger.debug(f"#{self.num_steps} [{time.time() - self.start_time} s] env step two start")
         (reward, s, term, extra) = self.environment.step_two()
         logger.debug(f"#{self.num_steps} [{time.time() - self.start_time} s] env step two end: reward {reward}")

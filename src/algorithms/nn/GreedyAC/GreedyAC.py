@@ -56,9 +56,12 @@ class GreedyAC(BaseAgent):
             )
         self.state = observation
         self.action = self.greedy_ac.sample_action(self.state)
-        
+
         return self.action
-    
+
+    def plan(self):
+        self.greedy_ac.plan()
+
     def end(self, reward: float, extra: Dict[str, Any]):
         self.greedy_ac.update(
             state=self.state,

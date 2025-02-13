@@ -90,6 +90,8 @@ class GreedyACDiscrete(BaseAgent):
             "action_values": [],
             "source": source,
         }
+        self.q_loss = None
+        self.policy_loss = None
 
     def update(self, state, action, reward, next_state, done_mask):
         # Adjust action shape to ensure it fits in replay buffer properly
@@ -120,11 +122,11 @@ class GreedyACDiscrete(BaseAgent):
         q_value = self.critic(state_batch, action_batch)
 
         # Calculate the loss on the critic
-        q_loss = F.mse_loss(target_q_value, q_value)
+        self.q_loss = F.mse_loss(target_q_value, q_value)
 
         # Update the critic
         self.critic_optim.zero_grad()
-        q_loss.backward()
+        self.q_loss.backward()
         self.critic_optim.step()
 
         # Update target networks
@@ -164,11 +166,11 @@ class GreedyACDiscrete(BaseAgent):
         # print(stacked_s_batch.shape, best_actions.shape)
         # print("Computing actor loss")
         policy_loss = self.policy.log_prob(stacked_s_batch, best_actions)
-        policy_loss = -policy_loss.mean()
+        self.policy_loss = -policy_loss.mean()
 
         # Update actor
         self.policy_optim.zero_grad()
-        policy_loss.backward()
+        self.policy_loss.backward()
         self.policy_optim.step()
 
     def sample_action(self, state):
