@@ -41,8 +41,10 @@
 - State = concatenate(sin time, cos time, num_steps/terminal_time, area, 24hr-prior area)
 - Action = [off, on]
 - Reward = (area - 24hr-prior area) / 24hr-prior area
-- Agent: greedy AC added by Oliver
+- Agent: greedy AC added by Oliver, equipped with 2 layers of 32 hidden units.
 ### Observations: 
-- 
+- GAC agent takes much longer to run than SoftmaxAC, probably because GAC was written in Pytorch.
+- The best agent during the sweep learned. Re-run it with 5 offset random seeds. 
+- The best GAC agent kept light on between 3000-6000 steps, but started turning light off again? Is it because of the nonzero exploration?
 ### Conclusions & Outlooks: 
--
+- GAC does really good with the above state and reward formulations.

@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
         indices = count(path, e_to_missing[path])
         for idx in indices:
-            exe = f'python {cmdline.entry} --silent -e {path} -i {idx}'
+            exe = f'python {cmdline.entry} -e {path} -i {idx}'
             cmds.append(exe)
 
     print(len(cmds))

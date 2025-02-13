@@ -24,8 +24,9 @@ from experiment.tools import parseCmdLineArgs
 # also sets fonts to be right size when saving
 setDefaultConference('jmlr')
 
+PLOT_THIS_AGENT = 'GAC-best'
 COLORS = {
-    'GAC': 'green',
+    PLOT_THIS_AGENT: 'green',
 }
 
 if __name__ == "__main__":
@@ -58,62 +59,60 @@ if __name__ == "__main__":
     )
 
     assert df is not None
-    Metrics.add_step_weighted_return(df)
-    print(df['return'])
 
     exp = results.get_any_exp()
 
     for env, env_df in split_over_column(df, col='environment'):
-        f, ax = plt.subplots()
+        
         for alg, sub_df in split_over_column(env_df, col='algorithm'):
-            print(alg)
             if len(sub_df) == 0: continue
+            if alg == PLOT_THIS_AGENT:
+                f, ax = plt.subplots()
 
-            report = Hypers.select_best_hypers(
-                sub_df,
-                metric='step_weighted_return',
-                prefer=Hypers.Preference.high,
-                time_summary=TimeSummary.sum,
-                statistic=Statistic.mean,
-            )
-
-            print('-' * 25)
-            print(env, alg)
-            Hypers.pretty_print(report)
-
-            xs, ys = extract_learning_curves(
+                report = Hypers.select_best_hypers(
                     sub_df,
-                    report.best_configuration,
                     metric='return',
-                    interpolation=None,
+                    prefer=Hypers.Preference.high,
+                    time_summary=TimeSummary.sum,
+                    statistic=Statistic.mean,
                 )
 
-            xs = np.asarray(xs)
-            ys = np.asarray(ys)
+                print('-' * 25)
+                print(env, alg)
+                Hypers.pretty_print(report)
 
-            # make sure all of the x values are the same for each curve
-            assert np.all(np.isclose(xs[0], xs))
+                xs, ys = extract_learning_curves(
+                        sub_df,
+                        report.best_configuration,
+                        metric='return',
+                        interpolation=None,
+                    )
 
-            res = curve_percentile_bootstrap_ci(
-                rng=np.random.default_rng(0),
-                y=ys,
-                statistic=Statistic.mean,
-            )
+                xs = np.asarray(xs)
+                ys = np.asarray(ys)
 
-            ax.plot(xs[0], res.sample_stat, label=alg, color=COLORS[alg], linewidth=0.5)
-            ax.fill_between(xs[0], res.ci[0], res.ci[1], color=COLORS[alg], alpha=0.2)
+                # make sure all of the x values are the same for each curve
+                assert np.all(np.isclose(xs[0], xs))
 
-        #ax.plot(np.linspace(0, exp.total_steps, 100), np.ones(100)*202.3, 'k-.', linewidth=1, label='light-on')
-        #ax.plot(np.linspace(0, exp.total_steps, 100), np.ones(100)*192, 'k--', linewidth=1, label='light-on w/ ep=0.1')
-        #ax.plot(np.linspace(0, exp.total_steps, 100), np.ones(100)*112.5, 'b--', linewidth=1, label='random')
-        ax.set_xlim(0, exp.total_steps)
-        ax.legend()
-        ax.set_title('Compare Different Agents in PlantSimulator')
-        ax.set_ylabel('Return')
-        ax.set_xlabel('Daytime Time Step')
+                res = curve_percentile_bootstrap_ci(
+                    rng=np.random.default_rng(0),
+                    y=ys,
+                    statistic=Statistic.mean,
+                )
 
-        save(
-            save_path=f'{path}/plots',
-            plot_name=f'algs'
-        )
-        plt.show()
+                ax.plot(xs[0], res.sample_stat, label=alg, color=COLORS[alg], linewidth=0.5)
+                ax.fill_between(xs[0], res.ci[0], res.ci[1], color=COLORS[alg], alpha=0.2)
+
+                ax.plot(np.linspace(0, exp.total_steps, 100), np.ones(100)*202.3, 'k-.', linewidth=1, label='light-on')
+                ax.plot(np.linspace(0, exp.total_steps, 100), np.ones(100)*112.5, 'b--', linewidth=1, label='random')
+                ax.set_xlim(0, exp.total_steps)
+                ax.legend()
+                ax.set_title('Learning Curve in PlantSimulator')
+                ax.set_ylabel('Return')
+                ax.set_xlabel('Daytime Time Step')
+
+                save(
+                    save_path=f'{path}/plots',
+                    plot_name=f'{alg}'
+                )
+                plt.show()

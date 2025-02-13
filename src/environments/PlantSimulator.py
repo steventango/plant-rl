@@ -120,7 +120,7 @@ class PlantSimulator(BaseEnvironment):
         df = pd.read_csv(data_path).sort_values(by='timestamp')
         
         # The second when  the first day starts 
-        first_second = pd.to_datetime('2024-02-10 09:00').time().hour * 3600 + pd.to_datetime('2024-02-10 09:00').time().minute * 60
+        first_second = pd.to_datetime(df['timestamp'].iloc[0]).time().hour * 3600 + pd.to_datetime(df['timestamp'].iloc[0]).time().minute * 60
 
         # Number of time steps per day 
         df['timestamp'] = pd.to_datetime(df['timestamp'])

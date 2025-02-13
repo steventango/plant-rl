@@ -29,7 +29,7 @@ def getAgent(name) -> Type[BaseAgent]:
     if name == 'ContinuousRandom':
         return ContinuousRandomAgent
 
-    if name == 'GreedyAC':
+    if name.startswith("GreedyAC"):
         return GreedyAC
 
     raise Exception('Unknown algorithm')
