@@ -21,6 +21,9 @@ class BaseAgent(RlGlue.agent.BaseAgent):
     def cleanup(self):
         ...
 
+    def plan(self):
+        pass
+
     # -------------------
     # -- Checkpointing --
     # -------------------

@@ -9,10 +9,10 @@ import logging
 import argparse
 from PIL import Image
 import numpy as np
-from RlGlue import RlGlue
 from experiment import ExperimentModel
 from utils.checkpoint import Checkpoint
 from utils.preempt import TimeoutHandler
+from utils.RlGlue.rl_glue import PlanningRlGlue
 from problems.registry import getProblem
 from PyExpUtils.results.sqlite import saveCollector
 from PyExpUtils.collection.Collector import Collector
@@ -89,7 +89,7 @@ for idx in indices:
     agent = chk.build('a', problem.getAgent)
     env = chk.build('e', problem.getEnvironment)
 
-    glue = chk.build('glue', lambda: RlGlue(agent, env))
+    glue = chk.build("glue", lambda: PlanningRlGlue(agent, env))
     chk.initial_value('episode', 0)
 
     context = exp.buildSaveContext(idx, base=args.save_path)
@@ -100,17 +100,14 @@ for idx in indices:
 
     # if we haven't started yet, then make the first interaction
     if glue.total_steps == 0:
-        s, _ = glue.start()
-        image = Image.fromarray(s)
-        image.save(context.resolve('images/0.jpg'))
+        glue.start()
+        env.image.save(context.resolve('images/0.jpg'))
 
     for step in range(glue.total_steps, exp.total_steps):
         collector.next_frame()
         chk.maybe_save()
-        time.sleep(60)
         interaction = glue.step()
-        image = Image.fromarray(interaction.o)
-        image.save(context.resolve(f'images/{step}.jpg'))
+        env.image.save(context.resolve(f'images/{step}.jpg'))
 
         if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
             # allow agent to cleanup traces or other stateful episodic info
