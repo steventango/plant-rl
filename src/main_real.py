@@ -92,7 +92,7 @@ for idx in indices:
     chk.initial_value('episode', 0)
 
     context = exp.buildSaveContext(idx, base=args.save_path)
-    context.ensureExists('images')
+    context.ensureExists(f'{idx}/images')
 
     # Run the experiment
     start_time = time.time()
@@ -100,7 +100,7 @@ for idx in indices:
     # if we haven't started yet, then make the first interaction
     if glue.total_steps == 0:
         glue.start()
-        env.image.save(context.resolve('images/0.jpg'))
+        env.image.save(context.resolve(f'{idx}/images/0.jpg'))
 
     for step in range(glue.total_steps, exp.total_steps):
         collector.next_frame()
@@ -109,7 +109,7 @@ for idx in indices:
         collector.collect('time', time.time() - glue.start_time)
         collector.collect('reward', interaction.r)
         collector.collect('steps', glue.num_steps)
-        env.image.save(context.resolve(f'images/{step}.jpg'))
+        env.image.save(context.resolve(f'{idx}/images/{step}.jpg'))
 
         if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
             # allow agent to cleanup traces or other stateful episodic info
