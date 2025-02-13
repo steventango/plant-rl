@@ -66,6 +66,7 @@ class DQN(NNAgent):
         self.plan()
 
     def plan(self):
+        super().plan()
         # skip updates if the buffer isn't full yet
         if self.buffer.size() <= self.batch_size:
             return
