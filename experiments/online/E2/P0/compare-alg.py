@@ -25,8 +25,10 @@ from experiment.tools import parseCmdLineArgs
 setDefaultConference('jmlr')
 
 COLORS = {
-    'GAC': 'blue',
     'Random': 'red',
+    'GAC': 'green',
+    'GACP': 'blue',
+    'Constant': 'black',
 }
 
 if __name__ == "__main__":
@@ -99,24 +101,26 @@ if __name__ == "__main__":
                 statistic=Statistic.mean,
             )
 
-            ax.plot(xs[0], res.sample_stat, label=alg, color=COLORS[alg], linewidth=0.5)
-            ax.fill_between(xs[0], res.ci[0], res.ci[1], color=COLORS[alg], alpha=0.2)
+            ax.plot(xs[0], res.sample_stat, label=alg, color=COLORS[alg], linewidth=1)
+
+            for x, y in zip(xs, ys):
+                ax.plot(x, y, color=COLORS[alg], linewidth=0.5, alpha=0.2)
 
         ax.set_xlim(0, exp.total_steps)
         # Set minor ticks every 1
-        minor_ticks = np.arange(0, exp.total_steps, 1)
+        minor_ticks = np.arange(0, exp.total_steps + 1, 1)
         ax.set_xticks(minor_ticks, minor=True)
         # Set major ticks and labels every 5
-        major_ticks = np.arange(0, exp.total_steps, 5)
+        major_ticks = np.arange(0, exp.total_steps + 1, 5)
         ax.set_xticks(major_ticks)
         ax.set_xticklabels(major_ticks)
 
         # Style minor ticks (optional)
         ax.tick_params(axis='x', which='minor', length=4, color='gray')
         ax.legend()
-        ax.set_title('Compare Different Agents in PlantSimulator')
+        ax.set_title('PlantGrowthChamber')
         ax.set_ylabel('Reward')
-        ax.set_xlabel('Time Step')
+        ax.set_xlabel('Step (minute)')
 
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
@@ -125,4 +129,3 @@ if __name__ == "__main__":
             save_path=f'{path}/plots',
             plot_name=f'algs'
         )
-        plt.show()
