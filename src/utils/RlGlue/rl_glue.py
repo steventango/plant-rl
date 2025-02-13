@@ -36,8 +36,9 @@ class PlanningRlGlue(RlGlue):
         while time.time() < self.start_time + self.step_duration * (self.num_steps + 1):
             self.agent.plan()
         logger.debug(f"#{self.num_steps} [{time.time() - self.start_time} s] agent planning end")
-        logger.debug(f"q loss: {self.agent.greedy_ac.q_loss}")
-        logger.debug(f"policy loss: {self.agent.greedy_ac.policy_loss}")
+        if hasattr(self.agent, 'greedy_ac'):
+            logger.debug(f"q loss: {self.agent.greedy_ac.q_loss}")
+            logger.debug(f"policy loss: {self.agent.greedy_ac.policy_loss}")
         logger.debug(f"#{self.num_steps} [{time.time() - self.start_time} s] env step two start")
         (reward, s, term, extra) = self.environment.step_two()
         logger.debug(f"#{self.num_steps} [{time.time() - self.start_time} s] env step two end: reward {reward}")
