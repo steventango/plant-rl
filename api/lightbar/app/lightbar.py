@@ -21,11 +21,13 @@ class Lightbar:
             self.set_half_bar_pwm(channel, duty_cycle[channel])
 
     def ensure_safety_limits(self, action: np.ndarray):
-        # safety limits (for now)
+        # safety limits
+        # action should be 0.5 max per channel
+        action /= 2
+        # sum of all channels should be at most 2
         if action.sum() > 2:
             action /= action.sum()
             action *= 2
-        action = np.clip(action, 0, 0.5)
         return action
 
     def convert_to_duty_cycle(self, action: np.ndarray):
