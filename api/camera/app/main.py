@@ -8,10 +8,13 @@ app = FastAPI()
 camera = None
 
 def get_camera():
-    from picamzero import Camera
+    from picamera2 import Picamera2
     global camera
-    if camera is None:
-        camera = Camera()
+    if camera is not None:
+        return camera
+    camera = Picamera2()
+    camera.configure("still")
+    camera.start()
     return camera
 
 
