@@ -137,7 +137,8 @@ class PlantSimulator(BaseEnvironment):
         # Load historic plant area data
         data_path = os.path.dirname(os.path.abspath(__file__)) + "/plant_data/plant_area_data.csv"
         df = pd.read_csv(data_path).sort_values(by='timestamp')
-        
+        # Filter out any plants that have sensor reading errors (area randomly goes to 0 at some timesteps)
+        df = df.loc[:, ~(df == 0).any()]
         # The second when  the first day starts 
         first_second = pd.to_datetime('2024-02-10 09:00').time().hour * 3600 + pd.to_datetime('2024-02-10 09:00').time().minute * 60
 
