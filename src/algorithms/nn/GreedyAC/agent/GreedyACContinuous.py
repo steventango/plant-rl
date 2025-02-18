@@ -1,5 +1,5 @@
 # Import modules
-#from gym.spaces import Box, Discrete
+from gymnasium.spaces import Box, Discrete
 import torch
 import torch.nn.functional as F
 from torch.optim import Adam

@@ -28,6 +28,7 @@ class PlantSimulator(BaseEnvironment):
 
         self.gamma = 0.99
         self.num_steps = 0
+
         self.n_step = n_step if n_step is not None else self.steps_per_day # Sets lag for determining change in area used in reward function, default is 1 day
 
     def start(self):
@@ -140,7 +141,7 @@ class PlantSimulator(BaseEnvironment):
         # Filter out any plants that have sensor reading errors (area randomly goes to 0 at some timesteps)
         df = df.loc[:, ~(df == 0).any()]
         # The second when  the first day starts 
-        first_second = pd.to_datetime('2024-02-10 09:00').time().hour * 3600 + pd.to_datetime('2024-02-10 09:00').time().minute * 60
+        first_second = pd.to_datetime(df['timestamp'].iloc[0]).time().hour * 3600 + pd.to_datetime(df['timestamp'].iloc[0]).time().minute * 60
 
         # Number of time steps per day 
         df['timestamp'] = pd.to_datetime(df['timestamp'])

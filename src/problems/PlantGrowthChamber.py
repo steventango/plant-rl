@@ -10,6 +10,6 @@ class PlantGrowthChamber(BaseProblem):
         super().__init__(exp, idx, collector)
 
         self.env = Env(**self.env_params)
-        self.actions = (2, 6)
-        self.observations = (2,)
+        self.actions = 6
+        self.observations = (1,)
         self.gamma = 0.99

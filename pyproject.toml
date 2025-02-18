@@ -41,6 +41,7 @@ dependencies = [
     'PyExpPlotting-andnp',
     'matplotlib',
     'requests>=2.32.3',
+    'plantcv~=4.2.1',
 ]
 
 [project.optional-dependencies]

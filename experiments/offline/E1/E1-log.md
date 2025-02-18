@@ -33,3 +33,29 @@
 ### Conclusions & Outlooks: 
 - How do we gather more experiences and reuse them? Consider treating each plant separately.
 - Use neural net actor-critic, rather than tile coding, to help generalize across states.
+
+## Phase P2
+### Objectives: 
+- Test out greedy AC in basic plant simulator
+### Methods: 
+- State = concatenate(sin time, cos time, num_steps/terminal_time, area, 24hr-prior area)
+- Action = [off, on]
+- Reward = (area - 24hr-prior area) / 24hr-prior area
+- Agent: greedy AC added by Oliver, equipped with 2 layers of 32 hidden units.
+### Observations: 
+- GAC agent takes much longer to run than SoftmaxAC, probably because GAC was written in Pytorch.
+- The best agent during the sweep learned. Re-run it with 5 offset random seeds. 
+- The best GAC agent kept light on between 3000-6000 steps, but started turning light off again? Is it because of the nonzero exploration?
+### Conclusions & Outlooks: 
+- GAC does really good with the above state and reward formulations.
+- Is the drop in return due to nonzero tau?
+
+## Phase P3
+### Objectives: 
+- See if drop in performance is due to tau
+### Methods: 
+- Same as the best setting above, with tau = 0
+### Observations: 
+- A little better performance than P2, but the return still drops below max after some time.
+### Conclusions & Outlooks: 
+- Why didn't Agent stick to best policy?

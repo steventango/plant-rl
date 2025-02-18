@@ -70,10 +70,6 @@ for idx in indices:
             'return': Identity(),
             'episode': Identity(),
             'steps': Identity(),
-            'delta': Pipe(
-                MovingAverage(0.99),
-                Subsample(100),
-            ),
         },
         # by default, ignore keys that are not explicitly listed above
         default=Ignore(),
@@ -81,8 +77,10 @@ for idx in indices:
     collector.setIdx(idx)
     run = exp.getRun(idx)
 
-    # set random seeds accordingly
-    np.random.seed(run)
+    # set random seeds accordingly, with optional offset
+    params = exp.get_hypers(idx)
+    seed = run + params.get("experiment", {}).get("seed_offset", 0)
+    np.random.seed(seed)
 
     # build stateful things and attach to checkpoint
     problem = chk.build('p', lambda: Problem(exp, idx, collector))

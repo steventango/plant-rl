@@ -30,5 +30,5 @@ screen
 fastapi run app/main.py --port 8000
 
 # on alien
-curl http://mitacs-zone2.ccis.ualberta.ca:8000/action -X PUT -H "Content-Type: application/json" -d '{"array": [[1.0, 1.0, 1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]]}'
+curl http://mitacs-zone2.ccis.ualberta.ca:8000/action/left -X PUT -H "Content-Type: application/json" -d '{"array": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]}'
 ```
