@@ -1,7 +1,7 @@
 {
     "agent": "GreedyAC",
     "problem": "PlantSimulator",
-    "total_steps": 500,
+    "total_steps": 10000,
     "episode_cutoff": 2000,
     "metaParameters": {
         "replay_capacity": 100000,
@@ -11,7 +11,7 @@
         "beta2": 0.999,
         "policy_type": "Softmax",
         "target_update_interval": 1,
-        "critic_lr": 1e-5,
+        "critic_lr": 1e-4,
         "actor_lr_scale": 10.0,
         "hidden_dim": 32,
         "n_hidden": 2,
@@ -19,9 +19,9 @@
         "clip_stddev": 1000,
 		"cuda": false,
         "environment": {
-            "random_plant": false, 
+            "random_plant": true, 
             "n_step": 72,
-            "plant_id":4
+            "plant_id":0
             }
     }
 }

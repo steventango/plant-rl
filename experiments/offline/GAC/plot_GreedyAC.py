@@ -26,6 +26,8 @@ setDefaultConference('jmlr')
 
 COLORS = {
     'GreedyAC': 'blue',
+    'GAC': 'blue',
+    'GAC_sweep': 'blue',
 }
 
 if __name__ == "__main__":
@@ -49,7 +51,7 @@ if __name__ == "__main__":
         # converts path like "experiments/example/MountainCar"
         # into a new column "environment" with value "MountainCar"
         # None means to ignore a path part
-        folder_columns=(None, None, None, 'environment'),
+        folder_columns=(None, None, 'environment'),
 
         # and creates a new column named "algorithm"
         # whose value is the name of an experiment file, minus extension.
@@ -65,7 +67,6 @@ if __name__ == "__main__":
     for env, env_df in split_over_column(df, col='environment'):
         f, ax = plt.subplots()
         for alg, sub_df in split_over_column(env_df, col='algorithm'):
-            print(alg)
             if len(sub_df) == 0: continue
 
             report = Hypers.select_best_hypers(

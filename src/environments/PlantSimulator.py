@@ -8,7 +8,9 @@ from RlGlue.environment import BaseEnvironment
 from utils.functions import PiecewiseLinear
 
 class PlantSimulator(BaseEnvironment):
-    def __init__(self, plant_id=0, random_plant=False, n_step=None, actions=[0, 1], action_effects=[1.0, 0.0]):
+    def __init__(self, seed=0, plant_id=0, random_plant=False, n_step=None, actions=[0, 1], action_effects=[1.0, 0.0]):
+        self.seed = seed
+        self.rand_state = np.random.RandomState(seed)
         self.state_dim = (5,)     
         self.current_state = np.empty(5)
         self.action_dim = 2      
@@ -36,7 +38,7 @@ class PlantSimulator(BaseEnvironment):
         self.frozen_time_today = 0
 
         if self.use_random_plant:
-            self.plant_id = np.random.randint(0, self.data.shape[1])
+            self.plant_id = self.rand_state.randint(0, self.data.shape[1])
             self.original_actual_area, self.projection_factor, self.terminal_step = self.analyze_area_data()
 
         self.actual_area = self.original_actual_area.copy()   # Make a copy because actual_area will be modified at each step
@@ -119,6 +121,14 @@ class PlantSimulator(BaseEnvironment):
 
         # Compute projection factor
         truncated_data = ep_data[self.steps_per_day:-self.steps_per_day]
+        '''
+        TODO When any of the areas from the dataset are 0, the projection factor goes to 0. 
+        So multiplying the actual_area by the projection factor to get the observed area in step 
+        results in a value of 0. Then when we calculate the % change for the reward we get a divide by 0 
+        error. For now, we can just use plants that don't have any 0 entries, but in the future we 
+        might want to include random errors in sensor readings like these when training the model so 
+        we can ensure the algo/hypers we deploy are robust to sensor errors (this has been mentioned previously by Adam as well). 
+        '''
         projection_factor = truncated_data/actual_area_daytime
         
         return pwl, projection_factor, terminal_step
