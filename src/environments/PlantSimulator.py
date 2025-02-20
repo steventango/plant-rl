@@ -177,15 +177,16 @@ class PlantSimulator(BaseEnvironment):
 class MultiPlantSimulator(BaseEnvironment):  
     ''' 
     Simulate a tray of plants under the same lighting agent.
-    State = (time of day, lagged average area, average area)
+    State = (time of day, lagged observed areas, observed areas)
     '''
-    def __init__(self, num_plant=32, lag=None, actions=[0, 1], action_effects=[1.0, 0.0]):
-        self.state_dim = (4,)   
-        self.current_state = np.empty(4)
-        self.action_dim = 2      
+    def __init__(self, num_plants=None, lag=None, actions=[0, 1], action_effects=[1.0, 0.0]):
+        self.num_plants = num_plants if num_plants is not None else 32
+
+        self.state_dim = (2 + 2 * self.num_plants,)   
+        self.current_state = np.empty(2 + 2 * self.num_plants)
+        self.action_dim = len(actions)      
         self.actions = actions               # default is [light off, light on]
         self.frozen_time = action_effects    # due to the agent's action, freeze plant for a percentage of the current time step 
-        self.num_plant = num_plant
 
         self.data, self.steps_per_day, self.steps_per_night, self.interval, self.first_second = self.load_area_data()
         self.original_actual_areas, self.projection_factors, self.terminal_step = self.analyze_area_data()
@@ -196,7 +197,7 @@ class MultiPlantSimulator(BaseEnvironment):
         self.gamma = 0.99
         self.num_steps = 0
 
-        self.lag = lag if lag is not None else self.steps_per_day  # Sets lag for determining change in area used in reward function, default is 1 day
+        self.lag = lag if lag is not None else 1 # Sets lag for determining change in area used in reward function, default is 1 step
 
     def start(self):
         self.frozen_time_today = 0
@@ -206,16 +207,17 @@ class MultiPlantSimulator(BaseEnvironment):
 
         self.actual_areas = [pwl.copy() for pwl in self.original_actual_areas]   # Make a copy because actual_areas will be modified at each step
 
-        self.observed_areas.append([self.actual_areas[i](self.time)*self.projection_factors[i][self.num_steps] for i in range(self.num_plant)])
+        self.observed_areas.append([self.actual_areas[i](self.time)*self.projection_factors[i][self.num_steps] 
+                                    for i in range(self.num_plants)])
 
         self.current_state = np.hstack([self.sine_time(clock), 
-                                        self.normalize(1), 
-                                        self.normalize(np.mean(self.observed_areas[-1]))])
+                                        self.normalize(np.ones(self.num_plants)),   # fill in missing values with small values close to zero
+                                        self.normalize(self.observed_areas[-1])])
 
         return self.current_state
 
     def step(self, action): 
-        # Modify the interpolated actual_area according to the action
+        # Modify the interpolated actual_areas according to the action
         for pwl in self.actual_areas: 
             pwl.insert_plateau(self.time, self.time + self.frozen_time[action])
         self.frozen_time_today += self.frozen_time[action]
@@ -232,20 +234,20 @@ class MultiPlantSimulator(BaseEnvironment):
             self.time += self.steps_per_night - 1   # fastforward time
             self.frozen_time_today = 0
 
-        # Compute observed area by projecting actual area
-        self.observed_areas.append([self.actual_areas[i](self.time)*self.projection_factors[i][self.num_steps] for i in range(self.num_plant)])
+        # Compute observed areas by projecting actual areas
+        self.observed_areas.append([self.actual_areas[i](self.time)*self.projection_factors[i][self.num_steps] 
+                                    for i in range(self.num_plants)])
 
         # Set state
         if self.num_steps >= self.lag: 
             self.current_state = np.hstack([self.sine_time(clock), 
-                                            self.normalize(np.mean(self.observed_areas[-1-self.lag])), 
-                                            self.normalize(np.mean(self.observed_areas[-1]))])
+                                            self.normalize(self.observed_areas[-1-self.lag]), 
+                                            self.normalize(self.observed_areas[-1])])
         else: 
             self.current_state = np.hstack([self.sine_time(clock), 
-                                            self.normalize(1), 
-                                            self.normalize(np.mean(self.observed_areas[-1]))])
+                                            self.normalize(np.ones(self.num_plants)),  
+                                            self.normalize(self.observed_areas[-1])])
 
-        #self.reward = self.current_state[-1] / self.current_state[-2] - 1
         self.reward = self.reward_function()
 
         if self.num_steps == self.terminal_step:
@@ -257,8 +259,8 @@ class MultiPlantSimulator(BaseEnvironment):
         if self.num_steps >= self.lag: 
             new = self.observed_areas[-1]
             old = self.observed_areas[-1-self.lag]
-            rewards = [new[i]/old[i] - 1 for i in range(self.num_plant)]
-            return np.percentile(rewards, 20)
+            rewards = [new[i]/old[i] - 1 for i in range(self.num_plants)]
+            return np.percentile(rewards, 20)    # other options: np.mean(rewards), np.median(rewards), np.percentile(rewards, 10), ...
         else: 
             return 0
 
@@ -271,7 +273,7 @@ class MultiPlantSimulator(BaseEnvironment):
         '''
         PWL = []
         PF = []
-        for _ in range(self.num_plant):
+        for _ in range(self.num_plants):
             ep_data = self.data[:, _]                 
             observed_area = np.reshape(ep_data, (-1, self.steps_per_day))  # reshape into different days
             max_indices = np.argmax(observed_area, axis=1)                 # index at the max value of each day
@@ -329,9 +331,9 @@ class MultiPlantSimulator(BaseEnvironment):
 
         # Observed areas of plants (in unit of pixels)
         plant_area_data = np.array(df.drop(columns=['timestamp']))
-        assert plant_area_data.shape[1] >= self.num_plant, "You requested too many plants!"
+        assert plant_area_data.shape[1] >= self.num_plants, "You requested too many plants!"
 
-        return plant_area_data[:,:self.num_plant], steps_per_day, steps_per_night, time_increment.total_seconds(), first_second
+        return plant_area_data[:,:self.num_plants], steps_per_day, steps_per_night, time_increment.total_seconds(), first_second
     
     def sine_time(self, t):
         # Return sine & cosine times, normalized to between 0 and 1

@@ -15,9 +15,11 @@
 
 ##  Phase P1
 ### Objectives: 
-- What should the State be if reward = np.percentile(rewards, 20), where rewards are 1-step % growths of 32 plants?
+- Can GAC learn to keep the light on with long state vector := (time of day, lagged observed areas, observed areas) AND 1-step reward? 
 ### Methods: 
-- ...
+- Reward = np.percentile(1-step rewards, 20) 
+- num_plants = 32, which makes the state vector 66 entries long
+- Hypersweep GAC's params
 ### Observations: 
 - ...
 ### Conclusions & Outlooks: 

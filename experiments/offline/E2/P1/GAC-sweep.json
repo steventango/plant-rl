@@ -1,0 +1,26 @@
+{
+    "agent": "GreedyAC",
+    "problem": "MultiPlantSimulator",
+    "total_steps": 10000,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment":{
+            "num_plants": 32,
+            "lag": 1
+        },
+        "replay_capacity": 10000,
+        "batch_size": 32,
+        "tau": 0.01,
+		"beta1": 0.9,
+        "beta2": 0.999,
+        "policy_type": "Softmax",
+        "target_update_interval": 1,
+        "critic_lr": [1e-3, 1e-4, 1e-5],
+        "actor_lr_scale": [1e-1, 1.0, 10.0],
+        "hidden_dim": 32,
+        "n_hidden": 2,
+        "weight_init": "xavier_uniform",
+        "clip_stddev": 1000,
+		"cuda": false
+        }
+}
