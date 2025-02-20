@@ -6,10 +6,10 @@ from algorithms.nn.EQRC import EQRC
 from algorithms.ConstantAgent import ConstantAgent
 from algorithms.ContinuousRandomAgent import ContinuousRandomAgent
 from algorithms.DiscreteRandomAgent import DiscreteRandomAgent
+from algorithms.SpreadsheetAgent import SpreadsheetAgent
 from algorithms.tc.ESARSA import ESARSA
 from algorithms.tc.SoftmaxAC import SoftmaxAC
 from algorithms.nn.GreedyAC.GreedyAC import GreedyAC
-
 
 def getAgent(name) -> Type[BaseAgent]:
     if name.startswith("DQN"):
@@ -32,6 +32,9 @@ def getAgent(name) -> Type[BaseAgent]:
 
     if name == 'ContinuousRandom':
         return ContinuousRandomAgent
+
+    if name == 'Spreadsheet':
+        return SpreadsheetAgent
 
     if name.startswith("GreedyAC"):
         return GreedyAC
