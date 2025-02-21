@@ -35,9 +35,10 @@ if __name__ == "__main__":
     path, should_save, save_type = parseCmdLineArgs()
 
     results = ResultCollection.fromExperiments(Model=ExperimentModel)
-
+    hyper_cols = results.get_hyperparameter_columns()
+    hyper_cols.remove('action')
     data_definition(
-        hyper_cols=results.get_hyperparameter_columns(),
+        hyper_cols=hyper_cols,
         seed_col='seed',
         time_col='frame',
         environment_col='environment',
