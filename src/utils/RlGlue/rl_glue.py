@@ -19,10 +19,14 @@ class PlanningRlGlue(RlGlue):
         self.exp_params = exp_params
         self.step_duration = exp_params.get('step_duration', 60)
         self.update_freq = exp_params.get('update_freq', 5)
+        self.start_time = exp_params.get('start_time', None)
+        self._num_steps = exp_params.get('num_steps', 0)
 
     def start(self):
         result = super().start()
-        self.start_time = time.time()
+        if self.start_time is None:
+            self.start_time = time.time()
+        self.num_steps = self._num_steps
         return result
 
     def step(self) -> Interaction:
