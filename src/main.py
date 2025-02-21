@@ -107,7 +107,8 @@ for idx in indices:
             agent.cleanup()
 
             # collect some data
-            collector.collect('return', np.mean(glue.total_reward).item())
+            total_reward = np.mean(glue.total_reward).item()
+            collector.collect('return', total_reward)
             collector.collect('episode', chk['episode'])
             collector.collect('steps', glue.num_steps)
 
@@ -119,7 +120,7 @@ for idx in indices:
             fps = step / (time.time() - start_time)
 
             episode = chk['episode']
-            logger.debug(f'{episode} {step} {glue.total_reward} {avg_time:.4}ms {int(fps)}')
+            logger.debug(f'{episode} {step} {total_reward} {avg_time:.4}ms {int(fps)}')
 
             glue.start()
 
