@@ -21,8 +21,9 @@ class PlanningRlGlue(RlGlue):
         self.update_freq = exp_params.get('update_freq', 5)
 
     def start(self):
+        result = super().start()
         self.start_time = time.time()
-        return super().start()
+        return result
 
     def step(self) -> Interaction:
         assert (
