@@ -34,26 +34,27 @@ class SpreadsheetAgent(BaseAgent):
         pass
 
     def get_action(self, current_time: int):
-        # current_day = current_time // 86400 % self.df["Day"].max()
-        current_time = current_time % 86400
+        cycle_length = 86400 * (self.df["Day"].max() + 1)
+        clock_time = current_time % cycle_length
 
-        if current_time >= self.df["datetime"].max():
+        if clock_time >= self.df["datetime"].max():
             second_point = self.df.iloc[0]
-            second_index = 0
-        else:
-            second_point = self.df[self.df["datetime"] > current_time].iloc[0]
-            second_index = self.df.index[self.df["datetime"] > current_time][0]
-        if second_index == 0:
             first_point = self.df.iloc[-1]
         else:
+            second_point = self.df[self.df["datetime"] > clock_time].iloc[0]
+            second_index = self.df[self.df["datetime"] > clock_time].index[0]
             first_point = self.df.iloc[second_index - 1]
 
-        if first_point["datetime"] < second_point["datetime"]:
-            region_completed = (current_time - first_point["datetime"]) / (
-                second_point["datetime"] - first_point["datetime"]
-            )
-        else:
-            region_completed = 1
+        first_datetime = first_point["datetime"]
+        second_datetime = second_point["datetime"]
+
+        if second_datetime < first_datetime:
+            second_datetime += cycle_length
+
+        if clock_time < first_datetime:
+            clock_time += cycle_length
+
+        region_completed = (clock_time - first_datetime) / (second_datetime - first_datetime)
 
         light_scaling_factor = linear_interpolation(first_point["Scaling"], second_point["Scaling"], region_completed)
 

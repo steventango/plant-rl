@@ -16,14 +16,14 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.lightbar_url = lightbar_url
         self.image = None
         self.time = None
+        self.start_time = time.time()
 
     def get_observation(self):
-        self.time = time.time()
+        self.time = time.time() - self.start_time
         timestamp = datetime.fromtimestamp(self.time)
         self.get_image()
-        array = np.array(self.image)
-        array = np.ones(1)
-        return array
+        observation = (self.time, np.array(self.image))
+        return observation
 
     def get_image(self):
         response = requests.get(self.camera_url, timeout=5)
@@ -32,6 +32,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     def start(self):
         observation = self.get_observation()
+        self.start_time = time.time()
         return observation
 
     def step_one(self, action: np.ndarray):
