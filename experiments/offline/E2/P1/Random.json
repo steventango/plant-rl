@@ -1,0 +1,12 @@
+{
+    "agent": "DiscreteRandom",
+    "problem": "MultiPlantSimulator",
+    "total_steps": 100000,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "num_plants": 32,
+            "lag": 1
+        }
+    }
+}

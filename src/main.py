@@ -97,7 +97,7 @@ for idx in indices:
     if glue.total_steps == 0:
         glue.start()
 
-    for step in range(glue.total_steps, exp.total_steps):
+    for step in tqdm(range(glue.total_steps, exp.total_steps)):
         collector.next_frame()
         chk.maybe_save()
         interaction = glue.step()
@@ -107,7 +107,7 @@ for idx in indices:
             agent.cleanup()
 
             # collect some data
-            collector.collect('return', glue.total_reward)
+            collector.collect('return', np.mean(glue.total_reward).item())
             collector.collect('episode', chk['episode'])
             collector.collect('steps', glue.num_steps)
 

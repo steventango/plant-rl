@@ -12,5 +12,5 @@ class MultiPlantSimulator(BaseProblem):
         # Make sure to define num_plants in your json file!
         self.env = Env(**self.env_params)
         self.actions = 2
-        self.observations = (2 + 2 * self.env_params['num_plants'],) 
+        self.observations = (4,)
         self.gamma = 0.99
