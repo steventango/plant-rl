@@ -1,9 +1,10 @@
+from functools import lru_cache
+
 import numpy as np
 import pytest
 
 from ..app.lightbar import Lightbar
 from .mock_lightbar import MockLightbar
-from functools import lru_cache
 
 
 @lru_cache(maxsize=None)

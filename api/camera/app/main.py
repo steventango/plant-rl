@@ -1,7 +1,7 @@
 import io
+from functools import lru_cache
 from typing import Annotated
 
-from functools import lru_cache
 from fastapi import Depends, FastAPI, Response
 from PIL import Image
 
