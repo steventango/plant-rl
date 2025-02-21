@@ -1,4 +1,5 @@
 import io
+from functools import lru_cache
 
 import numpy as np
 from fastapi.testclient import TestClient
@@ -8,6 +9,7 @@ from ..app.main import app, get_camera
 from .mock_picamzero import MockCamera
 
 
+@lru_cache(maxsize=None)
 def get_mock_camera():
     return MockCamera()
 
@@ -27,3 +29,9 @@ def test_observation():
     array = np.array(image)
     assert array.shape == (1944, 2592, 3)
     assert array.dtype == np.uint8
+
+
+def test_get_camera_singleton():
+    camera1 = get_mock_camera()
+    camera2 = get_mock_camera()
+    assert camera1 is camera2

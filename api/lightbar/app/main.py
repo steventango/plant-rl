@@ -1,4 +1,4 @@
-import json
+from functools import lru_cache
 from typing import List
 
 import numpy as np
@@ -17,10 +17,12 @@ class Action(BaseModel):
     array: List[float]
 
 
+@lru_cache(maxsize=None)
 def get_lightbar_left():
     return Lightbar(zone.left)
 
 
+@lru_cache(maxsize=None)
 def get_lightbar_right():
     return Lightbar(zone.right)
 

@@ -1,17 +1,16 @@
 import io
+from functools import lru_cache
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, Response
 from PIL import Image
 
 app = FastAPI()
-camera = None
 
+
+@lru_cache(maxsize=None)
 def get_camera():
     from picamera2 import Picamera2
-    global camera
-    if camera is not None:
-        return camera
     camera = Picamera2()
     camera.configure("still")
     camera.start()

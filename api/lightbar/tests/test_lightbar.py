@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 import numpy as np
 import pytest
 
@@ -5,9 +7,14 @@ from ..app.lightbar import Lightbar
 from .mock_lightbar import MockLightbar
 
 
+@lru_cache(maxsize=None)
+def get_lightbar():
+    return MockLightbar(0x69)
+
+
 @pytest.fixture
 def lightbar():
-    return MockLightbar(0x69)
+    return get_lightbar()
 
 
 class TestLightbar:
@@ -60,3 +67,9 @@ class TestLightbar:
         duty_cycle = lightbar.convert_to_duty_cycle(action)
         assert duty_cycle.shape == (6,)
         np.testing.assert_array_equal(duty_cycle, np.ones(6) * 1365)
+
+
+def test_get_lightbar_singleton():
+    lightbar1 = get_lightbar()
+    lightbar2 = get_lightbar()
+    assert lightbar1 is lightbar2
