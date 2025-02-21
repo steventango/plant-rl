@@ -21,8 +21,9 @@ class PlanningRlGlue(RlGlue):
         self.update_freq = exp_params.get('update_freq', 5)
 
     def start(self):
+        result = super().start()
         self.start_time = time.time()
-        return super().start()
+        return result
 
     def step(self) -> Interaction:
         assert (
@@ -41,7 +42,7 @@ class PlanningRlGlue(RlGlue):
             logger.debug(f"policy loss: {self.agent.greedy_ac.policy_loss}")
         logger.debug(f"#{self.num_steps} [{time.time() - self.start_time} s] env step two start")
         (reward, s, term, extra) = self.environment.step_two()
-        logger.debug(f"#{self.num_steps} [{time.time() - self.start_time} s] env step two end: reward {reward}")
+        logger.debug(f"#{self.num_steps} [{time.time() - self.start_time} s] env step two end: state[0] {s[0]}, reward {reward}")
 
         self.total_reward += reward
 
