@@ -37,7 +37,7 @@ dependencies = [
     'pyrlenvs-andnp~=2.0',
     'ReplayTables-andnp~=6.0',
     'RlGlue-andnp~=1.0',
-    'RlEvaluation~=1.0',
+    'RlEvaluation @ git+https://github.com/rlai-lab/rl-evaluation@0.1.1',
     'PyExpPlotting-andnp',
     'matplotlib',
     'requests>=2.32.3',
