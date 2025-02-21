@@ -1,7 +1,7 @@
 {
     "agent": "GreedyAC",
     "problem": "MultiPlantSimulator",
-    "total_steps": 100000,
+    "total_steps": 10000,
     "episode_cutoff": -1,
     "metaParameters": {
         "environment":{
@@ -15,7 +15,7 @@
         "beta2": 0.999,
         "policy_type": "Softmax",
         "target_update_interval": 1,
-        "critic_lr": 1e-4,
+        "critic_lr": [3e-3, 4e-3, 5e-3, 6e-3, 7e-3, 8e-3],
         "actor_lr_scale": 0.1,
         "hidden_dim": 32,
         "n_hidden": 2,
