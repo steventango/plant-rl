@@ -93,12 +93,17 @@ class GreedyACDiscrete(BaseAgent):
         self.q_loss = None
         self.policy_loss = None
 
-    def update(self, state, action, reward, next_state, done_mask):
+    def update(self, states, action, rewards, next_state, done_mask, batch_state: bool):
         # Adjust action shape to ensure it fits in replay buffer properly
         action = np.array([action])
 
         # Keep transition in replay buffer
-        self.replay.push(state, action, reward, next_state, done_mask)
+        if batch_state:
+            assert len(states) == len(rewards)
+            for state, reward in zip(states, rewards):
+                self.replay.push(state, action, reward, next_state, done_mask)
+        else:
+            self.replay.push(states, action, rewards, next_state, done_mask)
         self.plan()
 
     def plan(self):

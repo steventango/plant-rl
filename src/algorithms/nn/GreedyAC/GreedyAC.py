@@ -40,10 +40,15 @@ class GreedyAC(BaseAgent):
             init=None, 
             entropy_from_single_sample=True,
             activation="relu")
+        self.batch_observations = params["batch_observations"]
 
     def start(self, observation: Any) -> int:
         self.state = observation
-        self.action = self.greedy_ac.sample_action(self.state)
+        if self.batch_observations:
+            state = np.mean(self.state, axis=0)
+            self.action = self.greedy_ac.sample_action(state)
+        else:
+            self.action = self.greedy_ac.sample_action(self.state)
         return self.action
 
     def step(self, reward: float, observation: Any, extra: Dict[str, Any]) -> int:
@@ -52,10 +57,15 @@ class GreedyAC(BaseAgent):
             action=self.action,
             reward = reward,
             next_state=observation,
-            done_mask=False
-            )
+            done_mask=False,
+            batch_state=self.batch_observations,
+        )
         self.state = observation
-        self.action = self.greedy_ac.sample_action(self.state)
+        if self.batch_observations:
+            state = np.mean(self.state, axis=0)
+            self.action = self.greedy_ac.sample_action(state)
+        else:
+            self.action = self.greedy_ac.sample_action(self.state)
 
         return self.action
 
@@ -69,7 +79,8 @@ class GreedyAC(BaseAgent):
             action=self.action,
             reward = reward,
             next_state=np.zeros(self.observations),
-            done_mask=True
+            done_mask=True,
+            batch_state=self.batch_observations,
             )
         self.state = None
         self.action = None
