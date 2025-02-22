@@ -93,12 +93,17 @@ class GreedyACDiscrete(BaseAgent):
         self.q_loss = None
         self.policy_loss = None
 
-    def update(self, state, action, reward, next_state, done_mask):
+    def update(self, state, action, reward, next_state, done_mask, batch_state: bool):
         # Adjust action shape to ensure it fits in replay buffer properly
         action = np.array([action])
 
         # Keep transition in replay buffer
-        self.replay.push(state, action, reward, next_state, done_mask)
+        if batch_state:
+            assert len(state) == len(reward)
+            for s, r, ns in zip(state, reward, next_state):
+                self.replay.push(s, action, r, ns, done_mask)
+        else:
+            self.replay.push(state, action, reward, next_state, done_mask)
         self.plan()
 
     def plan(self):
@@ -173,14 +178,17 @@ class GreedyACDiscrete(BaseAgent):
         self.policy_loss.backward()
         self.policy_optim.step()
 
-    def sample_action(self, state):
-        state = torch.FloatTensor(state).to(self.device).unsqueeze(0)
+    def sample_actions(self, state):
+        state = torch.FloatTensor(state).to(self.device)
         if self.is_training:
             action, _, _ = self.policy.sample(state)
         else:
             _, _, action = self.policy.sample(state)
+        return action.detach().cpu().numpy()
 
-        act = action.detach().cpu().numpy()[0][0]
+    def sample_action(self, state):
+        action = self.sample_actions(state[None, :])
+        act = action[0][0]
 
         return act
 

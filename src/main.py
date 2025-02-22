@@ -3,12 +3,12 @@ import os
 import sys
 sys.path.append(os.getcwd())
 from tqdm import tqdm
-
 import time
 import socket
 import logging
 import argparse
 import numpy as np
+from collections import deque
 from RlGlue import RlGlue
 from experiment import ExperimentModel
 from utils.checkpoint import Checkpoint
@@ -97,17 +97,24 @@ for idx in indices:
     if glue.total_steps == 0:
         glue.start()
 
-    for step in range(glue.total_steps, exp.total_steps):
+    actions = deque(maxlen=100)
+
+    for step in tqdm(range(glue.total_steps, exp.total_steps)):
         collector.next_frame()
         chk.maybe_save()
         interaction = glue.step()
+
+        action = interaction.a
+        if action is not None:
+            actions.append(action)
 
         if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
             # allow agent to cleanup traces or other stateful episodic info
             agent.cleanup()
 
             # collect some data
-            collector.collect('return', glue.total_reward)
+            total_reward = np.mean(glue.total_reward).item()
+            collector.collect('return', total_reward)
             collector.collect('episode', chk['episode'])
             collector.collect('steps', glue.num_steps)
 
@@ -119,7 +126,8 @@ for idx in indices:
             fps = step / (time.time() - start_time)
 
             episode = chk['episode']
-            logger.debug(f'{episode} {step} {glue.total_reward} {avg_time:.4}ms {int(fps)}')
+            mean_action = np.mean(actions) if len(actions) > 0 else 0
+            logger.debug(f'{episode} {step} {total_reward:.2f} {mean_action:.2f} {avg_time:.4}ms {int(fps)}')
 
             glue.start()
 

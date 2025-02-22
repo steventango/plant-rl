@@ -209,10 +209,12 @@ class MultiPlantSimulator(BaseEnvironment):
 
         self.observed_areas.append([self.actual_areas[i](self.time)*self.projection_factors[i][self.num_steps] 
                                     for i in range(self.num_plants)])
-
-        self.current_state = np.hstack([self.sine_time(clock), 
-                                        self.normalize(np.ones(self.num_plants)),   # fill in missing values with small values close to zero
-                                        self.normalize(self.observed_areas[-1])])
+        sine_time = np.array(self.sine_time(clock))
+        self.current_state = np.hstack([
+            np.tile(sine_time[:, None], self.num_plants).T,
+            self.normalize(np.ones(self.num_plants))[:, None], # fill in missing values with small values close to zero
+            self.normalize(np.array(self.observed_areas[-1]))[:, None],
+        ])
 
         return self.current_state
 
@@ -239,14 +241,19 @@ class MultiPlantSimulator(BaseEnvironment):
                                     for i in range(self.num_plants)])
 
         # Set state
-        if self.num_steps >= self.lag: 
-            self.current_state = np.hstack([self.sine_time(clock), 
-                                            self.normalize(self.observed_areas[-1-self.lag]), 
-                                            self.normalize(self.observed_areas[-1])])
-        else: 
-            self.current_state = np.hstack([self.sine_time(clock), 
-                                            self.normalize(np.ones(self.num_plants)),  
-                                            self.normalize(self.observed_areas[-1])])
+        sine_time = np.array(self.sine_time(clock))
+        if self.num_steps >= self.lag:
+            self.current_state = np.hstack([
+                np.tile(sine_time[:, None], self.num_plants).T,
+                self.normalize(np.array(self.observed_areas[-1-self.lag]))[:, None],
+                self.normalize(np.array(self.observed_areas[-1]))[:, None],
+            ])
+        else:
+            self.current_state = np.hstack([
+                np.tile(sine_time[:, None], self.num_plants).T,
+                self.normalize(np.ones(self.num_plants))[:, None], # fill in missing values with small values close to zero
+                self.normalize(np.array(self.observed_areas[-1]))[:, None],
+            ])
 
         self.reward = self.reward_function()
 
@@ -256,12 +263,12 @@ class MultiPlantSimulator(BaseEnvironment):
             return self.reward, self.current_state, False, self.get_info()
     
     def reward_function(self):
-        if self.num_steps >= self.lag: 
-            new = self.observed_areas[-1]
-            old = self.observed_areas[-1-self.lag]
-            rewards = [new[i]/old[i] - 1 for i in range(self.num_plants)]
-            return np.percentile(rewards, 20)    # other options: np.mean(rewards), np.median(rewards), np.percentile(rewards, 10), ...
-        else: 
+        if self.num_steps >= self.lag:
+            new = self.normalize(np.array(self.observed_areas[-1]))
+            old = self.normalize(np.array(self.observed_areas[-1-self.lag]))
+            rewards = new - old
+            return rewards    # other options: np.mean(rewards), np.median(rewards), np.percentile(rewards, 10), ...
+        else:
             return 0
 
     def get_info(self):
