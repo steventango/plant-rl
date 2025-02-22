@@ -18,26 +18,26 @@ class GreedyAC(BaseAgent):
         self.state = None
         self.action = None
         self.greedy_ac = GreedyACDiscrete(
-            num_inputs = observations[0], 
-            num_actions = actions, 
-            gamma = self.gamma, 
-            tau = params['tau'], 
+            num_inputs = observations[0],
+            num_actions = actions,
+            gamma = self.gamma,
+            tau = params['tau'],
             policy = params['policy_type'],
-            target_update_interval = params['target_update_interval'], 
-            critic_lr = params['critic_lr'], 
+            target_update_interval = params['target_update_interval'],
+            critic_lr = params['critic_lr'],
             actor_lr_scale = params['actor_lr_scale'],
-            actor_hidden_dim = params['hidden_dim'], 
-            critic_hidden_dim = params['hidden_dim'], 
+            actor_hidden_dim = params['hidden_dim'],
+            critic_hidden_dim = params['hidden_dim'],
             actor_n_hidden= params['n_hidden'],
             critic_n_hidden= params['n_hidden'],
-            replay_capacity = params['replay_capacity'], 
+            replay_capacity = params['replay_capacity'],
             seed = seed,
-            batch_size = params['batch_size'], 
-            beta1 = params['beta1'], 
-            beta2 = params['beta2'], 
+            batch_size = params['batch_size'],
+            beta1 = params['beta1'],
+            beta2 = params['beta2'],
             cuda=False,
-            clip_stddev=1000, 
-            init=None, 
+            clip_stddev=1000,
+            init=None,
             entropy_from_single_sample=True,
             activation="relu")
         self.batch_observations = params.get("batch_observations", False)
@@ -62,8 +62,8 @@ class GreedyAC(BaseAgent):
         )
         self.state = observation
         if self.batch_observations:
-            state = np.mean(self.state, axis=0)
-            self.action = self.greedy_ac.sample_action(state)
+            actions = self.greedy_ac.sample_actions(self.state)
+            self.action = np.round(np.median(actions.squeeze())).astype(np.int32)
         else:
             self.action = self.greedy_ac.sample_action(self.state)
 
