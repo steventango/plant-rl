@@ -21,6 +21,23 @@
 - num_plants = 32, which makes the state vector 66 entries long
 - Hypersweep GAC's params
 ### Observations: 
-- ...
+- The performance is not too bad, considering the agents are given noisy 1-step reward. Definitely not hitting the optimal policy though.
 ### Conclusions & Outlooks: 
-- ...
+- Maybe the state vectors are too long?
+
+##  Phase P2
+### Objectives: 
+- Will GAC learn better if we ignore individual plants and simply use the average area?
+- We keep the challenge posted by noisy 1-step reward.
+### Methods: 
+- State = (time of day, average lagged area, average area)
+- Reward = average area / average lagged area - 1
+- num_plants = 32, lag = 1 step
+- Hypersweep GAC's params
+- Use --cpus 1 as per Steven: "something about GreedyAC scales poorly with multiple processes. It seems to run faster sequentially than in parallel."
+- Edited plotting script in P1, P2 so that hyper params are selected by AUC
+### Observations: 
+- Agent didn't learn. The performance is about the same as P1, but with more variance across seeds.
+- Change in plotting script doesn't result in a different best config.
+### Conclusions & Outlooks: 
+- Reducing the length of state vector didn't help. The problem is else where. However since it doesn't matter, I will stick with the smaller state vector for simplicity.

@@ -177,13 +177,13 @@ class PlantSimulator(BaseEnvironment):
 class MultiPlantSimulator(BaseEnvironment):  
     ''' 
     Simulate a tray of plants under the same lighting agent.
-    State = (time of day, lagged observed areas, observed areas)
+    State = (time of day, average lagged area, average area)
     '''
     def __init__(self, num_plants=None, lag=None, actions=[0, 1], action_effects=[1.0, 0.0]):
         self.num_plants = num_plants if num_plants is not None else 32
 
-        self.state_dim = (2 + 2 * self.num_plants,)   
-        self.current_state = np.empty(2 + 2 * self.num_plants)
+        self.state_dim = (4,)   
+        self.current_state = np.empty(4)
         self.action_dim = len(actions)      
         self.actions = actions               # default is [light off, light on]
         self.frozen_time = action_effects    # due to the agent's action, freeze plant for a percentage of the current time step 
@@ -211,8 +211,8 @@ class MultiPlantSimulator(BaseEnvironment):
                                     for i in range(self.num_plants)])
 
         self.current_state = np.hstack([self.sine_time(clock), 
-                                        self.normalize(np.ones(self.num_plants)),   # fill in missing values with small values close to zero
-                                        self.normalize(self.observed_areas[-1])])
+                                        self.normalize(1),   # fill in missing value(s) with small value(s) close to zero
+                                        self.normalize(np.mean(self.observed_areas[-1]))])
 
         return self.current_state
 
@@ -241,12 +241,12 @@ class MultiPlantSimulator(BaseEnvironment):
         # Set state
         if self.num_steps >= self.lag: 
             self.current_state = np.hstack([self.sine_time(clock), 
-                                            self.normalize(self.observed_areas[-1-self.lag]), 
-                                            self.normalize(self.observed_areas[-1])])
+                                            self.normalize(np.mean(self.observed_areas[-1-self.lag])),   
+                                            self.normalize(np.mean(self.observed_areas[-1]))])
         else: 
             self.current_state = np.hstack([self.sine_time(clock), 
-                                            self.normalize(np.ones(self.num_plants)),  
-                                            self.normalize(self.observed_areas[-1])])
+                                            self.normalize(1),   
+                                            self.normalize(np.mean(self.observed_areas[-1]))])
 
         self.reward = self.reward_function()
 
@@ -259,8 +259,7 @@ class MultiPlantSimulator(BaseEnvironment):
         if self.num_steps >= self.lag: 
             new = self.observed_areas[-1]
             old = self.observed_areas[-1-self.lag]
-            rewards = [new[i]/old[i] - 1 for i in range(self.num_plants)]
-            return np.percentile(rewards, 20)    # other options: np.mean(rewards), np.median(rewards), np.percentile(rewards, 10), ...
+            return np.mean(new) / np.mean(old) - 1
         else: 
             return 0
 
