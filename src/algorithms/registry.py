@@ -8,6 +8,7 @@ from algorithms.ContinuousRandomAgent import ContinuousRandomAgent
 from algorithms.DiscreteRandomAgent import DiscreteRandomAgent
 from algorithms.tc.ESARSA import ESARSA
 from algorithms.tc.SoftmaxAC import SoftmaxAC
+from algorithms.linear.ESARSA import ESARSA as LinearESARSA
 from algorithms.nn.GreedyAC.GreedyAC import GreedyAC
 
 
@@ -20,6 +21,8 @@ def getAgent(name) -> Type[BaseAgent]:
 
     if name == 'ESARSA':
         return ESARSA
+    if name == 'LinearESARSA':
+        return LinearESARSA
 
     if name == 'SoftmaxAC':
         return SoftmaxAC
