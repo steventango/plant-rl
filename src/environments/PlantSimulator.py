@@ -305,7 +305,7 @@ class MultiPlantSimulator(BaseEnvironment):
             PF.append(projection_factor)
 
         # Optionally set a larger time step than the one given in plant data
-        assert self.steps_per_day % self.stride == 0 & self.steps_per_night % self.stride == 0, f"stride must be a divisor of steps_per_day={steps_per_day} and of steps_per_night={steps_per_night}."
+        assert self.steps_per_day % self.stride == 0 & self.steps_per_night % self.stride == 0, f"stride must be a divisor of steps_per_day={self.steps_per_day} and of steps_per_night={self.steps_per_night}."
         PF = [pf[::self.stride] for pf in PF]
         PWL = [pwl.rescale_x(1 / self.stride) for pwl in PWL]
         self.steps_per_day /= self.stride
@@ -487,7 +487,7 @@ class SmokeTest_MultiPlantSimulator(BaseEnvironment):
             PF.append(projection_factor)
 
         # Optionally set a larger time step than the one given in plant data
-        assert self.steps_per_day % self.stride == 0 & self.steps_per_night % self.stride == 0, f"stride must be a divisor of steps_per_day={steps_per_day} and of steps_per_night={steps_per_night}."
+        assert self.steps_per_day % self.stride == 0 & self.steps_per_night % self.stride == 0, f"stride must be a divisor of steps_per_day={self.steps_per_day} and of steps_per_night={self.steps_per_night}."
         PF = [pf[::self.stride] for pf in PF]
         PWL = [pwl.rescale_x(1 / self.stride) for pwl in PWL]
         self.steps_per_day /= self.stride
