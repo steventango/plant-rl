@@ -84,3 +84,28 @@ class PiecewiseLinear:
                     new_segments.append((t1, x_max + shift, slope, val_at_t0 - slope * t1))
         
         self.segments = new_segments
+
+    def rescale_x(self, n):
+        """
+        Rescales the x-axis of the piecewise linear function by a factor of n.
+        Args:
+            n (float): The scaling factor for the x-axis. Must be non-zero.
+        Returns:
+            PiecewiseLinear: A new PiecewiseLinear object with the rescaled x-axis.
+        Raises:
+            ValueError: If n is zero.
+        """
+        if n == 0:
+            raise ValueError("Scaling factor n cannot be zero")
+
+        new_obj = self.copy()
+        new_segments = []
+        for x_min, x_max, slope, intercept in self.segments:
+            new_x_min = x_min * n
+            new_x_max = x_max * n
+            new_slope = slope / n
+            new_intercept = intercept
+            new_segments.append((new_x_min, new_x_max, new_slope, new_intercept))
+        new_obj.segments = new_segments
+        
+        return new_obj
