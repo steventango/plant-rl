@@ -41,3 +41,30 @@
 - Change in plotting script doesn't result in a different best config.
 ### Conclusions & Outlooks: 
 - Reducing the length of state vector didn't help. The problem is else where. However since it doesn't matter, I will stick with the smaller state vector for simplicity.
+
+##  Phase P3
+### Objectives: 
+- Play with the size of time step. 
+- Can GAC learn if time step is longer, say 1hr (i.e. only 12 actions/day as opposed to 72)?
+### Methods: 
+- Added a "rescale" method in utils.functions.PiecewiseLinear
+- Added a new parameter to MultiPlantSimulator, "stride", such that env time step = stride * spreadsheet time step 
+- stride = 6, otherwise same as P2
+### Observations: 
+- It learned really good! But it falls short of optimal policy. Is it due to exploration?
+### Conclusions & Outlooks: 
+- Changing time scale really helepd!
+
+##  Phase P4
+### Objectives: 
+- Do a smoke test as per Adam's suggestion
+### Methods: 
+- Added a new class SmokeTest_MultiPlantSimulator that manually sets areas to near zero when action = off. 
+- Reward = average area
+- The rest same as P3
+### Observations: 
+- Observed that if reward = average area / average lagged area - 1, the reward is SO HUGE after an off-to-on transition that the return of a random policy is better than the light-on policy. So here we use reward = average area
+- Agent learned the optimal policy after 2 episodes.
+### Conclusions & Outlooks: 
+- Smoke test worked
+ 
