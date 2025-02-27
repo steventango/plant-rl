@@ -113,9 +113,9 @@ for idx in indices:
         collector.collect('action', interaction.a)
         collector.collect('reward', interaction.r)
         collector.collect('steps', glue.num_steps)
-        env.image.save(context.resolve(f'{idx}/images/{step}.jpg'))
+        env.image.save(context.resolve(f'{idx}/images/{step}.png'))
         if hasattr(env, "shape_image"):
-            env.shape_image.save(context.resolve(f'{idx}/images/{step}_processed.jpg'))
+            env.shape_image.save(context.resolve(f'{idx}/images/{step}_processed.png'))
 
         if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
             # allow agent to cleanup traces or other stateful episodic info
