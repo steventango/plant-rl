@@ -25,7 +25,7 @@ from experiment.tools import parseCmdLineArgs
 setDefaultConference('jmlr')
 
 COLORS = {
-    'GAC': 'blue',
+    'ESARSA': 'blue',
 }
 
 if __name__ == "__main__":
@@ -58,7 +58,6 @@ if __name__ == "__main__":
     )
 
     assert df is not None
-    Metrics.add_step_weighted_return(df)
 
     exp = results.get_any_exp()
 
@@ -101,28 +100,11 @@ if __name__ == "__main__":
             ax.plot(xs[0], res.sample_stat, label=alg, color=COLORS[alg], linewidth=0.5)
             ax.fill_between(xs[0], res.ci[0], res.ci[1], color=COLORS[alg], alpha=0.2)
 
-        ax.plot(np.linspace(0, exp.total_steps, 100), np.ones(100)*202.3, 'k-.', linewidth=1, label='light-on')
-        ax.plot(np.linspace(0, exp.total_steps, 100), np.ones(100)*192, 'k--', linewidth=1, label='light-on w/ ep=0.1')
-        ax.plot(np.linspace(0, exp.total_steps, 100), np.ones(100)*112.5, 'b--', linewidth=1, label='random')
         ax.set_xlim(0, exp.total_steps)
-        xticks = np.arange(0, exp.total_steps, 1000)
-        # Set minor ticks every 1000
-        minor_ticks = np.arange(0, exp.total_steps, 1000)
-        ax.set_xticks(minor_ticks, minor=True)
-        # Set major ticks and labels every 20000
-        major_ticks = np.arange(0, exp.total_steps, 20000)
-        ax.set_xticks(major_ticks)
-        ax.set_xticklabels(major_ticks)
 
-        # Style minor ticks (optional)
-        ax.tick_params(axis='x', which='minor', length=4, color='gray')
         ax.legend()
-        ax.set_title('Compare Different Agents in PlantSimulator')
+        ax.set_title('ESARSA CliffWalking-Comparing Step-size')
         ax.set_ylabel('Return')
-        ax.set_xlabel('Daytime Time Step')
+        ax.set_xlabel('Time Step')
 
-        save(
-            save_path=f'{path}/plots',
-            plot_name=f'algs'
-        )
         plt.show()

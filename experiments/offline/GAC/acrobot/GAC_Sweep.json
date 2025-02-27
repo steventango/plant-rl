@@ -1,7 +1,7 @@
 {
     "agent": "GreedyAC",
     "problem": "Acrobot",
-    "total_steps": 20000,
+    "total_steps": 30000,
     "episode_cutoff": 500,
     "metaParameters": {
         "replay_capacity": 100000,
@@ -11,10 +11,10 @@
         "beta2": 0.999,
         "policy_type": "Softmax",
         "target_update_interval": 1,
-        "critic_lr": 1e-4,
-        "actor_lr_scale": 10.0,
-        "hidden_dim": 32,
-        "n_hidden": 2,
+        "critic_lr": [1e-1, 1e-2, 1e-3, 1e-4, 1e-5],
+        "actor_lr_scale": [1e-3, 1e-2, 1e-1, 1.0, 2.0, 10.0],
+        "hidden_dim": [32,64],
+        "n_hidden": [0,1,2],
         "weight_init": "xavier_uniform",
         "clip_stddev": 1000,
 		"cuda": false

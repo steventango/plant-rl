@@ -39,7 +39,8 @@ import jax
 device = 'gpu' if args.gpu else 'cpu'
 jax.config.update('jax_platform_name', device)
 
-logging.basicConfig(level=logging.ERROR)
+logfile = '/Users/oliverdiamond/Desktop/alberta/research/plant-rl/src/exp.log'
+logging.basicConfig(filename=logfile, level=logging.ERROR)
 logger = logging.getLogger('exp')
 prod = 'cdr' in socket.gethostname() or args.silent
 if not prod:
@@ -119,9 +120,9 @@ for idx in indices:
             fps = step / (time.time() - start_time)
 
             episode = chk['episode']
-            logger.debug(f'{episode} {step} {glue.total_reward} {avg_time:.4}ms {int(fps)}')
-
+            #logger.debug(f'{episode} {step} {glue.total_reward} {avg_time:.4}ms {int(fps)}')
             glue.start()
+        logger.debug(glue.agent.info)
 
     collector.reset()
 

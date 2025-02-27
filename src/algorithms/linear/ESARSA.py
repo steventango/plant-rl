@@ -8,8 +8,16 @@ from algorithms.linear.LinearAgent import LinearAgent
 from utils.checkpoint import checkpointable
 from utils.policies import egreedy_probabilities
 
+import logging
 
-@njit(cache=True)
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
+
+
+#@njit(cache=True)
 def _update(w, x, a, xp, pi, r, gamma, alpha):
     qsa = w[a].dot(x)
 
@@ -19,7 +27,7 @@ def _update(w, x, a, xp, pi, r, gamma, alpha):
 
     w[a] = w[a] + alpha * delta
 
-@njit(cache=True)
+#@njit(cache=True)
 def value(w, x):
     return w.dot(x)
 
@@ -49,5 +57,8 @@ class ESARSA(LinearAgent):
             pi = np.zeros(self.actions)
         else:
             pi = self.policy(xp)
+        self.info = {'x': np.argmax(x), 'pi': pi, 'a':a, 'action vals for state': self.w[:, np.argmax(x)], 'term': xp==None}
+
+
 
         _update(self.w, x, a, xp, pi, r, gamma, self.alpha)
