@@ -249,7 +249,8 @@ class MultiPlantSimulator(BaseEnvironment):
                                             self.normalize(1),   
                                             self.normalize(np.mean(self.observed_areas[-1]))])
 
-        self.reward = self.reward_function_raw()
+        #self.reward = self.reward_function_raw()
+        self.reward = self.reward_function()
 
         if self.num_steps == self.terminal_step:
             return self.reward, self.current_state, True, self.get_info()
