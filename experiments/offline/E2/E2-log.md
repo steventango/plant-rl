@@ -136,10 +136,21 @@
  
 ##  Phase P10
 ### Objectives: 
-- Oliver realized an error in GAC's code which set gamma=0 this whole time! This made the agent very myopic.
+- Oliver realized an error in GAC's implementation which set gamma=0 this whole time! This made the agent very myopic.
 - How would GAC perform with gamma = 0.99?
 ### Methods: 
--
+- Same as P9 (raw change in area)
+### Observations: 
+- Agents with longer time steps did reach the optimal policy after more than 2 episodes, but collapsed soon after.
+- Small critic_lr is prefered. So I will widen the hypersweep from now on.
+### Conclusions & Outlooks: 
+- Farsighted GAC managed to learn with reward=raw area change, but quickly forgot the optimal policy.
+
+##  Phase P11
+### Objectives: 
+- With reward = % area change, would the farsighted GAC perform better or worse than the myopic GAC in P7?
+### Methods: 
+- Same as P7 but with fixed GAC and widened hypersweep "critic_lr": [3e-2, 1e-2, 3e-3, 1e-3, 3e-4, 1e-4, 3e-5, 1e-5, 3e-6]
 ### Observations: 
 - 
 ### Conclusions & Outlooks: 
