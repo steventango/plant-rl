@@ -15,18 +15,41 @@ from RlEvaluation.utils.pandas import split_over_column
 
 import RlEvaluation.hypers as Hypers
 import RlEvaluation.metrics as Metrics
-
-# from analysis.confidence_intervals import bootstrapCI
 from experiment.ExperimentModel import ExperimentModel
 from experiment.tools import parseCmdLineArgs
 
-# makes sure figures are right size for the paper/column widths
-# also sets fonts to be right size when saving
 setDefaultConference('jmlr')
 
-THIS_AGENT = 'GAC-sweep'
 COLORS = {
-    THIS_AGENT: 'green'
+    'GAC-sweep-s2': 'red',
+    'GAC-sweep-s3': 'orange',
+    'GAC-sweep-s6': 'green',
+    'GAC-sweep-s9': 'blue',
+    'GAC-sweep-s12': 'purple',
+}
+
+MAX_RETURN =  {
+    'GAC-sweep-s2': 2.803,
+    'GAC-sweep-s3': 2.775,
+    'GAC-sweep-s6': 2.710,
+    'GAC-sweep-s9': 2.663,
+    'GAC-sweep-s12': 2.609,
+}
+
+MIN_RETURN =  {
+    'GAC-sweep-s2': 0.179,
+    'GAC-sweep-s3': 0.162,
+    'GAC-sweep-s6': 0.150,
+    'GAC-sweep-s9': 0.153,
+    'GAC-sweep-s12': 0.147,
+}
+
+STRIDE = {
+    'GAC-sweep-s2': 2,
+    'GAC-sweep-s3': 3,
+    'GAC-sweep-s6': 6,
+    'GAC-sweep-s9': 9,
+    'GAC-sweep-s12': 12,
 }
 
 def main():
@@ -56,15 +79,16 @@ def main():
         f, ax = plt.subplots()
         for alg, alg_df in split_over_column(env_df, col='algorithm'):            
 
-            # Pick the best learning rate
+            # Pick the best learning rate by AUC
             lr2metric = {}
             for lr in alg_df['critic_lr'].unique():
                 xs, ys = extract_learning_curves(alg_df, (lr,), metric='return', interpolation=None)
-                assert len(xs) == 5   # check all 5 seeds are there
+                assert len(xs) == 5, 'Some seeds are missing.'
                 metric = [auc(t, r) for t, r in zip(xs, ys)]
                 lr2metric[lr] = np.mean(metric)
             
             best_lr = max(lr2metric, key=lr2metric.get) 
+            print(f'Best critic_lr = {best_lr}')
             xs, ys = extract_learning_curves(alg_df, (best_lr,), metric='return', interpolation=None)
 
             xs = np.asarray(xs)
@@ -78,26 +102,28 @@ def main():
                 statistic=Statistic.mean,
             )
 
-            ax.plot(xs[0], res.sample_stat, label=f'{alg}', color=COLORS[alg], linewidth=1)
-            
-            for i in range(xs.shape[0]):
-                ax.plot(xs[i], ys[i], color=COLORS[alg], linewidth=0.5, alpha=0.2)
+            ax.plot(rescale_time(xs[0], STRIDE[alg]), rescale_return(res.sample_stat, MIN_RETURN[alg], MAX_RETURN[alg]), label=f'time step={10*STRIDE[alg]}min', color=COLORS[alg], linewidth=0.5)
+            ax.fill_between(rescale_time(xs[0], STRIDE[alg]), rescale_return(res.ci[0], MIN_RETURN[alg], MAX_RETURN[alg]), rescale_return(res.ci[1], MIN_RETURN[alg], MAX_RETURN[alg]), color=COLORS[alg], alpha=0.2)
 
-            ax.plot(np.linspace(0, exp.total_steps, 100), np.ones(100)*2.622, 'k-.', linewidth=1, label='light-on')
-            ax.plot(np.linspace(0, exp.total_steps, 100), np.ones(100)*1.3, 'b--', linewidth=1, label='random')
+        ax.plot(np.linspace(0, 5000, 100), np.ones(100), 'k--', linewidth=0.5, label='light-on')
+        ax.set_ylim(0.35, 1.02) 
+        ax.set_xlim(0, 5000) 
+        ax.legend()
+        ax.set_title('GAC\'s Learning Curves in PlantSimulator (1 plant only)')
+        ax.set_ylabel('Normalized Episodic Return [light-off policy: 0, light-on policy: 1]')
+        ax.set_xlabel('Day Time [Hours]')
 
-            ax.set_xlim(0, 3000) 
-            ax.legend()
-            ax.set_title('Learning Curve in MultiPlantSimulator')
-            ax.set_ylabel('Return')
-            ax.set_xlabel('Day Time [Hours]')
+        save(
+            save_path=f'{path}/plots',
+            plot_name='GAC-2action-1plant'
+        )
 
-            save(
-                save_path=f'{path}/plots',
-                plot_name=f'{alg}'
-            )
-            plt.show()
+def rescale_time(x, stride):
+    base_step = 10/60           # spreadsheet time step is 10 minutes
+    return x*base_step*stride   # x-values in units of hours
 
+def rescale_return(y, min, max):
+    return (y - min) / (max - min)
 
 def auc(t, r):
     return np.sum(r)

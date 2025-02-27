@@ -83,10 +83,10 @@ def main():
             for i in range(xs.shape[0]):
                 ax.plot(xs[i], ys[i], color=COLORS[alg], linewidth=0.5, alpha=0.2)
 
-            ax.plot(np.linspace(0, exp.total_steps, 100), np.ones(100)*2.622, 'k-.', linewidth=1, label='light-on')
-            ax.plot(np.linspace(0, exp.total_steps, 100), np.ones(100)*1.3, 'b--', linewidth=1, label='random')
+            ax.plot(np.linspace(0, exp.total_steps, 100), np.ones(100)*0.198/0.02, 'k-.', linewidth=1, label='light-on')
+            ax.plot(np.linspace(0, exp.total_steps, 100), np.ones(100)*0.045/0.02, 'b--', linewidth=1, label='random')
 
-            ax.set_xlim(0, 3000) 
+            #ax.set_xlim(0, 3000) 
             ax.legend()
             ax.set_title('Learning Curve in MultiPlantSimulator')
             ax.set_ylabel('Return')

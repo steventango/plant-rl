@@ -67,4 +67,82 @@
 - Agent learned the optimal policy after 2 episodes.
 ### Conclusions & Outlooks: 
 - Smoke test worked
+
+##  Phase P5
+### Objectives: 
+- If we use average area as observation, should we use % change in area as reward, or raw change in area (in unit of pixel)? 
+- The latter generally assigns higher rewards to states with larger areas, which may motivate the agent to try to achieve those states? Or is it confusing to the agent that overall the reward increases regardless of the actions?
+### Methods: 
+- Reward = average area - average lagged area
+- The rest same as P3
+### Observations: 
+- Does much worse than P3, but fairly stable across seeds
+### Conclusions & Outlooks: 
+- The raw area change is very small because areas are normalized to [0, 1]. Would rescaling the reward help? 
+
+##  Phase P6
+### Objectives: 
+- See if rescaling reward manually makes P5 viable.
+### Methods: 
+- Reward = (average area - average lagged area) / 0.02
+### Observations: 
+- Achieved higher return than P5, but with greater variance across seeds. 
+- On average, not nearly as good as P3.
+### Conclusions & Outlooks: 
+- % change in area works better than raw change in area. 
+ 
+##  Phase P7
+### Objectives: 
+- Which time step is optimal?
+### Methods: 
+- State = (time of day, average lagged area, average area)
+- Reward = average area / average lagged area - 1
+- num_plants = 32, lag = 1 step, stride = [2, 3, 6, 9, 12]
+- total run time = 5000 hours
+### Observations: 
+- As seen in the learning curves, stride = [9, 12] result in near optimal policy within two episodes. The shorter time steps did not reach the optimal policy.
+### Conclusions & Outlooks: 
+- 90 and 120 minutes, with the former slightly worse as seen in a hiccup near 1000 hours.
+
+##  Phase P8
+### Objectives: 
+- Now that we know time step is a crucial hyperparameter, could we tune it to make 1-plant environment work?
+### Methods: 
+- State = (time of day, lagged area, area)
+- Reward = area / lagged area - 1
+- num_plants = 1, lag = 1 step, stride = [2, 3, 6, 9, 12]
+- total run time = 5000 hours
+### Observations: 
+- Checked that reward history is indeed more noisy with 1 plant only, regardless of the time step.
+- Performance is generally worse than P7, and can drop over time. 
+### Conclusions & Outlooks: 
+- 1-plant environment is significantly harder than 32-plant environment that uses average area. 
+- Averaging area really helps stabilize learning.
+
+##  Phase P9
+### Objectives: 
+- Could `reward = raw change in area` work if we sweep over time-step size? It didn't work in P5, P6.
+### Methods: 
+- State = (time of day, lagged average area, average area). Note that areas have been normalized to between [0, 1].
+- Reward = (area - lagged area) / 0.08. The manual re-scaling by 0.08 is to prevent rewards from being too small, giving this design choice an unfair disadvantage.
+- num_plants = 32, lag = 1 step, stride = [2, 3, 6, 9, 12]
+- total run time = 5000 hours
+- Widen hypersweep of learning rate -- "critic_lr": [3e-2, 1e-2, 3e-3, 1e-3, 3e-4, 1e-4, 3e-5]
+### Observations: 
+- Learning curves are all unstable and do not adhere to max return.
+- stride = [6, 9, 12] reached near max return after two episodes, but quickly collapsed.
+### Conclusions & Outlooks: 
+- % area change still seems to be better. 
+ 
+##  Phase P10
+### Objectives: 
+- Oliver realized an error in GAC's code which set gamma=0 this whole time! This made the agent very myopic.
+- How would GAC perform with gamma = 0.99?
+### Methods: 
+-
+### Observations: 
+- 
+### Conclusions & Outlooks: 
+- 
+
  

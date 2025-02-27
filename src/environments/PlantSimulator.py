@@ -249,7 +249,7 @@ class MultiPlantSimulator(BaseEnvironment):
                                             self.normalize(1),   
                                             self.normalize(np.mean(self.observed_areas[-1]))])
 
-        self.reward = self.reward_function()
+        self.reward = self.reward_function_raw()
 
         if self.num_steps == self.terminal_step:
             return self.reward, self.current_state, True, self.get_info()
@@ -261,6 +261,14 @@ class MultiPlantSimulator(BaseEnvironment):
             new = self.observed_areas[-1]
             old = self.observed_areas[-1-self.lag]
             return np.mean(new) / np.mean(old) - 1
+        else: 
+            return 0
+
+    def reward_function_raw(self):
+        if self.num_steps >= self.lag: 
+            new = self.normalize(np.mean(self.observed_areas[-1]))
+            old = self.normalize(np.mean(self.observed_areas[-1-self.lag]))
+            return (new - old) / 0.08
         else: 
             return 0
 
