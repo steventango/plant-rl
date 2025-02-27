@@ -1,11 +1,12 @@
 # ignore data folder
 data
 
-# ignore all results folders
+# ignore all results 
 results
 results/
 results.tar*
 .tmp/
+*.out
 
 # ignore python caches
 ENV/
