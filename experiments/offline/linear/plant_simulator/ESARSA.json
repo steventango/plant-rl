@@ -1,0 +1,16 @@
+{
+    "agent": "LinearESARSA",
+    "problem": "PlantSimulator",
+    "total_steps": 10000,
+    "episode_cutoff": 2000,
+    "metaParameters": {
+        "alpha": [0.125],
+        "epsilon": [0.1],
+        "n_step": [3],
+        "environment": {
+            "random_plant": false, 
+            "n_step": 72,
+            "plant_id":0
+            }
+    }
+}

@@ -45,7 +45,6 @@ prod = 'cdr' in socket.gethostname() or args.silent
 if not prod:
     logger.setLevel(logging.DEBUG)
 
-
 # ----------------------
 # -- Experiment Def'n --
 # ----------------------
@@ -96,7 +95,6 @@ for idx in indices:
     # if we haven't started yet, then make the first interaction
     if glue.total_steps == 0:
         glue.start()
-
     for step in range(glue.total_steps, exp.total_steps):
         collector.next_frame()
         chk.maybe_save()
@@ -119,7 +117,7 @@ for idx in indices:
             fps = step / (time.time() - start_time)
 
             episode = chk['episode']
-            logger.debug(f'{episode} {step} {glue.total_reward} {avg_time:.4}ms {int(fps)}')
+            logger.debug(f'{episode} {step} {glue.total_reward} {glue.num_steps} {avg_time:.4}ms {int(fps)}')
 
             glue.start()
 
