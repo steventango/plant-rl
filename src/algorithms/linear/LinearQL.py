@@ -28,11 +28,8 @@ class LinearQL(BaseAgent):
         return a
     
     def update(self, r, s_next):
-        if s_next is None:
-            next_q = 0
-        else:
-            next_q = np.dot(self.w, s_next).max()
-        delta = r + self.gamma*next_q - np.dot(self.w, self.curr_state)[self.curr_action]
+        next_q = np.dot(self.w, s_next).max()
+        delta = r + self.gamma*next_q - np.dot(self.w[self.curr_action], self.curr_state)
         self.w[self.curr_action] += self.alpha * delta * self.curr_state
 
     def start(self, s: np.ndarray):
@@ -52,4 +49,4 @@ class LinearQL(BaseAgent):
         
 
     def end(self, r: float, extra):
-        self.update(r, None)
+        self.update(r, np.zeros(self.observations[0]))
