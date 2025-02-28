@@ -39,19 +39,11 @@ import jax
 device = 'gpu' if args.gpu else 'cpu'
 jax.config.update('jax_platform_name', device)
 
-logfile = '/Users/oliverdiamond/Desktop/alberta/research/plant-rl/src/exp.log'
-logging.basicConfig(filename=logfile, level=logging.ERROR)
+logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger('exp')
 prod = 'cdr' in socket.gethostname() or args.silent
 if not prod:
     logger.setLevel(logging.DEBUG)
-    
-# Separate terminal logger
-term_logger = logging.getLogger('exp_term')
-term_logger.setLevel(logging.DEBUG if not prod else logging.ERROR)
-console_handler = logging.StreamHandler()
-console_handler.setFormatter(logging.Formatter('%(message)s'))  # Simple format for terminal
-term_logger.addHandler(console_handler)
 
 # ----------------------
 # -- Experiment Def'n --
@@ -107,9 +99,6 @@ for idx in indices:
         collector.next_frame()
         chk.maybe_save()
         interaction = glue.step()
-        #if glue.total_steps == 1 or glue.total_steps == 1000 or glue.total_steps == 5000 or glue.total_steps == 10000 or glue.total_steps == 15000:
-            #term_logger.info(f'\n\n{glue.agent.policy_str}')
-
 
         if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
             # allow agent to cleanup traces or other stateful episodic info
@@ -128,11 +117,9 @@ for idx in indices:
             fps = step / (time.time() - start_time)
 
             episode = chk['episode']
-            #term_logger.info(f'{episode} {step} {glue.total_reward} {avg_time:.4}ms {int(fps)}')
-            term_logger.info(f'{glue.num_steps} {glue.total_reward}')
+            logger.debug(f'{episode} {step} {glue.total_reward} {glue.num_steps} {avg_time:.4}ms {int(fps)}')
+
             glue.start()
-        #logger.info(glue.agent.info)
-    #term_logger.info(f'\n{glue.agent.policy_str}')
 
     collector.reset()
 

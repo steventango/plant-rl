@@ -8,7 +8,6 @@ from algorithms.BaseAgent import BaseAgent
 from utils.policies import egreedy_probabilities
 
 
-
 class LinearQL(BaseAgent):
     def __init__(self, observations: Tuple[int, ...], actions: int, params: Dict, collector: Collector, seed: int):
         super().__init__(observations, actions, params, collector, seed)
@@ -19,7 +18,7 @@ class LinearQL(BaseAgent):
         self.curr_action = None
 
         # create initial weights, set to -10
-        self.w = np.ones((actions, self.observations[0]), dtype=np.float64)*-10
+        self.w = np.zeros((actions, self.observations[0]), dtype=np.float64)
     
     def get_egreedy_action(self, s):
         qs = np.dot(self.w, s)
