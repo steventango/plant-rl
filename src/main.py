@@ -17,6 +17,7 @@ from problems.registry import getProblem
 from PyExpUtils.results.sqlite import saveCollector
 from PyExpUtils.collection.Collector import Collector
 from PyExpUtils.collection.Sampler import Ignore, MovingAverage, Subsample, Identity
+from utils.window_avg import WindowAverage
 from PyExpUtils.collection.utils import Pipe
 
 # ------------------
@@ -69,6 +70,7 @@ for idx in indices:
             'return': Identity(),
             'episode': Identity(),
             'steps': Identity(),
+            'avg_reward': WindowAverage(size = 10),
         },
         # by default, ignore keys that are not explicitly listed above
         default=Ignore(),
@@ -99,6 +101,7 @@ for idx in indices:
         collector.next_frame()
         chk.maybe_save()
         interaction = glue.step()
+        collector.collect('avg_reward', interaction.r)
 
         if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
             # allow agent to cleanup traces or other stateful episodic info
