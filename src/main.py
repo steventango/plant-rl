@@ -70,7 +70,7 @@ for idx in indices:
             'return': Identity(),
             'episode': Identity(),
             'steps': Identity(),
-            'avg_reward': WindowAverage(size = 10),
+            'avg_reward': WindowAverage(size = getattr(args, 'avg_rew_window', 10)),
         },
         # by default, ignore keys that are not explicitly listed above
         default=Ignore(),
@@ -90,6 +90,12 @@ for idx in indices:
 
     glue = chk.build('glue', lambda: RlGlue(agent, env))
     chk.initial_value('episode', 0)
+
+    # If exp.total_steps is -1, then set total experiment steps 
+    # based on the length of the timestep such that each run 
+    # lasts for 14 days. 
+    if exp.problem == 'MultiPlantSimulator' and exp.total_steps == -1:
+        exp.total_steps = len(env.data)//env.stride
 
     # Run the experiment
     start_time = time.time()
@@ -120,9 +126,11 @@ for idx in indices:
             fps = step / (time.time() - start_time)
 
             episode = chk['episode']
-            logger.debug(f'{episode} {step} {glue.total_reward} {glue.num_steps} {avg_time:.4}ms {int(fps)}')
-
+            #logger.debug(f'Episode: {episode} Step: {step} Total Rew: {glue.total_reward} Avg time: {avg_time:.4}ms FPS: {int(fps)}')
             glue.start()
+
+        if step % 20 == 0 and step > 0:
+            logger.debug(f'Seed: {idx} Episode: {chk["episode"]}, Step: {step} Avg Reward: {collector.get_last("avg_reward")}')
 
     collector.reset()
 
