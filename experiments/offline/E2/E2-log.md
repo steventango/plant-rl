@@ -152,8 +152,33 @@
 ### Methods: 
 - Same as P7 but with fixed GAC and widened hypersweep "critic_lr": [3e-2, 1e-2, 3e-3, 1e-3, 3e-4, 1e-4, 3e-5, 1e-5, 3e-6]
 ### Observations: 
-- 
+- It surprisingly performed worse than myopic GAC (P7)! Stride = [9, 12] achieved optimal policy after two episodes, but quickly forgot it.
 ### Conclusions & Outlooks: 
-- 
+- We need to understand why myopic agent performs better than reward = % change.
 
+##  Phase P12
+### Objectives: 
+- Try reward = % overnight growth at the first time step every morning. reward = 0 at other times of day.
+- This reward function gives clean (not noisy) but sparse rewards. I expect that farsighted agent would do better than myopic one due to sparsity of rewards.
+### Methods: 
+- Same as P11 but with a new reward function "reward_function_overnight"
+### Observations: 
+- Wow I'm so surprised. It doesn't look good at all!
+### Conclusions & Outlooks: 
+- Overnight reward doesn't work well at all!
+
+##  Phase P13
+### Objectives: 
+- Steven made a good point during the group meeting: we should optimize for learning within 2 weeks time!
+- Would farsighted GAC learn to keep light on within 2 weeks?
+### Methods: 
+- Total training time = 14 days
+- Record accumulated reward at every step
+- Widen hypersweep
+- Test different strides
+- reward = % change over one time step
+### Observations: 
+-...
+### Conclusions & Outlooks: 
+-...
  

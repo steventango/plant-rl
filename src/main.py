@@ -69,6 +69,7 @@ for idx in indices:
             'return': Identity(),
             'episode': Identity(),
             'steps': Identity(),
+            'action': Identity()
         },
         # by default, ignore keys that are not explicitly listed above
         default=Ignore(),
@@ -95,19 +96,26 @@ for idx in indices:
     # if we haven't started yet, then make the first interaction
     if glue.total_steps == 0:
         glue.start()
+        
     for step in range(glue.total_steps, exp.total_steps):
         collector.next_frame()
         chk.maybe_save()
         interaction = glue.step()
+        
+        # collect at each time step 
+        collector.collect('return', glue.total_reward)
+        collector.collect('episode', chk['episode'])
+        collector.collect('steps', glue.num_steps)
+        collector.collect('action', int.from_bytes(glue.last_action, byteorder='little'))
 
         if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
             # allow agent to cleanup traces or other stateful episodic info
             agent.cleanup()
 
             # collect some data
-            collector.collect('return', glue.total_reward)
-            collector.collect('episode', chk['episode'])
-            collector.collect('steps', glue.num_steps)
+            #collector.collect('return', glue.total_reward)
+            #collector.collect('episode', chk['episode'])
+            #collector.collect('steps', glue.num_steps)
 
             # track how many episodes are completed (cutoff is counted as termination for this count)
             chk['episode'] += 1
