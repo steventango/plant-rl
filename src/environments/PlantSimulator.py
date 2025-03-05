@@ -179,12 +179,13 @@ class MultiPlantSimulator(BaseEnvironment):
     Simulate a tray of plants under the same lighting agent.
     State = (time of day, average lagged area, average area)
     '''
-    def __init__(self, num_plants=32, lag=1, stride=1, actions=[0, 1], action_effects=[1.0, 0.0]):
-        self.state_dim = (4,)   
-        self.current_state = np.empty(4)
+    def __init__(self, num_plants=32, lag=1, stride=1, actions=[0, 1], action_effects=[1.0, 0.0], one_hot_time = False):
+        self.state_dim = (one_hot_time*22 + 4,) # Time encoding has len 24 if one-hot else len 2 if sin/cos, plus 2 area features 
+        self.current_state = np.empty(self.state_dim)
         self.action_dim = len(actions)      
         self.actions = actions               # default is [light off, light on]
         self.frozen_time = action_effects    # due to the agent's action, freeze plant for a percentage of the current time step 
+        self.one_hot_time = one_hot_time
 
         self.num_plants = num_plants
         self.stride = stride                 # env time step = stride * time step in plant data
@@ -238,14 +239,18 @@ class MultiPlantSimulator(BaseEnvironment):
         # Compute observed areas by projecting actual areas
         self.observed_areas.append([self.actual_areas[i](self.time)*self.projection_factors[i][self.num_steps] 
                                     for i in range(self.num_plants)])
-
+        if self.one_hot_time:
+            time_obs = np.zeros(24)
+            time_obs[clock // 3600] = 1 # Set the position for the current hour to 1
+        else:
+            time_obs = self.sine_time(clock)
         # Set state
         if self.num_steps >= self.lag: 
-            self.current_state = np.hstack([self.sine_time(clock), 
+            self.current_state = np.hstack([time_obs, 
                                             self.normalize(np.mean(self.observed_areas[-1-self.lag])),   
                                             self.normalize(np.mean(self.observed_areas[-1]))])
         else: 
-            self.current_state = np.hstack([self.sine_time(clock), 
+            self.current_state = np.hstack([time_obs, 
                                             self.normalize(1),   
                                             self.normalize(np.mean(self.observed_areas[-1]))])
 
