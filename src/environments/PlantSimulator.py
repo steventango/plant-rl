@@ -254,7 +254,6 @@ class MultiPlantSimulator(BaseEnvironment):
                                             self.normalize(1),   
                                             self.normalize(np.mean(self.observed_areas[-1]))])
 
-        #self.reward = self.reward_function_raw()
         self.reward = self.reward_function()
 
         if self.num_steps == self.terminal_step:
@@ -264,9 +263,9 @@ class MultiPlantSimulator(BaseEnvironment):
     
     def reward_function(self):
         if self.num_steps >= self.lag: 
-            new = self.observed_areas[-1]
-            old = self.observed_areas[-1-self.lag]
-            return np.mean(new) / np.mean(old) - 1
+            new = self.normalize(np.mean(self.observed_areas[-1]))
+            old = self.normalize(np.mean(self.observed_areas[-1-self.lag]))
+            return new / old - 1
         else: 
             return 0
 
@@ -275,6 +274,14 @@ class MultiPlantSimulator(BaseEnvironment):
             new = self.normalize(np.mean(self.observed_areas[-1]))
             old = self.normalize(np.mean(self.observed_areas[-1-self.lag]))
             return (new - old) / 0.08
+        else: 
+            return 0
+    
+    def reward_function_overnight(self):
+        if self.num_steps >= self.lag and self.num_steps % self.steps_per_day == 0: 
+            new = self.normalize(np.mean(self.observed_areas[-1]))
+            old = self.normalize(np.mean(self.observed_areas[-1-self.lag]))
+            return new / old - 1     # % growth overnight
         else: 
             return 0
 
