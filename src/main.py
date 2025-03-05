@@ -126,7 +126,7 @@ for idx in indices:
             fps = step / (time.time() - start_time)
 
             episode = chk['episode']
-            #logger.debug(f'Episode: {episode} Step: {step} Total Rew: {glue.total_reward} Avg time: {avg_time:.4}ms FPS: {int(fps)}')
+            logger.debug(f'Seed: {idx} Episode: {episode} Step: {step} Total Rew: {glue.total_reward} Avg Reward: {collector.get_last("avg_reward")} Avg time: {avg_time:.4}ms FPS: {int(fps)}')
             glue.start()
 
         if step % 20 == 0 and step > 0:
