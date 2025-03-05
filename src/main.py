@@ -129,9 +129,6 @@ for idx in indices:
             logger.debug(f'Seed: {idx} Episode: {episode} Step: {step} Total Rew: {glue.total_reward} Avg Reward: {collector.get_last("avg_reward")} Avg time: {avg_time:.4}ms FPS: {int(fps)}')
             glue.start()
 
-        if step % 20 == 0 and step > 0:
-            logger.debug(f'Seed: {idx} Episode: {chk["episode"]}, Step: {step} Avg Reward: {collector.get_last("avg_reward")}')
-
     collector.reset()
 
     # ------------

@@ -1,11 +1,12 @@
 {
-    "agent": "LinearQL",
+    "agent": "LinearESARSA",
     "problem": "MultiPlantSimulator",
     "avg_rew_window": 10,
     "total_steps": -1,
     "metaParameters": {
         "alpha": [0.01, 0.1, 0.2],
         "epsilon": [0.1],
+        "n_step": [1, 4, 8],
         "environment":{
             "num_plants": 32,
             "lag": 1,
