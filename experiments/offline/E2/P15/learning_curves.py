@@ -21,22 +21,14 @@ from experiment.tools import parseCmdLineArgs
 setDefaultConference('neurips'); setFonts(font_size=8)  # for a small plot ("PaperDimensions" of neurips has been changed to column_width=3, text_width=3)
 #setDefaultConference('jmlr')  # for a large plot
 
-PLOT_THIS = 'GAC-sweep-s1'
+PLOT_THIS = 'GAC-sweep-n0'
 
 COLORS = {
-    'GAC-sweep-s2': 'red',
-    'GAC-sweep-s3': 'orange',
-    'GAC-sweep-s6': 'green',
-    'GAC-sweep-s9': 'blue',
-    'GAC-sweep-s1': 'purple',
+    'GAC-sweep-n0': 'red'
 }
 
-STRIDE = {
-    'GAC-sweep-s2': 2,
-    'GAC-sweep-s3': 3,
-    'GAC-sweep-s6': 6,
-    'GAC-sweep-s9': 9,
-    'GAC-sweep-s1': 1,
+N = {
+    'GAC-sweep-n0': 0
 }
 
 def main():
@@ -45,7 +37,7 @@ def main():
     results = ResultCollection.fromExperiments(Model=ExperimentModel)
 
     data_definition(
-        hyper_cols=['critic_lr', 'actor_lr_scale'],
+        hyper_cols=['critic_lr', 'actor_lr_scale', 'tau'],
         seed_col='seed',
         time_col='frame',
         environment_col='environment',
@@ -59,9 +51,9 @@ def main():
     )
 
     assert df is not None
-
+    
     exp = results.get_any_exp()
-
+    
     for env, env_df in split_over_column(df, col='environment'):
         for alg, alg_df in split_over_column(env_df, col='algorithm'):            
             if alg == PLOT_THIS:
@@ -91,9 +83,9 @@ def main():
                     statistic=Statistic.mean,
                 )
                 
-                ax[0].plot(rescale_time(xs[0], STRIDE[alg]), res.sample_stat, label=f'time step={10*STRIDE[alg]}min', color=COLORS[alg], linewidth=0.5)
-                ax[0].fill_between(rescale_time(xs[0], STRIDE[alg]), res.ci[0], res.ci[1], color=COLORS[alg], alpha=0.2)
-                ax[0].set_xlim(0, 168)
+                ax[0].plot(rescale_time(xs[0],1), res.sample_stat, label=f'n_hidden={N[alg]}', color=COLORS[alg], linewidth=0.5)
+                ax[0].fill_between(rescale_time(xs[0], 1), res.ci[0], res.ci[1], color=COLORS[alg], alpha=0.2)
+                ax[0].legend()
                 ax[0].set_title('Learning Curves')
                 ax[0].set_ylabel('Accumulated Reward')
 
@@ -108,10 +100,8 @@ def main():
                     statistic=Statistic.mean,
                 )
 
-                ax[1].plot(rescale_time(xs_a[0], STRIDE[alg]), res.sample_stat, label=f'time step={10*STRIDE[alg]}min', color=COLORS[alg], linewidth=0.5)
-                ax[1].fill_between(rescale_time(xs_a[0], STRIDE[alg]), res.ci[0], res.ci[1], color=COLORS[alg], alpha=0.2)
-                ax[1].set_xlim(0, 168)
-                ax[1].legend()
+                ax[1].plot(rescale_time(xs_a[0], 1), res.sample_stat, color=COLORS[alg], linewidth=0.5)
+                ax[1].fill_between(rescale_time(xs_a[0], 1), res.ci[0], res.ci[1], color=COLORS[alg], alpha=0.2)
                 ax[1].set_ylabel('Action')
                 ax[1].set_xlabel('Day Time [Hours]')
 

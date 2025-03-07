@@ -70,11 +70,8 @@ for idx in indices:
             'return': Identity(),
             'episode': Identity(),
             'steps': Identity(),
-            'avg_reward': WindowAverage(size = getattr(args, 'avg_rew_window', 10)),
             'action': Identity()
-
         },
-        # by default, ignore keys that are not explicitly listed above
         default=Ignore(),
     ))
     collector.setIdx(idx)
@@ -93,12 +90,6 @@ for idx in indices:
     glue = chk.build('glue', lambda: RlGlue(agent, env))
     chk.initial_value('episode', 0)
 
-    # If exp.total_steps is -1, then set total experiment steps 
-    # based on the length of the timestep such that each run 
-    # lasts for 14 days. 
-    if exp.problem == 'MultiPlantSimulator' and exp.total_steps == -1:
-        exp.total_steps = len(env.data)//env.stride
-
     # Run the experiment
     start_time = time.time()
 
@@ -110,21 +101,15 @@ for idx in indices:
         collector.next_frame()
         chk.maybe_save()
         interaction = glue.step()
-        # collect at each time step 
-        collector.collect('avg_reward', interaction.r)
-        collector.collect('return', glue.total_reward)
+
+        collector.collect('return', glue.total_reward)  # accumulated reward so far
         collector.collect('episode', chk['episode'])
         collector.collect('steps', glue.num_steps)
-        collector.collect('action', int.from_bytes(glue.last_action, byteorder='little'))
+        collector.collect('action', glue.last_action)   # for GAC, collect int.from_bytes(glue.last_action, byteorder='little')
 
         if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
             # allow agent to cleanup traces or other stateful episodic info
             agent.cleanup()
-
-            # collect some data
-            #collector.collect('return', glue.total_reward)
-            #collector.collect('episode', chk['episode'])
-            #collector.collect('steps', glue.num_steps)
 
             # track how many episodes are completed (cutoff is counted as termination for this count)
             chk['episode'] += 1
@@ -134,7 +119,7 @@ for idx in indices:
             fps = step / (time.time() - start_time)
 
             episode = chk['episode']
-            logger.debug(f'Seed: {idx} Episode: {episode} Step: {step} Total Rew: {glue.total_reward} Avg Reward: {collector.get_last("avg_reward")} Avg time: {avg_time:.4}ms FPS: {int(fps)}')
+            logger.debug(f'{episode} {step} {glue.total_reward} {avg_time:.4}ms {int(fps)}')
             glue.start()
 
     collector.reset()
