@@ -129,7 +129,7 @@ for idx in indices:
         collector.next_frame()
         chk.maybe_save()
         interaction = glue.step()
-        collector.collect('time', time.time() - glue.start_time)
+        collector.collect('time', time.time())
         collector.collect('action', interaction.a)
         collector.collect('reward', interaction.r)
         collector.collect('steps', glue.num_steps)
