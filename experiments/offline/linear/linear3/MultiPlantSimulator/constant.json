@@ -6,9 +6,9 @@
     "metaParameters": {
         "action": 1,
         "environment":{
-            "num_plants": 49,
+            "num_plants": 32,
             "lag": [1],
-            "stride": [1], 
+            "stride": [1, 2, 3, 6], 
             "one_hot_time":false
         }
     }

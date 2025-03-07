@@ -1,5 +1,4 @@
 # Experiments with linear function approximation in the MultiPlantSimulator env
-
 ## <u>Linear1</u>
 Debugging Q-learning and ESARSA, Q-learning seems to perform much better
 
@@ -31,18 +30,17 @@ becuase we are no longer splitting the chamber anyways (we will use all 64 plant
 
 #### TODO
 
-## <u>Linear4</u>
+## <u>Linear4</u> (NOT DONE YET, ignore the configs in here for now)
 DQN agent with single linear layer (to test batch updating for greater sample efficiency, though a confounding factor here 
-is Andy's DQN uses ADAM not regular SGD, might want to change to isolate the effect of batch updates but doesn't really matter)lolo
+is Andy's DQN uses ADAM not regular SGD, might want to change to isolate the effect of batch updates but probably not essential). Use larger batch size, maybe increase number of updates per step? 
 
 #### Notes
 - Best parameters are: ___
 
 #### TODO
 
-## <u>Linear5</u>
-GAC with a single linear layer and annealing temperature parameter (Check with Adam if there are any red flags with using a single
-linear layer for GAC)
+## <u>Linear5</u> (NOT DONE YET, dir doesn't exist)
+GAC with a single linear layer and large batch sizes, maybe increase number of updates per step? 
 
 #### Notes
 - Best parameters are: ___
