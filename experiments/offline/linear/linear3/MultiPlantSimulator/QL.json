@@ -1,0 +1,17 @@
+{
+    "agent": "LinearQL",
+    "problem": "MultiPlantSimulator",
+    "avg_rew_window": 10,
+    "total_steps": -1,
+    "metaParameters": {
+        "alpha": [0.2],
+        "epsilon": [0.1],
+        "decay_eps_frac": [0.5],
+        "environment":{
+            "num_plants": 49,
+            "lag": [1],
+            "stride": [2,3,6],
+            "one_hot_time": false
+        }
+    }
+}

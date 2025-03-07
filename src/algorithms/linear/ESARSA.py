@@ -31,6 +31,15 @@ class ESARSA(LinearAgent):
         # define parameter contract
         self.alpha = params['alpha']
         self.epsilon = params['epsilon']
+        self.decay_eps_frac = params.get('decay_eps_frac', False) # Fraction of total env steps at which we stop decaying epsilon, if false then there is no decay
+        
+        @property
+        def exp_len(self):
+            return self._exp_len
+
+        @exp_len.setter
+        def exp_len(self, exp_len):
+            self._exp_len = exp_len
 
         # create initial weights, set to 0
         self.w = np.zeros((actions, self.observations[0]), dtype=np.float64)
@@ -49,8 +58,8 @@ class ESARSA(LinearAgent):
             pi = np.zeros(self.actions)
         else:
             pi = self.policy(xp)
+        if self.decay_eps_frac:
+            self.epsilon = max(self.epsilon - 0.1 / (self.params['exp_len'] * self.decay_eps_frac), 0)
         
         _update(self.w, x, a, xp, pi, r, gamma, self.alpha)
-        #Decay epsilon
-        #self.epsilon = max(self.epsilon - 1.0 / self.epsilon, 0.01)
 

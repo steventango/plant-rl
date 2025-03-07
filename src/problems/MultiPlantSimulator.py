@@ -11,5 +11,5 @@ class MultiPlantSimulator(BaseProblem):
         
         self.env = Env(**self.env_params)
         self.actions = 2
-        self.observations = (4,) 
+        self.observations = self.env.state_dim
         self.gamma = 0.99

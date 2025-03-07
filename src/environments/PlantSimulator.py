@@ -211,8 +211,15 @@ class MultiPlantSimulator(BaseEnvironment):
 
         self.observed_areas.append([self.actual_areas[i](self.time)*self.projection_factors[i][self.num_steps] 
                                     for i in range(self.num_plants)])
+        
+        if self.one_hot_time:
+            time_obs = np.zeros(24)
+            time_idx = int(clock//3600)
+            time_obs[time_idx] = 1 # Set the position for the current hour to 1
+        else:
+            time_obs = self.sine_time(clock)
 
-        self.current_state = np.hstack([self.sine_time(clock), 
+        self.current_state = np.hstack([time_obs, 
                                         self.normalize(1),   # fill in missing value(s) with small value(s) close to zero
                                         self.normalize(np.mean(self.observed_areas[-1]))])
 
@@ -241,7 +248,8 @@ class MultiPlantSimulator(BaseEnvironment):
                                     for i in range(self.num_plants)])
         if self.one_hot_time:
             time_obs = np.zeros(24)
-            time_obs[clock // 3600] = 1 # Set the position for the current hour to 1
+            time_idx = int(clock//3600)
+            time_obs[time_idx] = 1 # Set the position for the current hour to 1
         else:
             time_obs = self.sine_time(clock)
         # Set state
