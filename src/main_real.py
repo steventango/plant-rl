@@ -5,6 +5,8 @@ sys.path.append(os.getcwd())
 import time
 import socket
 import logging
+from datetime import datetime, timedelta
+from pathlib import Path
 import argparse
 from PIL import Image
 import numpy as np
@@ -55,6 +57,25 @@ exp = ExperimentModel.load(args.exp)
 indices = args.idxs
 
 Problem = getProblem(exp.problem)
+
+
+def round_seconds(obj: datetime) -> datetime:
+    if obj.microsecond >= 500_000:
+        obj += timedelta(seconds=1)
+    return obj.replace(microsecond=0)
+
+
+def save_images(env, data_path: Path):
+    now = datetime.now()
+    now = round_seconds(now)
+    now = now.isoformat().replace(':', '')
+    img_path = data_path / f"{now}.png"
+    env.image.save(img_path)
+    if hasattr(env, "shape_image"):
+        shape_img_path = data_path / f"{now}_processed.png"
+        env.shape_image.save(shape_img_path)
+
+
 for idx in indices:
     chk = Checkpoint(exp, idx, base_path=args.checkpoint_path)
     chk.load_if_exists()
@@ -93,7 +114,8 @@ for idx in indices:
     chk.initial_value('episode', 0)
 
     context = exp.buildSaveContext(idx, base=args.save_path)
-    context.ensureExists(f'{idx}/images')
+    data_path = Path("/workspaces/plant-rl/data/first_exp/z2cR")
+    data_path.mkdir(parents=True, exist_ok=True)
 
     # Run the experiment
     start_time = time.time()
@@ -101,9 +123,7 @@ for idx in indices:
     # if we haven't started yet, then make the first interaction
     if glue.total_steps == 0:
         glue.start()
-        env.image.save(context.resolve(f'{idx}/images/_.jpg'))
-        if hasattr(env, "shape_image"):
-            env.shape_image.save(context.resolve(f'{idx}/images/_processed.jpg'))
+        save_images(env, data_path)
 
     for step in range(glue.total_steps, exp.total_steps):
         collector.next_frame()
@@ -113,9 +133,7 @@ for idx in indices:
         collector.collect('action', interaction.a)
         collector.collect('reward', interaction.r)
         collector.collect('steps', glue.num_steps)
-        env.image.save(context.resolve(f'{idx}/images/{step}.png'))
-        if hasattr(env, "shape_image"):
-            env.shape_image.save(context.resolve(f'{idx}/images/{step}_processed.png'))
+        save_images(env, data_path)
 
         if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
             # allow agent to cleanup traces or other stateful episodic info
