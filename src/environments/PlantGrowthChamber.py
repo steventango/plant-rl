@@ -19,7 +19,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self._start_time = start_time
 
     def get_observation(self):
-        self.time = time.time() - self.start_time
+        self.time = time.time() # - self.start_time
+        # adjust for time zone
+        self.time -= 7 * 3600
         timestamp = datetime.fromtimestamp(self.time)
         self.get_image()
         observation = (self.time, np.array(self.image))
@@ -31,10 +33,10 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.image = Image.open(io.BytesIO(response.content))
 
     def start(self):
-        if self._start_time is None:
-            self.start_time = time.time()
-        else:
-            self.start_time = self._start_time
+        # if self._start_time is None:
+        #     self.start_time = time.time()
+        # else:
+        #     self.start_time = self._start_time
         observation = self.get_observation()
         return observation
 
