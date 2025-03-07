@@ -1,16 +1,15 @@
 {
-    "agent": "LinearESARSA",
+    "agent": "Constant",
     "problem": "MultiPlantSimulator",
     "avg_rew_window": 10,
     "total_steps": -1,
     "metaParameters": {
-        "alpha": [0.01, 0.1, 0.2],
-        "epsilon": [0.1],
-        "n_step": [1, 4, 8],
+        "action": 1,
         "environment":{
             "num_plants": 32,
-            "lag": 1,
-            "stride": [1, 3, 6]
+            "lag": [1],
+            "stride": [1, 2, 3, 6], 
+            "one_hot_time":false
         }
     }
 }

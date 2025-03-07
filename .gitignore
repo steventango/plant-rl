@@ -1,7 +1,7 @@
 # ignore data folder
 data
 
-# ignore all results 
+# ignore all results
 results
 results/
 results.tar*
@@ -29,3 +29,5 @@ test.json
 build
 build/
 **.egg-info/
+
+*.mp4

@@ -10,7 +10,7 @@ from algorithms.SpreadsheetAgent import SpreadsheetAgent
 from algorithms.tc.ESARSA import ESARSA
 from algorithms.tc.SoftmaxAC import SoftmaxAC
 from algorithms.linear.ESARSA import ESARSA as LinearESARSA
-from algorithms.linear.LinearQL import LinearQL
+from algorithms.linear.LinearQL import LinearQL#, LinearBatchQL
 from algorithms.nn.GreedyAC.GreedyAC import GreedyAC
 
 def getAgent(name) -> Type[BaseAgent]:
@@ -28,7 +28,10 @@ def getAgent(name) -> Type[BaseAgent]:
 
     if name == 'LinearQL':
         return LinearQL
-
+    '''
+    if name == 'LinearBatchQL':
+        return LinearBatchQL
+    '''
     if name == 'SoftmaxAC':
         return SoftmaxAC
 

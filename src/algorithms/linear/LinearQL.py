@@ -16,7 +16,8 @@ class LinearQL(BaseAgent):
         self.epsilon = params['epsilon']
         self.curr_state = None
         self.curr_action = None
-
+        self.decay_eps_frac = params.get('decay_eps_frac', False) # Fraction of total env steps at which we stop decaying epsilon, if false then there is no decay
+        
         # create initial weights, set to -10
         self.w = np.zeros((actions, self.observations[0]), dtype=np.float64)
     
@@ -43,7 +44,9 @@ class LinearQL(BaseAgent):
         self.curr_action = a
         self.curr_state = s_next
         # Decay epsilon
-        #self.epsilon = max(self.epsilon - 1.0 / self.epsilon, 0.01)
+        if self.decay_eps_frac:
+            self.epsilon = max(self.epsilon - 0.1 / (self.params['exp_len'] * self.decay_eps_frac), 0) # Problem needs to have this param set in main using stride info from env
+
         return a
         
 

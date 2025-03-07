@@ -5,10 +5,12 @@ sys.path.append(os.getcwd())
 from tqdm import tqdm
 
 import time
+import random
 import socket
 import logging
 import argparse
 import numpy as np
+import torch
 from RlGlue import RlGlue
 from experiment import ExperimentModel
 from utils.checkpoint import Checkpoint
@@ -80,7 +82,13 @@ for idx in indices:
     # set random seeds accordingly, with optional offset
     params = exp.get_hypers(idx)
     seed = run + params.get("experiment", {}).get("seed_offset", 0)
+    
+    # Seed various modules
     np.random.seed(seed)
+    random.seed(seed)            
+    torch.manual_seed(seed)      
+    torch.cuda.manual_seed(seed) 
+    torch.backends.cudnn.deterministic = True
 
     # build stateful things and attach to checkpoint
     problem = chk.build('p', lambda: Problem(exp, idx, collector))
@@ -105,7 +113,7 @@ for idx in indices:
         collector.collect('return', glue.total_reward)  # accumulated reward so far
         collector.collect('episode', chk['episode'])
         collector.collect('steps', glue.num_steps)
-        collector.collect('action', glue.last_action)   # for GAC, collect int.from_bytes(glue.last_action, byteorder='little')
+        collector.collect('action', int.from_bytes(glue.last_action, byteorder='little'))
 
         if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
             # allow agent to cleanup traces or other stateful episodic info
@@ -119,7 +127,7 @@ for idx in indices:
             fps = step / (time.time() - start_time)
 
             episode = chk['episode']
-            logger.debug(f'{episode} {step} {glue.total_reward} {avg_time:.4}ms {int(fps)}')
+            logger.debug(f'Seed: {idx} Episode: {episode} Step: {step} Total Rew: {glue.total_reward} Avg Reward: {collector.get_last("avg_reward")} Avg time: {avg_time:.4}ms FPS: {int(fps)}')
             glue.start()
 
     collector.reset()
