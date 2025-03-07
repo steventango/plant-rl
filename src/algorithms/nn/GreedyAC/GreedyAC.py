@@ -52,7 +52,7 @@ class GreedyAC(BaseAgent):
             action=self.action,
             reward = reward,
             next_state=observation,
-            done_mask=False
+            done_mask=True
             )
         self.state = observation
         self.action = self.greedy_ac.sample_action(self.state)
@@ -69,7 +69,7 @@ class GreedyAC(BaseAgent):
             action=self.action,
             reward = reward,
             next_state=np.zeros(self.observations),
-            done_mask=True
+            done_mask=False
             )
         self.state = None
         self.action = None

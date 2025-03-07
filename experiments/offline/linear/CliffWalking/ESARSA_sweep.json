@@ -1,0 +1,10 @@
+{
+    "agent": "LinearESARSA",
+    "problem": "CliffWalking",
+    "total_steps": 30000,
+    "metaParameters": {
+        "alpha": [0.1, 0.01, 0.001, 0.0001],
+        "epsilon": [0.1],
+        "n_step": [5, 10, 50, 100]
+    }
+}

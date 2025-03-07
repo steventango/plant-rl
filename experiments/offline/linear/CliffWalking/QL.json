@@ -1,0 +1,11 @@
+{
+    "agent": "LinearQL",
+    "problem": "CliffWalking",
+    "total_steps": 15000,
+    "episode_cutoff": 50,
+    "metaParameters": {
+        "alpha": [0.1],
+        "epsilon": [0.1],
+        "n_step": [1]
+    }
+}
