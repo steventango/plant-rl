@@ -1,0 +1,17 @@
+{
+    "agent": "Spreadsheet",
+    "problem": "PlantGrowthChamber",
+    "total_steps": 27360,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "camera_url": "http://mitacs-zone02-camera01.ccis.ualberta.ca:8000/observation",
+            "lightbar_url": "http://mitacs-zone2.ccis.ualberta.ca:8000/action/left"
+        },
+        "experiment": {
+            "step_duration": 60,
+            "update_freq": 1
+        },
+        "filepath": "experiments/online/E4/P1/AfternoonNap.xlsx"
+    }
+}

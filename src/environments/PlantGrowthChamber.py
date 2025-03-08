@@ -10,16 +10,18 @@ from utils.RlGlue.environment import BaseAsyncEnvironment
 
 
 class PlantGrowthChamber(BaseAsyncEnvironment):
-    def __init__(self, camera_url: str, lightbar_url: str):
+    def __init__(self, camera_url: str, lightbar_url: str, start_time: float | None = None):
         self.gamma = 0.99
         self.camera_url = camera_url
         self.lightbar_url = lightbar_url
         self.image = None
         self.time = None
-        self.start_time = time.time()
+        self._start_time = start_time
 
     def get_observation(self):
-        self.time = time.time() - self.start_time
+        self.time = time.time() # - self.start_time
+        # adjust for time zone
+        self.time -= 7 * 3600
         timestamp = datetime.fromtimestamp(self.time)
         self.get_image()
         observation = (self.time, np.array(self.image))
@@ -31,8 +33,11 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.image = Image.open(io.BytesIO(response.content))
 
     def start(self):
+        # if self._start_time is None:
+        #     self.start_time = time.time()
+        # else:
+        #     self.start_time = self._start_time
         observation = self.get_observation()
-        self.start_time = time.time()
         return observation
 
     def step_one(self, action: np.ndarray):
