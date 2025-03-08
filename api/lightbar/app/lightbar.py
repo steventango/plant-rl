@@ -68,4 +68,6 @@ class Lightbar:
 
     def get_i2c(self):
         from smbus2 import SMBus
-        return SMBus(1)
+        bus = SMBus(1)
+        time.sleep(1)
+        return bus
