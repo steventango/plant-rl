@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from PIL import Image
 
 from ..app.main import app, get_camera
-from .mock_picamzero import MockCamera
+from .mock_camera import MockCamera
 
 
 @lru_cache(maxsize=None)
