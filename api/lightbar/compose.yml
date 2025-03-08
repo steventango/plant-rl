@@ -1,6 +1,6 @@
 services:
   app:
-    image: ghcr.io/steventango/plant-rl/lightbar:dockerize-lightbar-api
+    image: ghcr.io/steventango/plant-rl/lightbar:dockerize-apis
     ports:
       - "0.0.0.0:80:80"
     devices:
