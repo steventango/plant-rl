@@ -21,22 +21,22 @@ from experiment.tools import parseCmdLineArgs
 setDefaultConference('neurips'); setFonts(font_size=8)  # for a small plot ("PaperDimensions" of neurips has been changed to column_width=3, text_width=3)
 #setDefaultConference('jmlr')  # for a large plot
 
-PLOT_THIS = 'GAC-sweep-s1'
+PLOT_THIS = 'GAC-sweep-l12'
 
 COLORS = {
-    'GAC-sweep-s2': 'red',
-    'GAC-sweep-s3': 'orange',
-    'GAC-sweep-s6': 'green',
-    'GAC-sweep-s9': 'blue',
-    'GAC-sweep-s1': 'purple',
+    'GAC-sweep-l2': 'red',
+    'GAC-sweep-l3': 'orange',
+    'GAC-sweep-l6': 'green',
+    'GAC-sweep-l9': 'blue',
+    'GAC-sweep-l12': 'purple',
 }
 
 STRIDE = {
-    'GAC-sweep-s2': 2,
-    'GAC-sweep-s3': 3,
-    'GAC-sweep-s6': 6,
-    'GAC-sweep-s9': 9,
-    'GAC-sweep-s1': 1,
+    'GAC-sweep-l2': 2,
+    'GAC-sweep-l3': 3,
+    'GAC-sweep-l6': 6,
+    'GAC-sweep-l9': 9,
+    'GAC-sweep-l12': 12,
 }
 
 def main():
@@ -59,9 +59,9 @@ def main():
     )
 
     assert df is not None
-
+    
     exp = results.get_any_exp()
-
+    
     for env, env_df in split_over_column(df, col='environment'):
         for alg, alg_df in split_over_column(env_df, col='algorithm'):            
             if alg == PLOT_THIS:
@@ -71,11 +71,11 @@ def main():
                 hyper2metric = {}
                 for clr in alg_df['critic_lr'].unique():
                     for alr in alg_df['actor_lr_scale'].unique():
-                        for tau in alg_df['tau'].unique():
-                            xs, ys = extract_learning_curves(alg_df, (clr, alr, tau), metric='return', interpolation=None)
-                            assert len(xs) == 5  
-                            metric = [r[-1] for r in ys]
-                            hyper2metric[(clr, alr, tau)] = np.mean(metric)
+                        print((clr, alr))
+                        xs, ys = extract_learning_curves(alg_df, (clr, alr), metric='return', interpolation=None)
+                        assert len(xs) == 5  
+                        metric = [r[-1] for r in ys]
+                        hyper2metric[(clr, alr)] = np.mean(metric)
                 
                 best_hyper = max(hyper2metric, key=hyper2metric.get) 
                 print(f'Best hypers for {alg} = {best_hyper}')
@@ -91,9 +91,8 @@ def main():
                     statistic=Statistic.mean,
                 )
                 
-                ax[0].plot(rescale_time(xs[0], STRIDE[alg]), res.sample_stat, label=f'time step={10*STRIDE[alg]}min', color=COLORS[alg], linewidth=0.5)
-                ax[0].fill_between(rescale_time(xs[0], STRIDE[alg]), res.ci[0], res.ci[1], color=COLORS[alg], alpha=0.2)
-                ax[0].set_xlim(0, 168)
+                ax[0].plot(rescale_time(xs[0],1), res.sample_stat, color=COLORS[alg], linewidth=0.5)
+                ax[0].fill_between(rescale_time(xs[0], 1), res.ci[0], res.ci[1], color=COLORS[alg], alpha=0.2)
                 ax[0].set_title('Learning Curves')
                 ax[0].set_ylabel('Accumulated Reward')
 
@@ -108,9 +107,8 @@ def main():
                     statistic=Statistic.mean,
                 )
 
-                ax[1].plot(rescale_time(xs_a[0], STRIDE[alg]), res.sample_stat, label=f'time step={10*STRIDE[alg]}min', color=COLORS[alg], linewidth=0.5)
-                ax[1].fill_between(rescale_time(xs_a[0], STRIDE[alg]), res.ci[0], res.ci[1], color=COLORS[alg], alpha=0.2)
-                ax[1].set_xlim(0, 168)
+                ax[1].plot(rescale_time(xs_a[0], 1), res.sample_stat, label=f'reward lag={10*STRIDE[alg]}min', color=COLORS[alg], linewidth=0.5)
+                ax[1].fill_between(rescale_time(xs_a[0], 1), res.ci[0], res.ci[1], color=COLORS[alg], alpha=0.2)
                 ax[1].legend()
                 ax[1].set_ylabel('Action')
                 ax[1].set_xlabel('Day Time [Hours]')

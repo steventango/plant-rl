@@ -173,12 +173,44 @@
 - Would farsighted GAC learn to keep light on within 2 weeks?
 ### Methods: 
 - Total training time = 14 days
-- Record accumulated reward at every step
+- Record accumulated reward at every step; reward = % change over one time step
 - Widen hypersweep
 - Test different strides
-- reward = % change over one time step
+- gamma = 0.99
 ### Observations: 
--...
+- Agents with time step = 90 or 120 minutes learned to keep the light on! 
+- They both prefer the largest learning rates: critic_lr = 0.01, actor_lr_scale = 10.0
 ### Conclusions & Outlooks: 
--...
+- GAC is able to see past the noises and daily modulation, but 90 minutes is too long. 
+- We could try to make short time steps work -- with wider hyper sweeps, different state/reward definitions, different agents, etc. But I suspect that the need for larger time steps is linked to plant's growth rate, noise, and daily modulation in the measurement, so maybe a more drastic change is needed. What if we incorporate a world model that estimates the actual plant size (like in the simulator)?
+- Another venue to explore is finding/inventing an algorithm that works on multiple time scales. We could start with a large time scale and a simple action space (just off/on), and then incrementally shrink the time step and increase the action space -> Adam recommends (i) options or (ii) add a change action penalty.
  
+ ##  Phase P14
+### Objectives: 
+- Thoroughly test out different "lags", while fixing stride = 1, to isolate the reason for the need of longer time scale.
+### Methods: 
+- Total training time = 14 days
+- Record accumulated reward at every step; reward = % change between area(t) and area(t-lag)
+- lag = 2, 3, 6, 9, 12
+- Stride = 1
+- gamma = 0.99
+### Observations: 
+- None of the agents learned.
+### Conclusions & Outlooks: 
+- Larger lag doesn't give the same benefit as larger time step. 
+
+##  Phase P15
+### Objectives: 
+- Is it possible that GAC is overfitting with too big of a network? Try one linear layer
+### Methods: 
+- Total training time = 14 days
+- Record accumulated reward at every step; reward = % change between area(t) and area(t-lag)
+- n_hidden = 0
+- sweep exploration tau 
+- lag =1
+- stride = 1
+- gamma = 0.99
+### Observations: 
+- Doesn't work
+### Conclusions & Outlooks:
+- Linear GAC doesn't work for all time steps
