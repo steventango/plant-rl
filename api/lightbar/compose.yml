@@ -1,8 +1,6 @@
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/steventango/plant-rl/lightbar:dockerize-lightbar-api
     ports:
       - 80:80
     devices:
