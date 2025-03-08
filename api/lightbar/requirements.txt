@@ -1,3 +1,4 @@
-fastapi[standard]==0.115.8
-numpy==1.24.4
-smbus2==0.5.0
+fastapi[standard]>=0.115.11
+numpy~=1.25.2
+smbus2>=0.5.0
+uvicorn>=0.34.0

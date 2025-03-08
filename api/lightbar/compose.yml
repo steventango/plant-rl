@@ -1,0 +1,11 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 80:80
+    devices:
+      - /dev/i2c-1:/dev/i2c-1
+    privileged: true
+    restart: unless-stopped
