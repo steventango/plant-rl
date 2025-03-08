@@ -7,7 +7,7 @@ name: Docker
 
 on:
   push:
-    branches: [ "main", "dockerize-lightbar-api" ]
+    branches: [ "main", "dockerize-apis" ]
     # Publish semver tags as releases.
     tags: [ 'v*.*.*' ]
     paths:
@@ -30,9 +30,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # - context: api/camera
-          #   image_name: ${{ github.repository }}/camera
-          #   platforms: linux/arm64
+          - context: api/camera
+            image_name: ${{ github.repository }}/camera
+            platforms: linux/arm64, linux/arm/v7
           - context: api/lightbar
             image_name: ${{ github.repository }}/lightbar
             platforms: linux/arm/v7
