@@ -1,3 +1,4 @@
+import os
 from functools import lru_cache
 from typing import List
 
@@ -7,10 +8,10 @@ from pydantic import BaseModel
 from typing_extensions import Annotated
 
 from .lightbar import Lightbar
-from .zones import zone2
+from .zones import ZONES
 
 app = FastAPI()
-zone = zone2
+zone = ZONES.get(os.getenv("ZONE", 2))
 
 
 class Action(BaseModel):

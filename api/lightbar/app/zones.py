@@ -3,4 +3,9 @@ class Zone:
         self.left = left
         self.right = right
 
-zone2 = Zone(0x69, 0x71)
+
+ZONES = {
+    2: Zone(0x69, 0x71),
+    8: Zone(0x10, 0x11),
+    9: Zone(0x63,0x65)
+}
