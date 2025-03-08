@@ -3,11 +3,11 @@ import time
 import numpy as np
 
 from .macros import LED0_ON_L, LED1_ON_L, LED2_ON_L, LED4_ON_L, LED5_ON_L, LED6_ON_L
-
+from .zones import Zone
 
 class Lightbar:
-    def __init__(self, address: int):
-        self.address = address
+    def __init__(self, zone: Zone):
+        self.addresses = (zone.left, zone.right)
         self.channels = ["blue", "cool_white", "warm_white", "orange_red", "red", "far_red"]
         self.i2c = self.get_i2c()
 
@@ -16,18 +16,18 @@ class Lightbar:
         duty_cycle = self.convert_to_duty_cycle(action)
         self.set_duty_cycle(duty_cycle)
 
-    def set_duty_cycle(self, duty_cycle: np.ndarray):
+    def set_duty_cycle(self, duty_cycles: np.ndarray):
         for channel in range(len(self.channels)):
-            self.set_half_bar_pwm(channel, duty_cycle[channel])
+            self.set_bar_pwn(channel, duty_cycles[:, channel])
 
     def ensure_safety_limits(self, action: np.ndarray):
         # safety limits
         # action should be 0.5 max per channel
         action /= 2
         # sum of all channels should be at most 2
-        if action.sum() > 2:
-            action /= action.sum()
-            action *= 2
+        cond = action.sum(axis=1) > 2
+        action[cond] /= action[cond].sum(axis=1, keepdims=True)
+        action[cond] *= 2
         return action
 
     def convert_to_duty_cycle(self, action: np.ndarray):
@@ -35,12 +35,16 @@ class Lightbar:
         duty_cycle = duty_cycle.astype(np.int32)
         return duty_cycle
 
-    def set_half_bar_pwm(self, channel: int, duty_cycle: int):
+    def set_bar_pwn(self, channel: int, duty_cycles: np.ndarray):
+        for address, duty_cycle in zip(self.addresses, duty_cycles):
+            self.set_half_bar_pwm(address, channel, duty_cycle)
+
+    def set_half_bar_pwm(self, address: int, channel: int, duty_cycle: int):
         """
         Set the PWM duty cycle for a channel on a half-bar.
         """
         command_array = self.get_command_array(channel, duty_cycle)
-        self.i2c.write_i2c_block_data(self.address, 3, command_array)
+        self.i2c.write_i2c_block_data(address, 3, command_array)
         time.sleep(0.025)
 
     def get_command_array(self, channel, duty_cycle):

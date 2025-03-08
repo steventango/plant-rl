@@ -15,24 +15,14 @@ zone = ZONES.get(os.getenv("ZONE", 2))
 
 
 class Action(BaseModel):
-    array: List[float]
+    array: List[List[float]]
 
 
 @lru_cache(maxsize=None)
-def get_lightbar_left():
-    return Lightbar(zone.left)
+def get_lightbar():
+    return Lightbar(zone)
 
 
-@lru_cache(maxsize=None)
-def get_lightbar_right():
-    return Lightbar(zone.right)
-
-
-@app.put("/action/left", response_class=Response)
-def update_action_left(action: Action, lightbar: Annotated[any, Depends(get_lightbar_left)]):
-    lightbar.step(np.array(action.array))
-
-
-@app.put("/action/right", response_class=Response)
-def update_action_right(action: Action, lightbar: Annotated[any, Depends(get_lightbar_right)]):
+@app.put("/action", response_class=Response)
+def update_action(action: Action, lightbar: Annotated[any, Depends(get_lightbar)]):
     lightbar.step(np.array(action.array))
