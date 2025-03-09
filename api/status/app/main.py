@@ -53,6 +53,9 @@ def show_zones():
         text-align: center;
         overflow: hidden;
       }
+      body {
+        font-family: sans-serif;
+      }
     </style>
     </head>
     <body>
