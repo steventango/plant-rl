@@ -1,5 +1,6 @@
 import base64
 import concurrent.futures
+import html
 import json
 
 import requests
@@ -38,7 +39,7 @@ def show_zones():
     with concurrent.futures.ThreadPoolExecutor() as executor:
         results = list(executor.map(fetch_zone_data, zones))
 
-    html = """
+    response = """
     <html>
     <head>
     <style>
@@ -65,25 +66,27 @@ def show_zones():
       <div class="grid">
     """
     for res in results:
-        cam1_src, cam1_alt = f"data:image/png;base64,{res['cam1_b64']}", "Camera1"
+        code = res["latest"]
+        cam1_src = f"data:image/png;base64,{res['cam1_b64']}"
         if res["cam1_b64"].startswith("Error:"):
             cam1_src = "https://placehold.co/400x300"
-            cam1_alt = res["cam1_b64"].replace('"', '\\"')
-        cam2_src, cam2_alt = f"data:image/png;base64,{res['cam2_b64']}", "Camera2"
+            code += "<br>" + res["cam1_b64"]
+        cam2_src = f"data:image/png;base64,{res['cam2_b64']}"
         if res["cam2_b64"].startswith("Error:"):
             cam2_src = "https://placehold.co/400x300"
-            cam2_alt = res["cam2_b64"].replace('"', '\\"')
-        html += f"""
+            code += "<br>" + res["cam2_b64"]
+        code = html.escape(code)
+        response += f"""
         <div class="zone">
           <h3>Zone {res["zone"]}</h3>
-          <img src="{cam1_src}" alt="{cam1_alt}"/>
-          <img src="{cam2_src}" alt="{cam2_alt}"/>
-          <pre>{res["latest"]}</pre>
+          <img src="{cam1_src}"/>
+          <img src="{cam2_src}"/>
+          <code>{code}</code>
         </div>
         """
-    html += """
+    response += """
       </div>
     </body>
     </html>
     """
-    return html
+    return response
