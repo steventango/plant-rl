@@ -18,8 +18,8 @@ def get_camera():
 
 
 @app.get("/observation", response_class=Response)
-def read_observation(cam: Annotated[any, Depends(get_camera)]):
-    array = cam.capture_array()
+def read_observation(camera: Annotated[any, Depends(get_camera)]):
+    array = camera.capture_array()
     image = Image.fromarray(array)
 
     with io.BytesIO() as buf:
