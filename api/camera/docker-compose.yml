@@ -1,0 +1,12 @@
+version: "2"
+
+services:
+  app:
+    image: ghcr.io/steventango/plant-rl/camera:dockerize-apis
+    ports:
+      - 80:80
+    privileged: true
+    restart: unless-stopped
+    volumes:
+      - /run/udev:/run/udev:ro
+      - .:/app

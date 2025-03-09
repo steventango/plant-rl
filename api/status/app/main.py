@@ -15,11 +15,24 @@ def show_zones():
     def fetch_zone_data(zone):
         result = {}
         result["zone"] = zone
-        result["latest"] = json.dumps(requests.get(f"http://mitacs-zone{zone}.ccis.ualberta.ca/action/latest").json(), indent=4)
-        cam1_resp = requests.get(f"http://mitacs-zone0{zone}-camera01.ccis.ualberta.ca/observation")
-        cam2_resp = requests.get(f"http://mitacs-zone0{zone}-camera02.ccis.ualberta.ca/observation")
-        result["cam1_b64"] = base64.b64encode(cam1_resp.content).decode()
-        result["cam2_b64"] = base64.b64encode(cam2_resp.content).decode()
+        try:
+            latest_resp = requests.get(f"http://mitacs-zone{zone}.ccis.ualberta.ca/action/latest")
+            latest_resp.raise_for_status()
+            result["latest"] = json.dumps(latest_resp.json(), indent=4)
+        except Exception as e:
+            result["latest"] = f"Error: {e}"
+        try:
+            cam1_resp = requests.get(f"http://mitacs-zone0{zone}-camera01.ccis.ualberta.ca/observation")
+            cam1_resp.raise_for_status()
+            result["cam1_b64"] = base64.b64encode(cam1_resp.content).decode()
+        except Exception as e:
+            result["cam1_b64"] = f"Error: {e}"
+        try:
+            cam2_resp = requests.get(f"http://mitacs-zone0{zone}-camera02.ccis.ualberta.ca/observation")
+            cam2_resp.raise_for_status()
+            result["cam2_b64"] = base64.b64encode(cam2_resp.content).decode()
+        except Exception as e:
+            result["cam2_b64"] = f"Error: {e}"
         return result
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
