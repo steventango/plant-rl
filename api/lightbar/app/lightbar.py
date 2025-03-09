@@ -5,14 +5,19 @@ import numpy as np
 from .macros import LED0_ON_L, LED1_ON_L, LED2_ON_L, LED4_ON_L, LED5_ON_L, LED6_ON_L
 from .zones import Zone
 
+
 class Lightbar:
     def __init__(self, zone: Zone):
         self.addresses = (zone.left, zone.right)
         self.channels = ["blue", "cool_white", "warm_white", "orange_red", "red", "far_red"]
         self.i2c = self.get_i2c()
+        self.action = None
+        self.safe_action = None
 
     def step(self, action: np.ndarray):
+        self.action = action.copy()
         action = self.ensure_safety_limits(action)
+        self.safe_action = action
         duty_cycle = self.convert_to_duty_cycle(action)
         self.set_duty_cycle(duty_cycle)
 
