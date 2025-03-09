@@ -2,7 +2,7 @@ version: "2"
 
 services:
   app:
-    image: ghcr.io/steventango/plant-rl/camera:dockerize-apis
+    image: ghcr.io/steventango/plant-rl/camera2:dockerize-apis
     ports:
       - 80:80
     privileged: true

@@ -32,7 +32,10 @@ jobs:
         include:
           - context: api/camera
             image_name: ${{ github.repository }}/camera
-            platforms: linux/arm64, linux/arm/v7
+            platforms: linux/arm/v7
+          - context: api/camera2
+            image_name: ${{ github.repository }}/camera2
+            platforms: linux/arm64
           - context: api/lightbar
             image_name: ${{ github.repository }}/lightbar
             platforms: linux/arm/v7
