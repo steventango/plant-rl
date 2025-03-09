@@ -51,14 +51,16 @@ def show_zones():
       .zone {
         border: 1px solid #ccc;
         margin: 5px;
-        text-align: center;
         overflow: hidden;
+      }
+      h3 {
+        text-align: center;
       }
       body {
         font-family: sans-serif;
       }
       img {
-        width: 50%;
+        width: 49%;
       }
     </style>
     </head>
@@ -66,21 +68,21 @@ def show_zones():
       <div class="grid">
     """
     for res in results:
-        code = res["latest"]
+        code = html.escape(res["latest"])
         cam1_src = f"data:image/png;base64,{res['cam1_b64']}"
         if res["cam1_b64"].startswith("Error:"):
             cam1_src = "https://placehold.co/400x300"
-            code += "<br>" + res["cam1_b64"]
+            code += "<br><br>" + html.escape(res["cam1_b64"])
         cam2_src = f"data:image/png;base64,{res['cam2_b64']}"
         if res["cam2_b64"].startswith("Error:"):
             cam2_src = "https://placehold.co/400x300"
-            code += "<br>" + res["cam2_b64"]
-        code = html.escape(code)
+            code += "<br><br>" + html.escape(res["cam2_b64"])
         response += f"""
         <div class="zone">
           <h3>Zone {res["zone"]}</h3>
           <img src="{cam1_src}"/>
           <img src="{cam2_src}"/>
+          <br>
           <code>{code}</code>
         </div>
         """
