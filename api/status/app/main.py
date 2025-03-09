@@ -65,11 +65,19 @@ def show_zones():
       <div class="grid">
     """
     for res in results:
+        cam1_src, cam1_alt = f"data:image/png;base64,{res['cam1_b64']}", "Camera1"
+        if res["cam1_b64"].startswith("Error:"):
+            cam1_src = "https://placehold.co/400x300"
+            cam1_alt = res["cam1_b64"].replace('"', '\\"')
+        cam2_src, cam2_alt = f"data:image/png;base64,{res['cam2_b64']}", "Camera2"
+        if res["cam2_b64"].startswith("Error:"):
+            cam2_src = "https://placehold.co/400x300"
+            cam2_alt = res["cam2_b64"].replace('"', '\\"')
         html += f"""
         <div class="zone">
           <h3>Zone {res["zone"]}</h3>
-          <img src="data:image/png;base64,{res["cam1_b64"]}" alt="Camera1"/>
-          <img src="data:image/png;base64,{res["cam2_b64"]}" alt="Camera2"/>
+          <img src="{cam1_src}" alt="{cam1_alt}"/>
+          <img src="{cam2_src}" alt="{cam2_alt}"/>
           <pre>{res["latest"]}</pre>
         </div>
         """
