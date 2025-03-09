@@ -56,6 +56,9 @@ def show_zones():
       body {
         font-family: sans-serif;
       }
+      img {
+        width: 50%;
+      }
     </style>
     </head>
     <body>
