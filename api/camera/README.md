@@ -32,5 +32,5 @@ screen
 fastapi run app/main.py --port 8000
 
 # on alien
-curl http://mitacs-zone02-camera01.ccis.ualberta.ca:8000/observation --output observation.jpg
+curl http://mitacs-zone02-camera01.ccis.ualberta.ca:8000/observation --output observation.png
 ```
