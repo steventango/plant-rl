@@ -4,7 +4,7 @@
 set -e
 
 # https://forums.raspberrypi.com/viewtopic.php?t=356182
-sed -i 's/raspbian.raspberrypi.org/legacy.raspbian.org/g' /etc/apt/sources.list
+sudo sed -i 's/raspbian.raspberrypi.org/legacy.raspbian.org/g' /etc/apt/sources.list
 
 # Add Docker's official GPG key:
 sudo apt-get update
