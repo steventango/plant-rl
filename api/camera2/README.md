@@ -13,7 +13,7 @@ ssh zone08-camera01 -t "cd ~/Desktop && ./install-stretch.sh"
 ## Usage
 ```bash
 # on alien
-ssh zone08-camera01 -t "cd ~/Desktop/camera && docker compose up -d"
-  
-curl http://mitacs-zone02-camera01.ccis.ualberta.ca:8000/observation --output observation.png
+ssh zone08-camera01 -t "cd ~/Desktop/camera && docker-compose up -d"
+
+curl http://mitacs-zone08-camera01.ccis.ualberta.ca/observation --output observation.png
 ```
