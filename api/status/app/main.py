@@ -18,7 +18,7 @@ def show_zones():
         try:
             latest_resp = requests.get(f"http://mitacs-zone{zone}.ccis.ualberta.ca/action/latest")
             latest_resp.raise_for_status()
-            result["latest"] = json.dumps(latest_resp.json(), indent=4)
+            result["latest"] = json.dumps(latest_resp.json())
         except Exception as e:
             result["latest"] = f"Error: {e}"
         try:
