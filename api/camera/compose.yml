@@ -3,9 +3,8 @@ services:
     image: ghcr.io/steventango/plant-rl/camera:dockerize-apis
     ports:
       - 80:80
-    devices:
-      - /dev/i2c-1:/dev/i2c-1
     privileged: true
     restart: unless-stopped
-    environment:
-      - ZONE=${ZONE}
+    volumes:
+      - /run/udev:/run/udev:ro
+      - .:/app
