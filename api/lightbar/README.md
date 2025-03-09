@@ -6,14 +6,12 @@ This starts a FastAPI server that controls the lightbar.
 ```bash
 rsync -azP ../install-buster.sh zone8:~/Desktop/
 rsync -azP . zone8:~/Desktop/lightbar
-ssh zone8 -t "cd ~/Desktop && ./install-buster.sh"
+ssh zone8 -t "cd ~/Desktop && ./install-buster.sh && cd lightbar && echo 'ZONE=8' > .env && docker compose up -d"
 ```
 
 
 ## Usage
 ```bash
-ssh zone8 -t "cd ~/Desktop/lightbar && echo 'ZONE=8' > .env && docker compose up -d"
-
 curl http://mitacs-zone8.ccis.ualberta.ca/action -X PUT -H "Content-Type: application/json" -d '{"array": [[1.0, 1.0, 1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]]}'
 curl http://mitacs-zone8.ccis.ualberta.ca/action/latest
 ```
