@@ -53,8 +53,8 @@ def show_zones():
         html += f"""
         <div class="zone">
           <h3>Zone {res["zone"]}</h3>
-          <img src="data:image/jpeg;base64,{res["cam1_b64"]}" alt="Camera1"/>
-          <img src="data:image/jpeg;base64,{res["cam2_b64"]}" alt="Camera2"/>
+          <img src="data:image/png;base64,{res["cam1_b64"]}" alt="Camera1"/>
+          <img src="data:image/png;base64,{res["cam2_b64"]}" alt="Camera2"/>
           <pre>{res["latest"]}</pre>
         </div>
         """
