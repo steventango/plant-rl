@@ -42,8 +42,17 @@ def show_zones():
     <html>
     <head>
     <style>
-      .grid { display: grid; grid-template-columns: repeat(3, 1fr); }
-      .zone { border: 1px solid #ccc; margin: 5px; text-align: center; }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        margin: 0 auto;
+      }
+      .zone {
+        border: 1px solid #ccc;
+        margin: 5px;
+        text-align: center;
+        overflow: hidden;
+      }
     </style>
     </head>
     <body>
