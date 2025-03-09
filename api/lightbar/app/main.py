@@ -1,3 +1,4 @@
+import os
 from functools import lru_cache
 from typing import List
 
@@ -7,31 +8,29 @@ from pydantic import BaseModel
 from typing_extensions import Annotated
 
 from .lightbar import Lightbar
-from .zones import zone2
+from .zones import ZONES
 
 app = FastAPI()
-zone = zone2
+zone = ZONES.get(int(os.getenv("ZONE", 2)))
 
 
 class Action(BaseModel):
-    array: List[float]
+    array: List[List[float]]
 
 
 @lru_cache(maxsize=None)
-def get_lightbar_left():
-    return Lightbar(zone.left)
+def get_lightbar():
+    return Lightbar(zone)
 
 
-@lru_cache(maxsize=None)
-def get_lightbar_right():
-    return Lightbar(zone.right)
-
-
-@app.put("/action/left", response_class=Response)
-def update_action_left(action: Action, lightbar: Annotated[any, Depends(get_lightbar_left)]):
+@app.put("/action", response_class=Response)
+def update_action(action: Action, lightbar: Annotated[any, Depends(get_lightbar)]):
     lightbar.step(np.array(action.array))
 
 
-@app.put("/action/right", response_class=Response)
-def update_action_right(action: Action, lightbar: Annotated[any, Depends(get_lightbar_right)]):
-    lightbar.step(np.array(action.array))
+@app.get("/action/latest")
+def get_current_action(lightbar: Lightbar = Depends(get_lightbar)):
+    return {
+        "action": lightbar.action.tolist() if lightbar.action is not None else None,
+        "safe_action": lightbar.safe_action.tolist() if lightbar.safe_action is not None else None
+    }

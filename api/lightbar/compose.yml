@@ -1,0 +1,13 @@
+services:
+  app:
+    image: ghcr.io/steventango/plant-rl/lightbar:dockerize-apis
+    ports:
+      - 80:80
+    devices:
+      - /dev/i2c-1:/dev/i2c-1
+    privileged: true
+    restart: unless-stopped
+    environment:
+      - ZONE=${ZONE}
+    volumes:
+      - .:/app
