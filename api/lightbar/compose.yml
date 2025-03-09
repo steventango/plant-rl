@@ -9,3 +9,5 @@ services:
     restart: unless-stopped
     environment:
       - ZONE=${ZONE}
+    volumes:
+      - .:/app
