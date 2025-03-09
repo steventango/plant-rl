@@ -6,7 +6,6 @@ RUN apt update && apt install -y --no-install-recommends gnupg
 RUN echo "deb http://archive.raspberrypi.org/debian/ buster main" > /etc/apt/sources.list.d/raspi.list \ && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 82B129927FA3303E
 
 RUN apt update && apt install -y --no-install-recommends \
-  python3-pip \
   python3-picamera \
   && apt-get clean \
   && apt-get autoremove \
