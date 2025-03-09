@@ -1,3 +1,8 @@
+#!/bin/sh
+
+# exit script on error
+set -e
+
 # Add Docker's official GPG key:
 sudo apt-get update
 sudo apt-get install -y ca-certificates curl

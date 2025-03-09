@@ -1,3 +1,8 @@
+#!/bin/sh
+
+# exit script on error
+set -e
+
 # https://forums.raspberrypi.com/viewtopic.php?t=356182
 sed -i 's/raspbian.raspberrypi.org/legacy.raspbian.org/g' /etc/apt/sources.list
 
