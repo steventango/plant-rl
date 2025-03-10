@@ -17,19 +17,19 @@ def show_zones():
         result = {}
         result["zone"] = zone
         try:
-            latest_resp = requests.get(f"http://mitacs-zone{zone}.ccis.ualberta.ca/action/latest")
+            latest_resp = requests.get(f"http://mitacs-zone{zone}.ccis.ualberta.ca:8080/action/latest")
             latest_resp.raise_for_status()
             result["latest"] = json.dumps(latest_resp.json())
         except Exception as e:
             result["latest"] = f"Error: {e}"
         try:
-            cam1_resp = requests.get(f"http://mitacs-zone0{zone}-camera01.ccis.ualberta.ca/observation")
+            cam1_resp = requests.get(f"http://mitacs-zone0{zone}-camera01.ccis.ualberta.ca:8080/observation")
             cam1_resp.raise_for_status()
             result["cam1_b64"] = base64.b64encode(cam1_resp.content).decode()
         except Exception as e:
             result["cam1_b64"] = f"Error: {e}"
         try:
-            cam2_resp = requests.get(f"http://mitacs-zone0{zone}-camera02.ccis.ualberta.ca/observation")
+            cam2_resp = requests.get(f"http://mitacs-zone0{zone}-camera02.ccis.ualberta.ca:8080/observation")
             cam2_resp.raise_for_status()
             result["cam2_b64"] = base64.b64encode(cam2_resp.content).decode()
         except Exception as e:
