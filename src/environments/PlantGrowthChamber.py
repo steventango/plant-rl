@@ -28,7 +28,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         return observation
 
     def get_image(self):
-        response = requests.get(self.camera_url, timeout=5)
+        response = requests.get(self.camera_url, timeout=15)
         response.raise_for_status()
         self.image = Image.open(io.BytesIO(response.content))
 
