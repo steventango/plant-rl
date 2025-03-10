@@ -5,13 +5,13 @@ This starts a FastAPI server that takes pictures when requested.
 ## Installation
 ```bash
 rsync -azP api/install-stretch.sh zone06-camera01:~/Desktop/
-rsync -azP api/camera zone06-camera01:~/Desktop/camera
+rsync -azP api/camera/ zone06-camera01:~/Desktop/camera
 ssh zone06-camera01 -t "cd ~/Desktop && ./install-stretch.sh && cd camera && docker-compose up -d"
 ```
 
 ## Update
 ```bash
-rsync -azP api/camera zone06-camera01:~/Desktop/camera
+rsync -azP api/camera/ zone06-camera01:~/Desktop/camera
 ssh zone06-camera01 -t "cd ~/Desktop/camera && docker-compose up -d"
 ```
 
