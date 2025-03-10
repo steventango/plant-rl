@@ -1,5 +1,3 @@
-version: "2"
-
 services:
   app:
     image: ghcr.io/steventango/plant-rl/camera2:main
