@@ -12,5 +12,5 @@ ssh zone08-camera01 -t "cd ~/Desktop && ./install-stretch.sh && cd camera && doc
 
 ## Usage
 ```bash
-curl http://mitacs-zone08-camera01.ccis.ualberta.ca/observation --output observation.png
+curl http://mitacs-zone08-camera01.ccis.ualberta.ca:8080/observation --output observation.png
 ```

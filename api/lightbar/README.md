@@ -12,6 +12,6 @@ ssh zone8 -t "cd ~/Desktop && ./install-buster.sh && cd lightbar && echo 'ZONE=8
 
 ## Usage
 ```bash
-curl http://mitacs-zone8.ccis.ualberta.ca/action -X PUT -H "Content-Type: application/json" -d '{"array": [[1.0, 1.0, 1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]]}'
-curl http://mitacs-zone8.ccis.ualberta.ca/action/latest
+curl http://mitacs-zone8.ccis.ualberta.ca:8080/action -X PUT -H "Content-Type: application/json" -d '{"array": [[1.0, 1.0, 1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]]}'
+curl http://mitacs-zone8.ccis.ualberta.ca:8080/action/latest
 ```
