@@ -15,6 +15,7 @@ class SpreadsheetAgent(BaseAgent):
     def __init__(self, observations: Tuple[int, ...], actions: int, params: Dict, collector: Collector, seed: int):
         super().__init__(observations, actions, params, collector, seed)
         self.df = pd.read_excel(self.params["filepath"])
+        self.compatibility_mode = self.params.get("compatibility_mode", False)
         self.df["datetime"] = self.df["Day"] * 86400 + self.df["Time"].apply(
             lambda x: x.hour * 3600 + x.minute * 60 + x.second
         )
@@ -81,4 +82,8 @@ class SpreadsheetAgent(BaseAgent):
         color = linear_interpolation(first_color, second_color, region_completed)
 
         action = color * light_scaling_factor
+
+        if self.compatibility_mode:
+            action *= 2
+
         return action

@@ -192,3 +192,46 @@ class TestSpreadsheetAgent:
             # 9:00:00 PM
             action = agent.get_action(cycle * 86400 + 21 * 3600)
             np.testing.assert_almost_equal(action, [0.6, 0.5, 0.4, 0.3, 0.2, 0.1])
+
+    def test_compatibility_mode(self):
+        agent = SpreadsheetAgent(
+            observations=(1,),
+            actions=6,
+            params={
+                "filepath": "tests/test_data/z3-0min-100ppfd-Balanced_optima12_12.xlsx",
+                "compatibility_mode": True,
+            },
+            collector=None,
+            seed=0,
+        )
+
+        cycles = 3
+
+        for cycle in range(cycles):
+            # 12:00:00 AM
+            action = agent.get_action(cycle * 86400 + 0)
+            np.testing.assert_almost_equal(action, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+
+            # 8:59:59 AM
+            action = agent.get_action(cycle * 86400 + 8 * 3600 + 59 * 60 + 59)
+            np.testing.assert_almost_equal(action, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+
+            # 9:00:00 AM
+            action = agent.get_action(cycle * 86400 + 9 * 3600)
+            np.testing.assert_almost_equal(action, [0.398, 0.762, 0.324, 0.0, 0.332, 0.606])
+
+            # 9:00:01 AM
+            action = agent.get_action(cycle * 86400 + 9 * 3600 + 1)
+            np.testing.assert_almost_equal(action, [0.398, 0.762, 0.324, 0.0, 0.332, 0.606])
+
+            # 8:59:59 PM
+            action = agent.get_action(cycle * 86400 + 20 * 3600 + 59 * 60 + 59)
+            np.testing.assert_almost_equal(action, [0.398, 0.762, 0.324, 0.0, 0.332, 0.606])
+
+            # 9:00:00 PM
+            action = agent.get_action(cycle * 86400 + 21 * 3600)
+            np.testing.assert_almost_equal(action, [0.398, 0.762, 0.324, 0.0, 0.332, 0.606])
+
+            # 9:00:01 PM
+            action = agent.get_action(cycle * 86400 + 21 * 3600 + 1)
+            np.testing.assert_almost_equal(action, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
