@@ -14,9 +14,9 @@ from .zones import get_zone
 
 class PlantGrowthChamber(BaseAsyncEnvironment):
 
-    def __init__(self, zone: int, start_time: float | None = None):
+    def __init__(self, zone: int | None, start_time: float | None = None):
         self.gamma = 0.99
-        self.zone = get_zone(zone)
+        self.zone = get_zone(zone) if zone else None
         self.images = {}
         self.image = None
         self.time = None

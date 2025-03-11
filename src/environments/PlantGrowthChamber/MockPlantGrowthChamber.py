@@ -24,8 +24,9 @@ from representations.PlantVision.Pipeline.Undistortion import Undistortion
 
 
 class MockPlantGrowthChamber(PlantGrowthChamber):
+
     def __init__(self):
-        super().__init__(None, None)
+        super().__init__(None)
         self.reference_spectrum = np.array([0.398, 0.762, 0.324, 0.000, 0.332, 0.606])
         self.data_path = Path("data")
         self.data_iter = self.data_iterator()
