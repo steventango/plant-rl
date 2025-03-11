@@ -16,7 +16,7 @@ from cv2 import (
 from PIL import Image
 from plantcv import plantcv as pcv
 
-from environments.PlantGrowthChamber import PlantGrowthChamber
+from environments.PlantGrowthChamber.PlantGrowthChamber import PlantGrowthChamber
 from representations.PlantVision.Pipeline.Experiment import Experiment
 from representations.PlantVision.Pipeline.HSVThreshold import HSVThreshold
 from representations.PlantVision.Pipeline.Roi import RoiList

@@ -1,6 +1,6 @@
 import numpy as np
 
-from environments.PlantGrowthChamber import PlantGrowthChamber
+from environments.PlantGrowthChamber.PlantGrowthChamber import PlantGrowthChamber
 
 
 class PlantGrowthChamberIntensity(PlantGrowthChamber):
