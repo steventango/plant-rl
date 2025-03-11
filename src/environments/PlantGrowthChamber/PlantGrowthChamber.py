@@ -1,36 +1,60 @@
 import io
 import time
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 
 import numpy as np
 import requests
 from PIL import Image
-from datetime import datetime
 
 from utils.RlGlue.environment import BaseAsyncEnvironment
 
+from .zones import get_zone
+
 
 class PlantGrowthChamber(BaseAsyncEnvironment):
-    def __init__(self, camera_url: str, lightbar_url: str, start_time: float | None = None):
+
+    def __init__(self, zone: int, start_time: float | None = None):
         self.gamma = 0.99
-        self.camera_url = camera_url
-        self.lightbar_url = lightbar_url
+        self.zone = get_zone(zone)
+        self.images = {}
         self.image = None
         self.time = None
         self._start_time = start_time
 
     def get_observation(self):
-        self.time = time.time() # - self.start_time
+        self.time = time.time()  # - self.start_time
         # adjust for time zone
         self.time -= 7 * 3600
         timestamp = datetime.fromtimestamp(self.time)
+
         self.get_image()
-        observation = (self.time, np.array(self.image))
+        if "left" in self.images and "right" in self.images:
+            self.image = np.hstack((np.array(self.images["left"]), np.array(self.images["right"])))
+        elif "left" in self.images:
+            self.image = np.array(self.images["left"])
+        elif "right" in self.images:
+            self.image = np.array(self.images["right"])
+
+        observation = (self.time, self.image)
         return observation
 
     def get_image(self):
-        response = requests.get(self.camera_url, timeout=15)
-        response.raise_for_status()
-        self.image = Image.open(io.BytesIO(response.content))
+
+        def fetch_image(url: str):
+            response = requests.get(url, timeout=30)
+            response.raise_for_status()
+            return Image.open(io.BytesIO(response.content))
+
+        with ThreadPoolExecutor() as executor:
+            futures = {}
+            if self.zone.camera_left_url:
+                futures["left"] = executor.submit(fetch_image, self.zone.camera_left_url)
+            if self.zone.camera_right_url:
+                futures["right"] = executor.submit(fetch_image, self.zone.camera_right_url)
+
+            for side, future in futures.items():
+                self.images[side] = future.result()
 
     def start(self):
         # if self._start_time is None:
@@ -53,7 +77,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     def put_action(self, action):
         action = np.tile(action, (2, 1))
-        response = requests.put(self.lightbar_url, json={"array": action.tolist()}, timeout=5)
+        response = requests.put(self.zone.lightbar_url, json={"array": action.tolist()}, timeout=5)
         response.raise_for_status()
 
     def get_info(self):
@@ -63,4 +87,4 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         return np.array(self.image).mean() / 255
 
     def close(self):
-        requests.put(self.lightbar_url, json={"array": np.zeros(6).tolist()})
+        requests.put(self.zone.lightbar_url, json={"array": np.zeros(6).tolist()})

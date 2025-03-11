@@ -1,24 +1,27 @@
 import os
 import sys
+
 sys.path.append(os.getcwd())
 
-import time
-import socket
+import argparse
 import logging
+import socket
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
-import argparse
-from PIL import Image
+
 import numpy as np
+from PIL import Image
+from PyExpUtils.collection.Collector import Collector
+from PyExpUtils.collection.Sampler import Identity, Ignore, MovingAverage, Subsample
+from PyExpUtils.collection.utils import Pipe
+from PyExpUtils.results.sqlite import saveCollector
+
 from experiment import ExperimentModel
+from problems.registry import getProblem
 from utils.checkpoint import Checkpoint
 from utils.preempt import TimeoutHandler
 from utils.RlGlue.rl_glue import PlanningRlGlue
-from problems.registry import getProblem
-from PyExpUtils.results.sqlite import saveCollector
-from PyExpUtils.collection.Collector import Collector
-from PyExpUtils.collection.Sampler import Ignore, MovingAverage, Subsample, Identity
-from PyExpUtils.collection.utils import Pipe
 
 # ------------------
 # -- Command Args --
@@ -69,8 +72,14 @@ def save_images(env, data_path: Path):
     now = datetime.now()
     now = round_seconds(now)
     now = now.isoformat().replace(':', '')
-    img_path = data_path / f"{now}.png"
-    env.image.save(img_path)
+    zone_identifier = env.zone.identifier
+
+    if "left" in env.images:
+        img_path = data_path / f"z{zone_identifier}cL" / f"{now}.png"
+        env.images["left"].save(img_path)
+    if "right" in env.images:
+        img_path = data_path / f"z{zone_identifier}cR" / f"{now}.png"
+        env.images["right"].save(img_path)
     if hasattr(env, "shape_image"):
         shape_img_path = data_path / f"{now}_processed.png"
         env.shape_image.save(shape_img_path)
@@ -114,7 +123,7 @@ for idx in indices:
     chk.initial_value('episode', 0)
 
     context = exp.buildSaveContext(idx, base=args.save_path)
-    data_path = Path("/workspaces/plant-rl/data/first_exp/z2cR")
+    data_path = Path(f"/workspaces/plant-rl/data/{exp.name}/z{env.zone.identifier}")
     data_path.mkdir(parents=True, exist_ok=True)
 
     # Run the experiment
