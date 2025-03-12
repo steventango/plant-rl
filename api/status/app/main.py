@@ -97,7 +97,8 @@ async def show_zones():
             latestElement.textContent = `Action: [\n  ${action[0]},\n  ${action[1]}\n]\nSafe Action: [\n  ${safeAction[0]},\n  ${safeAction[1]}\n]`;
           } catch (error) {
             const latestElement = zone.querySelector("code");
-            latestElement.textContent = `Error: ${error}`;
+            const data = await response.text();
+            latestElement.textContent = `Error: ${data}`;
           }
         }
 
