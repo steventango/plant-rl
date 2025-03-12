@@ -104,6 +104,12 @@ for idx in indices:
     # if we haven't started yet, then make the first interaction
     if glue.total_steps == 0:
         glue.start()
+
+    '''
+    if exp.problem == 'PlantSimulator' and exp.total_steps == -1:
+        problem.params['total_steps'] = len(env.data)//env.stride
+        exp.total_steps = len(env.data)//env.stride
+    '''
         
     for step in range(glue.total_steps, exp.total_steps):
         collector.next_frame()
@@ -113,7 +119,8 @@ for idx in indices:
         collector.collect('return', glue.total_reward)  # accumulated reward so far
         collector.collect('episode', chk['episode'])
         collector.collect('steps', glue.num_steps)
-        collector.collect('action', int.from_bytes(glue.last_action, byteorder='little'))  
+        #collector.collect('action', int.from_bytes(glue.last_action, byteorder='little'))
+        collector.collect('action', glue.last_action)
 
         if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
             # allow agent to cleanup traces or other stateful episodic info

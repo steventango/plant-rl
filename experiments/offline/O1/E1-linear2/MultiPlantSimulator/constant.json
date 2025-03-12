@@ -1,15 +1,14 @@
 {
     "agent": "Constant",
-    "problem": "MultiPlantSimulator",
+    "problem": "PlantSimulator",
     "avg_rew_window": 10,
-    "total_steps": -1,
+    "total_steps": 71,
     "metaParameters": {
         "action": 1,
         "environment":{
             "num_plants": 49,
-            "lag": [1],
-            "stride": [1], 
-            "one_hot_time":false
+            "lag": 1,
+            "stride": 1
         }
     }
 }

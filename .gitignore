@@ -8,6 +8,10 @@ results.tar*
 .tmp/
 *.out
 
+# ignore checkpoints
+checkpoints
+checkpoints/
+
 # ignore python caches
 ENV/
 env/
