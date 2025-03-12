@@ -2,9 +2,10 @@ import base64
 import concurrent.futures
 import html
 import json
+from datetime import datetime
 
 import requests
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.responses import HTMLResponse
 
 app = FastAPI()
@@ -22,18 +23,7 @@ def show_zones():
             result["latest"] = json.dumps(latest_resp.json())
         except Exception as e:
             result["latest"] = f"Error: {e}"
-        try:
-            cam1_resp = requests.get(f"http://mitacs-zone0{zone}-camera01.ccis.ualberta.ca:8080/observation", timeout=15)
-            cam1_resp.raise_for_status()
-            result["cam1_b64"] = base64.b64encode(cam1_resp.content).decode()
-        except Exception as e:
-            result["cam1_b64"] = f"Error: {e}"
-        try:
-            cam2_resp = requests.get(f"http://mitacs-zone0{zone}-camera02.ccis.ualberta.ca:8080/observation", timeout=15)
-            cam2_resp.raise_for_status()
-            result["cam2_b64"] = base64.b64encode(cam2_resp.content).decode()
-        except Exception as e:
-            result["cam2_b64"] = f"Error: {e}"
+        result["fetch_time"] = datetime.now().isoformat()
         return result
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -61,6 +51,8 @@ def show_zones():
       }
       img {
         width: 49%;
+        aspect-ratio: 4 / 3;
+        background-color: #ccc;
       }
     </style>
     </head>
@@ -69,21 +61,16 @@ def show_zones():
     """
     for res in results:
         code = html.escape(res["latest"])
-        cam1_src = f"data:image/png;base64,{res['cam1_b64']}"
-        if res["cam1_b64"].startswith("Error:"):
-            cam1_src = "https://placehold.co/400x300"
-            code += "<br><br>" + html.escape(res["cam1_b64"])
-        cam2_src = f"data:image/png;base64,{res['cam2_b64']}"
-        if res["cam2_b64"].startswith("Error:"):
-            cam2_src = "https://placehold.co/400x300"
-            code += "<br><br>" + html.escape(res["cam2_b64"])
+        fetch_time = html.escape(res["fetch_time"])
         response += f"""
         <div class="zone">
           <h3>Zone {res["zone"]}</h3>
-          <img src="{cam1_src}"/>
-          <img src="{cam2_src}"/>
+          <img src="/proxy/zone/{res['zone']}/camera/1.png"/>
+          <img src="/proxy/zone/{res['zone']}/camera/2.png"/>
           <br>
           <code>{code}</code>
+          <br>
+          <code>Fetched at: {fetch_time}</code>
         </div>
         """
     response += """
@@ -92,3 +79,27 @@ def show_zones():
     </html>
     """
     return response
+
+
+@app.get("/proxy/zone/{zone}/latest")
+def proxy_latest(zone: int):
+    try:
+        resp = requests.get(f"http://mitacs-zone{zone}.ccis.ualberta.ca:8080/action/latest", timeout=5)
+        resp.raise_for_status()
+        return resp.json()
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/proxy/zone/{zone}/camera/{camera_id}.png")
+def proxy_camera(zone: int, camera_id: int):
+    resp = requests.get(
+        f"http://mitacs-zone{zone:02d}-camera{camera_id:02d}.ccis.ualberta.ca:8080/observation",
+        timeout=30,
+    )
+    return Response(
+        content=resp.content,
+        status_code=resp.status_code,
+        headers=resp.headers,
+        media_type=resp.headers.get("Content-Type"),
+    )
