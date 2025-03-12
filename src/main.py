@@ -69,10 +69,11 @@ for idx in indices:
         #  - Window(n)  take a window average of size n
         #  - Subsample(n) save one of every n elements
         config={
-            'return': Identity(),
+            'return': Identity(),       # total reward at the end of episode
+            'reward': Identity(),       # reward at each step
             'episode': Identity(),
             'steps': Identity(),
-            'action': Identity()
+            'action': Identity(),
         },
         default=Ignore(),
     ))
@@ -94,30 +95,41 @@ for idx in indices:
     problem = chk.build('p', lambda: Problem(exp, idx, collector))
     agent = chk.build('a', problem.getAgent)
     env = chk.build('e', problem.getEnvironment)
+    
+    # If exp.total_steps is -1, then set total steps such that each run lasts for "environment.last_day" days. 
+    if exp.problem == 'PlantSimulator' and exp.total_steps == -1:
+        problem.params['total_steps'] = env.terminal_step
+        exp.total_steps = env.terminal_step
 
     glue = chk.build('glue', lambda: RlGlue(agent, env))
     chk.initial_value('episode', 0)
-
+    
     # Run the experiment
     start_time = time.time()
 
     # if we haven't started yet, then make the first interaction
     if glue.total_steps == 0:
         glue.start()
-        
+    
+    previous_total_reward = 0 
     for step in range(glue.total_steps, exp.total_steps):
         collector.next_frame()
         chk.maybe_save()
         interaction = glue.step()
 
-        collector.collect('return', glue.total_reward)  # accumulated reward so far
+        collector.collect('reward', glue.total_reward - previous_total_reward)
+        previous_total_reward = np.copy(glue.total_reward) 
         collector.collect('episode', chk['episode'])
         collector.collect('steps', glue.num_steps)
-        collector.collect('action', int.from_bytes(glue.last_action, byteorder='little'))  
+        #collector.collect('action', int.from_bytes(glue.last_action, byteorder='little'))    # only needed for GAC for some reason
+        collector.collect('action', glue.last_action)  
 
         if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
             # allow agent to cleanup traces or other stateful episodic info
             agent.cleanup()
+            
+            # Collect total reward
+            collector.collect('return', glue.total_reward) 
 
             # track how many episodes are completed (cutoff is counted as termination for this count)
             chk['episode'] += 1
