@@ -165,6 +165,8 @@ for idx in indices:
 
             glue.start()
 
+        saveCollector(exp, collector, base=args.save_path)
+
     collector.reset()
 
     env.close()
