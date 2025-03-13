@@ -18,7 +18,7 @@ class LinearQL(BaseAgent):
         self.curr_action = None
         self.decay_eps_frac = params.get('decay_eps_frac', False) # Fraction of total env steps at which we stop decaying epsilon, if false then there is no decay
         
-        # create initial weights, set to -10
+        # create initial weights, set to 0
         self.w = np.zeros((actions, self.observations[0]), dtype=np.float64)
     
     def get_egreedy_action(self, s):

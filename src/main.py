@@ -110,8 +110,9 @@ for idx in indices:
     # if we haven't started yet, then make the first interaction
     if glue.total_steps == 0:
         glue.start()
-    
+
     previous_total_reward = 0 
+    
     for step in range(glue.total_steps, exp.total_steps):
         collector.next_frame()
         chk.maybe_save()
@@ -121,6 +122,7 @@ for idx in indices:
         previous_total_reward = np.copy(glue.total_reward) 
         collector.collect('episode', chk['episode'])
         collector.collect('steps', glue.num_steps)
+
         #collector.collect('action', int.from_bytes(glue.last_action, byteorder='little'))    # only needed for GAC for some reason
         collector.collect('action', glue.last_action)  
 
