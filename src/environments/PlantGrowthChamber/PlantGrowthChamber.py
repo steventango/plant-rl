@@ -14,9 +14,9 @@ from .zones import get_zone
 
 class PlantGrowthChamber(BaseAsyncEnvironment):
 
-    def __init__(self, zone: int | None, start_time: float | None = None):
+    def __init__(self, zone: int, start_time: float | None = None):
         self.gamma = 0.99
-        self.zone = get_zone(zone) if zone else None
+        self.zone = get_zone(zone)
         self.images = {}
         self.image = None
         self.time = None
@@ -54,10 +54,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 self.images[side] = future.result()
 
     def start(self):
-        # if self._start_time is None:
-        #     self.start_time = time.time()
-        # else:
-        #     self.start_time = self._start_time
         observation = self.get_observation()
         return observation
 
@@ -66,10 +62,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     def step_two(self):
         observation = self.get_observation()
-
-        # Compute reward
         self.reward = self.reward_function()
-
         return self.reward, observation, False, self.get_info()
 
     def put_action(self, action):
