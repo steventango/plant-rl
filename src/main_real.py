@@ -99,6 +99,7 @@ for idx in indices:
             #  - Window(n)  take a window average of size n
             #  - Subsample(n) save one of every n elements
             config={
+                "state": Identity(),
                 "action": Identity(),
                 "reward": Identity(),
                 "steps": Identity(),
@@ -141,6 +142,7 @@ for idx in indices:
         chk.maybe_save()
         interaction = glue.step()
         collector.collect('time', time.time())
+        collector.collect('state', interaction.o)
         collector.collect('action', interaction.a)
         collector.collect('reward', interaction.r)
         collector.collect('steps', glue.num_steps)
