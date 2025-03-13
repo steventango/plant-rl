@@ -123,7 +123,9 @@ for idx in indices:
     chk.initial_value('episode', 0)
 
     context = exp.buildSaveContext(idx, base=args.save_path)
-    data_path = Path(f"/workspaces/plant-rl/data/{exp.name}/z{env.zone.identifier}")
+    data_path = Path('data') / Path(context.resolve()).relative_to('results')
+    (data_path / f"z{env.zone.identifier}cL").mkdir(parents=True, exist_ok=True)
+    (data_path / f"z{env.zone.identifier}cR").mkdir(parents=True, exist_ok=True)
     data_path.mkdir(parents=True, exist_ok=True)
 
     # Run the experiment
