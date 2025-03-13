@@ -139,7 +139,7 @@ for idx in indices:
 
     for step in range(glue.total_steps, exp.total_steps):
         collector.next_frame()
-        chk.maybe_save()
+        chk.save()
         interaction = glue.step()
         collector.collect('time', time.time())
         collector.collect('state', interaction.o)
@@ -179,4 +179,3 @@ for idx in indices:
     # -- Saving --
     # ------------
     saveCollector(exp, collector, base=args.save_path)
-    chk.delete()
