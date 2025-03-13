@@ -123,7 +123,7 @@ class PiecewiseLinear:
 
 
 
-#@partial(jax.jit, static_argnums=(2))
+@partial(jax.jit, static_argnums=(2))
 def fta(x: ArrayLike, eta: float = 2, tiles: int = 20, lower_bound: float = -20, upper_bound: float = 20) -> Array:
     r"""Fuzzy Tiling Activation
 
@@ -155,6 +155,6 @@ def fta(x: ArrayLike, eta: float = 2, tiles: int = 20, lower_bound: float = -20,
     z = z.reshape(x.shape[0], -1)
     return z
 
-#@jax.jit
+@jax.jit
 def fuzzy_indicator_function(x: ArrayLike, eta: float):
     return jnp.greater(eta, x).astype(x.dtype) * x + jnp.greater(x, eta).astype(x.dtype)

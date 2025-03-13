@@ -98,7 +98,7 @@ def buildFeatureNetwork(inputs: Tuple, params: Dict[str, Any], rng: Any):
                     lower_bound=params.get('fta_lower_bound', -2), 
                     upper_bound=params.get('fta_upper_bound', 2),
                     ),
-                hk.Flatten(name='flatten'),
+                hk.Flatten(name='phi'),
             ]
 
         else:

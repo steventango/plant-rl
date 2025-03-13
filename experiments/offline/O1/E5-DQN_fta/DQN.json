@@ -1,5 +1,5 @@
 {
-    "agent": "DQN",
+    "agent": "DynamicBatchDQN",
     "problem": "PlantSimulator",
     "total_steps": 504,
     "metaParameters": {
