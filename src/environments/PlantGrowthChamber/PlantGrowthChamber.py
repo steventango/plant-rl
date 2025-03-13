@@ -77,4 +77,4 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         return np.array(self.image).mean() / 255
 
     def close(self):
-        requests.put(self.zone.lightbar_url, json={"array": np.zeros(2, 6).tolist()})
+        requests.put(self.zone.lightbar_url, json={"array": np.zeros((2, 6)).tolist()})

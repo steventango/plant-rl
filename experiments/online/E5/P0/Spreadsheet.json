@@ -1,6 +1,6 @@
 {
     "agent": "Spreadsheet",
-    "problem": "PlantGrowthChamber",
+    "problem": "TemporalPlantGrowthChamber",
     "total_steps": 40320,
     "episode_cutoff": -1,
     "metaParameters": {

@@ -14,7 +14,7 @@ def get_zone(indentifier: int):
         case 1:
             return Zone(
                 identifier=1,
-                camera_left_url="http://mitacs-zone01-camera01.ccis.ualberta.ca:8080/observation",
+                camera_left_url="http://mitacs-zone01-camera02.ccis.ualberta.ca:8080/observation",
                 camera_right_url=None,
                 lightbar_url="http://mitacs-zone1.ccis.ualberta.ca:8080/action"
             )
