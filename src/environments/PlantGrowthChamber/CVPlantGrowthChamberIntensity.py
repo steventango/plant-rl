@@ -6,6 +6,6 @@ from environments.PlantGrowthChamber.PlantGrowthChamberIntensity import PlantGro
 
 class CVPlantGrowthChamberIntensity(CVPlantGrowthChamber, PlantGrowthChamberIntensity):
 
-    def __init__(self, zone: int):
-        super().__init__(zone)
-
+    def __init__(self, **kwargs):
+        CVPlantGrowthChamber.__init__(self, **kwargs)
+        PlantGrowthChamberIntensity.__init__(self, zone=kwargs['zone'])

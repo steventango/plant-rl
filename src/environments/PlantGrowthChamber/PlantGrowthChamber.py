@@ -33,8 +33,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         elif "right" in self.images:
             self.image = np.array(self.images["right"])
 
-        observation = (self.time, self.image)
-        return observation
+        self.plant_stats = np.random.randn(16, 1)
+
+        return self.time, self.image, self.plant_stats
 
     def get_image(self):
 
