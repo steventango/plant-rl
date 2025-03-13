@@ -1,5 +1,5 @@
 {
-    "agent": "DynamicBatchDQN",
+    "agent": "DQN",
     "problem": "PlantSimulator",
     "total_steps": 504,
     "metaParameters": {
@@ -18,7 +18,11 @@
         },
         "representation": {
             "type": "FTA",
-            "hidden": 5
+            "hidden": 5,
+            "fta_eta": 0.4,
+            "fta_tiles": 20, 
+            "fta_lower_bound": -2, 
+            "fta_upper_bound": 2
         }
     }
 }
