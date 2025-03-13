@@ -11,3 +11,13 @@
 - They both kind of worked
 ### Conclusions & Outlooks: 
 - Simple ESARSA seems to learn light-on is good even with time step = 10min.
+
+##  Phase P1
+### Objectives:
+- Retrain TC ESARSA in the drastically updated PlantSimulator (smooth ob, horizon countdown, 3 actions). 
+### Methods: 
+- Use TC because Adam wants discretized observations
+### Observations: 
+- 
+### Conclusions & Outlooks: 
+-

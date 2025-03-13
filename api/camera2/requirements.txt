@@ -1,2 +1,4 @@
 fastapi[standard]>=0.115.8
+picamera2>=0.3.25
 pillow>=11.1.0
+rpi-kms>=0.1a1

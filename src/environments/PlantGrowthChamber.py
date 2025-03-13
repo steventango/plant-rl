@@ -28,7 +28,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         return observation
 
     def get_image(self):
-        response = requests.get(self.camera_url, timeout=5)
+        response = requests.get(self.camera_url, timeout=15)
         response.raise_for_status()
         self.image = Image.open(io.BytesIO(response.content))
 
@@ -52,6 +52,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         return self.reward, observation, False, self.get_info()
 
     def put_action(self, action):
+        action = np.tile(action, (2, 1))
         response = requests.put(self.lightbar_url, json={"array": action.tolist()}, timeout=5)
         response.raise_for_status()
 

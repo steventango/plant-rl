@@ -5,8 +5,8 @@
     "episode_cutoff": -1,
     "metaParameters": {
         "environment": {
-            "camera_url": "http://mitacs-zone02-camera01.ccis.ualberta.ca:8000/observation",
-            "lightbar_url": "http://mitacs-zone2.ccis.ualberta.ca:8000/action/left"
+            "camera_url": "http://mitacs-zone02-camera01.ccis.ualberta.ca:8080/observation",
+            "lightbar_url": "http://mitacs-zone2.ccis.ualberta.ca:8080/action"
         },
         "experiment": {
             "step_duration": 60,

@@ -10,6 +10,6 @@ class PlantSimulator(BaseProblem):
         super().__init__(exp, idx, collector)
         
         self.env = Env(**self.env_params)
-        self.actions = 2
-        self.observations = (4,) 
+        self.actions = 3
+        self.observations = (6,) 
         self.gamma = 0.99
