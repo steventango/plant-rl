@@ -1,5 +1,5 @@
 {
-    "agent": "DQN",
+    "agent": "DynamicBatchDQN",
     "problem": "PlantSimulator",
     "total_steps": 504,
     "metaParameters": {
@@ -8,7 +8,7 @@
         "buffer_type": "uniform",
         "buffer_size": 2000,
         "min_batch": 32,
-        "batch": [8, 16, 32, 64, 128, 512],
+        "batch": [8, 16, 32, 64],
         "n_step": 1,
         "optimizer": {
             "name": "ADAM",
@@ -18,11 +18,9 @@
         },
         "representation": {
             "type": "FTA",
-            "hidden": 5,
+            "hidden": 16,
             "fta_eta": 0.4,
-            "fta_tiles": 20, 
-            "fta_lower_bound": -2, 
-            "fta_upper_bound": 2
+            "fta_tiles": 20
         }
     }
 }
