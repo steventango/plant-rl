@@ -22,7 +22,8 @@ from experiment.tools import parseCmdLineArgs
 setDefaultConference('neurips')
 
 COLORS = {
-    'linearDQN':'red'
+    'linearDQN':'red',
+    'linearDQN_sgd': 'blue'
 }
 
 def main():

@@ -6,6 +6,8 @@ import jax.numpy as jnp
 import haiku as hk
 
 import utils.hk as hku
+from utils.functions import fta
+
 
 ModuleBuilder = Callable[[], Callable[[jax.Array | np.ndarray], jax.Array]]
 
@@ -85,6 +87,19 @@ def buildFeatureNetwork(inputs: Tuple, params: Dict[str, Any], rng: Any):
 
         elif name == 'OneLayerRelu':
             layers = reluLayers([hidden], name='phi')
+
+        elif name == 'FTA':
+            layers = [
+                hk.Linear(hidden, name='linear'),
+                lambda x: fta(
+                    x, 
+                    eta=params.get('fta_eta', 0.4), 
+                    tiles=params.get('fta_tiles', 20), 
+                    lower_bound=params.get('fta_lower_bound', -2), 
+                    upper_bound=params.get('fta_upper_bound', 2),
+                    ),
+                hk.Flatten(name='flatten'),
+            ]
 
         else:
             raise NotImplementedError()

@@ -22,8 +22,7 @@ Q-learning sweep (linear function approx). Learning from 1 day of experience (72
 None
 
 
-
-## <u>E2-DQN</u>
+## <u>E2-linearDQN</u>
 
 DQN agent with single linear layer (to test batch updating for greater sample efficiency, though a confounding factor here is Andy's DQN uses ADAM not regular SGD, might want to change to isolate the effect of batch updates but probably not essential).
 
@@ -32,16 +31,80 @@ Testing large batch sizes. Target refresh rate is set to 1 since this is just q-
 Made new DQN class that allows for specifying a minimum batch size, and still doing updates as long as the number of collected samples is greater than the minimum batch size (even if it is less than the full batch size, which could be quite large)
 
 #### Results
-- Best parameters are: ___
+- Best hypers:
+target_refresh:     1
+epsilon:            0.1
+n_step:             1
+buffer_size:        2000
+optimizer.beta2:    0.999
+min_batch:          32
+optimizer.name:     ADAM
+buffer_type:        uniform
+optimizer.beta1:    0.9
+optimizer.alpha:    0.01
+batch:              128
+
+Failed to learn in a week. Selecting action 0 much more than 10% of the time. 
 
 #### TODO
-Test multiple updates per step?
+Test multiple updates per step? Going to test on 1 day period to see if we get similar results to ESARSA in that learning over longer timescale is harder. Also want to try with regular sgd (no adam)
 
 
 ## <u>E3-DQN</u>
-DQN with hidden layer size 4. Large batch sizes like in E2 above.
+DQN with hidden layer size 4. One week experiment. Large batch sizes like in E2 above.
 
 #### Results
-- Best parameters are: ___
+- Best hypers:
+buffer_type:              uniform
+batch:                    512
+optimizer.beta1:          0.9
+buffer_size:              2000
+n_step:                   1
+min_batch:                32
+epsilon:                  0.1
+representation.type:      OneLayerRelu
+optimizer.name:           ADAM
+representation.hidden:    4
+optimizer.beta2:          0.999
+optimizer.alpha:          0.1
+target_refresh:           1
+
+Failed to learn in a week. Did much worse than linear. Notably I had the target refresh rate set to one accidentally which was probably bad even with the single hidden layer with 4 units, not sure. There's only like 500ish datapoints so not sure what is a good value. 
 
 #### TODO
+Going to sweep a more conventional range for batch size. Also will try FTA and different target refresh rates.
+
+## <u>E4-linearDQN</u>
+
+DQN agent with single linear layer. Testing on 1 day period with ADAM and SGD (technically adam with beta1=0 and beta2=1)
+
+#### Results
+- Best hypers:
+n_step:             1
+buffer_type:        uniform
+optimizer.beta1:    0.9
+target_refresh:     1
+min_batch:          8
+batch:              8
+buffer_size:        2000
+optimizer.beta2:    0.999
+epsilon:            0.1
+optimizer.name:     ADAM
+optimizer.alpha:    0.1
+
+Both failed to learn in a day. ADAM with momentum did better. 
+Notably the smallest batch size did the best, interesting because 128 did best on one week timescale. Makes me think it's a matter of what transitions you're working with since some are noisier than others. 
+
+#### TODO
+Multiple updates per step. Maybe use 2 day period instead (Steven asked for this for experiment this weekend). Be sure to include small batch size too.
+
+
+## <u>E5-linearDQN</u>
+
+
+#### Results
+
+
+#### TODO
+
+

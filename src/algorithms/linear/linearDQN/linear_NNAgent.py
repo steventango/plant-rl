@@ -28,7 +28,6 @@ class LinearNNAgent(BaseAgent):
         # ------------------------------
         # -- Configuration Parameters --
         # ------------------------------
-        self.rep_params: Dict = params['representation']
         self.optimizer_params: Dict = params['optimizer']
 
         self.epsilon = params['epsilon']
@@ -37,7 +36,7 @@ class LinearNNAgent(BaseAgent):
         # ---------------------
         # -- NN Architecture --
         # ---------------------
-        builder = LinearNetworkBuilder(observations, self.rep_params, seed)
+        builder = LinearNetworkBuilder(observations, seed)
         self._build_heads(builder)
         #self.phi = builder.getFeatureFunction()
         net_params = builder.getParams()
@@ -58,6 +57,8 @@ class LinearNNAgent(BaseAgent):
         self.buffer_size = params['buffer_size']
         self.batch_size = params['batch']
         self.update_freq = params.get('update_freq', 1)
+        self.updates_per_step = params.get('updates_per_step', 1)
+        
 
         self.buffer = build_buffer(
             buffer_type=params['buffer_type'],

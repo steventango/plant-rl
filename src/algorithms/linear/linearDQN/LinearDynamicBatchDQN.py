@@ -74,25 +74,27 @@ class LinearDynamicBatchDQN(LinearNNAgent):
         if self.buffer.size() <= self.min_batch_size:
             return
 
-        self.updates += 1
+        for _ in range(self.updates_per_step):
 
-        # Sample min(batch_size, buffer_size) transitions so that we can do still do updates 
-        # before collecting batch_size samples when batch_size is large
-        batch = self.buffer.sample(min(self.buffer.size(), self.batch_size))
-        weights = self.buffer.isr_weights(batch.eid)
-        self.state, metrics = self._computeUpdate(self.state, batch, weights)
+            # Sample min(batch_size, buffer_size) transitions so that we can do still do updates 
+            # before collecting batch_size samples when batch_size is large
+            batch = self.buffer.sample(min(self.buffer.size(), self.batch_size))
+            weights = self.buffer.isr_weights(batch.eid)
+            self.state, metrics = self._computeUpdate(self.state, batch, weights)
 
-        metrics = jax.device_get(metrics)
+            metrics = jax.device_get(metrics)
 
-        priorities = metrics['delta']
-        self.buffer.update_batch(batch, priorities=priorities)
+            priorities = metrics['delta']
+            self.buffer.update_batch(batch, priorities=priorities)
 
-        for k, v in metrics.items():
-            self.collector.collect(k, np.mean(v).item())
+            for k, v in metrics.items():
+                self.collector.collect(k, np.mean(v).item())
 
-        if self.updates % self.target_refresh == 0:
-            self.state.target_params = self.state.params
+            self.updates += 1
 
+            if self.updates % self.target_refresh == 0:
+                self.state.target_params = self.state.params
+            
     # -------------
     # -- Updates --
     # -------------
