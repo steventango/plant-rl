@@ -22,8 +22,10 @@ from experiment.tools import parseCmdLineArgs
 setDefaultConference('neurips')
 
 COLORS = {
-    'tc-ESARSA': 'blue',
+    'tc-ESARSA': 'green',
 }
+
+optimal_policy = np.hstack([np.ones(3*6), 2*np.ones(6*6), np.ones(3*6)])
 
 def main():
     path, should_save, save_type = parseCmdLineArgs()
@@ -43,20 +45,23 @@ def main():
         folder_columns=(None, None, None, 'environment'),
         file_col='algorithm',
     )
-    
+ 
     assert df is not None
+    
+    add_finite_horizon_return(df, day=3)
     
     total_days = int(df['environment.last_day'].iloc[0])
     print(f'total days = {total_days}')
+    optimal_action = np.tile(optimal_policy, total_days)[:-1]
     
     exp = results.get_any_exp()
 
     for env, env_df in split_over_column(df, col='environment'):
-        f, ax = plt.subplots(2, 1)
+        f, ax = plt.subplots(5, 1)
         for alg, sub_df in split_over_column(env_df, col='algorithm'):
             report = Hypers.select_best_hypers(
                 sub_df,
-                metric='return', 
+                metric='finite_horizon_return', 
                 prefer=Hypers.Preference.high,
                 time_summary=TimeSummary.sum,
                 statistic=Statistic.mean,
@@ -77,39 +82,34 @@ def main():
                 statistic=Statistic.mean,
             )
 
-            ax[0].plot(rescale_time(xs_a[0], 1), res.sample_stat, label=alg, color=COLORS[alg], linewidth=0.5)
-            ax[0].fill_between(rescale_time(xs_a[0], 1), res.ci[0], res.ci[1], color=COLORS[alg], alpha=0.2)
-            ax[0].legend()
+            for i in range(5):
+                ax[i].plot(rescale_time(xs_a[0], 1), ys_a[i], label=f'seed{i+1}', color=COLORS[alg], linewidth=0.5)
+                ax[i].plot(rescale_time(xs_a[0], 1), optimal_action, color='r', label='optimal policy', linewidth=0.5)
+                ax[i].set_ylabel('Action')       
+                #ax[i].set_xticks([])    
+                for j in range(total_days + 1):
+                    ax[i].axvline(x = 12*j, color='k', linestyle='--', linewidth=0.5)
+            
             ax[0].set_title(f'Learning curves over {total_days} days')
-            ax[0].set_ylabel('Action')
-            ax[0].set_xlabel('Day Time [Hours]')
-            
-            # Plot reward history averaged over 5 seeds
-            xs, ys = extract_learning_curves(sub_df, report.best_configuration, metric='reward', interpolation=None)
-            xs = np.asarray(xs)
-            ys = np.asarray(ys)
+            ax[4].set_xlabel('Day Time [Hours]')
 
-            res = curve_percentile_bootstrap_ci(
-                rng=np.random.default_rng(0),
-                y=ys,
-                statistic=Statistic.mean,
-            )
-            
-            ax[1].plot(rescale_time(xs[0],1), res.sample_stat, label=alg, color=COLORS[alg], linewidth=0.5)
-            ax[1].fill_between(rescale_time(xs[0], 1), res.ci[0], res.ci[1], color=COLORS[alg], alpha=0.2)
-            ax[1].legend()
-            ax[1].set_ylabel('Reward')
-            ax[1].set_xlabel('Day Time [Hours]')
-            
-            for i in range(total_days + 1):
-                ax[0].axvline(x = 12*i, color='k', linestyle='--', linewidth=0.5)
-                ax[1].axvline(x = 12*i, color='k', linestyle='--', linewidth=0.5)
 
         save(save_path=f'{path}/plots', plot_name=f'{alg}', save_type='jpg')
 
 def rescale_time(x, stride):
     base_step = 10/60           # spreadsheet time step is 10 minutes
     return x*base_step*stride   # x-values in units of hours
+
+def add_finite_horizon_return(df, day):
+    """
+    Add a 'finite_horizon_return' column to the dataframe where all entries are zero except
+    at steps = 12*6*day - 1, where the entry is the sum of rewards from steps 1 to 12*6*day - 1.
+    """
+    df['finite_horizon_return'] = 0
+    horizon = 12*6*day - 1    
+    if horizon in df['steps'].values:
+        rewards_sum = df[df['steps'] <= horizon]['reward'].sum()
+        df.loc[df['steps'] == horizon, 'finite_horizon_return'] = rewards_sum
 
 if __name__ == "__main__":
     main()
