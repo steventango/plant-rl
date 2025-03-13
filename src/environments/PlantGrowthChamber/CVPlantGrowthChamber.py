@@ -8,7 +8,8 @@ class CVPlantGrowthChamber(PlantGrowthChamber):
     def __init__(self, zone: int, total_steps: int = 40320):
         super().__init__(zone)
         self.total_steps = total_steps
-        self.plant_area_emas = [UnbiasedExponentialMovingAverage(alpha=0.1)] * self.zone.num_plants
+        # todo don't hardcode 16
+        self.plant_area_emas = [UnbiasedExponentialMovingAverage(alpha=0.1)] * 16
 
     def get_observation(self):
         time, _, plant_stats = super().get_observation()

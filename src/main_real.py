@@ -75,14 +75,15 @@ def save_images(env, data_path: Path):
     zone_identifier = env.zone.identifier
 
     if "left" in env.images:
-        img_path = data_path / f"z{zone_identifier}cL" / f"{now}.png"
+        img_path = data_path / f"z{zone_identifier}/cL" / f"{now}.png"
         env.images["left"].save(img_path)
     if "right" in env.images:
-        img_path = data_path / f"z{zone_identifier}cR" / f"{now}.png"
+        img_path = data_path / f"z{zone_identifier}/cR" / f"{now}.png"
         env.images["right"].save(img_path)
-    if hasattr(env, "shape_image"):
-        shape_img_path = data_path / f"{now}_processed.png"
-        env.shape_image.save(shape_img_path)
+    if hasattr(env, "processed_image"):
+        shape_img_path = data_path / f"z{zone_identifier}/processed" / f"{now}.png"
+        processed_image = Image.fromarray(env.processed_image)
+        processed_image.save(shape_img_path)
 
 
 for idx in indices:
@@ -125,8 +126,9 @@ for idx in indices:
 
     context = exp.buildSaveContext(idx, base=args.save_path)
     data_path = Path('data') / Path(context.resolve()).relative_to('results')
-    (data_path / f"z{env.zone.identifier}cL").mkdir(parents=True, exist_ok=True)
-    (data_path / f"z{env.zone.identifier}cR").mkdir(parents=True, exist_ok=True)
+    (data_path / f"z{env.zone.identifier}/cL").mkdir(parents=True, exist_ok=True)
+    (data_path / f"z{env.zone.identifier}/cR").mkdir(parents=True, exist_ok=True)
+    (data_path / f"z{env.zone.identifier}/processed").mkdir(parents=True, exist_ok=True)
     data_path.mkdir(parents=True, exist_ok=True)
 
     # Run the experiment

@@ -3,6 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
+import cv2
 import numpy as np
 import requests
 from PIL import Image
@@ -33,6 +34,8 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         elif "right" in self.images:
             self.image = np.array(self.images["right"])
 
+        self.processed_image = self.process_image(self.image)
+
         self.plant_stats = np.random.randn(16, 1)
 
         return self.time, self.image, self.plant_stats
@@ -53,6 +56,39 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
             for side, future in futures.items():
                 self.images[side] = future.result()
+
+    def process_image(self, image: np.ndarray):
+        POT_WIDTH = 100
+        POT_HEIGHT = 100
+        # Get source points from the tray's rectangle
+        if self.zone.trays:
+            processed_images = []
+            for tray in self.zone.trays:
+                src_points = np.array(
+                    [tray.rect.top_left, tray.rect.top_right, tray.rect.bottom_right, tray.rect.bottom_left],
+                    dtype=np.float32,
+                )
+                # Calculate the height and width from pot widths and heights in each tray
+                width = tray.n_wide * POT_WIDTH
+                height = tray.n_tall * POT_HEIGHT
+
+                # Define destination points (desired corners of the tray)
+                dst_points = np.array(
+                    [[0, 0], [width - 1, 0], [width - 1, height - 1], [0, height - 1]], dtype=np.float32
+                )
+                 # Compute the homography matrix
+                homography_matrix, _ = cv2.findHomography(src_points, dst_points)
+
+                # Warp the image using the homography matrix
+                processed_image = cv2.warpPerspective(image, homography_matrix, (width, height))
+
+                processed_images.append(processed_image)
+
+            processed_image = np.hstack(processed_images)
+        else:
+            processed_image = image
+
+        return processed_image
 
     def start(self):
         observation = self.get_observation()

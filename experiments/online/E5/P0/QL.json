@@ -8,7 +8,7 @@
         "epsilon": [0.1],
         "decay_eps_frac": [false],
         "environment": {
-            "zone": 1,
+            "zone": 2,
             "total_steps": 40320
         },
         "experiment": {
