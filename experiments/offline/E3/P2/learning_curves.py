@@ -52,7 +52,9 @@ def main():
 
     for env, env_df in split_over_column(df, col='environment'):
         f, ax = plt.subplots(5, 1)
-        for alg, sub_df in split_over_column(env_df, col='algorithm'):
+        for alg, alg_df in split_over_column(env_df, col='algorithm'):
+            sub_df = alg_df[alg_df['environment.trace_decay_rate'] == 0.9]
+            
             report = Hypers.select_best_hypers(
                 sub_df,
                 metric='finite_horizon_return', 
@@ -87,7 +89,7 @@ def main():
             ax[4].set_xlabel('Day Time [Hours]')
 
 
-        save(save_path=f'{path}/plots', plot_name=f'{alg}', save_type='jpg')
+        save(save_path=f'{path}/plots', plot_name=f'09beta_{alg}', save_type='jpg')
 
 def rescale_time(x, stride):
     base_step = 10/60           # spreadsheet time step is 10 minutes

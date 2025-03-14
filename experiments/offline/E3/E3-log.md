@@ -25,14 +25,44 @@
 
 ##  Phase P2
 ### Objectives:
-- Train TC ESARSA in the further updated PlantSimulator (same as P2 but raw area change as reward, gamma = 1)
+- Train TC ESARSA in the further updated PlantSimulator (same as P1 but raw area change as reward, gamma = 1)
 ### Methods: 
 - Reward = 1000 * raw area change over 1 step. 1000 is there just to scale the reward values. Use raw reward so that the agent doesn't game the system (e.g. make the plants move so that they look bigger temperarily). Moreover, with countdown timer in the state, the agent shouldn't be confused by continually increasing raw area change.
 - use gamma = 1 because plants' response can be slow, I don't what to discount future rewards. Further, I want the sum of total rewards to be `final area - initial area`
 - Use a much finer tile coding so that the area spans ~25 tc grid points over one day.
-- different set of hyper sweeps from P2 (check config)
+- different set of hyper sweeps from P1 (check config)
 ### Observations: 
-- 
+- It's kind of working! Much better than P1
+- best config
+```
+representation.tilings:          256
+epsilon:                         0.05
+representation.tiles:            8
+environment.stride:              1
+n_step:                          1
+environment.trace_decay_rate:    0.0
+environment.num_plants:          49
+environment.last_day:            7
+environment.lag:                 1
+alpha:                           0.003
+```
+- n_step = 1 being best makes sense in a simulator because plant responds proportionally to lighting change immediately. Real plants might respond in a more complicated way, so it may be more benefitial to use larger n-step. Though it's unclear whether we should use small n_step still (to only capture plant's immediate response to lighting change), or large ones to hopefully capture overnight growth.
+- note that small alpha and epsilon are prefered
+- large trace_decay_rate makes really smooth action history! Though Oliver and I have decided to not use smooth areas in the reward, so this may change. 
+### Conclusions & Outlooks: 
+- n_step needs to be small in the simulator, but not necessarily in real experiment
+- epsilon and alpha both needs to be small, but this could be due to small, discrete action space, 
+- trace_decay_rate will affect things differently in the next updated plantsimulator
+- The tiles and tilings seem to be sensible choices. 
+
+##  Phase P3
+### Objectives:
+- Train TC-ESARSA again but with different state/reward definitions
+### Methods: 
+- State = (sin time-of-day, cos time-of-day, sin countdown, cos countdown, average observed area, history of average observed area)
+- lagged areas can be safely removed from the state if lag = 1
+- Reward = change in average area over 1 step, multiplied by 1000 to scale up (P2 used smooth average area)
+### Observations: 
+-
 ### Conclusions & Outlooks: 
 - 
-
