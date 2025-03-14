@@ -6,34 +6,36 @@ import jax.numpy as jnp
 import haiku as hk
 
 import utils.hk as hku
-from utils.functions import fta
-
 
 ModuleBuilder = Callable[[], Callable[[jax.Array | np.ndarray], jax.Array]]
 
-class NetworkBuilder:
-    def __init__(self, input_shape: Tuple, params: Dict[str, Any], seed: int):
+class LinearNetworkBuilder:
+    def __init__(self, input_shape: Tuple, seed: int):
         self._input_shape = tuple(input_shape)
-        self._h_params = params
         self._rng, feat_rng = jax.random.split(jax.random.PRNGKey(seed))
 
+        '''
         self._feat_net, self._feat_params = buildFeatureNetwork(input_shape, params, feat_rng)
 
         self._params = {
             'phi': self._feat_params,
         }
+        '''
+        self._params = {}
 
         self._retrieved_params = False
 
     def getParams(self):
         self._retrieved_params = True
         return self._params
-
+    
+    '''
     def getFeatureFunction(self):
         def _inner(params: Any, x: jax.Array | np.ndarray):
             return self._feat_net.apply(params['phi'], x)
 
         return _inner
+    '''
 
     def addHead(self, module: ModuleBuilder, name: Optional[str] = None, grad: bool = True):
         assert not self._retrieved_params, 'Attempted to add head after params have been retrieved'
@@ -50,11 +52,11 @@ class NetworkBuilder:
             return out
 
         sample_in = jnp.zeros((1,) + self._input_shape)
-        sample_phi = self._feat_net.apply(self._feat_params, sample_in).out
+        #sample_phi = self._feat_net.apply(self._feat_params, sample_in).out
 
         self._rng, rng = jax.random.split(self._rng)
         h_net = hk.without_apply_rng(hk.transform(_builder))
-        h_params = h_net.init(rng, sample_phi)
+        h_params = h_net.init(rng, sample_in)
 
         name = name or _state.get('name')
         assert name is not None, 'Could not detect name from module'
@@ -65,6 +67,7 @@ class NetworkBuilder:
 
         return _inner
 
+'''
 
 def reluLayers(layers: List[int], name: Optional[str] = None):
     w_init = hk.initializers.Orthogonal(np.sqrt(2))
@@ -77,6 +80,7 @@ def reluLayers(layers: List[int], name: Optional[str] = None):
 
     return out
 
+
 def buildFeatureNetwork(inputs: Tuple, params: Dict[str, Any], rng: Any):
     def _inner(x: jax.Array):
         name = params['type']
@@ -87,20 +91,9 @@ def buildFeatureNetwork(inputs: Tuple, params: Dict[str, Any], rng: Any):
 
         elif name == 'OneLayerRelu':
             layers = reluLayers([hidden], name='phi')
-
-        elif name == 'FTA':
-            eta = params.get('fta_eta', 0.4)
-            layers = [
-                hk.Linear(hidden, name='linear'),
-                lambda x: fta(
-                    x, 
-                    eta=eta, 
-                    tiles=params.get('fta_tiles', 20), 
-                    lower_bound = -10*eta, 
-                    upper_bound = 10*eta,
-                    ),
-                hk.Flatten(name='phi'),
-            ]
+            
+        elif name == 'identity':
+            
 
         else:
             raise NotImplementedError()
@@ -115,6 +108,7 @@ def buildFeatureNetwork(inputs: Tuple, params: Dict[str, Any], rng: Any):
     return network, net_params
 
 
+
 def make_conv(size: int, shape: Tuple[int, int], stride: Tuple[int, int]):
     w_init = hk.initializers.Orthogonal(np.sqrt(2))
     b_init = hk.initializers.Constant(0)
@@ -127,3 +121,5 @@ def make_conv(size: int, shape: Tuple[int, int], stride: Tuple[int, int]):
         padding='VALID',
         name='conv',
     )
+
+'''
