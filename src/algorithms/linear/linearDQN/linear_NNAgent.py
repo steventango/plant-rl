@@ -10,7 +10,7 @@ from ReplayTables.interface import Timestep
 from ReplayTables.registry import build_buffer
 
 from algorithms.BaseAgent import BaseAgent
-from representations.networks import NetworkBuilder
+from algorithms.linear.linearDQN.linear_networks import LinearNetworkBuilder
 from utils.checkpoint import checkpointable
 from utils.policies import egreedy_probabilities, sample
 
@@ -21,14 +21,13 @@ class AgentState:
 
 
 @checkpointable(('buffer', 'steps', 'state', 'updates'))
-class NNAgent(BaseAgent):
+class LinearNNAgent(BaseAgent):
     def __init__(self, observations: Tuple[int, ...], actions: int, params: Dict, collector: Collector, seed: int):
         super().__init__(observations, actions, params, collector, seed)
 
         # ------------------------------
         # -- Configuration Parameters --
         # ------------------------------
-        self.rep_params: Dict = params['representation']
         self.optimizer_params: Dict = params['optimizer']
 
         self.epsilon = params['epsilon']
@@ -37,9 +36,9 @@ class NNAgent(BaseAgent):
         # ---------------------
         # -- NN Architecture --
         # ---------------------
-        builder = NetworkBuilder(observations, self.rep_params, seed)
+        builder = LinearNetworkBuilder(observations, seed)
         self._build_heads(builder)
-        self.phi = builder.getFeatureFunction()
+        #self.phi = builder.getFeatureFunction()
         net_params = builder.getParams()
 
         # ---------------
@@ -59,6 +58,7 @@ class NNAgent(BaseAgent):
         self.batch_size = params['batch']
         self.update_freq = params.get('update_freq', 1)
         self.updates_per_step = params.get('updates_per_step', 1)
+        
 
         self.buffer = build_buffer(
             buffer_type=params['buffer_type'],
@@ -84,7 +84,7 @@ class NNAgent(BaseAgent):
     # ------------------------
 
     @abstractmethod
-    def _build_heads(self, builder: NetworkBuilder) -> None:
+    def _build_heads(self, builder: LinearNetworkBuilder) -> None:
         ...
 
     @abstractmethod
@@ -109,13 +109,7 @@ class NNAgent(BaseAgent):
         # if x is a vector, then jax handles a lack of "batch" dimension gracefully
         #   at a 5x speedup
         # if x is a tensor, jax does not handle lack of "batch" dim gracefully
-        
-        # Added extra condition for FTA because the vector becomes a tensor during 
-        # the forward pass. So we need to add the batch dim manually
-        # at the start as if we were passing a tensor, otherwise modules 
-        # after the FTA application (i.e flatten) will think the (n_hidden x n_tiles) 
-        # tensor is (n_batch x n_hidden) and not behave correctly. 
-        if len(x.shape) > 1 or self.rep_params.get('type', None) == 'FTA':
+        if len(x.shape) > 1:
             x = np.expand_dims(x, 0)
             q = self._values(self.state, x)[0]
 

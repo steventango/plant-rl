@@ -226,8 +226,7 @@ class PlantSimulatorOffLowHigh(BaseEnvironment):
         if clock < 0.25*total_seconds or clock > 0.75*total_seconds:   # twilight
             return action == 1   # twilight
         else:
-            return action == 2   # near noon
-        
+            return action == 2   # near noon        
 
 
 class PlantSimulatorLowHigh(PlantSimulator):  

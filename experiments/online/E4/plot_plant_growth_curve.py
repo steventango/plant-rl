@@ -29,73 +29,73 @@ def process_image(image):
     except Exception:
         return None
 
-results = process_map(process_image, sorted(image_dir.glob("*.png")))
+# results = process_map(process_image, sorted(image_dir.glob("*.png")))
 
-for result in results:
-    if result is not None:
-        time, blue_value, brightness_value = result
-        times.append(time)
-        blue.append(blue_value)
-        brightness.append(brightness_value)
+# for result in results:
+#     if result is not None:
+#         time, blue_value, brightness_value = result
+#         times.append(time)
+#         blue.append(blue_value)
+#         brightness.append(brightness_value)
 
-df = pd.DataFrame(
-    {
-        "time": times,
-        "blue": blue,
-        "brightness": brightness,
-    }
-)
+# df = pd.DataFrame(
+#     {
+#         "time": times,
+#         "blue": blue,
+#         "brightness": brightness,
+#     }
+# )
 
-df["time"] = pd.to_datetime(df["time"])
-# drop time before 2025
-df = df[df["time"] > "2025-01-01"]
+# df["time"] = pd.to_datetime(df["time"])
+# # drop time before 2025
+# df = df[df["time"] > "2025-01-01"]
 
-df.plot(x="time", y="blue", marker=".", figsize=(9, 6), label="Blue Channel")
-plt.legend()
-plt.show()
+# df.plot(x="time", y="blue", marker=".", figsize=(9, 6), label="Blue Channel")
+# plt.legend()
+# # plt.show()
 
 
-#%%
-df["light_on"] = df["blue"] < .5
+# #%%
+# df["light_on"] = df["blue"] < .5
 
-# %%
-df.to_csv("data/first_exp/z2cR.csv", index=False)
-
-# %%
-import pandas as pd
-
-df = pd.read_csv("data/first_exp/z2cR.csv")
-df["time"] = pd.to_datetime(df["time"])
-
-import matplotlib.pyplot as plt
-
-# filter data for Mar 1st
-# cond = ((df["time"].dt.month == 3) & (df["time"].dt.day == 1)) | ((df["time"].dt.month == 3) & (df["time"].dt.day == 2))
-# df = df[cond]
-
-df.plot(x="time", y="blue", marker=".", figsize=(36, 6), label="Blue Channel")
-# show 9 am 0 minutes as xticks
-cond = (df["time"].dt.minute == 0)
-plt.xticks(
-    ticks=df["time"][cond],
-    # format MM-DD HH:MM
-    labels=df["time"][cond].dt.strftime("%m-%d %H:%M"),
-    rotation=90,
-)
+# # %%
+# df.to_csv("data/first_exp/z2cR.csv", index=False)
 
 # %%
+# import pandas as pd
+
+# df = pd.read_csv("data/first_exp/z2cR.csv")
+# df["time"] = pd.to_datetime(df["time"])
+
+# import matplotlib.pyplot as plt
+
+# # filter data for Mar 1st
+# # cond = ((df["time"].dt.month == 3) & (df["time"].dt.day == 1)) | ((df["time"].dt.month == 3) & (df["time"].dt.day == 2))
+# # df = df[cond]
+
+# df.plot(x="time", y="blue", marker=".", figsize=(72, 6), label="Blue Channel")
+# # show 9 am 0 minutes as xticks
+# cond = (df["time"].dt.minute == 0)
+# plt.xticks(
+#     ticks=df["time"][cond],
+#     # format MM-DD HH:MM
+#     labels=df["time"][cond].dt.strftime("%m-%d %H:%M"),
+#     rotation=90,
+# )
+
+# %%
 
 
-df = pd.read_csv("first_exp_area_over_time.csv")
+df = pd.read_csv(Path(__file__).parent  / "first_exp_area_over_time.csv")
 df["timestamp"] = pd.to_datetime(df["timestamp"])
 df
 
 # %%
-# if value < 50, set to nan, for non timestamp columns
+# if value < 10, set to nan, for non timestamp columns
 for column in df.columns:
     if column == "timestamp":
         continue
-    df.loc[df[column] < 50, column] = pd.NA
+    df.loc[df[column] < 10, column] = pd.NA
 
 df = df.dropna()
 
@@ -147,8 +147,8 @@ def plot_segments(df, x_column, y_column, ax, color, label=None, gap_indices=Non
 
 
 # Create subplots with shared x-axis
-fig, axs = plt.subplots(2, 1, figsize=(12, 6), sharex=True)
-ax = axs[0]
+fig, axs = plt.subplots(2, 1, figsize=(60, 6), sharex=True)
+ax = axs[1]
 # Sort DataFrame by timestamp to ensure proper ordering
 df = df.sort_values("timestamp")
 
@@ -159,6 +159,15 @@ df["time_diff"] = df["timestamp"].diff()
 threshold = pd.Timedelta(minutes=6)
 large_gaps = df["time_diff"] > threshold
 
+
+#%%
+# get data on Mar 8
+cond = (df["timestamp"].dt.month == 3) & (df["timestamp"].dt.day == 8)
+df[cond]
+# save to csv
+df[cond].to_csv("z2cR_0308.csv", index=False)
+
+#%%
 # Get the indices where large gaps occur
 gap_indices = df.index[large_gaps].tolist()
 
@@ -170,7 +179,7 @@ for column in df.columns:
     color = palette.pop(0)
     plot_segments(df, "timestamp", column, ax, color, label=column, gap_indices=gap_indices)
 
-ax.set_ylim(0, 900)
+ax.set_ylim(0, 1200)
 ax.set_ylabel("Area (px$^2$)")
 ax.set_title("Area Over Time")
 plt.ylabel("Area")
@@ -178,7 +187,7 @@ plt.ylabel("Area")
 # %%
 
 
-df2 = pd.read_csv("data/first_exp/z2cR.csv")
+df2 = pd.read_csv(Path(__file__).parent.parent.parent.parent / "data/first_exp/z2cR.csv")
 df2["time"] = pd.to_datetime(df2["time"])
 df2["light_on"] = df2["light_on"].astype(int)
 
@@ -199,10 +208,10 @@ large_gaps_df2 = df2["time_diff"] > threshold
 gap_indices_df2 = df2.index[large_gaps_df2].tolist()
 
 # Use plot_segments to plot light_on data
-plot_segments(df2, "time", "light_on", axs[1], color="blue", label="Light On", gap_indices=gap_indices_df2)
-axs[1].set_title("Policy")
-axs[1].set_ylabel("Action (Light On)")
-axs[1].set_ylim(-0.1, 1.1)  # For binary data, setting appropriate y-limits
+plot_segments(df2, "time", "light_on", axs[0], color="blue", label="Light On", gap_indices=gap_indices_df2)
+axs[0].set_title("Policy")
+axs[0].set_ylabel("Action (Light On)")
+axs[0].set_ylim(-0.1, 1.1)  # For binary data, setting appropriate y-limits
 
 # Find common time range for both plots
 min_time = max(df["timestamp"].min(), df2["time"].min())
@@ -215,16 +224,34 @@ for ax in axs:
 # Format the x-axis dates nicely
 fig.autofmt_xdate()
 
+# add major grid lines for every day
+for ax in axs:
+    ax.xaxis.grid(True, which="major")
+    ax.xaxis.set_major_locator(plt.MultipleLocator(1))
+
+    ax.xaxis.grid(True, which="minor")
+    import matplotlib.dates as mdates
+
+    ax.xaxis.set_minor_locator(
+        mdates.HourLocator(byhour=[1,2,9,13,14,16,17,18,19,21], interval=1)
+    )
+    ax.xaxis.set_minor_formatter(mdates.DateFormatter("%H"))
+    ax.tick_params(axis="x", which="minor", labelrotation=90)
+
+
 # Set x-label only on the bottom subplot
 plt.xlabel("Time")
+
+# rotate x-axis labels
+plt.xticks(rotation=90)
 
 # Adjust layout to make room for x-axis labels
 plt.tight_layout()
 
 # %%
 # plt.show()
-fig.savefig("area_over_time_and_policy.png")
-fig.show()
+fig.savefig(Path(__file__).parent / "area_over_time_and_policy.png")
+# fig.show()
 # plt.savefig("area_over_time_and_policy.png")
 
 # %%
