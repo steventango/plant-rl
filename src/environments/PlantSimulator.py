@@ -5,7 +5,7 @@ import pandas as pd
 from RlGlue.environment import BaseEnvironment
 from utils.functions import PiecewiseLinear
 
-class PlantSimulatorOffLowHigh(BaseEnvironment):  
+class PlantSimulator(BaseEnvironment):  
     ''' 
     Simulate a tray of plants under the same lighting agent.
     State = (sin time-of-day, cos time-of-day, sin countdown, cos countdown, average observed area, history of average observed area)
@@ -229,7 +229,7 @@ class PlantSimulatorOffLowHigh(BaseEnvironment):
             return action == 2   # near noon        
 
 
-class PlantSimulatorLowHigh(PlantSimulatorOffLowHigh):  
+class PlantSimulatorLowHigh(PlantSimulator):  
     ''' 
     Simulate a tray of plants under the same lighting agent.
     State = (sin time-of-day, cos time-of-day, sin countdown, cos countdown, average observed area, history of average observed area)
