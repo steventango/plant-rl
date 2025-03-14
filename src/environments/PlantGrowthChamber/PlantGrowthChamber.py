@@ -1,9 +1,7 @@
 import io
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-from zoneinfo import ZoneInfo
 
-import cv2
 import numpy as np
 import requests
 from PIL import Image
@@ -24,7 +22,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self._start_time = start_time
 
     def get_observation(self):
-        self.time = datetime.now(tz=ZoneInfo("localtime")).timestamp()
+        self.time = datetime.now().timestamp()
 
         self.get_image()
         if "left" in self.images and "right" in self.images:

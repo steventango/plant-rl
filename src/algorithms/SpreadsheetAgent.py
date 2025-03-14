@@ -1,3 +1,4 @@
+import datetime
 from typing import Any, Dict, Tuple
 
 import numpy as np
@@ -19,6 +20,11 @@ class SpreadsheetAgent(BaseAgent):
         self.df["datetime"] = self.df["Day"] * 86400 + self.df["Time"].apply(
             lambda x: x.hour * 3600 + x.minute * 60 + x.second
         )
+        # convert from local time to UTC time
+        offset = datetime.datetime.now(datetime.timezone.utc).astimezone().utcoffset()
+        assert offset is not None
+        self.offset = offset.total_seconds()
+        self.df.to_csv("temp.csv")
 
     # ----------------------
     # -- RLGlue interface --
@@ -34,7 +40,8 @@ class SpreadsheetAgent(BaseAgent):
     def end(self, reward: float, extra: Dict[str, Any]):
         pass
 
-    def get_action(self, current_time: int):
+    def get_action(self, current_time: float):
+        current_time += self.offset
         cycle_length = 86400 * (self.df["Day"].max() + 1)
         clock_time = current_time % cycle_length
 
