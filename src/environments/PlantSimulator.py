@@ -13,7 +13,7 @@ class PlantSimulator(BaseEnvironment):
     "dim" is optimal in twilight hours, "bright" is optimal otherwise.
     Reward = % change in average smooth area over 1 step
     '''
-    def __init__(self, num_plants=32, lag=1, stride=1, last_day=14, trace_decay_rate = 0.9, **kwargs):
+    def __init__(self, num_plants=48, lag=1, stride=1, last_day=14, trace_decay_rate = 0.9, **kwargs):
         self.state_dim = (6,)   
         self.current_state = np.empty(6)
         self.action_dim = 3 
@@ -248,7 +248,7 @@ class PlantSimulatorLowHigh(PlantSimulator):
     "dim" is optimal in twilight hours, "bright" is optimal otherwise.
     Reward = % change in average smooth area over 1 step
     '''
-    def __init__(self, num_plants=32, lag=1, stride=1, last_day=14, trace_decay_rate = 0.9, **kwargs):
+    def __init__(self, num_plants=48, lag=1, stride=1, last_day=14, trace_decay_rate = 0.9, **kwargs):
         super().__init__(num_plants, lag, stride, last_day, trace_decay_rate)
         self.action_dim = 2 
         self.actions = [0, 1]
