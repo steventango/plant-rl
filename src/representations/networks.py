@@ -89,14 +89,15 @@ def buildFeatureNetwork(inputs: Tuple, params: Dict[str, Any], rng: Any):
             layers = reluLayers([hidden], name='phi')
 
         elif name == 'FTA':
+            eta = params.get('fta_eta', 0.4)
             layers = [
                 hk.Linear(hidden, name='linear'),
                 lambda x: fta(
                     x, 
-                    eta=params.get('fta_eta', 0.4), 
+                    eta=eta, 
                     tiles=params.get('fta_tiles', 20), 
-                    lower_bound=params.get('fta_lower_bound', -2), 
-                    upper_bound=params.get('fta_upper_bound', 2),
+                    lower_bound = -10*eta, 
+                    upper_bound = 10*eta,
                     ),
                 hk.Flatten(name='phi'),
             ]
