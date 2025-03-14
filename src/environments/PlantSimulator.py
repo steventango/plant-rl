@@ -230,7 +230,7 @@ class PlantSimulatorOffLowHigh(BaseEnvironment):
         
 
 
-class PlantSimulatorLowHigh(PlantSimulator):  
+class PlantSimulatorLowHigh(PlantSimulatorOffLowHigh):  
     ''' 
     Simulate a tray of plants under the same lighting agent.
     State = (sin time-of-day, cos time-of-day, sin countdown, cos countdown, average observed area, history of average observed area)
