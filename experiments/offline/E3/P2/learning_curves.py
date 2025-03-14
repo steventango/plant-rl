@@ -20,7 +20,7 @@ setDefaultConference('neurips')
 
 COLORS = {'tc-ESARSA': 'green'}
 
-total_days = 10   # for hypersweep, can be shorter than the run
+total_days = 7   # for hypersweep, can be shorter than the run
 steps_per_day = 72
 
 optimal_action = np.tile(np.hstack([np.ones(3*6), 2*np.ones(6*6), np.ones(3*6)]), total_days)[:-1]

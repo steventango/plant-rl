@@ -8,16 +8,16 @@
             "num_plants": 49,
             "lag": 1,
             "stride": 1, 
-            "last_day": 14,
-            "trace_decay_rate": [0.90]
+            "last_day": 7,
+            "trace_decay_rate": [0.0, 0.5, 0.9]
         },
-        "alpha": [0.0625, 0.125, 0.25, 0.5],
-        "epsilon": [0.05, 0.10, 0.15, 0.20, 0.25],
-        "n_step": [1, 2, 3],
+        "alpha": [3e-3, 1e-2, 3e-2, 1e-1, 3e-1, 1e0], 
+        "epsilon": [0.05, 0.10, 0.15],
+        "n_step": [1, 3, 10],
 
         "representation": {
-            "tiles": 4,
-            "tilings": [16, 32]
+            "tiles": 8,
+            "tilings": 256
         }
     }
 }

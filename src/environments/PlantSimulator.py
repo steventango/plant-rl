@@ -5,13 +5,13 @@ import pandas as pd
 from RlGlue.environment import BaseEnvironment
 from utils.functions import PiecewiseLinear
 
-class PlantSimulator(BaseEnvironment):  
+class PlantSimulatorOffLowHigh(BaseEnvironment):  
     ''' 
     Simulate a tray of plants under the same lighting agent.
-    State = (sin time-of-day, cos time-of-day, sin countdown, cos countdown, average smooth area 1 step ago, average smooth area)
+    State = (sin time-of-day, cos time-of-day, sin countdown, cos countdown, average observed area, history of average observed area)
     Action = [off, dim, bright]
     "dim" is optimal in twilight hours, "bright" is optimal otherwise.
-    Reward = % change in average smooth area over 1 step
+    Reward = change in average area over 1 step, multiplied by 1000 to scale up
     '''
     def __init__(self, num_plants=48, lag=1, stride=1, last_day=14, trace_decay_rate = 0.9, **kwargs):
         self.state_dim = (6,)   
@@ -35,7 +35,7 @@ class PlantSimulator(BaseEnvironment):
         self.data, self.steps_per_day, self.steps_per_night, self.interval, self.first_second = self.load_area_data()
         self.original_actual_areas, self.projection_factors, self.terminal_step = self.analyze_area_data()
 
-        self.gamma = 0.99
+        self.gamma = 1.0
 
     def start(self):
         self.frozen_time_today = 0
@@ -50,7 +50,7 @@ class PlantSimulator(BaseEnvironment):
 
         self.current_state = np.hstack([self.time_of_day(),
                                         self.countdown(),
-                                        self.normalize(1),   # fill in missing value(s) with small value(s) close to zero
+                                        self.normalize(np.mean(self.observed_areas[-1])),
                                         self.normalize(np.mean(self.smooth_areas[-1]))])
 
         return self.current_state
@@ -81,24 +81,14 @@ class PlantSimulator(BaseEnvironment):
         self.smooth_areas.append(self.moving_average(self.observed_areas[-1]))
 
         # Set state
-        if self.num_steps >= self.lag: 
-            self.current_state = np.hstack(
-                [
-                    self.time_of_day(), 
-                    self.countdown(),
-                    self.normalize(np.mean(self.observed_areas[-1])),
-                    self.normalize(np.mean(self.smooth_areas[-1]))
-                ]
-            )
-        else: 
-            self.current_state = np.hstack(
-                [
-                    self.time_of_day(), 
-                    self.countdown(),
-                    self.normalize(np.mean(self.observed_areas[-1])),
-                    self.normalize(np.mean(self.smooth_areas[-1]))
-                ]
-            )
+        self.current_state = np.hstack(
+            [
+                self.time_of_day(), 
+                self.countdown(),
+                self.normalize(np.mean(self.observed_areas[-1])),
+                self.normalize(np.mean(self.smooth_areas[-1]))
+            ]
+        )
 
         self.reward = self.reward_function()
 
@@ -111,7 +101,7 @@ class PlantSimulator(BaseEnvironment):
         if self.num_steps >= self.lag: 
             new = self.normalize(np.mean(self.observed_areas[-1]))
             old = self.normalize(np.mean(self.observed_areas[-1-self.lag]))
-            return new / old - 1
+            return (new - old) * 1000   # 1000 is there to make the reward values bigger
         else: 
             return 0
 
@@ -234,21 +224,20 @@ class PlantSimulator(BaseEnvironment):
         clock = (self.num_steps % self.steps_per_day)*self.interval    # seconds since beginning of day
         total_seconds = self.steps_per_day*self.interval               # total seconds during day time  
         if clock < 0.25*total_seconds or clock > 0.75*total_seconds:   # twilight
-            return action == 1
+            return action == 1   # twilight
         else:
-            return action == 2   # Daytime
-        
+            return action == 2   # near noon        
 
 
-class PlantSimulatorLowHigh(PlantSimulator):  
+class PlantSimulatorLowHigh(PlantSimulatorOffLowHigh):  
     ''' 
     Simulate a tray of plants under the same lighting agent.
-    State = (sin time-of-day, cos time-of-day, sin countdown, cos countdown, average smooth area 1 step ago, average smooth area)
-    Action = [off, dim, bright]
+    State = (sin time-of-day, cos time-of-day, sin countdown, cos countdown, average observed area, history of average observed area)
+    Action = [dim, bright]
     "dim" is optimal in twilight hours, "bright" is optimal otherwise.
-    Reward = % change in average smooth area over 1 step
+    Reward = change in average area over 1 step, multiplied by 1000 to scale up
     '''
-    def __init__(self, num_plants=48, lag=1, stride=1, last_day=14, trace_decay_rate = 0.9, **kwargs):
+    def __init__(self, num_plants=48, lag=1, stride=1, last_day=14, trace_decay_rate=0.9, **kwargs):
         super().__init__(num_plants, lag, stride, last_day, trace_decay_rate)
         self.action_dim = 2 
         self.actions = [0, 1]
@@ -269,6 +258,6 @@ class PlantSimulatorLowHigh(PlantSimulator):
         clock = (self.num_steps % self.steps_per_day)*self.interval    # seconds since beginning of day
         total_seconds = self.steps_per_day*self.interval               # total seconds during day time  
         if clock < 0.25*total_seconds or clock > 0.75*total_seconds:   # twilight
-            return action == 0
+            return action == 0   # twilight
         else:
-            return action == 1   # Daytime
+            return action == 1   # near noon
