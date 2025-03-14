@@ -13,7 +13,7 @@ class PlantSimulatorOffLowHigh(BaseEnvironment):
     "dim" is optimal in twilight hours, "bright" is optimal otherwise.
     Reward = change in average area over 1 step, multiplied by 1000 to scale up
     '''
-    def __init__(self, num_plants=48, lag=1, stride=1, last_day=14, trace_decay_rate = 0.9, **kwargs):
+    def __init__(self, num_plants=48, lag=1, stride=1, last_day=14, trace_decay_rate=0.9, **kwargs):
         self.state_dim = (6,)   
         self.current_state = np.empty(6)
         self.action_dim = 3 

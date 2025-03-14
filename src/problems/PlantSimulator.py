@@ -17,4 +17,4 @@ class PlantSimulator(BaseProblem):
             self.actions = 2
         
         self.observations = (6,) 
-        self.gamma = 0.99
+        self.gamma = 1.0
