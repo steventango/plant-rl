@@ -20,9 +20,7 @@ setDefaultConference('neurips')
 
 COLORS = {'tc-ESARSA': 'green'}
 
-total_days = 10   # for hypersweep, can be shorter than the run
-steps_per_day = 72
-
+total_days = 14   # match the config file
 optimal_action = np.tile(np.hstack([np.ones(3*6), 2*np.ones(6*6), np.ones(3*6)]), total_days)[:-1]
 
 def main():
@@ -45,17 +43,15 @@ def main():
     )
  
     assert df is not None
-    
-    add_finite_horizon_return(df, total_days)
-        
+            
     exp = results.get_any_exp()
 
     for env, env_df in split_over_column(df, col='environment'):
         f, ax = plt.subplots(5, 1)
-        for alg, sub_df in split_over_column(env_df, col='algorithm'):
+        for alg, sub_df in split_over_column(env_df, col='algorithm'):           
             report = Hypers.select_best_hypers(
                 sub_df,
-                metric='finite_horizon_return', 
+                metric='return', 
                 prefer=Hypers.Preference.high,
                 time_summary=TimeSummary.sum,
                 statistic=Statistic.mean,
@@ -66,8 +62,8 @@ def main():
             Hypers.pretty_print(report)
             
             xs_a, ys_a = extract_learning_curves(sub_df, report.best_configuration, metric='action', interpolation=None)
-            xs_a = np.asarray(xs_a)[:,:total_days*steps_per_day-1]
-            ys_a = np.asarray(ys_a)[:,:total_days*steps_per_day-1]
+            xs_a = np.asarray(xs_a)
+            ys_a = np.asarray(ys_a)
             
             res = curve_percentile_bootstrap_ci(
                 rng=np.random.default_rng(0),
@@ -79,7 +75,6 @@ def main():
                 ax[i].plot(rescale_time(xs_a[0], 1), optimal_action, color='r', label='optimal policy', linewidth=0.5)
                 ax[i].plot(rescale_time(xs_a[0], 1), ys_a[i], 'g.', label=f'seed{i+1}', markersize=0.5)
                 ax[i].set_ylabel('Action')       
-                #ax[i].set_xticks([])    
                 for j in range(total_days + 1):
                     ax[i].axvline(x = 12*j, color='k', linestyle='--', linewidth=0.5)
             
@@ -92,13 +87,6 @@ def main():
 def rescale_time(x, stride):
     base_step = 10/60           # spreadsheet time step is 10 minutes
     return x*base_step*stride   # x-values in units of hours
-
-def add_finite_horizon_return(df, day):
-    df['finite_horizon_return'] = 0.0
-    horizon = steps_per_day*day - 1    
-    if horizon in df['steps'].values:
-        rewards_sum = df[df['steps'] <= horizon]['reward'].sum()
-        df.loc[df['steps'] == horizon, 'finite_horizon_return'] = rewards_sum
 
 if __name__ == "__main__":
     main()
