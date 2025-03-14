@@ -3,5 +3,4 @@
 # exit script on error
 set -e
 
-python3 scripts/local.py --runs 3 -e experiments/offline/O1/E4-linearDQN/linearDQN.json
-python3 scripts/local.py --runs 3 -e experiments/offline/O1/E4-linearDQN/linearDQN_sgd.json
+python3 scripts/local.py --runs 5 -e experiments/offline/O1/E5-DQN_fta/DQN.json

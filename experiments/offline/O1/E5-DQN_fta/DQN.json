@@ -21,6 +21,12 @@
             "hidden": 16,
             "fta_eta": 0.4,
             "fta_tiles": 20
+        },
+        "environment": {
+            "type": "low_high",
+            "num_plants": 48,
+            "lag": 1,
+            "stride": 1
         }
     }
 }

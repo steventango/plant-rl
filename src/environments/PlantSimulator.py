@@ -13,7 +13,7 @@ class PlantSimulator(BaseEnvironment):
     "dim" is optimal in twilight hours, "bright" is optimal otherwise.
     Reward = % change in average smooth area over 1 step
     '''
-    def __init__(self, num_plants=32, lag=1, stride=1, last_day=14, trace_decay_rate = 0.9):
+    def __init__(self, num_plants=32, lag=1, stride=1, last_day=14, trace_decay_rate = 0.9, **kwargs):
         self.state_dim = (6,)   
         self.current_state = np.empty(6)
         self.action_dim = 3 
@@ -55,11 +55,14 @@ class PlantSimulator(BaseEnvironment):
 
         return self.current_state
 
-    def step(self, action): 
+    def step(self, action):
         # Modify the interpolated actual_areas according to the action
         for pwl in self.actual_areas: 
             pwl.insert_plateau(self.time, self.time + self.frozen_time(action))
         self.frozen_time_today += self.frozen_time(action)
+        
+        # Check if the agent selected optimal action given the time of day. This is env specific and should be overwritten by subclasses. 
+        self.last_action_optimal = self.is_optimal(action)
 
         # Keep track of time
         self.time += 1
@@ -79,15 +82,23 @@ class PlantSimulator(BaseEnvironment):
 
         # Set state
         if self.num_steps >= self.lag: 
-            self.current_state = np.hstack([self.time_of_day(), 
-                                            self.countdown(),
-                                            self.normalize(np.mean(self.smooth_areas[-1-self.lag])),   
-                                            self.normalize(np.mean(self.smooth_areas[-1]))])
+            self.current_state = np.hstack(
+                [
+                    self.time_of_day(), 
+                    self.countdown(),
+                    self.normalize(np.mean(self.observed_areas[-1])),
+                    self.normalize(np.mean(self.smooth_areas[-1]))
+                ]
+            )
         else: 
-            self.current_state = np.hstack([self.time_of_day(), 
-                                            self.countdown(),
-                                            self.normalize(1),   
-                                            self.normalize(np.mean(self.smooth_areas[-1]))])
+            self.current_state = np.hstack(
+                [
+                    self.time_of_day(), 
+                    self.countdown(),
+                    self.normalize(np.mean(self.observed_areas[-1])),
+                    self.normalize(np.mean(self.smooth_areas[-1]))
+                ]
+            )
 
         self.reward = self.reward_function()
 
@@ -98,14 +109,14 @@ class PlantSimulator(BaseEnvironment):
     
     def reward_function(self):
         if self.num_steps >= self.lag: 
-            new = self.normalize(np.mean(self.smooth_areas[-1]))
-            old = self.normalize(np.mean(self.smooth_areas[-1-self.lag]))
+            new = self.normalize(np.mean(self.observed_areas[-1]))
+            old = self.normalize(np.mean(self.observed_areas[-1-self.lag]))
             return new / old - 1
         else: 
             return 0
 
     def get_info(self):
-        return {"gamma": self.gamma}
+        return {"gamma": self.gamma, 'action_is_optimal': self.last_action_optimal}
         
     def analyze_area_data(self):    
         ''' 
@@ -218,3 +229,46 @@ class PlantSimulator(BaseEnvironment):
     def moving_average(self, new):
         history_rep = self.smooth_areas[-1]
         return [self.trace_decay_rate * history_rep[i] + (1 - self.trace_decay_rate) * new[i] for i in range(self.num_plants)]
+    
+    def is_optimal(self, action):
+        clock = (self.num_steps % self.steps_per_day)*self.interval    # seconds since beginning of day
+        total_seconds = self.steps_per_day*self.interval               # total seconds during day time  
+        if clock < 0.25*total_seconds or clock > 0.75*total_seconds:   # twilight
+            return action == 1
+        else:
+            return action == 2   # Daytime
+        
+
+
+class PlantSimulatorLowHigh(PlantSimulator):  
+    ''' 
+    Simulate a tray of plants under the same lighting agent.
+    State = (sin time-of-day, cos time-of-day, sin countdown, cos countdown, average smooth area 1 step ago, average smooth area)
+    Action = [off, dim, bright]
+    "dim" is optimal in twilight hours, "bright" is optimal otherwise.
+    Reward = % change in average smooth area over 1 step
+    '''
+    def __init__(self, num_plants=32, lag=1, stride=1, last_day=14, trace_decay_rate = 0.9, **kwargs):
+        super().__init__(num_plants, lag, stride, last_day, trace_decay_rate)
+        self.action_dim = 2 
+        self.actions = [0, 1]
+    
+    def frozen_time(self, action):       
+        # Amount of frozen time (in unit of time step), given action
+        twilight = {0: 0.0, 1: 0.5}
+        noon = {0: 0.5, 1: 0.0}
+        
+        clock = (self.num_steps % self.steps_per_day)*self.interval    # seconds since beginning of day
+        total_seconds = self.steps_per_day*self.interval               # total seconds during day time  
+        if clock < 0.25*total_seconds or clock > 0.75*total_seconds:   # if during the first or last 25% of daytime
+            return twilight[action]
+        else: 
+            return noon[action]
+    
+    def is_optimal(self, action):
+        clock = (self.num_steps % self.steps_per_day)*self.interval    # seconds since beginning of day
+        total_seconds = self.steps_per_day*self.interval               # total seconds during day time  
+        if clock < 0.25*total_seconds or clock > 0.75*total_seconds:   # twilight
+            return action == 0
+        else:
+            return action == 1   # Daytime
