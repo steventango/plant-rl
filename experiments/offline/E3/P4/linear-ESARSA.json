@@ -1,0 +1,19 @@
+{
+    "agent": "LinearESARSA",
+    "problem": "PlantSimulator",
+    "total_steps": -1,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment":{
+            "type": "off_low_high",
+            "num_plants": 48,
+            "lag": 1,
+            "stride": 1, 
+            "last_day": 7,
+            "trace_decay_rate": 0.99
+        },
+        "alpha": [1e-4, 1e-3, 1e-2, 1e-1], 
+        "epsilon": [0.05, 0.10, 0.15],
+        "n_step": [1, 2]
+    }
+}
