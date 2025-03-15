@@ -54,10 +54,9 @@ class UnbiasedExponentialMovingAverage:
         method will use ``values`` to update the metric.
 
         Args:
-          values: the values we want to use to update this metric.
+            values: the values we want to use to update this metric.
         """
-        if isinstance(values, (int, float)) or values.ndim == 0:
-            values = jnp.array([values], dtype=jnp.float32)
+        values = jnp.atleast_1d(values).astype(jnp.float32)
         for value in values:
             self.count_trace += self.alpha * (1 - self.count_trace)
             beta = self.alpha / self.count_trace
