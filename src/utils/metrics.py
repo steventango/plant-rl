@@ -12,22 +12,18 @@ class UnbiasedExponentialMovingAverage:
     Example usage::
 
       >>> import jax.numpy as jnp
-      >>> from flax import nnx
 
-      >>> batch_loss = jnp.array([1, 2, 3, 4])
-      >>> batch_loss2 = jnp.array([3, 2, 1, 0])
-
-      >>> metrics = nnx.metrics.UnbiasedExponentialMovingAverage()
-      >>> metrics.compute()
+      >>> uema = UnbiasedExponentialMovingAverage()
+      >>> uema.compute()
       Array(nan, dtype=float32)
-      >>> metrics.update(values=batch_loss)
-      >>> metrics.compute()
+      >>> uema.update(values=jnp.array([1, 2, 3, 4]))
+      >>> uema.compute()
       Array(2.501251, dtype=float32)
-      >>> metrics.update(values=batch_loss2)
-      >>> metrics.compute()
+      >>> uema.update(values=jnp.array([3, 2, 1, 0]))
+      >>> uema.compute()
       Array(1.998997, dtype=float32)
-      >>> metrics.reset()
-      >>> metrics.compute()
+      >>> uema.reset()
+      >>> uema.compute()
       Array(nan, dtype=float32)
     """
 
