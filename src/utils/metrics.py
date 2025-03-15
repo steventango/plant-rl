@@ -2,12 +2,10 @@ import typing as tp
 
 import jax
 import jax.numpy as jnp
-from flax.nnx import Metric
-from flax.nnx.training.metrics import Average, MetricState, Statistics, Welford
 
 
-class UnbiasedExponentialMovingAverage(Metric):
-    """Unbiased Exponential Moving Average metric.
+class UnbiasedExponentialMovingAverage:
+    """Unbiased Exponential Moving Average.
 
     Reference: Sutton & Barto (2018) Exercise 2.7
 
@@ -47,13 +45,13 @@ class UnbiasedExponentialMovingAverage(Metric):
 
         self.alpha = alpha
 
-        self.total = MetricState(jnp.array(0, dtype=jnp.float32))
-        self.count_trace = MetricState(jnp.array(0, dtype=jnp.int32))
+        self.total = jnp.array(0, dtype=jnp.float32)
+        self.count_trace = jnp.array(0, dtype=jnp.int32)
 
     def reset(self) -> None:
         """Reset this ``Metric``."""
-        self.total.value = jnp.array(0, dtype=jnp.float32)
-        self.count_trace.value = jnp.array(0, dtype=jnp.int32)
+        self.total = jnp.array(0, dtype=jnp.float32)
+        self.count_trace = jnp.array(0, dtype=jnp.int32)
 
     def update(self, **kwargs) -> None:
         """In-place update this ``Metric``. This method will use the value from
@@ -72,8 +70,8 @@ class UnbiasedExponentialMovingAverage(Metric):
         for value in values.flatten():
             self.count_trace += self.alpha * (1 - self.count_trace)
             beta = self.alpha / self.count_trace
-            self.total.value = (1 - beta) * self.total.value + beta * value
+            self.total = (1 - beta) * self.total + beta * value
 
     def compute(self) -> jax.Array:
         """Compute and return the unbiased exponential moving average."""
-        return self.total.value if self.count_trace.value > 0 else jnp.nan
+        return self.total if self.count_trace > 0 else jnp.array(jnp.nan, dtype=jnp.float32)
