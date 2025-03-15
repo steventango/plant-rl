@@ -14,8 +14,9 @@ class UnbiasedExponentialMovingAverage:
       >>> import jax.numpy as jnp
 
       >>> uema = UnbiasedExponentialMovingAverage()
+      >>> uema.update(values=jnp.array([1, 2, 3, 4]))
       >>> uema.compute()
-      Array(nan, dtype=float32)
+      Array(2.501251, dtype=float32)
       >>> uema.update(values=jnp.array([1, 2, 3, 4]))
       >>> uema.compute()
       Array(2.501251, dtype=float32)
@@ -27,10 +28,8 @@ class UnbiasedExponentialMovingAverage:
       Array(nan, dtype=float32)
     """
 
-    def __init__(self, shape=1, alpha: float = 0.001):
-        """Pass in a string denoting the key-word argument that :func:`update` will use to derive the new value.
-        For example, constructing the metric as ``uema = UnbiasedExponentialMovingAverage('test')`` would allow you to make updates with
-        ``uema.update(test=new_value)``.
+    def __init__(self, shape: tp.Union[int, tp.Sequence[int]] = 1, alpha: float = 0.001) -> None:
+        """Initialize the UnbiasedExponentialMovingAverage with the given shape and smoothing factor.
 
         Args:
           shape: int or sequence of ints specifying the shape of the created array.
