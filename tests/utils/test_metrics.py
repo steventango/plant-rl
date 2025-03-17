@@ -1,6 +1,7 @@
 import jax.numpy as jnp
 import pytest
-
+import matplotlib.pyplot as plt
+import numpy as np
 from utils.metrics import UnbiasedExponentialMovingAverage
 
 
@@ -100,3 +101,21 @@ class TestUnbiasedExponentialMovingAverage:
         assert metric.dtype == jnp.float32
         assert metric.shape == (2,)
         assert jnp.all(metric == pytest.approx(1.998997))
+        
+    def test_plot_beta(self):
+        uema = UnbiasedExponentialMovingAverage(shape=1)
+        beta_history = []
+        count_trace_history = []
+        for value in np.arange(10000):
+            uema.count_trace += uema.alpha * (1 - uema.count_trace)
+            count_trace_history.append(uema.count_trace)
+            beta = uema.alpha / uema.count_trace
+            beta_history.append(beta)
+            uema.total = (1 - beta) * uema.total + beta * value
+        fig, ax = plt.subplots(1, 2)
+        ax[0].plot(count_trace_history)
+        ax[0].set_xlabel('count_trace')
+        ax[1].plot(beta_history, label=f'last beta={beta_history[-1]:.2g}')
+        ax[1].legend()
+        ax[1].set_xlabel('beta')
+        plt.savefig('tests/utils/plot_trace.jpg')

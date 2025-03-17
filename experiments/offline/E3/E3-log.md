@@ -96,3 +96,13 @@ Just realized that data analysis for P1 and P2 were wrong. After fixing them, I 
 ### Conclusions & Outlooks: 
 - How to improve upon this?
 
+##  Phase P4
+### Objectives:
+- Use a smoother history trace decay rate = 0.99, following water treatment plant paper
+- Try linear ESARSA for now because I need to modify the tile coding script (too fine of a grid for time!)
+### Methods: 
+-
+### Observations: 
+-
+### Conclusions & Outlooks: 
+- 
