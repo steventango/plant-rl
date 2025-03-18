@@ -5,73 +5,58 @@ import jax.numpy as jnp
 
 
 class UnbiasedExponentialMovingAverage:
-    """Unbiased Exponential Moving Average metric.
+    """Unbiased Exponential Moving Average.
 
     Reference: Sutton & Barto (2018) Exercise 2.7
 
     Example usage::
 
       >>> import jax.numpy as jnp
-      >>> from flax import nnx
 
-      >>> batch_loss = jnp.array([1, 2, 3, 4])
-      >>> batch_loss2 = jnp.array([3, 2, 1, 0])
-
-      >>> metrics = nnx.metrics.UnbiasedExponentialMovingAverage()
-      >>> metrics.compute()
-      Array(nan, dtype=float32)
-      >>> metrics.update(values=batch_loss)
-      >>> metrics.compute()
+      >>> uema = UnbiasedExponentialMovingAverage()
+      >>> uema.update(values=jnp.array([1, 2, 3, 4]))
+      >>> uema.compute()
       Array(2.501251, dtype=float32)
-      >>> metrics.update(values=batch_loss2)
-      >>> metrics.compute()
+      >>> uema.update(values=jnp.array([1, 2, 3, 4]))
+      >>> uema.compute()
+      Array(2.501251, dtype=float32)
+      >>> uema.update(values=jnp.array([3, 2, 1, 0]))
+      >>> uema.compute()
       Array(1.998997, dtype=float32)
-      >>> metrics.reset()
-      >>> metrics.compute()
+      >>> uema.reset()
+      >>> uema.compute()
       Array(nan, dtype=float32)
     """
 
-    def __init__(self, argname: str = "values", alpha: float = 0.001):
-        """Pass in a string denoting the key-word argument that :func:`update` will use to derive the new value.
-        For example, constructing the metric as ``uema = UnbiasedExponentialMovingAverage('test')`` would allow you to make updates with
-        ``uema.update(test=new_value)``.
+    def __init__(self, shape: tp.Union[int, tp.Sequence[int]] = 1, alpha: float = 0.001) -> None:
+        """Initialize the UnbiasedExponentialMovingAverage with the given shape and smoothing factor.
 
         Args:
-          argname: an optional string denoting the key-word argument that
-            :func:`update` will use to derive the new value. Defaults to
-            ``'values'``.
+          shape: int or sequence of ints specifying the shape of the created array.
+          alpha: the smoothing factor. Defaults to ``0.001``.
         """
-        self.argname = argname
-
         self.alpha = alpha
-
-        self.total = jnp.array(0, dtype=jnp.float32)
-        self.count_trace = jnp.array(0, dtype=jnp.int32)
+        self.shape = shape
+        self.reset()
 
     def reset(self) -> None:
-        """Reset this ``Metric``."""
-        self.total = jnp.array(0, dtype=jnp.float32)
+        """Reset this ``UnbiasedExponentialMovingAverage``."""
+        self.total = jnp.zeros(self.shape, dtype=jnp.float32)
         self.count_trace = jnp.array(0, dtype=jnp.int32)
 
-    def update(self, **kwargs) -> None:
-        """In-place update this ``Metric``. This method will use the value from
-        ``kwargs[self.argname]`` to update the metric, where ``self.argname`` is
-        defined on construction.
+    def update(self, values: tp.Union[int, float, jax.Array]) -> None:
+        """In-place update this ``UnbiasedExponentialMovingAverage``. This
+        method will use ``values`` to update the metric.
 
         Args:
-          **kwargs: the key-word arguments that contains a ``self.argname``
-            entry that maps to the value we want to use to update this metric.
+            values: the values we want to use to update this metric.
         """
-        if self.argname not in kwargs:
-            raise TypeError(f"Expected keyword argument '{self.argname}'")
-        values: tp.Union[int, float, jax.Array] = kwargs[self.argname]
-        if isinstance(values, (int, float)) or values.ndim == 0:
-            values = jnp.array([values], dtype=jnp.float32)
-        for value in values.flatten():
+        values = jnp.atleast_1d(values).astype(jnp.float32)
+        for value in values:
             self.count_trace += self.alpha * (1 - self.count_trace)
             beta = self.alpha / self.count_trace
             self.total = (1 - beta) * self.total + beta * value
 
     def compute(self) -> jax.Array:
         """Compute and return the unbiased exponential moving average."""
-        return self.total if self.count_trace > 0 else jnp.nan
+        return self.total if self.count_trace > 0 else jnp.full(self.shape, jnp.nan, dtype=jnp.float32)

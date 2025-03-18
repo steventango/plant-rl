@@ -1,38 +1,121 @@
 import jax.numpy as jnp
 import pytest
-
+import matplotlib.pyplot as plt
+import numpy as np
 from utils.metrics import UnbiasedExponentialMovingAverage
 
 
 class TestUnbiasedExponentialMovingAverage:
     def test___init__(self):
-        metric = UnbiasedExponentialMovingAverage()
-        assert jnp.isnan(metric.compute())
+        uema = UnbiasedExponentialMovingAverage()
+        metric = uema.compute()
+        assert metric.dtype == jnp.float32
+        assert metric.shape == (1,)
+        assert jnp.isnan(metric)
 
     def test_reset(self):
-        metric = UnbiasedExponentialMovingAverage()
-        metric.update(values=jnp.array([1, 2, 3, 4]))
-        metric.reset()
-        assert jnp.isnan(metric.compute())
+        uema = UnbiasedExponentialMovingAverage()
+        uema.update(values=jnp.array([1, 2, 3, 4]))
+        uema.reset()
+        metric = uema.compute()
+        assert metric.dtype == jnp.float32
+        assert metric.shape == (1,)
+        assert jnp.isnan(metric)
 
     def test_update(self):
-        metric = UnbiasedExponentialMovingAverage()
-        metric.update(values=jnp.array([1, 2, 3, 4]))
+        uema = UnbiasedExponentialMovingAverage()
+        uema.update(values=jnp.array([1, 2, 3, 4]))
 
     def test_compute(self):
-        metric = UnbiasedExponentialMovingAverage()
-        metric.update(values=1)
-        uema = metric.compute()
-        assert uema == pytest.approx(1)
-        metric.update(values=2)
-        uema = metric.compute()
-        assert uema == pytest.approx(1.500250)
-        metric.update(values=3)
-        uema = metric.compute()
-        assert uema == pytest.approx(2.000667)
-        metric.update(values=4)
-        uema = metric.compute()
-        assert uema == pytest.approx(2.501251)
-        metric.update(values=jnp.array([3, 2, 1, 0]))
-        uema = metric.compute()
-        assert uema == pytest.approx(1.998997)
+        uema = UnbiasedExponentialMovingAverage()
+        uema.update(values=1)
+        metric = uema.compute()
+        assert metric.dtype == jnp.float32
+        assert metric.shape == (1,)
+        assert metric == pytest.approx(1)
+        uema.update(values=2)
+        metric = uema.compute()
+        assert metric.dtype == jnp.float32
+        assert metric.shape == (1,)
+        assert metric == pytest.approx(1.500250)
+        uema.update(values=3)
+        metric = uema.compute()
+        assert metric.dtype == jnp.float32
+        assert metric.shape == (1,)
+        assert metric == pytest.approx(2.000667)
+        uema.update(values=4)
+        metric = uema.compute()
+        assert metric.dtype == jnp.float32
+        assert metric.shape == (1,)
+        assert metric == pytest.approx(2.501251)
+        uema.update(values=jnp.array([3, 2, 1, 0]))
+        metric = uema.compute()
+        assert metric.dtype == jnp.float32
+        assert metric.shape == (1,)
+        assert metric == pytest.approx(1.998997)
+
+    def test__init__with_shape(self):
+        uema = UnbiasedExponentialMovingAverage(shape=2)
+        metric = uema.compute()
+        assert metric.dtype == jnp.float32
+        assert metric.shape == (2,)
+        assert jnp.all(jnp.isnan(metric))
+
+    def test_reset_with_shape(self):
+        uema = UnbiasedExponentialMovingAverage(shape=2)
+        uema.update(values=jnp.array([[1, 2], [3, 4]]))
+        uema.reset()
+        metric = uema.compute()
+        assert metric.dtype == jnp.float32
+        assert metric.shape == (2,)
+        assert jnp.all(jnp.isnan(metric))
+
+    def test_update_with_shape(self):
+        uema = UnbiasedExponentialMovingAverage(shape=2)
+        uema.update(values=jnp.array([[1, 2], [3, 4]]))
+
+    def test_compute_with_shape(self):
+        uema = UnbiasedExponentialMovingAverage(shape=2)
+        uema.update(values=jnp.array([[1, 1]]))
+        metric = uema.compute()
+        assert metric.dtype == jnp.float32
+        assert metric.shape == (2,)
+        assert jnp.all(metric == pytest.approx(1))
+        uema.update(values=jnp.array([[2, 2]]))
+        metric = uema.compute()
+        assert metric.dtype == jnp.float32
+        assert metric.shape == (2,)
+        assert jnp.all(metric == pytest.approx(1.500250))
+        uema.update(values=jnp.array([[3, 3]]))
+        metric = uema.compute()
+        assert metric.dtype == jnp.float32
+        assert metric.shape == (2,)
+        assert jnp.all(metric == pytest.approx(2.000667))
+        uema.update(values=jnp.array([[4, 4]]))
+        metric = uema.compute()
+        assert metric.dtype == jnp.float32
+        assert metric.shape == (2,)
+        assert jnp.all(metric == pytest.approx(2.501251))
+        uema.update(values=jnp.array([[3, 3], [2, 2], [1, 1], [0, 0]]))
+        metric = uema.compute()
+        assert metric.dtype == jnp.float32
+        assert metric.shape == (2,)
+        assert jnp.all(metric == pytest.approx(1.998997))
+
+    def test_plot_beta(self):
+        uema = UnbiasedExponentialMovingAverage(shape=1)
+        beta_history = []
+        count_trace_history = []
+        for value in np.arange(10000):
+            uema.count_trace += uema.alpha * (1 - uema.count_trace)
+            count_trace_history.append(uema.count_trace)
+            beta = uema.alpha / uema.count_trace
+            beta_history.append(beta)
+            uema.total = (1 - beta) * uema.total + beta * value
+        fig, ax = plt.subplots(1, 2)
+        ax[0].plot(count_trace_history)
+        ax[0].set_xlabel('count_trace')
+        ax[1].plot(beta_history, label=f'last beta={beta_history[-1]:.2g}')
+        ax[1].legend()
+        ax[1].set_xlabel('beta')
+        plt.savefig('tests/utils/plot_trace.jpg')

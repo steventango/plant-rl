@@ -74,6 +74,7 @@ for idx in indices:
             'episode': Identity(),
             'steps': Identity(),
             'action': Identity(),
+            'action_is_optimal': Identity(),
         },
         default=Ignore(),
     ))
@@ -110,8 +111,9 @@ for idx in indices:
     # if we haven't started yet, then make the first interaction
     if glue.total_steps == 0:
         glue.start()
-    
+
     previous_total_reward = 0 
+    
     for step in range(glue.total_steps, exp.total_steps):
         collector.next_frame()
         chk.maybe_save()
@@ -121,8 +123,8 @@ for idx in indices:
         previous_total_reward = np.copy(glue.total_reward) 
         collector.collect('episode', chk['episode'])
         collector.collect('steps', glue.num_steps)
-        #collector.collect('action', int.from_bytes(glue.last_action, byteorder='little'))    # only needed for GAC for some reason
-        collector.collect('action', glue.last_action)  
+        collector.collect('action', glue.last_action)      # or int.from_bytes(glue.last_action, byteorder='little') for GAC  
+        collector.collect('action_is_optimal', interaction.extra.get('action_is_optimal', -1))   # Check if the agent took the optimal action
 
         if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
             # allow agent to cleanup traces or other stateful episodic info

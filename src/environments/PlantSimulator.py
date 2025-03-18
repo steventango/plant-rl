@@ -4,28 +4,31 @@ import numpy as np
 import pandas as pd
 from RlGlue.environment import BaseEnvironment
 from utils.functions import PiecewiseLinear
+from utils.metrics import UnbiasedExponentialMovingAverage as uema
+import jax.numpy as jnp
 
 class PlantSimulator(BaseEnvironment):  
     ''' 
     Simulate a tray of plants under the same lighting agent.
-    State = (sin time-of-day, cos time-of-day, sin countdown, cos countdown, average smooth area 1 step ago, average smooth area)
-    Action = [off, dim, bright]
-    "dim" is optimal in twilight hours, "bright" is optimal otherwise.
-    Reward = % change in average smooth area over 1 step
+    State = (sin time-of-day, cos time-of-day, sin countdown, cos countdown, average area, history of change in average area)
+    Action = [moonlight, low, med, high] (med is optimal at noon, high is too bright)
+    Reward = change in average area over 1 step
     '''
-    def __init__(self, num_plants=32, lag=1, stride=1, last_day=14, trace_decay_rate = 0.9):
+    def __init__(self, num_plants=48, outliers=2, lag=1, stride=1, last_day=14, **kwargs):
         self.state_dim = (6,)   
         self.current_state = np.empty(6)
-        self.action_dim = 3 
-        self.actions = [0, 1, 2] 
+        self.action_dim = 4
+        self.actions = [0, 1, 2, 3] 
 
         self.num_plants = num_plants
+        self.outliers = outliers        # number of "outliers" to remove from the top/bottom observations
+        
         self.stride = stride            # env time step = stride * time step in plant data
         self.lag = lag                  # lag for change in area used in reward function; default is 1 time step
 
-        self.observed_areas = []        # store a list of observed areas
-        self.smooth_areas = []          # store a list of moving-averaged observed areas
-        self.trace_decay_rate = trace_decay_rate  # controls the amount of smoothing in the exponential weighted moving average
+        self.observed_areas = []        # stores a list of lists of daytime observed areas in pixels. i.e. self.observed_areas[-1] contains the latest areas of individual plants
+        
+        self.history = uema(alpha=0.01) # history of change in average observed area over 1 step
         
         self.time = 0                   # step counter that counts both day and night, even though agent is sleeping at night
         self.num_steps = 0
@@ -35,82 +38,108 @@ class PlantSimulator(BaseEnvironment):
         self.data, self.steps_per_day, self.steps_per_night, self.interval, self.first_second = self.load_area_data()
         self.original_actual_areas, self.projection_factors, self.terminal_step = self.analyze_area_data()
 
-        self.gamma = 0.99
-
+        self.gamma = 1.0
+        
     def start(self):
         self.frozen_time_today = 0
         self.time = 0
         self.num_steps = 0
 
         self.actual_areas = [pwl.copy() for pwl in self.original_actual_areas]   # Make a copy because actual_areas will be modified at each step
-
-        self.observed_areas.append([self.actual_areas[i](self.time)*self.projection_factors[i][self.num_steps] 
-                                    for i in range(self.num_plants)])
-        self.smooth_areas.append(self.observed_areas[-1])
-
+        
+        self.observed_areas = [[self.actual_areas[i](self.time)*self.projection_factors[i][self.num_steps] for i in range(self.num_plants)]]
+        
+        self.history = uema(alpha=0.01)
+        
         self.current_state = np.hstack([self.time_of_day(),
                                         self.countdown(),
-                                        self.normalize(1),   # fill in missing value(s) with small value(s) close to zero
-                                        self.normalize(np.mean(self.smooth_areas[-1]))])
+                                        self.normalize(self.iqm(self.observed_areas[-1])),
+                                        self.normalize(0, l=-5, u=30)])   # let the history be zero at t=0
 
         return self.current_state
 
-    def step(self, action): 
+    def step(self, action):
+        # Check if the agent selected optimal action given the time of day. This is env specific and should be overwritten by subclasses. 
+        self.last_action_optimal = self.is_optimal(action)
+        
         # Modify the interpolated actual_areas according to the action
         for pwl in self.actual_areas: 
             pwl.insert_plateau(self.time, self.time + self.frozen_time(action))
         self.frozen_time_today += self.frozen_time(action)
-
+        
         # Keep track of time
         self.time += 1
         self.num_steps += 1
 
-        # If transitioning into the next day, freeze growth at night by the same amount as daytime today
-        if self.num_steps % self.steps_per_day == 0: 
+        # Overnight behaviors
+        if self.num_steps % self.steps_per_day == 0:  # if transitioning into the next day
+            # freeze growth at night by the same amount as daytime today
             for pwl in self.actual_areas:
                 pwl.insert_plateau(self.time, self.time + self.frozen_time_today)
+                
+            # compute history throughout night time
+            self.overnight_trace()
+                           
             self.time += self.steps_per_night - 1   # fastforward time
             self.frozen_time_today = 0
 
         # Compute observed areas by projecting actual areas
         self.observed_areas.append([self.actual_areas[i](self.time)*self.projection_factors[i][self.num_steps] 
                                     for i in range(self.num_plants)])
-        self.smooth_areas.append(self.moving_average(self.observed_areas[-1]))
-
-        # Set state
-        if self.num_steps >= self.lag: 
-            self.current_state = np.hstack([self.time_of_day(), 
-                                            self.countdown(),
-                                            self.normalize(np.mean(self.smooth_areas[-1-self.lag])),   
-                                            self.normalize(np.mean(self.smooth_areas[-1]))])
-        else: 
-            self.current_state = np.hstack([self.time_of_day(), 
-                                            self.countdown(),
-                                            self.normalize(1),   
-                                            self.normalize(np.mean(self.smooth_areas[-1]))])
-
+        
+        # Compute reward
         self.reward = self.reward_function()
+        
+        # history = trace over "change in iqm(observed areas)" over 1 time step
+        if self.num_steps % self.steps_per_day != 0:    # note: the overnight case is as above
+            self.history.update(self.iqm(self.observed_areas[-1]) - self.iqm(self.observed_areas[-2]))
+        
+        self.current_state = np.hstack([self.time_of_day(),
+                                        self.countdown(),
+                                        self.normalize(self.iqm(self.observed_areas[-1])),
+                                        self.normalize(self.history.compute(), l=-5, u=30)])
 
         if self.num_steps == self.terminal_step:
             return self.reward, self.current_state, True, self.get_info()
         else:    
             return self.reward, self.current_state, False, self.get_info()
     
+    def overnight_trace(self): 
+        last_night_obs = self.observed_areas[-1]
+        overnight_obs = []
+        for i in range(self.num_plants):
+            # Interpolate for projection factors overnight
+            last_night_pf = self.projection_factors[i][self.num_steps - 1] 
+            morning_pf = self.projection_factors[i][self.num_steps] 
+            delta_pf = (morning_pf - last_night_pf) / self.steps_per_night
+            # Compute overnight observations
+            overnight_ob = [last_night_obs[i]]
+            for j in range(int(self.steps_per_night)):
+                pf = last_night_pf + delta_pf * (j + 1)
+                overnight_ob.append(self.actual_areas[i](self.time + j) * pf)
+            overnight_obs.append(overnight_ob)
+            
+        overnight_obs = np.array(overnight_obs).T   
+        
+        for j in range(int(self.steps_per_night)):   
+            self.history.update(self.iqm(overnight_obs[j + 1]) - self.iqm(overnight_obs[j]))           
+                
+    def iqm(self, values):
+        values = np.sort(values)
+        return np.mean(values[self.outliers:self.num_plants-self.outliers])
+        
     def reward_function(self):
         if self.num_steps >= self.lag: 
-            new = self.normalize(np.mean(self.smooth_areas[-1]))
-            old = self.normalize(np.mean(self.smooth_areas[-1-self.lag]))
-            return new / old - 1
+            new = self.normalize(self.iqm(self.observed_areas[-1]))
+            old = self.normalize(self.iqm(self.observed_areas[-1-self.lag]))
+            return new - old
         else: 
             return 0
 
     def get_info(self):
-        return {"gamma": self.gamma}
+        return {"gamma": self.gamma, 'action_is_optimal': self.last_action_optimal}
         
-    def analyze_area_data(self):    
-        ''' 
-        Approximate the actual leaf sizes and the projection factor throughout the day 
-        '''
+    def analyze_area_data(self):    # Approximate the actual leaf sizes and the projection factor throughout the day 
         PWL = []
         PF = []
         for _ in range(self.num_plants):
@@ -161,6 +190,7 @@ class PlantSimulator(BaseEnvironment):
         df = pd.read_csv(data_path).sort_values(by='timestamp')
 
         # Filter out any plants that have sensor reading errors (area randomly goes to 0 at some timesteps)
+        # TODO impute missing values by repeating previous values
         df = df.loc[:, ~(df == 0).any()]
 
         # Number of time steps per day
@@ -173,7 +203,7 @@ class PlantSimulator(BaseEnvironment):
         # Number of time steps per night
         time_increment = df['timestamp'].diff().mode()[0]
         night_duration = df.groupby(df['timestamp'].dt.date)['timestamp'].first().shift(-1) - df.groupby(df['timestamp'].dt.date)['timestamp'].last()
-        steps_per_night = int((night_duration.mode()[0] / time_increment)-1)
+        steps_per_night = int((night_duration.mode()[0] / time_increment) - 1)
 
         # The second when the first day starts 
         first_second = pd.to_datetime(df['timestamp'].iloc[0]).time().hour * 3600 + pd.to_datetime(df['timestamp'].iloc[0]).time().minute * 60
@@ -187,8 +217,7 @@ class PlantSimulator(BaseEnvironment):
 
         return plant_area_data[:,:self.num_plants], steps_per_day, steps_per_night, time_increment.total_seconds(), first_second
     
-    def time_of_day(self):
-        # Return sine & cosine times, normalized to between 0 and 1
+    def time_of_day(self):  # Return sine & cosine times, normalized to between 0 and 1
         clock = (self.num_steps % self.steps_per_day)*self.interval + self.first_second   # time of day in seconds
         return [(sin(2*pi*clock/86400)+1)/2, (cos(2*pi*clock/86400)+1)/2]
     
@@ -196,17 +225,51 @@ class PlantSimulator(BaseEnvironment):
         total_steps = self.last_day * self.steps_per_day
         return [(sin(2*pi*self.num_steps/total_steps)+1)/2, (cos(2*pi*self.num_steps/total_steps)+1)/2]
     
-    def normalize(self, x):   # normalize observation to between 0 and 1
-        u = 30000   # max historic area of one plant (in pixels)
-        l = 0
+    def normalize(self, x, l=0, u=15000):   # normalize areas to between 0 and 1 
         if isinstance(x, list):
             return [(val - l) / (u - l) for val in x]
         return (x - l) / (u - l) 
     
     def frozen_time(self, action):       
         # Amount of frozen time (in unit of time step), given action
-        twilight = {0: 1.0, 1: 0.0, 2: 0.5}
-        noon = {0: 1.0, 1: 0.5, 2: 0.0}
+        twilight = {0: 1.0, 1: 0.0, 2: 0.5, 3: 1.0}  # rank from good to bad: low, med, off/high
+        noon = {0: 1.0, 1: 0.5, 2: 0.0, 3: 1.0}      # rank from good to bad: med, low, off/high
+        
+        clock = (self.num_steps % self.steps_per_day)*self.interval    # seconds since beginning of day
+        total_seconds = self.steps_per_day*self.interval               # total seconds during day time  
+        
+        assert self.steps_per_day % 4 == 0, 'steps_per_day needs to be divisible by 4 in the current implementation of "frozen_time".'
+        if clock < 1/4*total_seconds or clock >= 3/4*total_seconds:   
+            return twilight[action]
+        else: 
+            return noon[action]
+    
+    def is_optimal(self, action):
+        clock = (self.num_steps % self.steps_per_day)*self.interval   
+        total_seconds = self.steps_per_day*self.interval             
+        if clock < 1/4*total_seconds or clock >= 3/4*total_seconds:   
+            return action == 1   
+        else:
+            return action == 2
+
+
+class PlantSimulatorLowHigh(PlantSimulator):  
+    ''' 
+    Simulate a tray of plants under the same lighting agent.
+    State = (sin time-of-day, cos time-of-day, sin countdown, cos countdown, average area, history of change in average area)
+    Action = [low, high]
+    "low" is optimal in twilight hours, "high" is optimal otherwise.
+    Reward = change in average area over 1 step
+    '''
+    def __init__(self, num_plants=48, outliers=2, lag=1, stride=1, last_day=14, **kwargs):
+        super().__init__(num_plants, outliers, lag, stride, last_day)
+        self.action_dim = 2 
+        self.actions = [0, 1]
+    
+    def frozen_time(self, action):       
+        # Amount of frozen time (in unit of time step), given action
+        twilight = {0: 0.0, 1: 0.5}
+        noon = {0: 0.5, 1: 0.0}
         
         clock = (self.num_steps % self.steps_per_day)*self.interval    # seconds since beginning of day
         total_seconds = self.steps_per_day*self.interval               # total seconds during day time  
@@ -214,7 +277,11 @@ class PlantSimulator(BaseEnvironment):
             return twilight[action]
         else: 
             return noon[action]
-        
-    def moving_average(self, new):
-        history_rep = self.smooth_areas[-1]
-        return [self.trace_decay_rate * history_rep[i] + (1 - self.trace_decay_rate) * new[i] for i in range(self.num_plants)]
+    
+    def is_optimal(self, action):
+        clock = (self.num_steps % self.steps_per_day)*self.interval    # seconds since beginning of day
+        total_seconds = self.steps_per_day*self.interval               # total seconds during day time  
+        if clock < 0.25*total_seconds or clock > 0.75*total_seconds:   # twilight
+            return action == 0   # twilight
+        else:
+            return action == 1   # near noon

@@ -2,6 +2,8 @@ from typing import Type
 
 from algorithms.BaseAgent import BaseAgent
 from algorithms.nn.DQN import DQN
+from algorithms.nn.DynamicBatchDQN import DynamicBatchDQN
+from algorithms.linear.linearDQN.LinearDynamicBatchDQN import LinearDynamicBatchDQN
 from algorithms.nn.EQRC import EQRC
 from algorithms.ConstantAgent import ConstantAgent
 from algorithms.ContinuousRandomAgent import ContinuousRandomAgent
@@ -10,12 +12,19 @@ from algorithms.SpreadsheetAgent import SpreadsheetAgent
 from algorithms.tc.ESARSA import ESARSA
 from algorithms.tc.SoftmaxAC import SoftmaxAC
 from algorithms.linear.ESARSA import ESARSA as LinearESARSA
-from algorithms.linear.LinearQL import LinearQL#, LinearBatchQL
+from algorithms.linear.LinearQL import LinearQL
 from algorithms.nn.GreedyAC.GreedyAC import GreedyAC
 
 def getAgent(name) -> Type[BaseAgent]:
     if name.startswith("DQN"):
         return DQN
+
+    if name == 'DynamicBatchDQN':
+        return DynamicBatchDQN
+
+
+    if name == 'LinearDynamicBatchDQN':
+        return LinearDynamicBatchDQN
 
     if name == 'EQRC':
         return EQRC

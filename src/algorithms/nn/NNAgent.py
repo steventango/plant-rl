@@ -58,6 +58,7 @@ class NNAgent(BaseAgent):
         self.buffer_size = params['buffer_size']
         self.batch_size = params['batch']
         self.update_freq = params.get('update_freq', 1)
+        self.updates_per_step = params.get('updates_per_step', 1)
 
         self.buffer = build_buffer(
             buffer_type=params['buffer_type'],
@@ -108,7 +109,13 @@ class NNAgent(BaseAgent):
         # if x is a vector, then jax handles a lack of "batch" dimension gracefully
         #   at a 5x speedup
         # if x is a tensor, jax does not handle lack of "batch" dim gracefully
-        if len(x.shape) > 1:
+        
+        # Added extra condition for FTA because the vector becomes a tensor during 
+        # the forward pass. So we need to add the batch dim manually
+        # at the start as if we were passing a tensor, otherwise modules 
+        # after the FTA application (i.e flatten) will think the (n_hidden x n_tiles) 
+        # tensor is (n_batch x n_hidden) and not behave correctly. 
+        if len(x.shape) > 1 or self.rep_params.get('type', None) == 'FTA':
             x = np.expand_dims(x, 0)
             q = self._values(self.state, x)[0]
 
