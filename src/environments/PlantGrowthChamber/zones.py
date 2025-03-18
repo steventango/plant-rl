@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -11,10 +11,13 @@ class Rect:
 
 @dataclass
 class Tray:
-    num_plants: int
     n_tall: int
     n_wide: int
     rect: Rect
+    num_plants: int = field(init=False)
+
+    def __post_init__(self):
+        self.num_plants = self.n_tall * self.n_wide
 
 
 @dataclass
@@ -24,6 +27,10 @@ class Zone:
     camera_right_url: str | None
     lightbar_url: str
     trays: list[Tray]
+
+    @property
+    def num_plants(self) -> int:
+        return sum(tray.num_plants for tray in self.trays)
 
 
 def get_zone(indentifier: int):
@@ -36,7 +43,6 @@ def get_zone(indentifier: int):
                 lightbar_url="http://mitacs-zone1.ccis.ualberta.ca:8080/action",
                 trays=[
                     Tray(
-                        num_plants=24,
                         n_wide=6,
                         n_tall=4,
                         rect=Rect(
@@ -47,7 +53,6 @@ def get_zone(indentifier: int):
                         ),
                     ),
                     Tray(
-                        num_plants=24,
                         n_wide=6,
                         n_tall=4,
                         rect=Rect(
@@ -56,7 +61,7 @@ def get_zone(indentifier: int):
                             bottom_left=(591, 1747),
                             bottom_right=(1791, 1830),
                         ),
-                    )
+                    ),
                 ],
             )
         case 2:
@@ -67,7 +72,6 @@ def get_zone(indentifier: int):
                 lightbar_url="http://mitacs-zone2.ccis.ualberta.ca:8080/action",
                 trays=[
                     Tray(
-                        num_plants=24,
                         n_wide=6,
                         n_tall=4,
                         rect=Rect(
@@ -78,7 +82,6 @@ def get_zone(indentifier: int):
                         ),
                     ),
                     Tray(
-                        num_plants=24,
                         n_wide=6,
                         n_tall=4,
                         rect=Rect(
@@ -87,7 +90,7 @@ def get_zone(indentifier: int):
                             bottom_left=(680, 1875),
                             bottom_right=(1946, 1764),
                         ),
-                    )
+                    ),
                 ],
             )
         case 3:
@@ -106,7 +109,6 @@ def get_zone(indentifier: int):
                 lightbar_url="http://mitacs-zone6.ccis.ualberta.ca:8080/action",
                 trays=[
                     Tray(
-                        num_plants=16,
                         n_wide=4,
                         n_tall=4,
                         rect=Rect(
@@ -126,7 +128,6 @@ def get_zone(indentifier: int):
                 lightbar_url="http://mitacs-zone8.ccis.ualberta.ca:8080/action",
                 trays=[
                     Tray(
-                        num_plants=16,
                         n_wide=4,
                         n_tall=4,
                         rect=Rect(
@@ -146,7 +147,6 @@ def get_zone(indentifier: int):
                 lightbar_url="http://mitacs-zone9.ccis.ualberta.ca:8080/action",
                 trays=[
                     Tray(
-                        num_plants=16,
                         n_wide=4,
                         n_tall=4,
                         rect=Rect(
