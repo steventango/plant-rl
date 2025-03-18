@@ -1,10 +1,12 @@
-import os
 import json
-import time
-import shutil
-import pickle
 import logging
-from typing import Any, Callable, Dict, Optional, Sequence, Type, TypeVar, Protocol
+import lzma
+import os
+import pickle
+import shutil
+import time
+from typing import Any, Callable, Dict, Optional, Protocol, Sequence, Type, TypeVar
+
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 
 T = TypeVar('T')
@@ -24,7 +26,7 @@ class Checkpoint:
         self._params = exp.getPermutation(idx)
         self._base_path = f'{idx}'
         self._params_path = f'{idx}/params.json'
-        self._data_path = f'{idx}/chk.pkl'
+        self._data_path = f"{idx}/chk.pkl.xz"
 
     def __getitem__(self, name: str):
         return self._storage[name]
@@ -57,7 +59,7 @@ class Checkpoint:
                 json.dump(self._params, f)
 
         data_path = self._ctx.ensureExists(self._data_path, is_file=True)
-        with open(data_path, 'wb') as f:
+        with lzma.open(data_path, "wb") as f:
             pickle.dump(self._storage, f)
 
         logging.info('Finished dumping checkpoint')
@@ -93,7 +95,7 @@ class Checkpoint:
 
         path = self._ctx.resolve(self._data_path)
         try:
-            with open(path, 'rb') as f:
+            with lzma.open(path, "rb") as f:
                 self._storage = pickle.load(f)
         except Exception as e:
             print(f'Failed to load checkpoint: {path}')
