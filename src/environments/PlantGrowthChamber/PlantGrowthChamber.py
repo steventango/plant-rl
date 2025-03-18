@@ -25,8 +25,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.time = None
         self.lag = 1
         self._start_time = start_time
-        # todo don't hardcode 16
-        self.plant_area_emas = [UnbiasedExponentialMovingAverage(alpha=0.1)] * 16
+        self.plant_area_ema = UnbiasedExponentialMovingAverage(self.zone.num_plants, alpha=0.1)
         self.min_action = 0.35 * np.array([0.398, 0.762, 0.324, 0.000, 0.332, 0.606])
         self.session = requests.Session()
         retries = Retry(total=3, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
@@ -48,15 +47,14 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         self.plant_stats = np.array(self.df, dtype=np.float32)
 
-        plant_area_emas_prev = [plant_area_ema.compute() for plant_area_ema in self.plant_area_emas]
-        self.mean_plant_area_ema_prev = np.mean(plant_area_emas_prev)
+        plant_area_ema_prev = self.plant_area_ema.compute()
+        self.mean_plant_area_ema_prev = np.mean(plant_area_ema_prev)
 
-        plant_areas = self.plant_stats[:, 2]
-        for plant_area_ema in self.plant_area_emas:
-            plant_area_ema.update(values=plant_areas)
+        plant_areas = self.plant_stats[:, 2].reshape(1, -1)
+        self.plant_area_ema.update(values=plant_areas)
 
-        plant_area_emas = [plant_area_ema.compute() for plant_area_ema in self.plant_area_emas]
-        self.mean_plant_area_ema = np.mean(plant_area_emas)
+        plant_area_ema = self.plant_area_ema.compute()
+        self.mean_plant_area_ema = np.mean(plant_area_ema)
 
         return self.time, self.image, self.plant_stats
 
