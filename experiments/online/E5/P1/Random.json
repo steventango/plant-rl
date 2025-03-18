@@ -1,11 +1,11 @@
 {
-    "agent": "Spreadsheet",
-    "problem": "TemporalPlantGrowthChamber",
+    "agent": "DiscreteRandom",
+    "problem": "CVPlantGrowthChamberBinary",
     "total_steps": 40320,
     "episode_cutoff": -1,
     "metaParameters": {
         "environment": {
-            "zone": [1, 2, 6, 8]
+            "zone": 9
         },
         "experiment": {
             "step_duration": 60,
