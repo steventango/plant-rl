@@ -1,6 +1,7 @@
 import logging
 import time
 
+import numpy as np
 from RlGlue import RlGlue
 from RlGlue.environment import BaseEnvironment
 from RlGlue.rl_glue import Interaction
@@ -27,6 +28,9 @@ class PlanningRlGlue(RlGlue):
         if self.start_time is None:
             self.start_time = time.time()
         self.total_steps = self._total_steps
+        s, last_action = result
+        logger.debug(f"#{self.total_steps} [{time.time() - self.start_time:.2f} s] env start: state[0] {int(s[0])}")
+        logger.debug(f"#{self.total_steps} [{time.time() - self.start_time:.2f} s] env start: action {last_action}")
         return result
 
     def step(self) -> Interaction:
@@ -34,19 +38,18 @@ class PlanningRlGlue(RlGlue):
             self.last_action is not None
         ), "Action is None; make sure to call glue.start() before calling glue.step()."
         if self.total_steps % self.update_freq == 0:
-            logger.debug(f"#{self.total_steps} [{time.time() - self.start_time} s] env step one start: action {self.last_action}")
+            logger.debug(f"#{self.total_steps} [{time.time() - self.start_time:.2f} s] env step one start: action {self.last_action}")
             self.environment.step_one(self.last_action)
-            logger.debug(f"#{self.total_steps} [{time.time() - self.start_time} s] env step one end")
-        logger.debug(f"#{self.total_steps} [{time.time() - self.start_time} s] agent planning start")
+            logger.debug(f"#{self.total_steps} [{time.time() - self.start_time:.2f} s] env step one end")
+        logger.debug(f"#{self.total_steps} [{time.time() - self.start_time:.2f} s] agent planning start")
         while time.time() < self.start_time + self.step_duration * (self.total_steps + 1):
             self.agent.plan()
-        logger.debug(f"#{self.total_steps} [{time.time() - self.start_time} s] agent planning end")
-        if hasattr(self.agent, 'greedy_ac'):
-            logger.debug(f"q loss: {self.agent.greedy_ac.q_loss}")
-            logger.debug(f"policy loss: {self.agent.greedy_ac.policy_loss}")
-        logger.debug(f"#{self.total_steps} [{time.time() - self.start_time} s] env step two start")
+        logger.debug(f"#{self.total_steps} [{time.time() - self.start_time:.2f} s] agent planning end")
+        logger.debug(f"#{self.total_steps} [{time.time() - self.start_time:.2f} s] env step two start")
         (reward, s, term, extra) = self.environment.step_two()
-        logger.debug(f"#{self.total_steps} [{time.time() - self.start_time} s] env step two end: state[0] {s[0]}, reward {reward}")
+        logger.debug(f"#{self.total_steps} [{time.time() - self.start_time:.2f} s] env step two end")
+        logger.debug(f"state[0] {int(s[0])}")
+        logger.debug(f"reward {reward}")
 
         self.total_reward += reward
 
@@ -64,9 +67,9 @@ class PlanningRlGlue(RlGlue):
             )
 
         if self.total_steps % self.update_freq == 0:
-            logger.debug(f"#{self.total_steps} [{time.time() - self.start_time} s] agent step start")
+            logger.debug(f"#{self.total_steps} [{time.time() - self.start_time:.2f} s] agent step start")
             self.last_action = self.agent.step(reward, s, extra)
-            logger.debug(f"#{self.total_steps} [{time.time() - self.start_time} s] agent step end")
+            logger.debug(f"#{self.total_steps} [{time.time() - self.start_time:.2f} s] agent step end")
         return Interaction(
             o=s,
             a=self.last_action,

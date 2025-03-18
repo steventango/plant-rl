@@ -1,0 +1,14 @@
+{
+    "agent": "Spreadsheet",
+    "problem": "MockPlantGrowthChamber",
+    "total_steps": 4860,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "experiment": {
+            "step_duration": 60,
+            "update_freq": 1,
+            "playback_rate": 10000
+        },
+        "filepath": "experiments/online/E4/P0/z3-0min-100ppfd-Balanced_optima12_12.xlsx"
+    }
+}

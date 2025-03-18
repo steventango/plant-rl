@@ -1,6 +1,6 @@
 from PyExpUtils.collection.Collector import Collector
 
-from environments.PlantGrowthChamber import PlantGrowthChamber as Env
+from environments.PlantGrowthChamber.PlantGrowthChamber import PlantGrowthChamber as Env
 from experiment.ExperimentModel import ExperimentModel
 from problems.BaseProblem import BaseProblem
 

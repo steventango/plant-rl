@@ -101,7 +101,7 @@ class TestUnbiasedExponentialMovingAverage:
         assert metric.dtype == jnp.float32
         assert metric.shape == (2,)
         assert jnp.all(metric == pytest.approx(1.998997))
-        
+
     def test_plot_beta(self):
         uema = UnbiasedExponentialMovingAverage(shape=1)
         beta_history = []

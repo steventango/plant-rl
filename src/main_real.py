@@ -1,24 +1,27 @@
 import os
 import sys
+
 sys.path.append(os.getcwd())
 
-import time
-import socket
+import argparse
 import logging
+import socket
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
-import argparse
-from PIL import Image
+
 import numpy as np
+from PIL import Image
+from PyExpUtils.collection.Collector import Collector
+from PyExpUtils.collection.Sampler import Identity, Ignore, MovingAverage, Subsample
+from PyExpUtils.collection.utils import Pipe
+from PyExpUtils.results.sqlite import saveCollector
+
 from experiment import ExperimentModel
+from problems.registry import getProblem
 from utils.checkpoint import Checkpoint
 from utils.preempt import TimeoutHandler
 from utils.RlGlue.rl_glue import PlanningRlGlue
-from problems.registry import getProblem
-from PyExpUtils.results.sqlite import saveCollector
-from PyExpUtils.collection.Collector import Collector
-from PyExpUtils.collection.Sampler import Ignore, MovingAverage, Subsample, Identity
-from PyExpUtils.collection.utils import Pipe
 
 # ------------------
 # -- Command Args --
@@ -69,12 +72,11 @@ def save_images(env, data_path: Path):
     now = datetime.now()
     now = round_seconds(now)
     now = now.isoformat().replace(':', '')
-    img_path = data_path / f"{now}.png"
-    env.image.save(img_path)
-    if hasattr(env, "shape_image"):
-        shape_img_path = data_path / f"{now}_processed.png"
-        env.shape_image.save(shape_img_path)
+    zone_identifier = env.zone.identifier
 
+    for key, image in env.images.items():
+        img_path = data_path / f"z{zone_identifier}" / f"{now}_{key}.png"
+        image.save(img_path)
 
 for idx in indices:
     chk = Checkpoint(exp, idx, base_path=args.checkpoint_path)
@@ -90,6 +92,7 @@ for idx in indices:
             #  - Window(n)  take a window average of size n
             #  - Subsample(n) save one of every n elements
             config={
+                "state": Identity(),
                 "action": Identity(),
                 "reward": Identity(),
                 "steps": Identity(),
@@ -114,7 +117,8 @@ for idx in indices:
     chk.initial_value('episode', 0)
 
     context = exp.buildSaveContext(idx, base=args.save_path)
-    data_path = Path("/workspaces/plant-rl/data/first_exp/z2cR")
+    data_path = Path('data') / Path(context.resolve()).relative_to('results')
+    (data_path / f"z{env.zone.identifier}").mkdir(parents=True, exist_ok=True)
     data_path.mkdir(parents=True, exist_ok=True)
 
     # Run the experiment
@@ -127,9 +131,10 @@ for idx in indices:
 
     for step in range(glue.total_steps, exp.total_steps):
         collector.next_frame()
-        chk.maybe_save()
+        chk.save()
         interaction = glue.step()
         collector.collect('time', time.time())
+        collector.collect('state', interaction.o)
         collector.collect('action', interaction.a)
         collector.collect('reward', interaction.r)
         collector.collect('steps', glue.num_steps)
@@ -156,6 +161,8 @@ for idx in indices:
 
             glue.start()
 
+        saveCollector(exp, collector, base=args.save_path)
+
     collector.reset()
 
     env.close()
@@ -164,4 +171,3 @@ for idx in indices:
     # -- Saving --
     # ------------
     saveCollector(exp, collector, base=args.save_path)
-    chk.delete()
