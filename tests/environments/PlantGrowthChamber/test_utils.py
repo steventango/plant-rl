@@ -12,7 +12,6 @@ def test_process_image():
         debug_images = {}
         trays = [
             Tray(
-                num_plants=24,
                 n_wide=8,
                 n_tall=3,
                 rect=Rect(
@@ -27,7 +26,6 @@ def test_process_image():
                 ),
             ),
             Tray(
-                num_plants=24,
                 n_wide=8,
                 n_tall=3,
                 rect=Rect(
