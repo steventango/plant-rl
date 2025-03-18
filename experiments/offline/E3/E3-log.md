@@ -101,8 +101,14 @@ Just realized that data analysis for P1 and P2 were wrong. After fixing them, I 
 - Use a smoother history trace decay rate = 0.99, following water treatment plant paper
 - Try linear ESARSA for now because I need to modify the tile coding script (too fine of a grid for time!)
 ### Methods: 
--
+- same as P3
 ### Observations: 
--
+- linear ESARSA agent learned to keep light either dim or bright the whole time, with some minimal exploration. not bad!
+- but it didn't figure out the time-dependent policy
 ### Conclusions & Outlooks: 
-- 
+- Adam suggested that adding (i) replay and (ii) Rich's tile coding will help the agent learn the optimal policy.
+
+## Phase P5
+### Objectives: 
+- Test out the newly updated plantsim (4 discrete actions, unbiased exp moving avg, history of reward rather than of area, removing outliers before averaging areas)
+- Test out Rich's tile coding script
