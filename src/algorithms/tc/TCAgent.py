@@ -18,13 +18,15 @@ class TCAgent(BaseAgent):
         self.lag = LagBuffer(self.n_step)
 
         self.rep_params: Dict = params['representation']
+        
+        assert self.rep_params['tc_dim'] <= observations[0], "Error: tc_dim > state dimension!"
+        self.tc_dim = observations[0] if self.rep_params['tc_dim'] is None else self.rep_params['tc_dim']
+
         self.rep = SparseTileCoder(TileCoderConfig(
             tiles=self.rep_params['tiles'],
             tilings=self.rep_params['tilings'],
-            dims=observations[0],
-            # specifying input_ranges in .json screws up results.db
-            # by commenting this out, we assume default input_ranges = [0, 1] for all state dimensions
-            #input_ranges=self.rep_params['input_ranges'],  
+            dims=self.tc_dim,
+            input_ranges=None,    # inputs must be in the range (0.0, 1.0)
         ))
 
     @abstractmethod
@@ -41,7 +43,12 @@ class TCAgent(BaseAgent):
     def start(self, s: np.ndarray):
         self.lag.flush()
 
-        x = self.rep.encode(s)
+        # only the last "tc_dim" inputs are tile coded
+        if self.tc_dim > 0: 
+            x = np.concatenate((s[:-self.tc_dim], self.rep.encode(s[-self.tc_dim:])))
+        else: 
+            x = s
+
         pi = self.policy(x)
         a = sample(pi, rng=self.rng)
         self.lag.add(Timestep(
@@ -59,7 +66,12 @@ class TCAgent(BaseAgent):
         # sample next action
         xp = None
         if sp is not None:
-            xp = self.rep.encode(sp)
+            # only the last "tc_dim" inputs are tile coded
+            if self.tc_dim > 0: 
+                xp = np.concatenate((sp[:-self.tc_dim], self.rep.encode(sp[-self.tc_dim:])))
+            else: 
+                xp = sp
+        
             pi = self.policy(xp)
             a = sample(pi, rng=self.rng)
 
