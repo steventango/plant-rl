@@ -26,7 +26,7 @@ class TCAgent(BaseAgent):
             tiles=self.rep_params['tiles'],
             tilings=self.rep_params['tilings'],
             dims=self.tc_dim,
-            input_ranges=None,    # inputs must be in the range (0.0, 1.0)
+            input_ranges=None,    # assume that inputs are in the range (0.0, 1.0)
         ))
 
     @abstractmethod

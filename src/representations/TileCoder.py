@@ -7,8 +7,8 @@ class SparseTileCoder(TileCoder):
         super().__init__(params, rng=rng)
 
     def _build_offset(self, n):   # use asymmetrical offsets; see Suttom & Barto p220
-        tile_length = 1.0 / super()._tiles
+        tile_length = 1.0 / self._tiles
         offset = []
-        for d in range(super()._c.dims):
-            offset.append(((1 + 2*d) * n * (tile_length / super()._c.tilings)) % tile_length - tile_length / 2)
+        for d in range(self._c.dims):
+            offset.append(((1 + 2*d) * n * (tile_length[d] / self._c.tilings)) % tile_length[d] - tile_length[d] / 2)
         return np.array(offset)
