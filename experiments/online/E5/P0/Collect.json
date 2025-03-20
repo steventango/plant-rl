@@ -1,0 +1,17 @@
+{
+    "agent": "Spreadsheet-C",
+    "problem": "TemporalPlantGrowthChamber",
+    "total_steps": 10,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": [1, 6]
+        },
+        "experiment": {
+            "step_duration": 60,
+            "update_freq": 1
+        },
+        "filepath": "experiments/online/E5/P0/collect.xlsx",
+        "compatibility_mode": false
+    }
+}

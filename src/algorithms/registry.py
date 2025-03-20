@@ -53,7 +53,7 @@ def getAgent(name) -> Type[BaseAgent]:
     if name == 'ContinuousRandom':
         return ContinuousRandomAgent
 
-    if name == 'Spreadsheet':
+    if name.startswith("Spreadsheet"):
         return SpreadsheetAgent
 
     if name.startswith("GreedyAC"):
