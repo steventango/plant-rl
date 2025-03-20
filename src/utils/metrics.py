@@ -60,3 +60,14 @@ class UnbiasedExponentialMovingAverage:
     def compute(self) -> jax.Array:
         """Compute and return the unbiased exponential moving average."""
         return self.total if self.count_trace > 0 else jnp.full(self.shape, jnp.nan, dtype=jnp.float32)
+
+
+def iqm(a: jax.Array, q: float) -> float:
+    """
+    Inter quantile mean
+    a (ArrayLike) – N-dimensional array input.
+    q (float) – floating-point values between 0.0 and 1.0.
+    """
+    l, u = jnp.quantile(a, jnp.array([q, 1 - q]))
+    b = a[(a >= l) & (a <= u)]
+    return jnp.mean(b).item() if b.size > 0 else jnp.nan
