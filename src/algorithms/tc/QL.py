@@ -4,27 +4,26 @@ from numba import njit
 from typing import Dict, Tuple
 from PyExpUtils.collection.Collector import Collector
 
-from algorithms.linear.LinearAgent import LinearAgent
+from algorithms.tc.TCAgent import TCAgent
 from utils.checkpoint import checkpointable
 from utils.policies import egreedy_probabilities
 
-
 @njit(cache=True)
-def _update(w, x, a, xp, pi, r, gamma, alpha):
+def _update(w, x, a, xp, r, gamma, alpha):
     qsa = np.dot(w[a],x)
 
-    qsp = np.dot(w, xp)
+    qsp = np.dot(w, xp).max()
 
-    delta = r + gamma * np.dot(qsp,pi) - qsa
+    delta = r + gamma * qsp - qsa
 
     w[a] = w[a] + alpha * delta * x
-    
+
 @njit(cache=True)
 def value(w, x):
     return np.dot(w,x)
 
 @checkpointable(('w', ))
-class ESARSA(LinearAgent):
+class QL(TCAgent):
     def __init__(self, observations: Tuple, actions: int, params: Dict, collector: Collector, seed: int):
         super().__init__(observations, actions, params, collector, seed)
 
@@ -32,8 +31,8 @@ class ESARSA(LinearAgent):
         self.alpha = params['alpha']
         self.epsilon = params['epsilon']
 
-        # create initial weights, set to 0
-        self.w = np.zeros((actions, self.observations[0]), dtype=np.float64)
+        # create initial weights
+        self.w = np.zeros((actions, self.n_features), dtype=np.float64)
 
     def policy(self, obs: np.ndarray) -> np.ndarray:
         qs = self.values(obs)
@@ -46,9 +45,5 @@ class ESARSA(LinearAgent):
     def update(self, x, a, xp, r, gamma):
         if xp is None:
             xp = np.zeros_like(x)
-            pi = np.zeros(self.actions)
-        else:
-            pi = self.policy(xp)
-        
-        _update(self.w, x, a, xp, pi, r, gamma, self.alpha)
 
+        _update(self.w, x, a, xp, r, gamma, self.alpha)

@@ -4,27 +4,26 @@ from numba import njit
 from typing import Dict, Tuple
 from PyExpUtils.collection.Collector import Collector
 
-from algorithms.tc.TCAgent import TCAgent
+from algorithms.tc.tc_replay.TCAgentReplay import TCAgentReplay
 from utils.checkpoint import checkpointable
 from utils.policies import egreedy_probabilities
 
-
 @njit(cache=True)
 def _update(w, x, a, xp, pi, r, gamma, alpha):
-    qsa = np.dot(w[a],x)
+    qsa = (x * w[a]).sum(axis=1)
+    qsp = np.matmul(xp, w.T)
+    delta = r + gamma * (qsp * pi).sum(axis=1) - qsa
 
-    qsp = np.dot(w, xp)
-
-    delta = r + gamma * np.dot(qsp,pi) - qsa
-
-    w[a] = w[a] + alpha * delta * x
+    grad = x * delta[:, None]
+    np.add.at(w, a, alpha*grad)
 
 @njit(cache=True)
 def value(w, x):
-    return np.dot(w,x)
+    qs = np.matmul(x, w.T)
+    return qs
 
 @checkpointable(('w', ))
-class ESARSA(TCAgent):
+class ESARSA(TCAgentReplay):
     def __init__(self, observations: Tuple, actions: int, params: Dict, collector: Collector, seed: int):
         super().__init__(observations, actions, params, collector, seed)
 
@@ -43,11 +42,22 @@ class ESARSA(TCAgent):
         x = np.asarray(x)
         return value(self.w, x)
 
-    def update(self, x, a, xp, r, gamma):
-        if xp is None:
-            xp = np.zeros_like(x)
-            pi = np.zeros(self.actions)
-        else:
-            pi = self.policy(xp)
+    def update(self):
+        self.steps += 1
 
-        _update(self.w, x, a, xp, pi, r, gamma, self.alpha)
+        # only update every `update_freq` steps
+        if self.steps % self.update_freq != 0:
+            return
+        
+        # wait till batch size samples have been collected
+        if self.buffer.size() <= self.batch_size:
+            return
+        
+        self.updates += 1
+
+        batch = self.buffer.sample(self.batch_size)
+        pi = self.policy(batch.xp)
+        _update(self.w, batch.x, batch.a, batch.xp, pi, batch.r, batch.gamma, self.alpha)
+        
+        self.buffer.update_batch(batch)
+
