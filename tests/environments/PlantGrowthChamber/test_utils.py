@@ -53,7 +53,9 @@ def test_process_zone_6():
 
 
 def plot_area_comparison(df: pd.DataFrame, out_dir: Path):
+    plt.figure(figsize=(4 * len(df) // 32, 3))
     sns.barplot(df, x="plant_id", y="area", hue="intensity")
+    plt.ylim(0, df["area"].quantile(0.99))
     plt.savefig(out_dir / "areas.png")
 
 
