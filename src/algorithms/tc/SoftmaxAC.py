@@ -7,7 +7,7 @@ from PyExpUtils.collection.Collector import Collector
 
 from algorithms.tc.TCAgent import TCAgent
 
-#TODO Note this will break with the new updates to the TCAgent if self.rep_params['tc_dim'] is not None 
+#TODO Note this will break with new updates to TCAgent and DenseTileCoder, which outputs binary vectors
 @njit(cache=True)
 def _update(w, theta, x, a, n_a, xp, r, pi, gamma, alpha):
     v = w[x].sum()

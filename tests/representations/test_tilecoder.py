@@ -1,38 +1,125 @@
-from representations.TileCoder import SparseTileCoder, TileCoderConfig
+from representations.TileCoder import DenseTileCoder, TileCoderConfig
+from representations.RichTileCoder import RichTileCoder, RichTileCoderConfig
 import numpy as np
 
-def test_tilecoder():
-    tiles = 4
-    tilings = 8
-    dims = 2
+class TestRichTileCoder():
+    def setup_method(self):
+        self.num_tiles = (2, 16)
+        self.num_tilings = 8
+        self.dims = 2
 
-    rep = SparseTileCoder(TileCoderConfig(
-            tiles=tiles,
-            tilings=tilings,
-            dims=dims,
-            input_ranges=None,   
-        ))
+        self.config = RichTileCoderConfig(
+            tiles=self.num_tiles, 
+            tilings=self.num_tilings,     
+            dims=self.dims,         
+            input_ranges=None  
+        )
+        self.tile_coder = RichTileCoder(self.config)
     
-    s1 = np.ones(dims)*0.5
-    rep1 = rep.encode(s1)
-    assert len(rep1) == (tiles**dims)*tilings
+    def test_initialization(self):
+        assert self.tile_coder._c.dims == self.dims
+        assert self.tile_coder._c.tilings == self.num_tilings
+        assert self.tile_coder._c.tiles == self.num_tiles
+        assert np.array_equal(self.tile_coder._input_ranges, np.array([(0.0, 1.0), (0.0, 1.0)]))
+        
+    def test_scale_factors(self):
+        # Scale factor for x should be 2 / (1.0 - 0.0) = 2
+        # Scale factor for y should be 16 / (1.0 - 0.0) = 16
+        assert self.tile_coder.scale[0] == self.num_tiles[0]
+        assert self.tile_coder.scale[1] == self.num_tiles[1]
 
-    s2 = np.ones(dims)    # at the upperbound
-    rep2 = rep.encode(s2)
+    def test_maxSize(self):
+        # maxSize should be tilings * (tiles_x + 1) * (tiles_y + 1) 
+        expected_max_size = self.num_tilings * (self.num_tiles[0] + 1) * (self.num_tiles[1] + 1)
+        assert self.tile_coder.maxSize == expected_max_size
 
-    s3 = np.ones(dims)*2   # out of upperbound
-    rep3 = rep.encode(s3)
+    def test_x_values(self):
+        x_edge = 1 / self.num_tilings / self.num_tiles[0]
+        point1 = np.array([x_edge, 0.5])
+        point2 = np.array([x_edge + x_edge*0.9, 0.5])  
+        
+        indices1 = self.tile_coder.get_indices(point1)
+        indices2 = self.tile_coder.get_indices(point2)
+        
+        assert sorted(indices1) == sorted(indices2), \
+            f"Close x-values should map to same tiles, but got {indices1} and {indices2}"
+        
+        encoding1 = self.tile_coder.encode(point1)
+        encoding2 = self.tile_coder.encode(point2)
+        
+        assert np.array_equal(encoding1, encoding2), \
+            "Encodings for close x-values should be identical"
+
+    def test_y_values(self):
+        x_edge = 1 / self.num_tilings / self.num_tiles[0]
+        y_edge = 1 / self.num_tilings / self.num_tiles[1]
+        point1 = np.array([0.5, y_edge])
+        point2 = np.array([0.5, y_edge + y_edge/2])
+
+        indices1 = self.tile_coder.get_indices(point1)
+        indices2 = self.tile_coder.get_indices(point2)
+        
+        assert sorted(indices1) == sorted(indices2), \
+            f"Close y-values should map to same tiles, but got {indices1} and {indices2}"
+        
+        encoding1 = self.tile_coder.encode(point1)
+        encoding2 = self.tile_coder.encode(point2)
+        
+        assert np.array_equal(encoding1, encoding2), \
+            "Encodings for close y-values should be identical"
+
+class TestAndyTileCoder():
+    def setup_method(self):
+        self.num_tiles = (2, 16)
+        self.num_tilings = 8
+        self.dims = 2
+
+        self.config = TileCoderConfig(
+            tiles=self.num_tiles, 
+            tilings=self.num_tilings,     
+            dims=self.dims,         
+            input_ranges=None  
+        )
+        self.tile_coder = DenseTileCoder(self.config)
     
-    assert np.all(rep2 == rep3)
+    def test_initialization(self):
+        assert self.tile_coder._c.dims == self.dims
+        assert self.tile_coder._c.tilings == self.num_tilings
+        assert self.tile_coder._c.tiles == self.num_tiles
+        assert np.array_equal(self.tile_coder._input_ranges, np.array([(0.0, 1.0), (0.0, 1.0)]))
 
-    s4 = np.ones(dims)*0   # at the lowerbound
-    rep4 = rep.encode(s4)
-    assert np.any(rep4 != rep2)
+    def test_x_values(self):
+        x_edge = 1 / self.num_tilings / self.num_tiles[0]
+        point1 = np.array([x_edge, 0.5])
+        point2 = np.array([x_edge + x_edge*0.9, 0.5])  
+        
+        indices1 = self.tile_coder.get_indices(point1)
+        indices2 = self.tile_coder.get_indices(point2)
+        
+        assert sorted(indices1) == sorted(indices2), \
+            f"Close x-values should map to same tiles, but got {indices1} and {indices2}"
+        
+        encoding1 = self.tile_coder.encode(point1)
+        encoding2 = self.tile_coder.encode(point2)
+        
+        assert np.array_equal(encoding1, encoding2), \
+            "Encodings for close x-values should be identical"
 
-    s5 = np.ones(dims)*-1   # below the lower bound
-    rep5 = rep.encode(s5)
-    assert np.all(rep4 == rep5)
+    def test_y_values(self):
+        x_edge = 1 / self.num_tilings / self.num_tiles[0]
+        y_edge = 1 / self.num_tilings / self.num_tiles[1]
+        point1 = np.array([0.5, y_edge])
+        point2 = np.array([0.5, y_edge + y_edge/2])
 
-
-
-
+        indices1 = self.tile_coder.get_indices(point1)
+        indices2 = self.tile_coder.get_indices(point2)
+        
+        assert sorted(indices1) == sorted(indices2), \
+            f"Close y-values should map to same tiles, but got {indices1} and {indices2}"
+        
+        encoding1 = self.tile_coder.encode(point1)
+        encoding2 = self.tile_coder.encode(point2)
+        
+        assert np.array_equal(encoding1, encoding2), \
+            "Encodings for close y-values should be identical"
+    

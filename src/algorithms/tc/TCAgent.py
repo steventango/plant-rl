@@ -8,7 +8,8 @@ from ReplayTables.interface import Timestep
 from ReplayTables.ingress.LagBuffer import LagBuffer
 
 from algorithms.BaseAgent import BaseAgent
-from representations.TileCoder import SparseTileCoder, TileCoderConfig
+from representations.TileCoder import DenseTileCoder, TileCoderConfig
+from representations.RichTileCoder import RichTileCoder, RichTileCoderConfig
 from utils.checkpoint import checkpointable
 
 @checkpointable(('rep', 'lag'))
@@ -18,27 +19,30 @@ class TCAgent(BaseAgent):
         self.lag = LagBuffer(self.n_step)
 
         self.rep_params: Dict = params['representation']
-        assert self.rep_params['tc_dim'] <= observations[0], "Error: tc_dim > state dimension!"
 
-        # NOTE: Only the LAST tc_dim features are tile-coded. Would like to come back and make this more elegent but we are trying to move fast
-        self.tc_dim = self.observations[0] if self.rep_params['tc_dim'] is None else self.rep_params['tc_dim']
-
-        self.tile_coder = SparseTileCoder(TileCoderConfig(
-            tiles=self.rep_params['tiles'],
-            tilings=self.rep_params['tilings'],
-            dims=self.tc_dim,
-            input_ranges=None,    # assume that inputs are in the range (0.0, 1.0)
-        ))
-    
-        self.n_features = self.observations[0] - self.tc_dim + self.tile_coder.features()
+        if self.rep_params['which_tc'] is None:
+            raise ValueError("Tile coder type cannot be None")
+        elif self.rep_params['which_tc'] == 'RichTileCoder':
+            self.tile_coder = RichTileCoder(RichTileCoderConfig(
+                tiles=self.rep_params['tiles'],
+                tilings=self.rep_params['tilings'],
+                dims=observations[0],
+                input_ranges=None,    # assume that inputs are in the range (0.0, 1.0)
+            ))
+        elif self.rep_params['which_tc'] == 'AndyTileCoder':
+            self.tile_coder = DenseTileCoder(TileCoderConfig(
+                tiles=self.rep_params['tiles'],
+                tilings=self.rep_params['tilings'],
+                dims=observations[0],
+                input_ranges=None,    # assume that inputs are in the range (0.0, 1.0)
+            ))
+        else:
+            raise ValueError(f"Unknown tile coder type: {self.rep_params['which_tc']}") 
+        
+        self.n_features = self.tile_coder.features()
 
     def get_rep(self, s):
-        # only the last "tc_dim" inputs are tile coded
-        if self.tc_dim > 0: 
-            x = np.concatenate((s[:-self.tc_dim], self.tile_coder.encode(s[-self.tc_dim:])))
-        else: 
-            x = s
-        return x
+        return self.tile_coder.encode(s)
 
     @abstractmethod
     def policy(self, obs: np.ndarray) -> np.ndarray:
@@ -53,6 +57,7 @@ class TCAgent(BaseAgent):
     # ----------------------
     def start(self, s: np.ndarray):
         self.lag.flush()
+        
         x = self.get_rep(s)
         pi = self.policy(x)
         a = sample(pi, rng=self.rng)
