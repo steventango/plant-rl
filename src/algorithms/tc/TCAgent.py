@@ -18,16 +18,27 @@ class TCAgent(BaseAgent):
         self.lag = LagBuffer(self.n_step)
 
         self.rep_params: Dict = params['representation']
-        
         assert self.rep_params['tc_dim'] <= observations[0], "Error: tc_dim > state dimension!"
-        self.tc_dim = observations[0] if self.rep_params['tc_dim'] is None else self.rep_params['tc_dim']
 
-        self.rep = SparseTileCoder(TileCoderConfig(
+        # NOTE: Only the LAST tc_dim features are tile-coded. Would like to come back and make this more elegent but we are trying to move fast
+        self.tc_dim = self.observations[0] if self.rep_params['tc_dim'] is None else self.rep_params['tc_dim']
+
+        self.tile_coder = SparseTileCoder(TileCoderConfig(
             tiles=self.rep_params['tiles'],
             tilings=self.rep_params['tilings'],
             dims=self.tc_dim,
             input_ranges=None,    # assume that inputs are in the range (0.0, 1.0)
         ))
+    
+        self.n_features = self.observations[0] - self.tc_dim + self.tile_coder.features()
+
+    def get_rep(self, s):
+        # only the last "tc_dim" inputs are tile coded
+        if self.tc_dim > 0: 
+            x = np.concatenate((s[:-self.tc_dim], self.tile_coder.encode(s[-self.tc_dim:])))
+        else: 
+            x = s
+        return x
 
     @abstractmethod
     def policy(self, obs: np.ndarray) -> np.ndarray:
@@ -42,13 +53,7 @@ class TCAgent(BaseAgent):
     # ----------------------
     def start(self, s: np.ndarray):
         self.lag.flush()
-
-        # only the last "tc_dim" inputs are tile coded
-        if self.tc_dim > 0: 
-            x = np.concatenate((s[:-self.tc_dim], self.rep.encode(s[-self.tc_dim:])))
-        else: 
-            x = s
-
+        x = self.get_rep(s)
         pi = self.policy(x)
         a = sample(pi, rng=self.rng)
         self.lag.add(Timestep(
@@ -66,12 +71,7 @@ class TCAgent(BaseAgent):
         # sample next action
         xp = None
         if sp is not None:
-            # only the last "tc_dim" inputs are tile coded
-            if self.tc_dim > 0: 
-                xp = np.concatenate((sp[:-self.tc_dim], self.rep.encode(sp[-self.tc_dim:])))
-            else: 
-                xp = sp
-        
+            xp = self.get_rep(sp)
             pi = self.policy(xp)
             a = sample(pi, rng=self.rng)
 

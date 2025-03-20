@@ -10,6 +10,9 @@ from algorithms.ContinuousRandomAgent import ContinuousRandomAgent
 from algorithms.DiscreteRandomAgent import DiscreteRandomAgent
 from algorithms.SpreadsheetAgent import SpreadsheetAgent
 from algorithms.tc.ESARSA import ESARSA
+from algorithms.tc.QL import QL
+from algorithms.tc.tc_replay.ESARSA import ESARSA as ESARSAReplay
+from algorithms.tc.tc_replay.QL import QL as QLReplay
 from algorithms.tc.SoftmaxAC import SoftmaxAC
 from algorithms.linear.ESARSA import ESARSA as LinearESARSA
 from algorithms.linear.LinearQL import LinearQL
@@ -22,7 +25,6 @@ def getAgent(name) -> Type[BaseAgent]:
     if name == 'DynamicBatchDQN':
         return DynamicBatchDQN
 
-
     if name == 'LinearDynamicBatchDQN':
         return LinearDynamicBatchDQN
 
@@ -31,6 +33,15 @@ def getAgent(name) -> Type[BaseAgent]:
 
     if name == 'ESARSA':
         return ESARSA
+    
+    if name == 'QL':
+        return QL
+    
+    if name == 'ESARSAReplay':
+        return ESARSAReplay
+    
+    if name == 'QLReplay':
+        return QLReplay
 
     if name == 'LinearESARSA':
         return LinearESARSA
