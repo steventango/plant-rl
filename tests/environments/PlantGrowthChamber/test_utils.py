@@ -25,7 +25,14 @@ def get_plant_area(zone_id: int):
         image = np.array(Image.open(path))
         debug_images = {}
         df = process_image(image, zone.trays, debug_images)
-        df["path"] = path.stem
+        df["intensity"] = path.stem
+
+        avg = df["area"].mean()
+        df = pd.concat([df, pd.DataFrame({
+            "plant_id": ["avg"],
+            "area": [avg],
+            "intensity": [path.stem]
+        })])
         dfs.append(df)
         df.to_csv(out_dir / f"{path.stem}.csv", index=False)
         for key, value in debug_images.items():
@@ -44,7 +51,7 @@ def test_process_zone_6():
 
 
 def plot_area_comparison(df: pd.DataFrame, out_dir: Path):
-    sns.barplot(df, x="plant_id", y="area", hue="path")
+    sns.barplot(df, x="plant_id", y="area", hue="intensity")
     plt.savefig(out_dir / "areas.png")
 
 

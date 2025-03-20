@@ -12,7 +12,7 @@ from .zones import POT_HEIGHT, POT_WIDTH, Tray
 
 def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, Image]):
     if not trays:
-        return
+        raise ValueError("No trays provided")
     all_plant_stats = []
     debug_tray_images = defaultdict(list)
 
@@ -20,7 +20,6 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
     dist_coeffs = np.array([0.0, 0.0, 0.0, 0.0])
     undistorted_image = cv2.undistort(image, camera_matrix, dist_coeffs)
     debug_images["undistorted"] = Image.fromarray(undistorted_image)
-
     for tray in trays:
         plant_stats = process_tray(undistorted_image, tray, debug_tray_images)
         all_plant_stats.extend(plant_stats)
@@ -46,19 +45,31 @@ def process_tray(image: np.ndarray, tray: Tray, debug_images: dict[str, list[np.
     homography_matrix, _ = cv2.findHomography(src_points, dst_points)
     warped_image = cv2.warpPerspective(image, homography_matrix, (width, height))
     debug_images["warped"].append(warped_image)
+    colorspaces = pcv.visualize.colorspaces(rgb_img=warped_image, original_img=False)
+    debug_images["colorspaces"].append(colorspaces)
+    image_a = pcv.rgb2gray_lab(rgb_img=warped_image, channel='a')
+    gray_image = image_a
+    debug_images["gray"].append(gray_image)
+    mask = pcv.threshold.mean(gray_img=gray_image, ksize=POT_WIDTH / 3, offset=5, object_type="dark")
+    debug_images["mask"].append(mask)
+    FILL_THRESHOLD = 0.0015 * POT_WIDTH * POT_HEIGHT
+    mask = pcv.fill(mask, FILL_THRESHOLD)
+    debug_images["mask_filled"].append(mask)
     cropping_positions_image = warped_image.copy()
     debug_pot_images = defaultdict(list)
     stats = []
+    MARGIN = 0.8
     for i in range(tray.n_wide):
         for j in range(tray.n_tall):
-            pot_image = get_pot_crop(warped_image, i, j)
-            shape_image, stat = process_plant(pot_image, debug_pot_images)
+            pot_image = get_pot_crop(warped_image, i, j, MARGIN)
+            pot_mask = get_pot_crop(mask, i, j, MARGIN)
+            shape_image, stat = process_plant(pot_image, pot_mask, debug_pot_images)
             stats.append(stat)
             # Visualize cropping positions
             x = i * POT_WIDTH
             y = j * POT_HEIGHT
-            crop_width = int(POT_WIDTH * 1.0)
-            crop_height = int(POT_HEIGHT * 1.0)
+            crop_width = int(POT_WIDTH)
+            crop_height = int(POT_HEIGHT)
             x_offset = (POT_WIDTH - crop_width) // 2
             y_offset = (POT_HEIGHT - crop_height) // 2
             cv2.rectangle(cropping_positions_image, (x + x_offset, y + y_offset), (x + x_offset + crop_width, y + y_offset + crop_height), (0, 255, 0), 2)
@@ -72,33 +83,31 @@ def process_tray(image: np.ndarray, tray: Tray, debug_images: dict[str, list[np.
     return stats
 
 
-def get_pot_crop(image: np.ndarray, i: int, j: int):
+def get_pot_crop(image: np.ndarray, i: int, j: int, margin: float):
     x = i * POT_WIDTH
     y = j * POT_HEIGHT
-    crop_width = int(POT_WIDTH * 1.0)
-    crop_height = int(POT_HEIGHT * 1.0)
-    x_offset = (POT_WIDTH - crop_width) // 2
-    y_offset = (POT_HEIGHT - crop_height) // 2
-    return image[y + y_offset : y + y_offset + crop_height, x + x_offset : x + x_offset + crop_width]
+    crop = image[y : y + POT_HEIGHT, x  : x  + POT_WIDTH]
+    # get the center of the crop with margin
+    x = int(crop.shape[1] / 2)
+    y = int(crop.shape[0] / 2)
+    r = int(POT_WIDTH * margin) // 2
+    crop2 = crop[y - r : y + r, x - r : x + r]
+    return crop2
 
 
-def process_plant(image: np.ndarray, debug_images: dict[str, list[np.ndarray]]):
-    gray_image = pcv.rgb2gray_lab(rgb_img=image, channel='a')
-    debug_images["gray"].append(gray_image)
-    mask = get_plant_mask(gray_image)
-    # debug_images["img_colors"].append(img_colors)
-    FILL_THRESHOLD = 50
-    debug_images["mask"].append(mask)
-    mask = pcv.fill(mask, FILL_THRESHOLD)
-    debug_images["mask_filled"].append(mask)
+def process_plant(image: np.ndarray, mask, debug_images: dict[str, list[np.ndarray]]):
     x = int(image.shape[1] / 2)
     y = int(image.shape[0] / 2)
     r = POT_WIDTH // 3
     roi = pcv.roi.multi(image, coord=[(x, y)], radius=r)
     # plant_mask = plant_mask.astype(np.uint8) * 255
     labeled_mask, num_plants = pcv.create_labels(mask=mask, rois=roi, roi_type="partial")
+    from plantcv.plantcv import params
+    params.line_thickness = 1
+    # convert image from RGBA to RGB
+    image = cv2.cvtColor(image, cv2.COLOR_RGBA2RGB)
     shape_image = pcv.analyze.size(img=image, labeled_mask=labeled_mask, n_labels=num_plants)
-    shape_image = cv2.circle(shape_image, (x, y), r, (0, 255, 255), 2)
+    shape_image = cv2.circle(shape_image, (x, y), r, (0, 255, 255), 1)
     debug_images["shape_image"].append(shape_image)
 
     stats = []
@@ -118,11 +127,11 @@ def process_plant(image: np.ndarray, debug_images: dict[str, list[np.ndarray]]):
     return shape_image, stats
 
 
-def get_plant_mask(gray_image: np.ndarray):
-    mask = pcv.threshold.mean(gray_img=gray_image, ksize=100, offset=5, object_type="dark")
+# def get_plant_mask(gray_image: np.ndarray):
+
     # mask = pcv.threshold.otsu(gray_img=gray_image, object_type="dark")
     # mask = pcv.threshold.triangle(gray_img=gray_image, object_type="dark")
-    return mask
+    # return mask
     # vector = image.reshape(-1, 3)s
     # compactness, labels, centers = kmeans(
     #     data=vector.astype(np.float32),
