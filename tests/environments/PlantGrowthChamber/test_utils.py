@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -9,6 +10,7 @@ from plantcv import plantcv as pcv
 
 from environments.PlantGrowthChamber.utils import process_image
 from environments.PlantGrowthChamber.zones import Rect, Tray, get_zone
+from utils.metrics import iqm
 
 TEST_DIR = Path(__file__).parent.parent.parent / "test_data"
 SC_TEST_DIR = TEST_DIR / "Spreadsheet-C"
@@ -27,9 +29,9 @@ def get_plant_area(zone_id: int):
         df = process_image(image, zone.trays, debug_images)
         df["intensity"] = path.stem
 
-        avg = df["area"].mean()
+        avg = iqm(jnp.array(df["area"]), 0.05)
         df = pd.concat([df, pd.DataFrame({
-            "plant_id": ["avg"],
+            "plant_id": ["iqm"],
             "area": [avg],
             "intensity": [path.stem]
         })])
