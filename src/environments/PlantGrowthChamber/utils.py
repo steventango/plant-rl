@@ -114,7 +114,6 @@ def process_plant(image: np.ndarray, mask, debug_images: dict[str, list[np.ndarr
     image = cv2.cvtColor(image, cv2.COLOR_RGBA2RGB)
     shape_image = pcv.analyze.size(img=image, labeled_mask=labeled_mask, n_labels=num_plants)
     shape_image = cv2.circle(shape_image, (x, y), r, (0, 255, 255), 1)
-    debug_images["shape_image"].append(shape_image)
 
     stats = []
     for sample, variables in pcv.outputs.observations.items():
@@ -133,4 +132,19 @@ def process_plant(image: np.ndarray, mask, debug_images: dict[str, list[np.ndarr
 
         row["area"] /= SCALE**2
 
+    for row in stats:
+        area = row["area"]
+        if area is not None:
+            cv2.putText(
+                shape_image,
+                f"{area:.2f} mm^2",
+                (x - int(r * 1.1), y - int(r * 1.1)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.4,
+                (255, 255, 255),
+                1,
+                cv2.LINE_AA,
+            )
+
+    debug_images["shape_image"].append(shape_image)
     return shape_image, stats
