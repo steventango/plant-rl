@@ -4,3 +4,4 @@
 set -e
 
 python scripts/local.py --runs 1 -e experiments/online/E5/P0/Spreadsheet.json --entry src/main_real.py
+# python scripts/local.py --runs 1 -e experiments/online/E5/P0/Collect.json --entry src/main_real.py

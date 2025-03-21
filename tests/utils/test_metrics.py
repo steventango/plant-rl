@@ -2,7 +2,7 @@ import jax.numpy as jnp
 import pytest
 import matplotlib.pyplot as plt
 import numpy as np
-from utils.metrics import UnbiasedExponentialMovingAverage
+from utils.metrics import UnbiasedExponentialMovingAverage, iqm
 
 
 class TestUnbiasedExponentialMovingAverage:
@@ -119,3 +119,9 @@ class TestUnbiasedExponentialMovingAverage:
         ax[1].legend()
         ax[1].set_xlabel('beta')
         plt.savefig('tests/utils/plot_trace.jpg')
+
+
+def test_iqm():
+    data = jnp.array([-1000, 1, 2, 3, 4, 5, 1000])
+    metric = iqm(data, 0.05)
+    assert metric == pytest.approx(3)

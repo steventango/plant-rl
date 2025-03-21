@@ -1,64 +1,65 @@
+from pathlib import Path
+
+import jax.numpy as jnp
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import seaborn as sns
 from PIL import Image
+from plantcv import plantcv as pcv
 
 from environments.PlantGrowthChamber.utils import process_image
-from environments.PlantGrowthChamber.zones import Rect, Tray
+from environments.PlantGrowthChamber.zones import Rect, Tray, get_zone
+from utils.metrics import iqm
+
+TEST_DIR = Path(__file__).parent.parent.parent / "test_data"
+SC_TEST_DIR = TEST_DIR / "Spreadsheet-C"
 
 
-def test_process_image():
-    areas = []
-    for file in ["z3c1--2022-12-31--08-50-01.png", "z3c1--2022-12-31--09-00-01.png"]:
-        image = np.array(Image.open(f"tests/test_data/{file}"))
+def get_plant_area(zone_id: int):
+    dfs = []
+    zone = get_zone(zone_id)
+    zone_dir = SC_TEST_DIR / f"z{zone_id}"
+    out_dir = zone_dir / "results"
+    out_dir.mkdir(exist_ok=True)
+    paths = sorted(zone_dir.glob("*.png"))
+    for path in paths:
+        image = np.array(Image.open(path))
         debug_images = {}
-        trays = [
-            Tray(
-                n_wide=8,
-                n_tall=3,
-                rect=Rect(
-                    top_left=(112, 404),
-                    top_right=(1718, 198),
-                    bottom_left=(114, 990),
-                    bottom_right=(1814, 838),
-                    # top_left=(116, 403),
-                    # top_right=(1717, 196),
-                    # bottom_left=(119, 988),
-                    # bottom_right=(1815, 844),
-                ),
-            ),
-            Tray(
-                n_wide=8,
-                n_tall=3,
-                rect=Rect(
-                    top_left=(106, 1062),
-                    top_right=(1804, 922),
-                    bottom_left=(188, 1652),
-                    bottom_right=(1832, 1594),
-                    # top_left=(111, 1062),
-                    # top_right=(1804, 926),
-                    # bottom_left=(192, 1651),
-                    # bottom_right=(1829, 1590),
-                ),
-            ),
-        ]
-        df = process_image(image, trays, debug_images)
-        df.to_csv(f"tests/test_data/{file}.csv", index=False)
-        areas.append(df["area"])
+        df = process_image(image, zone.trays, debug_images)
+        df["intensity"] = path.stem
+
+        avg = iqm(jnp.array(df["area"]), 0.05)
+        df = pd.concat([df, pd.DataFrame({
+            "plant_id": ["iqm"],
+            "area": [avg],
+            "intensity": [path.stem]
+        })])
+        dfs.append(df)
+        df.to_csv(out_dir / f"{path.stem}.csv", index=False)
         for key, value in debug_images.items():
-            value.save(f"tests/test_data/{file}_{key}.png")
+            value.save(out_dir / f"{path.stem}_{key}.png")
 
-    # create a side by side barplot comparision of the areas from each file
-    import matplotlib.pyplot as plt
+    df = pd.concat(dfs)
+    plot_area_comparison(df, out_dir)
 
-    fig, ax = plt.subplots()
-    ax.bar(np.arange(len(areas[0])), areas[0], color="b", label="2022-12-31--08-50-01")
-    ax.bar(np.arange(len(areas[1])) + 0.4, areas[1], color="r", label="2022-12-31--09-00-01")
-    ax.legend()
-    plt.savefig("tests/test_data/areas.png")
+
+def test_process_zone_1():
+    get_plant_area(1)
+
+
+def test_process_zone_6():
+    get_plant_area(6)
+
+
+def plot_area_comparison(df: pd.DataFrame, out_dir: Path):
+    plt.figure(figsize=(4 * len(df) // 32, 3))
+    sns.barplot(df, x="plant_id", y="area", hue="intensity")
+    plt.ylim(0, df["area"].quantile(0.99))
+    plt.savefig(out_dir / "areas.png")
 
 
 def test_alg():
-    from PIL import Image
-    from plantcv import plantcv as pcv
 
     gray_img = np.array(Image.open("tests/test_data/z3c1--2022-12-31--08-50-01.png"))[:, :, 1]
 

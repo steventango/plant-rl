@@ -73,8 +73,10 @@ def save_images(env, data_path: Path):
     now = round_seconds(now)
     now = now.isoformat().replace(':', '')
     zone_identifier = env.zone.identifier
-
+    save_keys = {"left", "right"}
     for key, image in env.images.items():
+        if key not in save_keys:
+            continue
         img_path = data_path / f"z{zone_identifier}" / f"{now}_{key}.png"
         image.save(img_path)
 

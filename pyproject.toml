@@ -43,6 +43,7 @@ dependencies = [
     'requests>=2.32.3',
     'plantcv~=4.2.1',
     'pandas[excel]',
+    'seaborn',
 ]
 
 [project.optional-dependencies]
