@@ -86,7 +86,7 @@ def process_image(image):
 # %%
 
 
-df = pd.read_csv(Path(__file__).parent  / "first_exp_area_over_time.csv")
+df = pd.read_csv(Path(__file__).parent  / "new_area_over_time.csv")
 df["timestamp"] = pd.to_datetime(df["timestamp"])
 df
 
@@ -152,20 +152,14 @@ ax = axs[1]
 # Sort DataFrame by timestamp to ensure proper ordering
 df = df.sort_values("timestamp")
 
+#%%
+
 # Calculate time differences between consecutive points
 df["time_diff"] = df["timestamp"].diff()
 
 # Identify large gaps (e.g., gaps > 6 hours)
 threshold = pd.Timedelta(minutes=6)
 large_gaps = df["time_diff"] > threshold
-
-
-#%%
-# get data on Mar 8
-cond = (df["timestamp"].dt.month == 3) & (df["timestamp"].dt.day == 8)
-df[cond]
-# save to csv
-df[cond].to_csv("z2cR_0308.csv", index=False)
 
 #%%
 # Get the indices where large gaps occur
@@ -176,10 +170,14 @@ palette = sns.color_palette("hls", len(df.columns) - 2)
 for column in df.columns:
     if column in ["timestamp", "time_diff"]:
         continue
-    color = palette.pop(0)
+    if column =="iqm":
+        color = "black"
+    else:
+        color = palette.pop(0)
     plot_segments(df, "timestamp", column, ax, color, label=column, gap_indices=gap_indices)
 
-ax.set_ylim(0, 1200)
+area_columns = [column for column in df.columns if column not in ["timestamp", "time_diff"]]
+ax.set_ylim(0, df[area_columns].quantile(0.99).max())
 ax.set_ylabel("Area (px$^2$)")
 ax.set_title("Area Over Time")
 plt.ylabel("Area")
