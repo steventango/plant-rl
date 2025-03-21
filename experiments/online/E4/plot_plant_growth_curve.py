@@ -178,9 +178,8 @@ for column in df.columns:
 
 area_columns = [column for column in df.columns if column not in ["timestamp", "time_diff"]]
 ax.set_ylim(0, df[area_columns].quantile(0.999).max())
-ax.set_ylabel("Area (px$^2$)")
+ax.set_ylabel("Area (mm$^2$)")
 ax.set_title("Area Over Time")
-plt.ylabel("Area")
 # plt.legend()
 # %%
 
