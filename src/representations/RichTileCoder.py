@@ -10,6 +10,7 @@ class RichTileCoderConfig:
     tiles: int | Sequence[int]
     tilings: int
     dims: int
+    multi_call: bool = False
     input_ranges: Optional[Sequence[Range | None]] = None
     
 class RichTileCoder():
@@ -33,7 +34,13 @@ class RichTileCoder():
         self.iht = IHT(self.maxSize)
 
     def get_indices(self, s: np.ndarray):   
-        return tiles(self.iht, self._c.tilings, [s[i]*self.scale[i] for i in range(self._c.dims)])
+        if self._c.multi_call:   # This specifically works for the 3D state space (time, area, change in area)
+            tile1 = tiles(self.iht, self._c.tilings, [s[0]*self.scale[0]], [0])   # 1D time
+            tile2 = tiles(self.iht, self._c.tilings, [s[1]*self.scale[1], s[2]*self.scale[2]], [1])   # 2D (area, change in area)
+            tile3 = tiles(self.iht, self._c.tilings, [s[0]*self.scale[0], s[2]*self.scale[2]], [2])   # 2D (time, change in area)
+            return tile1 + tile2 + tile3
+        else:
+            return tiles(self.iht, self._c.tilings, [s[i]*self.scale[i] for i in range(self._c.dims)])
 
     def features(self):
         return self.maxSize

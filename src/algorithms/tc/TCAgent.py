@@ -20,24 +20,21 @@ class TCAgent(BaseAgent):
 
         self.rep_params: Dict = params['representation']
 
-        if self.rep_params['which_tc'] is None:
-            raise ValueError("Tile coder type cannot be None")
-        elif self.rep_params['which_tc'] == 'RichTileCoder':
+        if self.rep_params['which_tc'] == 'RichTileCoder':
             self.tile_coder = RichTileCoder(RichTileCoderConfig(
                 tiles=self.rep_params['tiles'],
                 tilings=self.rep_params['tilings'],
                 dims=observations[0],
-                input_ranges=None,    # assume that inputs are in the range (0.0, 1.0)
+                multi_call=self.rep_params['multi_call'],
             ))
         elif self.rep_params['which_tc'] == 'AndyTileCoder':
             self.tile_coder = DenseTileCoder(TileCoderConfig(
                 tiles=self.rep_params['tiles'],
                 tilings=self.rep_params['tilings'],
                 dims=observations[0],
-                input_ranges=None,    # assume that inputs are in the range (0.0, 1.0)
             ))
         else:
-            raise ValueError(f"Unknown tile coder type: {self.rep_params['which_tc']}") 
+            raise ValueError(f"Please specify which tile coder to use with param which_tc.") 
         
         self.n_features = self.tile_coder.features()
 

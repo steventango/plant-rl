@@ -5,7 +5,7 @@ import pandas as pd
 from RlGlue.environment import BaseEnvironment
 from utils.functions import PiecewiseLinear
 from utils.metrics import UnbiasedExponentialMovingAverage as uema
-import jax.numpy as jnp
+import jax.numpy as jnp      
 
 class PlantSimulator(BaseEnvironment):  
     ''' 
@@ -28,7 +28,7 @@ class PlantSimulator(BaseEnvironment):
 
         self.observed_areas = []        # stores a list of lists of daytime observed areas in pixels. i.e. self.observed_areas[-1] contains the latest areas of individual plants
         
-        self.history = uema(alpha=0.01) # history of change in average observed area over 1 step
+        self.history = uema(alpha=0.01) # history of change in average observed area over 1 step (in units of pixels)
         
         self.time = 0                   # step counter that counts both day and night, even though agent is sleeping at night
         self.num_steps = 0
@@ -53,7 +53,7 @@ class PlantSimulator(BaseEnvironment):
         
         self.current_state = np.hstack([self.time_of_day(),
                                         self.countdown(),
-                                        self.normalize(self.iqm(self.observed_areas[-1])),
+                                        self.normalize(self.iqm(self.observed_areas[-1]), l=0, u=15000),
                                         self.normalize(0, l=-5, u=30)])   # let the history be zero at t=0
 
         return self.current_state
@@ -96,7 +96,7 @@ class PlantSimulator(BaseEnvironment):
         
         self.current_state = np.hstack([self.time_of_day(),
                                         self.countdown(),
-                                        self.normalize(self.iqm(self.observed_areas[-1])),
+                                        self.normalize(self.iqm(self.observed_areas[-1]), l=0, u=15000),
                                         self.normalize(self.history.compute(), l=-5, u=30)])
 
         if self.num_steps == self.terminal_step:
@@ -130,8 +130,8 @@ class PlantSimulator(BaseEnvironment):
         
     def reward_function(self):
         if self.num_steps >= self.lag: 
-            new = self.normalize(self.iqm(self.observed_areas[-1]))
-            old = self.normalize(self.iqm(self.observed_areas[-1-self.lag]))
+            new = self.normalize(self.iqm(self.observed_areas[-1]), l=0, u=15000)
+            old = self.normalize(self.iqm(self.observed_areas[-1-self.lag]), l=0, u=15000)
             return new - old
         else: 
             return 0
@@ -225,7 +225,7 @@ class PlantSimulator(BaseEnvironment):
         total_steps = self.last_day * self.steps_per_day
         return [(sin(2*pi*self.num_steps/total_steps)+1)/2, (cos(2*pi*self.num_steps/total_steps)+1)/2]
     
-    def normalize(self, x, l=0, u=15000):   # normalize areas to between 0 and 1 
+    def normalize(self, x, l, u):   # normalize areas to between 0 and 1 
         if isinstance(x, list):
             return [(val - l) / (u - l) for val in x]
         return (x - l) / (u - l) 
@@ -251,7 +251,40 @@ class PlantSimulator(BaseEnvironment):
             return action == 1   
         else:
             return action == 2
-
+        
+class PlantSimulator_Only1Time(PlantSimulator):  
+    ''' 
+    State = (linear time-of-day, average area, history of change in average area)
+    Action = [moonlight, low, med, high] (med is optimal at noon, high is too bright)
+    Reward = change in average area over 1 step
+    '''
+    def __init__(self, num_plants=48, outliers=2, lag=1, stride=1, last_day=14, **kwargs):
+        super().__init__(num_plants, outliers, lag, stride, last_day)
+        self.state_dim = (3,)   
+        self.current_state = np.empty(3)
+    
+    def start(self):
+        super().start()
+        self.current_state = np.hstack([self.linear_time_of_day(),
+                                        self.normalize(self.iqm(self.observed_areas[-1]), l=0, u=15000),
+                                        self.normalize(0, l=-5, u=30)])   
+        return self.current_state
+    
+    def step(self, action):
+        super().step(action)
+        self.current_state = np.hstack([self.linear_time_of_day(),
+                                        self.normalize(self.iqm(self.observed_areas[-1]), l=0, u=15000),
+                                        self.normalize(self.history.compute(), l=-5, u=30)])
+        
+        if self.num_steps == self.terminal_step:
+            return self.reward, self.current_state, True, self.get_info()
+        else:    
+            return self.reward, self.current_state, False, self.get_info()
+        
+    def linear_time_of_day(self):
+        step_today = self.num_steps % self.steps_per_day  
+        return step_today / self.steps_per_day
+    
 
 class PlantSimulatorLowHigh(PlantSimulator):  
     ''' 

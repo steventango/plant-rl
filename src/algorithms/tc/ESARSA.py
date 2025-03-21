@@ -17,7 +17,7 @@ def _update(w, x, a, xp, pi, r, gamma, alpha):
 
     delta = r + gamma * np.dot(qsp,pi) - qsa
 
-    w[a] = w[a] + alpha * delta * x
+    w[a] = w[a] + (alpha / np.count_nonzero(x)) * delta * x
 
 @njit(cache=True)
 def value(w, x):
