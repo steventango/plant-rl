@@ -6,7 +6,7 @@ import pandas as pd
 from PIL import Image
 from plantcv import plantcv as pcv
 
-from .zones import POT_HEIGHT, POT_WIDTH, Tray
+from .zones import POT_HEIGHT, POT_WIDTH, SCALE, Tray
 
 
 def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, Image]):
@@ -130,4 +130,7 @@ def process_plant(image: np.ndarray, mask, debug_images: dict[str, list[np.ndarr
             else:
                 row[variable] = value["value"]
         stats.append(row)
+
+        row["area"] /= SCALE**2
+
     return shape_image, stats

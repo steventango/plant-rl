@@ -161,6 +161,6 @@ def get_zone(indentifier: int):
         case _:
             raise ValueError(f"Unknown zone indentifier: {indentifier}")
 
-
-POT_HEIGHT = 60 * 4
-POT_WIDTH = 60 * 4
+SCALE = 4
+POT_HEIGHT = 60 * SCALE
+POT_WIDTH = 60 * SCALE
