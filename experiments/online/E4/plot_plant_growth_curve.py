@@ -177,7 +177,7 @@ for column in df.columns:
     plot_segments(df, "timestamp", column, ax, color, label=column, gap_indices=gap_indices)
 
 area_columns = [column for column in df.columns if column not in ["timestamp", "time_diff"]]
-ax.set_ylim(0, df[area_columns].quantile(0.99).max())
+ax.set_ylim(0, df[area_columns].quantile(0.999).max())
 ax.set_ylabel("Area (px$^2$)")
 ax.set_title("Area Over Time")
 plt.ylabel("Area")
