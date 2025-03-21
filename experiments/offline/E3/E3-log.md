@@ -110,5 +110,13 @@ Just realized that data analysis for P1 and P2 were wrong. After fixing them, I 
 
 ## Phase P5
 ### Objectives: 
-- Test out the newly updated plantsim (4 discrete actions, unbiased exp moving avg, history of reward rather than of area, removing outliers before averaging areas)
-- Test out Rich's tile coding script
+- Test out the newly updated plantsim (4 discrete actions, unbiased exp moving avg, history of reward rather than of area, removing outliers before averaging areas, using linear time of day, removing countdown timer)
+- Test out Rich's tile coding script, with multi call
+### Methods: 
+- See PlantSimulator_Only1Time
+- See representations/RichTileCoder.py
+- Agent = TC ESARSA without replay
+### Observations: 
+-
+
+### Conclusions & Outlooks: 

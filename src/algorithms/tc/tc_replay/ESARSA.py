@@ -14,6 +14,7 @@ def _update(w, x, a, xp, pi, r, gamma, alpha):
     qsp = np.matmul(xp, w.T)
     delta = r + gamma * (qsp * pi).sum(axis=1) - qsa
 
+    # TODO rescale learning rate by num active features
     grad = x * delta[:, None]
     np.add.at(w, a, alpha*grad)
 

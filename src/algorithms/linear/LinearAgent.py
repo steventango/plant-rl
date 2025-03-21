@@ -8,7 +8,7 @@ from ReplayTables.interface import Timestep
 from ReplayTables.ingress.LagBuffer import LagBuffer
 
 from algorithms.BaseAgent import BaseAgent
-from representations.TileCoder import SparseTileCoder, TileCoderConfig
+from representations.TileCoder import DenseTileCoder, TileCoderConfig
 from utils.checkpoint import checkpointable
 
 @checkpointable(('lag'))
