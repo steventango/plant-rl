@@ -1,0 +1,17 @@
+{
+    "agent": "Constant",
+    "problem": "PlantSimulator",
+    "total_steps": -1,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "type": "onlytime",
+            "num_plants": 48,
+            "lag": 1,
+            "stride": 1,
+            "last_day": 14,
+            "trace_decay_rate": 0.99
+        },
+        "actions": 1
+    }
+}
