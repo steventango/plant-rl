@@ -13,3 +13,16 @@
 
 ### Conclusions & Outlooks:
 - Try SARSA(λ) instead.
+
+## Phase P1
+### Objectives:
+- Try ESARSA(λ) with the original reward function.
+### Methods:
+- See only1time
+- See representations/RichTileCoder.py
+- Agent = TC ESARSA without replay
+### Observations:
+-
+
+### Conclusions & Outlooks:
+- 
