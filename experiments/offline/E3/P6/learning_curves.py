@@ -20,7 +20,7 @@ setDefaultConference('neurips')
 
 COLORS = {'tc-ESARSA': 'blue'}
 
-total_days = 7
+total_days = 10
 optimal_action = np.tile(np.hstack([np.ones(3*6), 2*np.ones(6*6), np.ones(3*6)]), total_days)
 
 def main():
@@ -41,18 +41,18 @@ def main():
         folder_columns=(None, None, None, 'environment'),
         file_col='algorithm',
     )
-
+ 
     assert df is not None
-
+            
     exp = results.get_any_exp()
 
     for env, env_df in split_over_column(df, col='environment'):
         f, ax = plt.subplots(5, 1)
-        for alg, sub_df in split_over_column(env_df, col='algorithm'):
-
+        for alg, alg_df in split_over_column(env_df, col='algorithm'):   
+            sub_df = alg_df[alg_df['alpha']==1.0]
             report = Hypers.select_best_hypers(
                 sub_df,
-                metric='return',
+                metric='return', 
                 prefer=Hypers.Preference.high,
                 time_summary=TimeSummary.sum,
                 statistic=Statistic.mean,
@@ -61,11 +61,11 @@ def main():
             print('-' * 25)
             print(env, alg)
             Hypers.pretty_print(report)
-
+            
             xs_a, ys_a = extract_learning_curves(sub_df, report.best_configuration, metric='action', interpolation=None)
             xs_a = np.asarray(xs_a)
             ys_a = np.asarray(ys_a)
-
+            
             res = curve_percentile_bootstrap_ci(
                 rng=np.random.default_rng(0),
                 y=ys_a,
@@ -75,11 +75,11 @@ def main():
             for i in range(5):
                 ax[i].plot(rescale_time(xs_a[0], 1), optimal_action, 'r.', label='optimal policy', markersize=0.5)
                 ax[i].plot(rescale_time(xs_a[0], 1), ys_a[i], 'g.', label=f'seed{i+1}', markersize=0.5)
-                ax[i].set_ylabel('Action')
+                ax[i].set_ylabel('Action')       
                 ax[i].set_ylim([-0.1,3.1])
                 for j in range(total_days + 1):
                     ax[i].axvline(x = 12*j, color='k', linestyle='--', linewidth=0.5)
-
+            
             ax[0].set_title(f'Learning curves over {total_days} days')
             ax[4].set_xlabel('Day Time [Hours]')
 

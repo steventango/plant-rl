@@ -115,8 +115,32 @@ Just realized that data analysis for P1 and P2 were wrong. After fixing them, I 
 ### Methods: 
 - See PlantSimulator_Only1Time
 - See representations/RichTileCoder.py
+- the tile code is tile(time) + tile(area, Δarea) + tile(time, Δarea)
 - Agent = TC ESARSA without replay
 ### Observations: 
--
-
+- seed 3 and seed 5 look promising!
 ### Conclusions & Outlooks: 
+- how to improve it?
+
+Between P5 and P6, tested out a few changes that didn't help: 
+- increase the freezing time in sim
+- give all incorrect actions the same freezing time in sim
+- increase lag to 3
+- increase stride to 3
+- remove penalty during daytime (only freeze growth at night)
+
+What did help:
+- using only tile-coded time as state
+
+## Phase P6
+### Objectives: 
+- Test if incorporating more "time" in tc would help
+### Methods: 
+- changed up tile coding,  now it's tc = tile(time) + tile(time,area) + tile(time, Δarea)
+- Agent = TC ESARSA without replay
+### Observations: 
+- alpha = 1, ep = 0.05, n_step = 1 does pretty good! almost hitting the optimal policy with seed 1 and 3
+- note that hypersweep would select alpha=0.1, which somehow has better return but the action history looks terrible!
+### Conclusions & Outlooks: 
+- ways to further improve: sarsa(lambda) for better credit assignment, test reward function that focuses on overnight growth, try penalizing inactive weights with L1
+
