@@ -120,7 +120,7 @@ for idx in indices:
         collector.collect('reward', interaction.r)
         collector.collect('episode', chk['episode'])
         collector.collect('steps', glue.num_steps)
-        collector.collect('action', glue.last_action)      # or int.from_bytes(glue.last_action, byteorder='little') for GAC
+        collector.collect('action', interaction.a)      # or int.from_bytes(glue.last_action, byteorder='little') for GAC
         collector.collect('action_is_optimal', interaction.extra.get('action_is_optimal', -1))   # Check if the agent took the optimal action
 
         if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):

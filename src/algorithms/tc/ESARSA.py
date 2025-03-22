@@ -35,9 +35,10 @@ class ESARSA(TCAgent):
         self.alpha = params['alpha']
         self.epsilon = params['epsilon']
         self.lambda_ = params.get('lambda', 0.0)
+        self.w0 = params.get('w0', 0.0)
 
         # create initial weights
-        self.w = np.zeros((actions, self.n_features), dtype=np.float64)
+        self.w = np.full((actions, self.n_features), self.w0, dtype=np.float64)
         self.z = np.zeros((actions, self.n_features), dtype=np.float64)
 
     def policy(self, obs: np.ndarray) -> np.ndarray:

@@ -3,10 +3,11 @@ from environments.PlantSimulator import PlantSimulator as PlantSimulatorEnv
 from environments.PlantSimulator import PlantSimulatorLowHigh as PlantSimulatorEnvLowHigh
 from environments.PlantSimulator import PlantSimulator_Only1Time_EMAReward
 from environments.PlantSimulator import PlantSimulator_Only1Time
+from environments.PlantSimulator import PlantSimulator_OnlyTime
 from experiment.ExperimentModel import ExperimentModel
 from problems.BaseProblem import BaseProblem
 
-import logging 
+import logging
 
 class PlantSimulator(BaseProblem):
     def __init__(self, exp: ExperimentModel, idx: int, collector: Collector):
@@ -14,11 +15,15 @@ class PlantSimulator(BaseProblem):
         if self.env_params['type'] == 'default':
             self.env = PlantSimulatorEnv(**self.env_params)
             self.actions = 4
-            self.observations = (6,) 
+            self.observations = (6,)
         elif self.env_params['type'] == 'only1time':
             self.env = PlantSimulator_Only1Time(**self.env_params)
             self.actions = 4
             self.observations = (3,)
+        elif self.env_params['type'] == 'onlytime':
+            self.env = PlantSimulator_OnlyTime(**self.env_params)
+            self.actions = 4
+            self.observations = (1,)
         elif self.env_params['type'] == 'only1time_emareward':
             self.env = PlantSimulator_Only1Time_EMAReward(**self.env_params)
             self.actions = 4
@@ -26,8 +31,8 @@ class PlantSimulator(BaseProblem):
         elif self.env_params['type'] == 'low_high':
             self.env = PlantSimulatorEnvLowHigh(**self.env_params)
             self.actions = 2
-            self.observations = (6,) 
+            self.observations = (6,)
         else:
             raise ValueError(f"Invalid argument. Expected one of {{'default', 'only1time', 'low_high'}}, but got: {self.env_params['type']}")
-        
+
         self.gamma = 1.0

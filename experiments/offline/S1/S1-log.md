@@ -22,7 +22,24 @@
 - See representations/RichTileCoder.py
 - Agent = TC ESARSA without replay
 ### Observations:
--
+- Works better, but maybe generalization across the time dimension is not working as well.
 
 ### Conclusions & Outlooks:
-- 
+- Adjust the time representation.
+
+## Phase P2
+### Objectives:
+- Try ESARSA(λ) with the original reward function, but with only the current time step as input.
+### Methods:
+- See onlytime
+- See representations/RichTileCoder.py
+- Agent = TC ESARSA without replay
+### Observations:
+- I tried many things and some of they contributed to something working.
+  - state aggregation instead of tiling
+  - hyper selection using return of last 20% of timesteps
+  - forcing epsilon=0.25
+  - The total returns / the return of the last 20% of timesteps,  favour a constant policy over our learned policy that visually does better
+### Conclusions & Outlooks:
+- Address issues with total returns.
+- We need to run an ablation study to understand what made it work.
