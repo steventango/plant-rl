@@ -8,6 +8,7 @@ from algorithms.nn.EQRC import EQRC
 from algorithms.ConstantAgent import ConstantAgent
 from algorithms.ContinuousRandomAgent import ContinuousRandomAgent
 from algorithms.DiscreteRandomAgent import DiscreteRandomAgent
+from algorithms.SequenceAgent import SequenceAgent
 from algorithms.SpreadsheetAgent import SpreadsheetAgent
 from algorithms.tc.ESARSA import ESARSA
 from algorithms.tc.QL import QL
@@ -33,13 +34,13 @@ def getAgent(name) -> Type[BaseAgent]:
 
     if name == 'ESARSA':
         return ESARSA
-    
+
     if name == 'QL':
         return QL
-    
+
     if name == 'ESARSAReplay':
         return ESARSAReplay
-    
+
     if name == 'QLReplay':
         return QLReplay
 
@@ -63,6 +64,9 @@ def getAgent(name) -> Type[BaseAgent]:
 
     if name == 'ContinuousRandom':
         return ContinuousRandomAgent
+
+    if name.startswith("Sequence"):
+        return SequenceAgent
 
     if name.startswith("Spreadsheet"):
         return SpreadsheetAgent
