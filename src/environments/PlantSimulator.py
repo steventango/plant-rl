@@ -286,8 +286,29 @@ class PlantSimulator_Only1Time(PlantSimulator):
         return step_today / self.steps_per_day
     
 
-class PlantSimulatorLowHigh(PlantSimulator):  
-    ''' 
+class PlantSimulator_Only1Time_EMAReward(PlantSimulator_Only1Time):
+    '''
+    State = (linear time-of-day, average area, history of change in average area)
+    Action = [moonlight, low, med, high] (med is optimal at noon, high is too bright)
+    Reward = change in fast exponential moving average of area and slow exponential moving average of area
+    '''
+    def __init__(self, num_plants=48, outliers=2, lag=1, stride=1, last_day=14, **kwargs):
+        super().__init__(num_plants, outliers, lag, stride, last_day, **kwargs)
+        self.area_history_fast = uema(alpha=0.01)
+        self.area_history_slow = uema(alpha=0.001)
+
+    def reward_function(self):
+        r = self.area_history_fast.compute() - self.area_history_slow.compute()
+        return r.item()
+
+    def step(self, action):
+        output = super().step(action)
+        self.area_history_fast.update(self.iqm(self.observed_areas[-1]))
+        self.area_history_slow.update(self.iqm(self.observed_areas[-1]))
+        return output
+
+class PlantSimulatorLowHigh(PlantSimulator):
+    '''
     Simulate a tray of plants under the same lighting agent.
     State = (sin time-of-day, cos time-of-day, sin countdown, cos countdown, average area, history of change in average area)
     Action = [low, high]

@@ -1,6 +1,7 @@
 from PyExpUtils.collection.Collector import Collector
 from environments.PlantSimulator import PlantSimulator as PlantSimulatorEnv
 from environments.PlantSimulator import PlantSimulatorLowHigh as PlantSimulatorEnvLowHigh
+from environments.PlantSimulator import PlantSimulator_Only1Time_EMAReward
 from environments.PlantSimulator import PlantSimulator_Only1Time
 from experiment.ExperimentModel import ExperimentModel
 from problems.BaseProblem import BaseProblem
@@ -17,7 +18,11 @@ class PlantSimulator(BaseProblem):
         elif self.env_params['type'] == 'only1time':
             self.env = PlantSimulator_Only1Time(**self.env_params)
             self.actions = 4
-            self.observations = (3,) 
+            self.observations = (3,)
+        elif self.env_params['type'] == 'only1time_emareward':
+            self.env = PlantSimulator_Only1Time_EMAReward(**self.env_params)
+            self.actions = 4
+            self.observations = (3,)
         elif self.env_params['type'] == 'low_high':
             self.env = PlantSimulatorEnvLowHigh(**self.env_params)
             self.actions = 2
