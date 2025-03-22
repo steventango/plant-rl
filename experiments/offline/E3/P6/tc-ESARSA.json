@@ -9,12 +9,12 @@
             "num_plants": 48,
             "lag": 1,
             "stride": 1, 
-            "last_day": 7,
+            "last_day": 10,
             "trace_decay_rate": 0.99
         },
-        "alpha": [1e0], 
-        "epsilon": [0.05],
-        "n_step": [1],
+        "alpha": [1e-1, 3e-1, 1e0, 3e0], 
+        "epsilon": [0.05, 0.10],
+        "n_step": [1, 2],
 
         "representation": {
             "which_tc": "RichTileCoder",
