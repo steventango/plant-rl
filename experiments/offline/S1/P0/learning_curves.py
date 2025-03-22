@@ -41,17 +41,17 @@ def main():
         folder_columns=(None, None, None, 'environment'),
         file_col='algorithm',
     )
- 
+
     assert df is not None
-            
+
     exp = results.get_any_exp()
 
     for env, env_df in split_over_column(df, col='environment'):
         f, ax = plt.subplots(5, 1)
-        for alg, sub_df in split_over_column(env_df, col='algorithm'):           
+        for alg, sub_df in split_over_column(env_df, col='algorithm'):
             report = Hypers.select_best_hypers(
                 sub_df,
-                metric='return', 
+                metric='return',
                 prefer=Hypers.Preference.high,
                 time_summary=TimeSummary.sum,
                 statistic=Statistic.mean,
@@ -60,29 +60,29 @@ def main():
             print('-' * 25)
             print(env, alg)
             Hypers.pretty_print(report)
-            
+
             xs_a, ys_a = extract_learning_curves(sub_df, report.best_configuration, metric='action', interpolation=None)
             xs_a = np.asarray(xs_a)
             ys_a = np.asarray(ys_a)
-            
+
             res = curve_percentile_bootstrap_ci(
                 rng=np.random.default_rng(0),
                 y=ys_a,
                 statistic=Statistic.mean,
             )
 
-            for i in range(5):
+            for i in range(min(5, len(ys_a))):
                 ax[i].plot(rescale_time(xs_a[0], 1), optimal_action, color='r', label='optimal policy', linewidth=0.5)
                 ax[i].plot(rescale_time(xs_a[0], 1), ys_a[i], 'g.', label=f'seed{i+1}', markersize=0.5)
-                ax[i].set_ylabel('Action')       
+                ax[i].set_ylabel('Action')
                 for j in range(total_days + 1):
                     ax[i].axvline(x = 12*j, color='k', linestyle='--', linewidth=0.5)
-            
+
             ax[0].set_title(f'Learning curves over {total_days} days')
             ax[4].set_xlabel('Day Time [Hours]')
 
 
-        save(save_path=f'{path}/plots', plot_name=f'{alg}', save_type='jpg')
+            save(save_path=f'{path}/plots', plot_name=f'{alg}', save_type='jpg')
 
 def rescale_time(x, stride):
     base_step = 10/60           # spreadsheet time step is 10 minutes
