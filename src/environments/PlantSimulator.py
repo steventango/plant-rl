@@ -294,11 +294,13 @@ class PlantSimulator_Only1Time_EMAReward(PlantSimulator_Only1Time):
     '''
     def __init__(self, num_plants=48, outliers=2, lag=1, stride=1, last_day=14, **kwargs):
         super().__init__(num_plants, outliers, lag, stride, last_day, **kwargs)
-        self.area_history_fast = uema(alpha=0.01)
-        self.area_history_slow = uema(alpha=0.001)
+        self.area_history_fast = uema(alpha=0.6)
+        self.area_history_slow = uema(alpha=0.06)
 
     def reward_function(self):
         r = self.area_history_fast.compute() - self.area_history_slow.compute()
+        # normalize
+        r /= 150
         return r.item()
 
     def step(self, action):
