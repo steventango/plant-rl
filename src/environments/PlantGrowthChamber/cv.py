@@ -90,8 +90,8 @@ def process_tray(image: np.ndarray, tray: Tray, debug_images: dict[str, list[np.
     debug_images["mask_filled"].append(mask)
     debug_pot_images = defaultdict(list)
     stats = []
-    for i in range(tray.n_wide):
-        for j in range(tray.n_tall):
+    for j in range(tray.n_tall):
+        for i in range(tray.n_wide):
             pot_image = get_pot_crop(matched, i, j, 1, pot_width)
             pot_mask = get_pot_crop(mask, i, j, 1, pot_width)
             shape_image, stat = process_plant(pot_image, pot_mask, debug_pot_images)
