@@ -11,7 +11,7 @@ from urllib3.util import Retry
 from utils.metrics import UnbiasedExponentialMovingAverage
 from utils.RlGlue.environment import BaseAsyncEnvironment
 
-from .utils import process_image
+from .cv import process_image
 from .zones import get_zone
 
 

@@ -8,7 +8,7 @@ import seaborn as sns
 from PIL import Image
 from plantcv import plantcv as pcv
 
-from environments.PlantGrowthChamber.utils import process_image
+from environments.PlantGrowthChamber.cv import process_image
 from environments.PlantGrowthChamber.zones import Rect, Tray, get_zone
 from utils.metrics import iqm
 
