@@ -7,19 +7,22 @@ import pandas as pd
 import seaborn as sns
 from PIL import Image
 from plantcv import plantcv as pcv
+from skimage import data, exposure
+from skimage.exposure import match_histograms
 
 from environments.PlantGrowthChamber.cv import process_image
 from environments.PlantGrowthChamber.zones import Rect, Tray, get_zone
 from utils.metrics import iqm
 
 TEST_DIR = Path(__file__).parent.parent.parent / "test_data"
+OLD_TEST_DIR = TEST_DIR / "old"
 SC_TEST_DIR = TEST_DIR / "Spreadsheet-C"
 
 
-def get_plant_area(zone_id: int):
+def get_plant_area(test_dir: Path, zone_id: int):
     dfs = []
     zone = get_zone(zone_id)
-    zone_dir = SC_TEST_DIR / f"z{zone_id}"
+    zone_dir = test_dir / f"z{zone_id}"
     out_dir = zone_dir / "results"
     out_dir.mkdir(exist_ok=True)
     paths = sorted(zone_dir.glob("*.png"))
@@ -45,11 +48,15 @@ def get_plant_area(zone_id: int):
 
 
 def test_process_zone_1():
-    get_plant_area(1)
+    get_plant_area(SC_TEST_DIR, 1)
 
 
 def test_process_zone_6():
-    get_plant_area(6)
+    get_plant_area(SC_TEST_DIR, 6)
+
+
+def test_process_old_zone_3():
+    get_plant_area(OLD_TEST_DIR, 3)
 
 
 def plot_area_comparison(df: pd.DataFrame, out_dir: Path):
@@ -60,17 +67,14 @@ def plot_area_comparison(df: pd.DataFrame, out_dir: Path):
 
 
 def test_alg():
-
-    gray_img = np.array(Image.open("tests/test_data/z3c1--2022-12-31--08-50-01.png"))[:, :, 1]
-
-    bin_gauss1 = pcv.threshold.gaussian(gray_img=gray_img, ksize=2500, offset=-50, object_type="light")
-
-    # save
-    Image.fromarray(bin_gauss1).save("tests/test_data/bin_gauss1.png")
-
-    gray_img2 = np.array(Image.open("tests/test_data/z3c1--2022-12-31--09-00-01.png"))[:, :, 1]
-    Image.fromarray(gray_img2).save("tests/test_data/gray_img2.png")
-    bin_gauss2 = pcv.threshold.gaussian(gray_img=gray_img2, ksize=2500, offset=-50, object_type="light")
-
-    # save
-    Image.fromarray(bin_gauss2).save("tests/test_data/bin_gauss2.png")
+    zone_id = 6
+    zone = get_zone(zone_id)
+    zone_dir = SC_TEST_DIR / f"z{zone_id}"
+    out_dir = zone_dir / "results"
+    out_dir.mkdir(exist_ok=True)
+    paths = sorted(zone_dir.glob("*.png"))
+    reference = np.array(Image.open(paths[2]))
+    for path in paths:
+        image = np.array(Image.open(path))
+        matched = match_histograms(image, reference, channel_axis=-1)
+        Image.fromarray(matched).save(out_dir / f"{path.stem}_matched.png")
