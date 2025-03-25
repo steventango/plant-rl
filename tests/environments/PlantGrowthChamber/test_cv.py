@@ -6,12 +6,9 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from PIL import Image
-from plantcv import plantcv as pcv
-from skimage import data, exposure
-from skimage.exposure import match_histograms
 
 from environments.PlantGrowthChamber.cv import process_image
-from environments.PlantGrowthChamber.zones import Rect, Tray, get_zone
+from environments.PlantGrowthChamber.zones import get_zone
 from utils.metrics import iqm
 
 TEST_DIR = Path(__file__).parent.parent.parent / "test_data"
@@ -33,11 +30,7 @@ def get_plant_area(test_dir: Path, zone_id: int):
         df["intensity"] = path.stem
 
         avg = iqm(jnp.array(df["area"]), 0.05)
-        df = pd.concat([df, pd.DataFrame({
-            "plant_id": ["iqm"],
-            "area": [avg],
-            "intensity": [path.stem]
-        })])
+        df = pd.concat([df, pd.DataFrame({"plant_id": ["iqm"], "area": [avg], "intensity": [path.stem]})])
         dfs.append(df)
         df.to_csv(out_dir / f"{path.stem}.csv", index=False)
         for key, value in debug_images.items():
@@ -64,17 +57,3 @@ def plot_area_comparison(df: pd.DataFrame, out_dir: Path):
     sns.barplot(df, x="plant_id", y="area", hue="intensity")
     plt.ylim(0, df["area"].quantile(0.99))
     plt.savefig(out_dir / "areas.png")
-
-
-def test_alg():
-    zone_id = 6
-    zone = get_zone(zone_id)
-    zone_dir = SC_TEST_DIR / f"z{zone_id}"
-    out_dir = zone_dir / "results"
-    out_dir.mkdir(exist_ok=True)
-    paths = sorted(zone_dir.glob("*.png"))
-    reference = np.array(Image.open(paths[2]))
-    for path in paths:
-        image = np.array(Image.open(path))
-        matched = match_histograms(image, reference, channel_axis=-1)
-        Image.fromarray(matched).save(out_dir / f"{path.stem}_matched.png")
