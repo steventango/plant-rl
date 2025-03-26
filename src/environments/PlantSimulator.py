@@ -5,14 +5,13 @@ import pandas as pd
 from RlGlue.environment import BaseEnvironment
 from utils.functions import PiecewiseLinear
 from utils.metrics import UnbiasedExponentialMovingAverage as uema
-import jax.numpy as jnp
 
 class PlantSimulator(BaseEnvironment):
     '''
     Simulate a tray of plants under the same lighting agent.
     State = (sin time-of-day, cos time-of-day, sin countdown, cos countdown, average area, history of change in average area)
     Action = [moonlight, low, med, high] (med is optimal at noon, high is too bright)
-    Reward = change in average area over 1 step
+    Reward = change in average area over 1 daytime time step
     '''
     def __init__(self, num_plants=48, outliers=2, lag=1, stride=1, last_day=14, **kwargs):
         self.state_dim = (6,)
@@ -39,22 +38,31 @@ class PlantSimulator(BaseEnvironment):
         self.original_actual_areas, self.projection_factors, self.terminal_step = self.analyze_area_data()
 
         self.gamma = 1.0
+    
+    def get_observation(self):
+        # Compute observed areas by projecting actual areas
+        self.observed_areas.append([self.actual_areas[i](self.time)*self.projection_factors[i][self.num_steps] for i in range(self.num_plants)])        
+        
+        # Compute history of change in average area
+        if self.num_steps > 0:
+            self.history.update(self.clean_mean(self.observed_areas[-1]) - self.clean_mean(self.observed_areas[-2]))
+        
+        observation = np.hstack([self.time_of_day(),
+                                 self.countdown(),
+                                 self.normalize(self.clean_mean(self.observed_areas[-1])),
+                                 self.normalize(self.history.compute(), l=-5, u=30)])
+        return observation
 
     def start(self):
+        self.actual_areas = [pwl.copy() for pwl in self.original_actual_areas]   # Make a copy because actual_areas will be modified at each step
+
         self.frozen_time_today = 0
         self.time = 0
         self.num_steps = 0
+        self.observed_areas = []
+        self.history.reset()
 
-        self.actual_areas = [pwl.copy() for pwl in self.original_actual_areas]   # Make a copy because actual_areas will be modified at each step
-
-        self.observed_areas = [[self.actual_areas[i](self.time)*self.projection_factors[i][self.num_steps] for i in range(self.num_plants)]]
-
-        self.history = uema(alpha=0.01)
-
-        self.current_state = np.hstack([self.time_of_day(),
-                                        self.countdown(),
-                                        self.normalize(self.iqm(self.observed_areas[-1]), l=0, u=15000),
-                                        self.normalize(0, l=-5, u=30)])   # let the history be zero at t=0
+        self.current_state = self.get_observation()
 
         return self.current_state
 
@@ -67,8 +75,8 @@ class PlantSimulator(BaseEnvironment):
             pwl.insert_plateau(self.time, self.time + self.frozen_time(action))
         self.frozen_time_today += self.frozen_time(action)
 
-        # Keep track of time
-        self.time += 1
+        # Keep track of time 
+        self.time += 1   # must occur after the above action effect
         self.num_steps += 1
 
         # Overnight behaviors
@@ -83,21 +91,9 @@ class PlantSimulator(BaseEnvironment):
             self.time += self.steps_per_night - 1   # fastforward time
             self.frozen_time_today = 0
 
-        # Compute observed areas by projecting actual areas
-        self.observed_areas.append([self.actual_areas[i](self.time)*self.projection_factors[i][self.num_steps]
-                                    for i in range(self.num_plants)])
-
-        # Compute reward
+        self.current_state = self.get_observation()
+        
         self.reward = self.reward_function()
-
-        # history = trace over "change in iqm(observed areas)" over 1 time step
-        if self.num_steps % self.steps_per_day != 0:    # note: the overnight case is as above
-            self.history.update(self.iqm(self.observed_areas[-1]) - self.iqm(self.observed_areas[-2]))
-
-        self.current_state = np.hstack([self.time_of_day(),
-                                        self.countdown(),
-                                        self.normalize(self.iqm(self.observed_areas[-1]), l=0, u=15000),
-                                        self.normalize(self.history.compute(), l=-5, u=30)])
 
         if self.num_steps == self.terminal_step:
             return self.reward, self.current_state, True, self.get_info()
@@ -122,16 +118,16 @@ class PlantSimulator(BaseEnvironment):
         overnight_obs = np.array(overnight_obs).T
 
         for j in range(int(self.steps_per_night)):
-            self.history.update(self.iqm(overnight_obs[j + 1]) - self.iqm(overnight_obs[j]))
+            self.history.update(self.clean_mean(overnight_obs[j + 1]) - self.clean_mean(overnight_obs[j]))
 
-    def iqm(self, values):
+    def clean_mean(self, values):
         values = np.sort(values)
         return np.mean(values[self.outliers:self.num_plants-self.outliers])
 
     def reward_function(self):
         if self.num_steps >= self.lag:
-            new = self.normalize(self.iqm(self.observed_areas[-1]), l=0, u=15000)
-            old = self.normalize(self.iqm(self.observed_areas[-1-self.lag]), l=0, u=15000)
+            new = self.normalize(self.clean_mean(self.observed_areas[-1]))
+            old = self.normalize(self.clean_mean(self.observed_areas[-1-self.lag]))
             return new - old
         else:
             return 0
@@ -225,7 +221,7 @@ class PlantSimulator(BaseEnvironment):
         total_steps = self.last_day * self.steps_per_day
         return [(sin(2*pi*self.num_steps/total_steps)+1)/2, (cos(2*pi*self.num_steps/total_steps)+1)/2]
 
-    def normalize(self, x, l, u):   # normalize areas to between 0 and 1
+    def normalize(self, x, l=0, u=11258):   # normalize areas to between 0 and 1
         if isinstance(x, list):
             return [(val - l) / (u - l) for val in x]
         return (x - l) / (u - l)
@@ -252,39 +248,28 @@ class PlantSimulator(BaseEnvironment):
         else:
             return action == 2
 
-class PlantSimulator_Only1Time(PlantSimulator):
+class PlantSimulator_OneTime(PlantSimulator):
     '''
     State = (linear time-of-day, average area, history of change in average area)
     Action = [moonlight, low, med, high] (med is optimal at noon, high is too bright)
-    Reward = change in average area over 1 step
+    Reward = change in average area over 1 daytime time step
     '''
     def __init__(self, num_plants=48, outliers=2, lag=1, stride=1, last_day=14, **kwargs):
         super().__init__(num_plants, outliers, lag, stride, last_day)
         self.state_dim = (3,)
         self.current_state = np.empty(3)
 
-    def start(self):
-        super().start()
-        self.current_state = np.hstack([self.linear_time_of_day(),
-                                        self.normalize(self.iqm(self.observed_areas[-1]), l=0, u=15000),
-                                        self.normalize(0, l=-5, u=30)])
-        return self.current_state
-
-    def step(self, action):
-        super().step(action)
-        self.current_state = np.hstack([self.linear_time_of_day(),
-                                        self.normalize(self.iqm(self.observed_areas[-1]), l=0, u=15000),
-                                        self.normalize(self.history.compute(), l=-5, u=30)])
-
-        if self.num_steps == self.terminal_step:
-            return self.reward, self.current_state, True, self.get_info()
-        else:
-            return self.reward, self.current_state, False, self.get_info()
+    def get_observation(self):
+        super().get_observation() 
+        observation = np.hstack([self.linear_time_of_day(),
+                                 self.normalize(self.clean_mean(self.observed_areas[-1])),
+                                 self.normalize(self.history.compute(), l=-5, u=30)])
+        return observation
 
     def linear_time_of_day(self):
         step_today = self.num_steps % self.steps_per_day
         return step_today / self.steps_per_day
-
+    
 class PlantSimulator_OnlyTime(PlantSimulator):
     '''
     State = (time-of-day)
@@ -317,7 +302,7 @@ class PlantSimulator_OnlyTime(PlantSimulator):
         step_today = self.num_steps % self.steps_per_day
         return step_today / self.steps_per_day
 
-class PlantSimulator_Only1Time_EMAReward(PlantSimulator_Only1Time):
+class PlantSimulator_OneTime_EMAReward(PlantSimulator_OneTime):
     '''
     State = (linear time-of-day, average area, history of change in average area)
     Action = [moonlight, low, med, high] (med is optimal at noon, high is too bright)
@@ -336,8 +321,8 @@ class PlantSimulator_Only1Time_EMAReward(PlantSimulator_Only1Time):
 
     def step(self, action):
         output = super().step(action)
-        self.area_history_fast.update(self.iqm(self.observed_areas[-1]))
-        self.area_history_slow.update(self.iqm(self.observed_areas[-1]))
+        self.area_history_fast.update(self.clean_mean(self.observed_areas[-1]))
+        self.area_history_slow.update(self.clean_mean(self.observed_areas[-1]))
         return output
 
 class PlantSimulatorLowHigh(PlantSimulator):
@@ -346,7 +331,7 @@ class PlantSimulatorLowHigh(PlantSimulator):
     State = (sin time-of-day, cos time-of-day, sin countdown, cos countdown, average area, history of change in average area)
     Action = [low, high]
     "low" is optimal in twilight hours, "high" is optimal otherwise.
-    Reward = change in average area over 1 step
+    Reward = change in average area over 1 daytime time step
     '''
     def __init__(self, num_plants=48, outliers=2, lag=1, stride=1, last_day=14, **kwargs):
         super().__init__(num_plants, outliers, lag, stride, last_day)
