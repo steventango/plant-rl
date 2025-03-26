@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from PIL import Image
 from plantcv import plantcv as pcv
-from skimage.exposure import match_histograms
+from skimage.exposure import match_histograms, equalize_adapthist
 
 from .zones import POT_HEIGHT, POT_WIDTH, SCALE, Tray
 
@@ -35,7 +35,7 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
         images = images.reshape(len(trays), *images.shape[1:])
         debug_images[key] = Image.fromarray(np.vstack(images))
     # convert all_plant_stats to pandas dataframe
-    df = pd.DataFrame([stat for sublist in all_plant_stats for stat in sublist])
+    df = pd.DataFrame(all_plant_stats)
     df.plant_id = df.index
     return df
 
@@ -45,25 +45,13 @@ def process_tray(image: np.ndarray, tray: Tray, debug_images: dict[str, list[np.
         [tray.rect.top_left, tray.rect.top_right, tray.rect.bottom_right, tray.rect.bottom_left],
         dtype=np.float32,
     )
+    pot_width = POT_WIDTH
     width = tray.n_wide * POT_WIDTH
     height = tray.n_tall * POT_HEIGHT
     dst_points = np.array([[0, 0], [width - 1, 0], [width - 1, height - 1], [0, height - 1]], dtype=np.float32)
     homography_matrix, _ = cv2.findHomography(src_points, dst_points)
     warped_image = cv2.warpPerspective(image, homography_matrix, (width, height))
     debug_images["warped"].append(warped_image)
-
-    # MARGIN = 0.7
-    # without_border_images = []
-    # for i in range(tray.n_wide):
-    #     for j in range(tray.n_tall):
-    #         without_border_image = get_pot_crop(warped_image, i, j, MARGIN, POT_WIDTH)
-    #         without_border_images.append(without_border_image)
-    # # combine without_border_images into one image (n_wide x n_tall)
-    # without_border_images = np.array(without_border_images)
-    # without_border_images = without_border_images.reshape(tray.n_tall, tray.n_wide, *without_border_images.shape[1:])
-    # # reassemble images into one image
-    # without_border_image = np.vstack([np.hstack(row) for row in without_border_images])
-    # debug_images["without_border"].append(without_border_image)
 
     lab = cv2.cvtColor(warped_image, cv2.COLOR_RGB2LAB)
     matched = match_histograms(lab, reference, channel_axis=-1)
@@ -75,60 +63,34 @@ def process_tray(image: np.ndarray, tray: Tray, debug_images: dict[str, list[np.
 
     gray_image = pcv.rgb2gray_lab(rgb_img=matched, channel="a")
     debug_images["gray"].append(gray_image)
-    normalized_gray_image = (gray_image - np.mean(gray_image)) / np.std(gray_image)
-    MEAN = 127
-    STD = 64
-    normalized_gray_image = MEAN + STD * normalized_gray_image
-    normalized_gray_image = np.clip(normalized_gray_image, 0, 255).astype(np.uint8)
-    debug_images["normalized_gray"].append(normalized_gray_image)
-    pot_width = int(POT_WIDTH)
-    OFFSET = 1.5
-    mask = pcv.threshold.mean(gray_img=normalized_gray_image, ksize=3 * pot_width, offset=OFFSET * STD, object_type="dark")
+
+    gray_image = gray_image.astype(np.uint8)
+    equalized = equalize_adapthist(gray_image, kernel_size=pot_width // 3, clip_limit=0.03)
+    equalized = (equalized * 255).astype(np.uint8)
+    debug_images["equalized"].append(equalized)
+    OFFSET = 90
+    mask = pcv.threshold.mean(gray_img=equalized, ksize=1 * pot_width, offset=OFFSET, object_type="dark")
     debug_images["mask"].append(mask)
-    FILL_THRESHOLD = 0.003 * pot_width**2
+    FILL_THRESHOLD = 0.001 * pot_width**2
     mask = pcv.fill(mask, FILL_THRESHOLD)
     debug_images["mask_filled"].append(mask)
-    debug_pot_images = defaultdict(list)
     stats = []
+    r = int(POT_WIDTH / 3)
+    coords = []
     for j in range(tray.n_tall):
         for i in range(tray.n_wide):
-            pot_image = get_pot_crop(matched, i, j, 1, pot_width)
-            pot_mask = get_pot_crop(mask, i, j, 1, pot_width)
-            shape_image, stat = process_plant(pot_image, pot_mask, debug_pot_images)
-            stats.append(stat)
-    # recombine debug_pot_images into one image (n_wide x n_tall)
-    for key, images in debug_pot_images.items():
-        images = np.array(images)
-        images = images.reshape(tray.n_tall, tray.n_wide, *images.shape[1:])
-        # reassemble images into one image
-        debug_images[key].append(np.vstack([np.hstack(row) for row in images]))
-    return stats
+            y = j * pot_width + pot_width // 2
+            x = i * pot_width + pot_width // 2
+            coords.append((x, y))
 
-
-def get_pot_crop(image: np.ndarray, i: int, j: int, margin: float, pot_width):
-    x = i * pot_width
-    y = j * pot_width
-    crop = image[y : y + pot_width, x : x + pot_width]
-    # get the center of the crop with margin
-    x = int(crop.shape[1] / 2)
-    y = int(crop.shape[0] / 2)
-    r = int(pot_width * margin) // 2
-    crop2 = crop[y - r : y + r, x - r : x + r]
-    return crop2
-
-
-def process_plant(image: np.ndarray, mask, debug_images: dict[str, list[np.ndarray]]):
-    x = int(image.shape[1] / 2)
-    y = int(image.shape[0] / 2)
-    r = POT_WIDTH // 4
-    roi = pcv.roi.multi(image, coord=[(x, y)], radius=r)
-    # plant_mask = plant_mask.astype(np.uint8) * 255
+    roi = pcv.roi.multi(warped_image, coord=coords, radius=r)
     labeled_mask, num_plants = pcv.create_labels(mask=mask, rois=roi, roi_type="partial")
     from plantcv.plantcv import params
     params.line_thickness = 1
 
-    shape_image = pcv.analyze.size(img=image, labeled_mask=labeled_mask, n_labels=num_plants)
-    shape_image = cv2.circle(shape_image, (x, y), r, (0, 255, 255), 1)
+    shape_image = pcv.analyze.size(img=warped_image, labeled_mask=labeled_mask, n_labels=num_plants)
+    for x, y in coords:
+        shape_image = cv2.circle(shape_image, (x, y), r, (0, 255, 255), 1)
 
     stats = []
     for sample, variables in pcv.outputs.observations.items():
@@ -143,17 +105,22 @@ def process_plant(image: np.ndarray, mask, debug_images: dict[str, list[np.ndarr
                 row["ellipse_center_x"], row["ellipse_center_y"] = value["value"]
             else:
                 row[variable] = value["value"]
+        row["area"] /= SCALE**2
         stats.append(row)
 
-        row["area"] /= SCALE**2
 
-    for row in stats:
+    for row, coord in zip(stats, coords):
+        x, y = coord
         area = row["area"]
         if area is not None:
+            text = f"{area:.2f} mm^2"
+            text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.4, 1)[0]
+            text_x = x - text_size[0] // 2
+            text_y = y + text_size[1] // 2
             cv2.putText(
                 shape_image,
-                f"{area:.2f} mm^2",
-                (x - int(r * 1.1), y - int(r * 1.1)),
+                text,
+                (text_x, text_y),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.4,
                 (255, 255, 255),
@@ -162,4 +129,5 @@ def process_plant(image: np.ndarray, mask, debug_images: dict[str, list[np.ndarr
             )
 
     debug_images["shape_image"].append(shape_image)
-    return shape_image, stats
+
+    return stats
