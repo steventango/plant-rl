@@ -144,3 +144,13 @@ What did help:
 ### Conclusions & Outlooks: 
 - ways to further improve: sarsa(lambda) for better credit assignment, test reward function that focuses on overnight growth, try penalizing inactive weights with L1
 
+## Phase P7
+### Objectives: 
+- Test all the updates
+### Methods: 
+- Updates to PlantSimulator: "get_observation" method, new upperbound for area normalization (agreed upon with Steven)
+- Updates to TC ESARSA: Steven added eligibility trace lambda, tc = tile(time) + tile(time,area) + tile(time, Δarea) + tile(area,Δarea)
+### Observations: 
+- ...
+### Conclusions & Outlooks: 
+-...

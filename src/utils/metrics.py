@@ -59,8 +59,8 @@ class UnbiasedExponentialMovingAverage:
 
     def compute(self) -> jax.Array:
         """Compute and return the unbiased exponential moving average."""
-        return self.total if self.count_trace > 0 else jnp.full(self.shape, jnp.nan, dtype=jnp.float32)
-
+        #return self.total if self.count_trace > 0 else jnp.full(self.shape, jnp.nan, dtype=jnp.float32)
+        return self.total 
 
 def iqm(a: jax.Array, q: float) -> float:
     """
