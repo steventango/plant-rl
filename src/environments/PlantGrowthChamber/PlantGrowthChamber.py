@@ -31,8 +31,8 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.session.mount("https://", HTTPAdapter(max_retries=retries))
 
         self.q = 0.10                     # the bottom q and the top 1-q quantiles are excluded from iqm
-        self.observed_areas = []          # stores a list of lists of daytime observed areas in pixels. i.e. self.observed_areas[-1] contains the latest areas of individual plants
-        self.history = uema(alpha=0.01)   # history of change in average observed area over 1 step (in units of pixels)
+        self.observed_areas = []          # stores a list of arrays of observed areas in mm^2. i.e. self.observed_areas[-1] contains the latest areas of individual plants
+        self.history = uema(alpha=0.01)   # history of change in average observed area over 1 time step (in units of mm^2). Note that tracing also happens at night.
         self.gamma = 1.0
 
     def get_raw_observation(self):
@@ -102,6 +102,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     def step_two(self):
         # TODO insert here a call for overnight behavior (tracing history)
+        # TODO if observed_areas include overnight measurements, need to revisit reward and history definitions
 
         self.get_raw_observation()
         observation = self.get_input_observation()
