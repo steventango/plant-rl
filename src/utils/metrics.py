@@ -38,7 +38,7 @@ class UnbiasedExponentialMovingAverage:
         self.alpha = alpha
         self.shape = shape
         self.reset() 
-        self.default = 0   # or jnp.nan
+        self.default = 0.0   # or jnp.nan
 
     def reset(self) -> None:
         """Reset this ``UnbiasedExponentialMovingAverage``."""
