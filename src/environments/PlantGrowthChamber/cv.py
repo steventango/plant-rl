@@ -116,7 +116,7 @@ def process_tray(image: np.ndarray, tray: Tray, debug_images: dict[str, list[np.
             text = f"{area:.2f} mm^2"
             text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.4, 1)[0]
             text_x = x - text_size[0] // 2
-            text_y = y + text_size[1] // 2
+            text_y = y + int(r * 1.25) + text_size[1] // 2
             cv2.putText(
                 shape_image,
                 text,
