@@ -2,7 +2,7 @@ from representations.TileCoder import DenseTileCoder, TileCoderConfig
 from representations.RichTileCoder import RichTileCoder, RichTileCoderConfig
 import numpy as np
 
-class TestRichTileCoder():
+class RichTileCoder():
     def setup_method(self):
         self.num_tiles = (2, 16)
         self.num_tilings = 8
@@ -68,7 +68,7 @@ class TestRichTileCoder():
         assert np.array_equal(encoding1, encoding2), \
             "Encodings for close y-values should be identical"
 
-class TestAndyTileCoder():
+class AndyTileCoder():
     def setup_method(self):
         self.num_tiles = (2, 16)
         self.num_tilings = 8

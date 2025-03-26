@@ -59,7 +59,7 @@ class TestUnbiasedExponentialMovingAverage:
         metric = uema.compute()
         assert metric.dtype == jnp.float32
         assert metric.shape == (2,)
-        assert jnp.all(jnp.isnan(metric))
+        assert jnp.all(jnp.equal(metric, 0))
 
     def test_reset_with_shape(self):
         uema = UnbiasedExponentialMovingAverage(shape=2)
@@ -68,7 +68,7 @@ class TestUnbiasedExponentialMovingAverage:
         metric = uema.compute()
         assert metric.dtype == jnp.float32
         assert metric.shape == (2,)
-        assert jnp.all(jnp.isnan(metric))
+        assert jnp.all(jnp.equal(metric, 0))
 
     def test_update_with_shape(self):
         uema = UnbiasedExponentialMovingAverage(shape=2)
