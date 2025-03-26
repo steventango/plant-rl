@@ -104,9 +104,9 @@ def get_zone(indentifier: int):
                         n_wide=8,
                         n_tall=3,
                         rect=Rect(
-                            top_left=(116, 405),
+                            top_left=(105, 405),
                             top_right=(1717, 198),
-                            bottom_left=(119, 992),
+                            bottom_left=(110, 992),
                             bottom_right=(1813, 843),
                         ),
                     ),
@@ -114,9 +114,9 @@ def get_zone(indentifier: int):
                         n_wide=8,
                         n_tall=3,
                         rect=Rect(
-                            top_left=(109, 1061),
+                            top_left=(90, 1061),
                             top_right=(1806, 926),
-                            bottom_left=(188, 1654),
+                            bottom_left=(170, 1654),
                             bottom_right=(1833, 1594),
                         ),
                     )
