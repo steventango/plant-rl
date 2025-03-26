@@ -148,9 +148,26 @@ What did help:
 ### Objectives: 
 - Test all the updates
 ### Methods: 
-- Updates to PlantSimulator: "get_observation" method, new upperbound for area normalization (agreed upon with Steven)
-- Updates to TC ESARSA: Steven added eligibility trace lambda, tc = tile(time) + tile(time,area) + tile(time, Δarea) + tile(area,Δarea)
+- Updates to PlantSimulator: "get_observation" method, new upperbound for area normalization (agreed upon with Steven), modularized iqm 
+- Updates to TC ESARSA: Steven added eligibility trace lambda, tc = tile(time) + tile(time,area) + tile(time, Δarea) + tile(area,Δarea), optimistic initial value w0=1.0
 ### Observations: 
-- ...
+- for lambda=0.75, alpha=0.01, ep = 0.1, one of the seed demonstrates ability to learn time-dependent policy, but seem to have problem at the overnight transition.
 ### Conclusions & Outlooks: 
--...
+- Up until now, I consider the reward as a combination of (i) reward from incremental change and (ii) reward from overnight growth, but the latter is in fact not very compatible with a 24hr agent. In this experiment, there is a slight evidence that the large overnight signal is not benefitial.
+- what if the reward is only based on incremental change? A good reward would then be contributed by (i) incremental growth and/or (ii) incremental leave opening. The former is definitely legit. The latter is also something we want to optimize anyways, because according to Glen, wide open leaves is a good sign and leads to growth.
+- Of course there is a limit on how much the plants can stretch wide open and grow, beyond this limit the plant may die. The agent will have to learn this limit itself. An analogy is the garbage picking robot, how long should it roam around before risking a dead battery?
+- Since raw change in area per time step is VERY noisy, I think it's sensible to use its trace.
+
+## Phase P8
+### Objectives: 
+- A new way of thinking this task: our agent's only job is to maximize incremental change in observed area. 
+- The developmental stage of the plant no longer matters. The agent is always adjusting its lighting policy anyways (online learning of a nonstationary plant preference). So we can remove any state inputs that tend to grow. 
+- let Reward = normalized trace(% change in average area) = last state input
+### Methods: 
+- State = (linear time-of-day, history of % change in average area), both inputs are normalized. The latter is clipped to [0,1] because the trace acts wildly at the beginning of the run.
+- Reward = second state input
+- Tile code = tile(2d state space). 
+### Observations: 
+- 
+### Conclusions & Outlooks: 
+- 
