@@ -42,15 +42,12 @@ class SimplePlantSimulator(BaseEnvironment):
         self.observed_areas.append(np.array([self.actual_areas[i](self.time)*self.projection_factors[i][self.num_steps] for i in range(self.num_plants)]))        
         
         # Compute history of % change in average area
-        if self.num_steps > 0:
+        if self.num_steps % self.steps_per_day != 0:  # DO NOT trace overnight here!
             old_area = iqm(self.observed_areas[-2], self.q)
             new_area = iqm(self.observed_areas[-1], self.q)
             self.history.update(self.percent_change(old_area, new_area))
         
-        if self.num_steps >= self.steps_per_day: 
-            observation = np.hstack([self.linear_time_of_day(), np.clip(self.normalize(self.history.compute()), 0, 1)])
-        else: 
-            observation = np.hstack([self.linear_time_of_day(), 0.0])    # the first day of trace is no good
+        observation = np.hstack([self.linear_time_of_day(), self.normalize(self.history.compute())])
             
         return observation
 
@@ -108,17 +105,18 @@ class SimplePlantSimulator(BaseEnvironment):
             # Interpolate for projection factors overnight
             last_night_pf = self.projection_factors[i][self.num_steps - 1]
             morning_pf = self.projection_factors[i][self.num_steps]
-            delta_pf = (morning_pf - last_night_pf) / self.steps_per_night
+            delta_pf = (morning_pf - last_night_pf) / (self.steps_per_night + 1)
+            
             # Compute overnight observations
             overnight_ob = [last_night_obs[i]]
-            for j in range(int(self.steps_per_night)):
+            for j in range(int(self.steps_per_night) + 1):
                 pf = last_night_pf + delta_pf * (j + 1)
                 overnight_ob.append(self.actual_areas[i](self.time + j) * pf)
             overnight_obs.append(overnight_ob)
 
         overnight_obs = np.array(overnight_obs).T
 
-        for j in range(int(self.steps_per_night)):
+        for j in range(int(self.steps_per_night) + 1):
             old_area = iqm(overnight_obs[j], self.q)
             new_area = iqm(overnight_obs[j + 1], self.q)
             self.history.update(self.percent_change(old_area, new_area))
@@ -133,11 +131,11 @@ class SimplePlantSimulator(BaseEnvironment):
         step_today = self.num_steps % self.steps_per_day
         return step_today / self.steps_per_day
 
-    def normalize(self, x, l=0.0003, u=0.0018):  
+    def normalize(self, x, l=0.0005, u=0.0025):  
         return (x - l) / (u - l)
     
     def percent_change(self, old, new):   # symmetric percentage change
-        return (new - old) / (new + old)
+        return 2 * (new - old) / (new + old)
 
     def frozen_time(self, action):
         # Amount of frozen time (in unit of time step), given action
