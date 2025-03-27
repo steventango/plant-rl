@@ -24,7 +24,7 @@ class CVPlantGrowthChamber(PlantGrowthChamber):
         time_of_day = self.transform_time_linear(time)  # TODO: DQN needs sin/cos time, ESARSA needs linear
         
         observation = np.hstack([time_of_day, 
-                                 np.clip(self.normalize(self.history.compute()), 0, 1)])
+                                 self.normalize(self.history.compute())])
         
         return observation
     
@@ -44,9 +44,9 @@ class CVPlantGrowthChamber(PlantGrowthChamber):
         return self.current_state[-1]
 
     def percent_change(self, old, new):   # symmetric percentage change
-        return (new - old) / (new + old)
+        return 2 * (new - old) / (new + old)
     
-    def normalize(self, x, l=0.0003, u=0.0018):  
+    def normalize(self, x, l=0.0005, u=0.0025):  
         return (x - l) / (u - l)
     
     def transform_time_sine(self, time, total=86400.0):

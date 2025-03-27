@@ -98,7 +98,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
     def reward_function(self):
         new = iqm(self.observed_areas[-1], self.q)
         old = iqm(self.observed_areas[-2], self.q)
-        return (new - old) / (new + old)   # symmetric percent change
+        return 2 * (new - old) / (new + old)   # symmetric percent change
 
     def close(self):
         requests.put(self.zone.lightbar_url, json={"array": np.zeros((2, 6)).tolist()})
