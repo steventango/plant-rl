@@ -168,6 +168,18 @@ What did help:
 - Reward = second state input
 - Tile code = tile(2d state space). 
 ### Observations: 
-- 
+- not bad. see plot
 ### Conclusions & Outlooks: 
-- 
+- I noticed that the first day of reward is basically a mess due to trace. Maybe we should nullify it.
+
+## Phase P9
+### Objectives: 
+- see if it's helpful to remove day 1's reward, which is senseless.
+### Methods: 
+- same as above
+- try lambda = 0.9 and 0.1
+- make sure w0 = 0 so that the initial r=0 simply doesn't update the net
+### Observations: 
+- seed 3 is pretty darn good. best config: alpha=0.3, ep=0.1, lambda=0 -> sensible. real exp should like large lambda
+### Conclusions & Outlooks: 
+- the improvements above are pretty good!

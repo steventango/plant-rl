@@ -117,7 +117,10 @@ class SimplePlantSimulator(BaseEnvironment):
             self.history.update(iqm(overnight_obs[j + 1], self.q) / iqm(overnight_obs[j], self.q) - 1)
 
     def reward_function(self):
-        return self.current_state[-1]
+        if self.num_steps >= self.steps_per_day: 
+            return self.current_state[-1]
+        else: 
+            return 0  # the first day of trace is messed up
 
     def get_info(self):
         return {"gamma": self.gamma, 'action_is_optimal': self.last_action_optimal}

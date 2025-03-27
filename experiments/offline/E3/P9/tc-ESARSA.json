@@ -12,14 +12,14 @@
         },
         "alpha": [1e-2, 3e-2, 1e-1, 3e-1, 1e0], 
         "epsilon": [0.025, 0.05, 0.10],
-        "lambda": [0.9],
-        "w0": [1.0],
+        "lambda": [0.9, 0.1, 0.0],
+        "w0": [0.0],
 
         "representation": {
             "which_tc": "RichTileCoder",
             "multi_call": false,
-            "tiles": [[8, 8]],
-            "tilings": [16, 32]  
+            "tiles": [8],
+            "tilings": [16]  
         }
     }
 }
