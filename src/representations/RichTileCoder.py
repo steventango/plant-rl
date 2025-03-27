@@ -34,12 +34,11 @@ class RichTileCoder():
         self.iht = IHT(self.maxSize)
 
     def get_indices(self, s: np.ndarray):   
-        if self._c.multi_call:   # This specifically works for the 3D state space (time, area, change in area)
+        if self._c.multi_call:   # specifically designed for the 2D state space (time, growth rate)
             tile1 = tiles(self.iht, self._c.tilings, [s[0]*self.scale[0]], [0])   # 1D time
-            tile2 = tiles(self.iht, self._c.tilings, [s[0]*self.scale[0], s[1]*self.scale[1]], [1])   # 2D (time, area)
-            tile3 = tiles(self.iht, self._c.tilings, [s[0]*self.scale[0], s[2]*self.scale[2]], [2])   # 2D (time, change in area)
-            tile4 = tiles(self.iht, self._c.tilings, [s[1]*self.scale[1], s[2]*self.scale[2]], [3])   # 2D (area, change in area)
-            return tile1 + tile2 + tile3 + tile4
+            tile2 = tiles(self.iht, self._c.tilings, [s[1]*self.scale[1]], [1])   # 1D growth rate
+            tile3 = tiles(self.iht, self._c.tilings, [s[0]*self.scale[0], s[1]*self.scale[1]], [2])   # 2D (time, growth rate)
+            return tile1 + tile2 + tile3
         else:
             return tiles(self.iht, self._c.tilings, [s[i]*self.scale[i] for i in range(self._c.dims)])
 
@@ -50,8 +49,8 @@ class RichTileCoder():
         return num_tiles / abs(range[1] - range[0])
 
     def compute_maxSize(self, x):
-        if self._c.multi_call:     # This specifically works for the 3D state space (time, area, change in area)
-            return self._c.tilings * ((x[0]+1) + (x[0]+1)*(x[1]+1) + (x[0]+1)*(x[2]+1) + (x[1]+1)*(x[2]+1))
+        if self._c.multi_call:     # specifically designed for the 2D state space (time, growth rate)
+            return self._c.tilings * ((x[0]+1) + (x[1]+1) + (x[0]+1)*(x[1]+1))
         else:
             a = self._c.tilings
             for num_tiles in x: 

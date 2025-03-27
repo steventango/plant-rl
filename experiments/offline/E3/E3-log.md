@@ -177,9 +177,35 @@ What did help:
 - see if it's helpful to remove day 1's reward, which is senseless.
 ### Methods: 
 - same as above
-- try lambda = 0.9 and 0.1
+- try lambda = 0.9, 0.1, 0.0
 - make sure w0 = 0 so that the initial r=0 simply doesn't update the net
 ### Observations: 
-- seed 3 is pretty darn good. best config: alpha=0.3, ep=0.1, lambda=0 -> sensible. real exp should like large lambda
+- seed 3 is pretty darn good. best config: alpha=0.3, ep=0.1, lambda=0. lambda=0 is sensible in sim, but real exp should use large lambda=0.9.
 ### Conclusions & Outlooks: 
 - the improvements above are pretty good!
+
+## Phase P10
+### Objectives: 
+- Test out a few reasonable changes (see methods)
+### Methods: 
+- mostly same as above
+- in sim, modified the percentage change formula slightly so that an up-and-down peak in area doesn't result in a net positive return (so called symmetric percentage change)
+- tile coding = tile(time) + tile(trace) + tile(time, trace).
+- w0 doesn't have to be zero, because day 1's trace and reward (which are messy) have been set to 0
+### Observations: 
+- 
+### Conclusions & Outlooks: 
+- 
+
+
+## Phase P11
+### Objectives: 
+- Test out L1 regularization
+### Methods: 
+- mostly same as above
+- in sim, modified the percentage change formula slightly so that an up-and-down peak in area doesn't result in a net positive return (so called symmetric percentage change)
+- tile coding = tile(time) + tile(trace) + tile(time, trace).
+- w0 doesn't have to be zero, because day 1's trace and reward (which are messy) have been set to 0
+### Observations: 
+- 
+### Conclusions & Outlooks: 
