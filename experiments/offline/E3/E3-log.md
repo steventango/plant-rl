@@ -177,9 +177,43 @@ What did help:
 - see if it's helpful to remove day 1's reward, which is senseless.
 ### Methods: 
 - same as above
-- try lambda = 0.9 and 0.1
+- try lambda = 0.9, 0.1, 0.0
 - make sure w0 = 0 so that the initial r=0 simply doesn't update the net
 ### Observations: 
-- seed 3 is pretty darn good. best config: alpha=0.3, ep=0.1, lambda=0 -> sensible. real exp should like large lambda
+- seed 3 is pretty darn good. best config: alpha=0.3, ep=0.1, lambda=0. lambda=0 is sensible in sim, but real exp should use large lambda=0.9.
 ### Conclusions & Outlooks: 
 - the improvements above are pretty good!
+
+## Phase P10
+### Objectives: 
+- Test out a few reasonable changes (see methods)
+### Methods: 
+- mostly same as above
+- in sim, modified the percentage change formula slightly so that an up-and-down peak in area doesn't result in a net positive return (so called symmetric percentage change)
+- tile coding = tile(time) + tile(trace) + tile(time, trace).
+- w0 doesn't have to be zero, because day 1's trace and reward (which are messy) have been set to 0
+### Observations: 
+- Not as good as P9. Could it be because it's harder to learn with the longer feature vector?
+### Conclusions & Outlooks: 
+- Try L1 regularization to penalize dead weights
+
+## Phase P11
+### Objectives: 
+- Test out L1 regularization
+### Methods: 
+- added L1 regularization to TC ESARSA
+- sweep through "l1": [1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
+### Observations: 
+- The agent seems to converge to flat line policy. Why can't it do any better? Is it not expressive enough? Maybe the 2D tile code gets penalized to death because it has 32 features, but the 1D tile codes each also has 32 features. 
+### Conclusions & Outlooks: 
+- Try using only 2Dtile = (time, growth rate) with L1 regularization
+
+## Phase P12
+### Objectives: 
+- Test out 2Dtile = (time, growth rate) with L1 regularization. 
+### Methods: 
+- Basically P9 but with symmetric % change in sim and L1 reg in agent.
+### Observations: 
+- ...
+### Conclusions & Outlooks: 
+- ..

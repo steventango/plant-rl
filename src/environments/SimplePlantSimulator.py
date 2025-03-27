@@ -10,9 +10,9 @@ from utils.metrics import iqm
 class SimplePlantSimulator(BaseEnvironment):
     '''
     Simulate a tray of plants under the same lighting agent.
-    State = (linear time-of-day, history of % change in average area)
+    State = (linear time-of-day, history of symmetric % change in average area)
     Action = [moonlight, low, med, high] (med is optimal at noon, high is too bright)
-    Reward = history of % change in average area
+    Reward = history of symmetric % change in average area
     '''
     def __init__(self, num_plants=48, q=0.05, last_day=14, **kwargs):
         self.state_dim = (2,)
@@ -42,11 +42,13 @@ class SimplePlantSimulator(BaseEnvironment):
         self.observed_areas.append(np.array([self.actual_areas[i](self.time)*self.projection_factors[i][self.num_steps] for i in range(self.num_plants)]))        
         
         # Compute history of % change in average area
-        if self.num_steps > 0:
-            self.history.update(iqm(self.observed_areas[-1], self.q) / iqm(self.observed_areas[-2], self.q) - 1)
+        if self.num_steps % self.steps_per_day != 0:  # DO NOT trace overnight here!
+            old_area = iqm(self.observed_areas[-2], self.q)
+            new_area = iqm(self.observed_areas[-1], self.q)
+            self.history.update(self.percent_change(old_area, new_area))
         
-        observation = np.hstack([self.linear_time_of_day(),
-                                 np.clip(self.normalize(self.history.compute(), l=0.0005, u=0.0035), 0, 1)])
+        observation = np.hstack([self.linear_time_of_day(), self.normalize(self.history.compute())])
+            
         return observation
 
     def start(self):
@@ -103,28 +105,60 @@ class SimplePlantSimulator(BaseEnvironment):
             # Interpolate for projection factors overnight
             last_night_pf = self.projection_factors[i][self.num_steps - 1]
             morning_pf = self.projection_factors[i][self.num_steps]
-            delta_pf = (morning_pf - last_night_pf) / self.steps_per_night
+            delta_pf = (morning_pf - last_night_pf) / (self.steps_per_night + 1)
+            
             # Compute overnight observations
             overnight_ob = [last_night_obs[i]]
-            for j in range(int(self.steps_per_night)):
+            for j in range(int(self.steps_per_night) + 1):
                 pf = last_night_pf + delta_pf * (j + 1)
                 overnight_ob.append(self.actual_areas[i](self.time + j) * pf)
             overnight_obs.append(overnight_ob)
 
         overnight_obs = np.array(overnight_obs).T
 
-        for j in range(int(self.steps_per_night)):
-            self.history.update(iqm(overnight_obs[j + 1], self.q) / iqm(overnight_obs[j], self.q) - 1)
+        for j in range(int(self.steps_per_night) + 1):
+            old_area = iqm(overnight_obs[j], self.q)
+            new_area = iqm(overnight_obs[j + 1], self.q)
+            self.history.update(self.percent_change(old_area, new_area))
 
     def reward_function(self):
-        if self.num_steps >= self.steps_per_day: 
-            return self.current_state[-1]
-        else: 
-            return 0  # the first day of trace is messed up
+        return self.current_state[-1]
 
     def get_info(self):
         return {"gamma": self.gamma, 'action_is_optimal': self.last_action_optimal}
 
+    def linear_time_of_day(self):
+        step_today = self.num_steps % self.steps_per_day
+        return step_today / self.steps_per_day
+
+    def normalize(self, x, l=0.0005, u=0.0025):  
+        return (x - l) / (u - l)
+    
+    def percent_change(self, old, new):   # symmetric percentage change
+        return 2 * (new - old) / (new + old)
+
+    def frozen_time(self, action):
+        # Amount of frozen time (in unit of time step), given action
+        twilight = {0: 1.0, 1: 0.0, 2: 0.5, 3: 1.0}  # rank from good to bad: low, med, off/high
+        noon = {0: 1.0, 1: 0.5, 2: 0.0, 3: 1.0}      # rank from good to bad: med, low, off/high
+
+        clock = (self.num_steps % self.steps_per_day)*self.interval    # seconds since beginning of day
+        total_seconds = self.steps_per_day*self.interval               # total seconds during day time
+
+        assert self.steps_per_day % 4 == 0, 'steps_per_day needs to be divisible by 4 in the current implementation of "frozen_time".'
+        if clock < 1/4*total_seconds or clock >= 3/4*total_seconds:
+            return twilight[action]
+        else:
+            return noon[action]
+
+    def is_optimal(self, action):
+        clock = (self.num_steps % self.steps_per_day)*self.interval
+        total_seconds = self.steps_per_day*self.interval
+        if clock < 1/4*total_seconds or clock >= 3/4*total_seconds:
+            return action == 1
+        else:
+            return action == 2
+        
     def analyze_area_data(self):    # Approximate the actual leaf sizes and the projection factor throughout the day
         PWL = []
         PF = []
@@ -193,32 +227,3 @@ class SimplePlantSimulator(BaseEnvironment):
         assert plant_area_data.shape[0] / steps_per_day - 2 >= self.last_day, f'The requested last_day exceeds available plant data, which has {plant_area_data.shape[0] / steps_per_day - 2} days.'
 
         return plant_area_data[:,:self.num_plants], steps_per_day, steps_per_night, time_increment.total_seconds(), first_second
-
-    def linear_time_of_day(self):
-        step_today = self.num_steps % self.steps_per_day
-        return step_today / self.steps_per_day
-
-    def normalize(self, x, l, u):   # normalize areas to between 0 and 1
-        return (x - l) / (u - l)
-
-    def frozen_time(self, action):
-        # Amount of frozen time (in unit of time step), given action
-        twilight = {0: 1.0, 1: 0.0, 2: 0.5, 3: 1.0}  # rank from good to bad: low, med, off/high
-        noon = {0: 1.0, 1: 0.5, 2: 0.0, 3: 1.0}      # rank from good to bad: med, low, off/high
-
-        clock = (self.num_steps % self.steps_per_day)*self.interval    # seconds since beginning of day
-        total_seconds = self.steps_per_day*self.interval               # total seconds during day time
-
-        assert self.steps_per_day % 4 == 0, 'steps_per_day needs to be divisible by 4 in the current implementation of "frozen_time".'
-        if clock < 1/4*total_seconds or clock >= 3/4*total_seconds:
-            return twilight[action]
-        else:
-            return noon[action]
-
-    def is_optimal(self, action):
-        clock = (self.num_steps % self.steps_per_day)*self.interval
-        total_seconds = self.steps_per_day*self.interval
-        if clock < 1/4*total_seconds or clock >= 3/4*total_seconds:
-            return action == 1
-        else:
-            return action == 2

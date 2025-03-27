@@ -7,8 +7,8 @@ import requests
 from PIL import Image
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
+from utils.metrics import iqm
 
-from utils.metrics import UnbiasedExponentialMovingAverage
 from utils.RlGlue.environment import BaseAsyncEnvironment
 
 from .utils import process_image
@@ -18,19 +18,21 @@ from .zones import get_zone
 class PlantGrowthChamber(BaseAsyncEnvironment):
 
     def __init__(self, zone: int, start_time: float | None = None):
-        self.gamma = 0.99
         self.zone = get_zone(zone)
         self.images = {}
         self.image = None
         self.time = None
-        self.lag = 1
         self._start_time = start_time
-        self.plant_area_ema = UnbiasedExponentialMovingAverage(self.zone.num_plants, alpha=0.1)
         self.min_action = 0.35 * np.array([0.398, 0.762, 0.324, 0.000, 0.332, 0.606])
         self.session = requests.Session()
         retries = Retry(total=3, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
         self.session.mount("http://", HTTPAdapter(max_retries=retries))
         self.session.mount("https://", HTTPAdapter(max_retries=retries))
+        
+        # TODO: save self.observed_areas at the end of the run
+        self.observed_areas = []          # stores a list of arrays of observed areas in mm^2. i.e. self.observed_areas[-1] contains the latest areas of individual plants
+        self.q = 0.10                     # the bottom q and the top 1-q quantiles are excluded from iqm of areas
+        self.gamma = 0.99
 
     def get_observation(self):
         self.time = datetime.now().timestamp()
@@ -47,14 +49,8 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         self.plant_stats = np.array(self.df, dtype=np.float32)
 
-        plant_area_ema_prev = self.plant_area_ema.compute()
-        self.mean_plant_area_ema_prev = np.mean(plant_area_ema_prev)
-
-        plant_areas = self.plant_stats[:, 2].reshape(1, -1)
-        self.plant_area_ema.update(values=plant_areas)
-
-        plant_area_ema = self.plant_area_ema.compute()
-        self.mean_plant_area_ema = np.mean(plant_area_ema)
+        plant_areas = self.plant_stats[:, 2].reshape(1, -1)  
+        self.observed_areas.append(plant_areas.flatten())
 
         return self.time, self.image, self.plant_stats
 
@@ -75,17 +71,8 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             for side, future in futures.items():
                 self.images[side] = future.result()
 
-    def start(self):
-        observation = self.get_observation()
-        return observation
-
     def step_one(self, action: np.ndarray):
         self.put_action(action)
-
-    def step_two(self):
-        observation = self.get_observation()
-        self.reward = self.reward_function()
-        return self.reward, observation, False, self.get_info()
 
     def put_action(self, action):
         # clip action to be between min_action and 1
@@ -94,19 +81,24 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         response = self.session.put(self.zone.lightbar_url, json={"array": action.tolist()}, timeout=10)
         response.raise_for_status()
 
+    def start(self):
+        self.observed_areas = []
+        observation = self.get_observation()
+        return observation
+
+    def step_two(self):
+        observation = self.get_observation()
+        self.reward = self.reward_function()
+
+        return self.reward, observation, False, self.get_info()
+
     def get_info(self):
         return {"gamma": self.gamma}
 
     def reward_function(self):
-        new = self.normalize(self.mean_plant_area_ema)
-        old = self.normalize(self.mean_plant_area_ema_prev)
-        return (new / old - 1).item()
-
-    def normalize(self, x):  # normalize observation to between 0 and 1
-        # TODO: check if this number is too big?
-        u = 30000  # max historic area of one plant (in pixels)
-        l = 0
-        return (x - l) / (u - l)
+        new = iqm(self.observed_areas[-1], self.q)
+        old = iqm(self.observed_areas[-2], self.q)
+        return 2 * (new - old) / (new + old)   # symmetric percent change
 
     def close(self):
         requests.put(self.zone.lightbar_url, json={"array": np.zeros((2, 6)).tolist()})
