@@ -1,0 +1,28 @@
+{
+    "agent": "GreedyAC",
+    "problem": "SimplePlantSimulator",
+    "total_steps": -1,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "replay_capacity": 2000,
+        "batch_size": 32,
+        "tau": 0.01,
+		"beta1": 0.9,
+        "beta2": 0.999,
+        "policy_type": "Softmax",
+        "target_update_interval": 1,
+        "critic_lr": [1e-4, 1e-3, 1e-2],
+        "actor_lr_scale": [1e-1, 1e0, 1e1],
+        "hidden_dim": [16],
+        "n_hidden": [2],
+        "weight_init": "xavier_uniform",
+        "clip_stddev": 1000,
+		"cuda": false,
+        "environment":{
+            "type": "TrivialRewSineTime",
+            "num_plants": 48,
+            "q": 0.05,
+            "last_day": 14
+        }
+    }
+}

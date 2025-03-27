@@ -47,10 +47,7 @@ class SimplePlantSimulator(BaseEnvironment):
             new_area = iqm(self.observed_areas[-1], self.q)
             self.history.update(self.percent_change(old_area, new_area))
         
-        if self.num_steps >= self.steps_per_day: 
-            observation = np.hstack([self.linear_time_of_day(), np.clip(self.normalize(self.history.compute()), 0, 1)])
-        else: 
-            observation = np.hstack([self.linear_time_of_day(), 0.0])    # the first day of trace is no good
+        observation = np.hstack([self.time_of_day(), np.clip(self.normalize(self.history.compute()), 0, 1)])
             
         return observation
 
@@ -94,7 +91,7 @@ class SimplePlantSimulator(BaseEnvironment):
 
         self.current_state = self.get_observation()
         
-        self.reward = self.reward_function()
+        self.reward = self.reward_function(action)
 
         if self.num_steps == self.terminal_step:
             return self.reward, self.current_state, True, self.get_info()
@@ -123,13 +120,13 @@ class SimplePlantSimulator(BaseEnvironment):
             new_area = iqm(overnight_obs[j + 1], self.q)
             self.history.update(self.percent_change(old_area, new_area))
 
-    def reward_function(self):
+    def reward_function(self, action):
         return self.current_state[-1]
 
     def get_info(self):
         return {"gamma": self.gamma, 'action_is_optimal': self.last_action_optimal}
 
-    def linear_time_of_day(self):
+    def time_of_day(self):
         step_today = self.num_steps % self.steps_per_day
         return step_today / self.steps_per_day
 
@@ -229,3 +226,43 @@ class SimplePlantSimulator(BaseEnvironment):
         assert plant_area_data.shape[0] / steps_per_day - 2 >= self.last_day, f'The requested last_day exceeds available plant data, which has {plant_area_data.shape[0] / steps_per_day - 2} days.'
 
         return plant_area_data[:,:self.num_plants], steps_per_day, steps_per_night, time_increment.total_seconds(), first_second
+    
+
+class TrivialRewEnv(SimplePlantSimulator):
+    '''
+    Uses trivial +1 or -1 reward for following the twilight policy
+    '''
+    def __init__(self, num_plants=48, q=0.05, last_day=14, **kwargs):
+        super().__init__(num_plants, q, last_day, **kwargs)     
+
+    def reward_function(self, action):
+        clock = (self.num_steps % self.steps_per_day)*self.interval    # seconds since beginning of day
+        total_seconds = self.steps_per_day*self.interval               # total seconds during day time
+        twilight = clock < 1/4*total_seconds or clock >= 3/4*total_seconds
+        noon = not twilight
+        if (twilight and action==1) or (noon and action == 2):
+            return 1.0
+        else:
+            return -1.0
+
+class SineTimeEnv(SimplePlantSimulator):
+    '''
+    Uses sine/cos time encoding
+    '''
+    def __init__(self, num_plants=48, q=0.05, last_day=14, **kwargs):
+        super().__init__(num_plants, q, last_day, **kwargs)     
+        self.state_dim = (3,)
+        self.current_state = np.empty(3)
+
+    def time_of_day(self):
+        clock = (self.num_steps % self.steps_per_day)*self.interval + self.first_second   # time of day in seconds
+        return [(sin(2*pi*clock/86400)+1)/2, (cos(2*pi*clock/86400)+1)/2]
+    
+
+class TrivialRewSineTimeEnv(SineTimeEnv, TrivialRewEnv):
+    '''
+    Uses sine/cos time encoding and trivial +1 or -1 reward for following the twilight policy
+    '''
+    def __init__(self, num_plants=48, q=0.05, last_day=14, **kwargs):
+        super().__init__(num_plants, q, last_day, **kwargs)
+    
