@@ -30,10 +30,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.session.mount("https://", HTTPAdapter(max_retries=retries))
         
         # TODO: save self.observed_areas at the end of the run
-
         self.observed_areas = []          # stores a list of arrays of observed areas in mm^2. i.e. self.observed_areas[-1] contains the latest areas of individual plants
         self.q = 0.10                     # the bottom q and the top 1-q quantiles are excluded from iqm of areas
-        self.gamma = 1.0
+        self.gamma = 0.99
 
     def get_observation(self):
         self.time = datetime.now().timestamp()
@@ -97,12 +96,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         return {"gamma": self.gamma}
 
     def reward_function(self):
-        new = self.normalize(iqm(self.observed_areas[-1], self.q))
-        old = self.normalize(iqm(self.observed_areas[-2], self.q))
-        return new - old
-
-    def normalize(self, x, l=0.0, u=930.0):  # normalize area (mm^2) to between 0 and 1
-        return (x - l) / (u - l)
+        new = iqm(self.observed_areas[-1], self.q)
+        old = iqm(self.observed_areas[-2], self.q)
+        return (new - old) / (new + old)   # symmetric percent change
 
     def close(self):
         requests.put(self.zone.lightbar_url, json={"array": np.zeros((2, 6)).tolist()})
