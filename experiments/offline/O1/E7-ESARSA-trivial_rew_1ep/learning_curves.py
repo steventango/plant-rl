@@ -21,6 +21,7 @@ setDefaultConference('neurips')
 
 COLORS = {'tc-ESARSA': 'blue'}
 
+
 total_days = 14
 optimal_action = np.tile(np.hstack([np.ones(3*6), 2*np.ones(6*6), np.ones(3*6)]), total_days)[1:-1]
 
