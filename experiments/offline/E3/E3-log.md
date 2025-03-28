@@ -239,3 +239,19 @@ What did help:
 - the config ep = 0.05, alpha = 1.0, l2 = 0.01, lambda = 0.5 does really good for seed 3!
 ### Conclusions & Outlooks: 
 - I think L2 works better than L1 in this setup because I think the forgetting of weights should be proportional to the size of weight. In this env I don't see a reason to forget all weights evenly.
+
+## Phase P15
+### Objectives: 
+- Fix a more general-purpose TC linear ESARSA agent and focus on designing state/reward
+- Oliver mentioned an important aspect of our state and reward design. Currently state = (time of day, growth rate) and reward = growth rate, where growth rate is a very smoothed out version of percentage growth per time step. Since it's so smoothed out, it may be hard to assign credit to agent's action since the agent can change action every 10 min. 
+- Ideally, it would be great to implement the option architecture, where we have pre-defined options that repeat actions. But since we don't have much time before Exp 1 starts, maybe we can settle with having a larger time step?
+### Methods: 
+- Adam said it's uncommon to add regularization to linear ESARSA, so set l1=l2=0
+- Fix ep = 0.05. Sweep alpha and lambda, for which the sim and real likely have different preferences.
+- TC grid has been selected based on historic data.
+- Try out different yet experimentally reasonable strides: [1, 2, 3]
+### Observations: 
+- best config: stride = 1, alpha = 1.0, lambda = 0.5 (see json for the rest). Seed 3 looks very good!
+- stride = 2, 3 doesn't make it easier in the sim...
+### Conclusions & Outlooks: 
+- TC linear ESARSA with 10 min time step does just fine in the simulator (at least for one of the seeds). But maybe a longer time step would be better in real experiment? Maybe we should use 10 min instead of 5 min.
