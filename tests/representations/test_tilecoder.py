@@ -11,7 +11,8 @@ class RichTileCoder():
         self.config = RichTileCoderConfig(
             tiles=self.num_tiles, 
             tilings=self.num_tilings,     
-            dims=self.dims,         
+            dims=self.dims,    
+            wrap_time=True,     
             input_ranges=None  
         )
         self.tile_coder = RichTileCoder(self.config)
@@ -35,8 +36,8 @@ class RichTileCoder():
 
     def test_x_values(self):
         x_edge = 1 / self.num_tilings / self.num_tiles[0]
-        point1 = np.array([x_edge, 0.5])
-        point2 = np.array([x_edge + x_edge*0.9, 0.5])  
+        point1 = np.array([0, 0.5])
+        point2 = np.array([1, 0.5])  
         
         indices1 = self.tile_coder.get_indices(point1)
         indices2 = self.tile_coder.get_indices(point2)

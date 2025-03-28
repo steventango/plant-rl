@@ -10,7 +10,11 @@ class SimplePlantSimulator(BaseProblem):
     def __init__(self, exp: ExperimentModel, idx: int, collector: Collector):
         super().__init__(exp, idx, collector)
         self.gamma = 0.99
-        if self.env_params['type'] == 'Default':
+        if 'type' not in self.env_params: 
+            self.env = DefaultEnv(**self.env_params)
+            self.actions = 4
+            self.observations = (2,)
+        elif self.env_params['type'] == 'Default':
             self.env = DefaultEnv(**self.env_params)
             self.actions = 4
             self.observations = (2,)

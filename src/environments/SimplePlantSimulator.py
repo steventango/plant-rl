@@ -14,7 +14,7 @@ class SimplePlantSimulator(BaseEnvironment):
     Action = [moonlight, low, med, high] (med is optimal at noon, high is too bright)
     Reward = history of symmetric % change in average area
     '''
-    def __init__(self, num_plants=48, q=0.05, last_day=14, **kwargs):
+    def __init__(self, num_plants=48, q=0.05, stride=1, l=0.0005, u=0.0025, last_day=14, **kwargs):
         self.state_dim = (2,)
         self.current_state = np.empty(2)
         self.action_dim = 4
@@ -22,6 +22,9 @@ class SimplePlantSimulator(BaseEnvironment):
 
         self.num_plants = num_plants
         self.q = q                      # the bottom q and the top 1-q quantiles are excluded from iqm
+        self.stride = stride            # env time step = stride * time step in plant data
+        self.l = l                      # lower bound for normalizing growth rate to [0,1]
+        self.u = u                      # upper bound ...
 
         self.observed_areas = []        # stores a list of lists of daytime observed areas in pixels. i.e. self.observed_areas[-1] contains the latest areas of individual plants
 
@@ -131,8 +134,8 @@ class SimplePlantSimulator(BaseEnvironment):
         step_today = self.num_steps % self.steps_per_day
         return step_today / self.steps_per_day
 
-    def normalize(self, x, l=0.0005, u=0.0025):  
-        return (x - l) / (u - l)
+    def normalize(self, x):  
+        return (x - self.l) / (self.u - self.l)
     
     def percent_change(self, old, new):   # symmetric percentage change
         return 2 * (new - old) / (new + old)
@@ -192,6 +195,15 @@ class SimplePlantSimulator(BaseEnvironment):
 
             PWL.append(pwl)
             PF.append(projection_factor)
+        
+        # Optionally set a larger time step than the one given in plant data
+        assert self.steps_per_day % self.stride == 0 & self.steps_per_night % self.stride == 0, f"stride must be a divisor of steps_per_day={self.steps_per_day} and of steps_per_night={self.steps_per_night}."
+        PF = [pf[::self.stride] for pf in PF]
+        PWL = [pwl.rescale_x(1 / self.stride) for pwl in PWL]
+        self.steps_per_day /= self.stride
+        self.steps_per_night /= self.stride
+        self.interval *= self.stride
+        terminal_step = int(terminal_step / self.stride)
 
         return PWL, PF, terminal_step
 
@@ -233,8 +245,8 @@ class TrivialRewEnv(SimplePlantSimulator):
     '''
     Uses trivial +1 or -1 reward for following the twilight policy
     '''
-    def __init__(self, num_plants=48, q=0.05, last_day=14, **kwargs):
-        super().__init__(num_plants, q, last_day, **kwargs)     
+    def __init__(self, num_plants=48, q=0.05, stride=1, l=0.0005, u=0.0025, last_day=14, **kwargs):
+        super().__init__(num_plants, q, stride, l, u, last_day, **kwargs)     
 
     def reward_function(self, action):
         clock = (self.num_steps % self.steps_per_day)*self.interval    # seconds since beginning of day
@@ -250,8 +262,8 @@ class SineTimeEnv(SimplePlantSimulator):
     '''
     Uses sine/cos time encoding
     '''
-    def __init__(self, num_plants=48, q=0.05, last_day=14, **kwargs):
-        super().__init__(num_plants, q, last_day, **kwargs)     
+    def __init__(self, num_plants=48, q=0.05, stride=1, l=0.0005, u=0.0025, last_day=14, **kwargs):
+        super().__init__(num_plants, q, stride, l, u, last_day, **kwargs)     
         self.state_dim = (3,)
         self.current_state = np.empty(3)
 
@@ -264,6 +276,6 @@ class TrivialRewSineTimeEnv(SineTimeEnv, TrivialRewEnv):
     '''
     Uses sine/cos time encoding and trivial +1 or -1 reward for following the twilight policy
     '''
-    def __init__(self, num_plants=48, q=0.05, last_day=14, **kwargs):
-        super().__init__(num_plants, q, last_day, **kwargs)
+    def __init__(self, num_plants=48, q=0.05, stride=1, l=0.0005, u=0.0025, last_day=14, **kwargs):
+        super().__init__(num_plants, q, stride, l, u, last_day, **kwargs)
     
