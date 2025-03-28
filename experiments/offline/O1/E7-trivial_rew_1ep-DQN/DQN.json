@@ -1,0 +1,31 @@
+{
+    "agent": "DynamicBatchDQN",
+    "problem": "SimplePlantSimulator",
+    "total_steps": -1,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "epsilon": 0.05,
+        "target_refresh": 1,
+        "buffer_type": "uniform",
+        "buffer_size": 2000,
+        "batch": 8,
+        "min_batch": 50,
+        "n_step": 1,
+        "optimizer": {
+            "name": "ADAM",
+            "alpha": 0.1,
+            "beta1": 0.9,
+            "beta2": 0.999
+        },
+        "representation": {
+            "type": "TwoLayerRelu",
+            "hidden": 16
+        },
+        "environment":{
+            "type": "TrivialRewSineTime",
+            "num_plants": 48,
+            "q": 0.05,
+            "last_day": 14
+        }
+    }
+}
