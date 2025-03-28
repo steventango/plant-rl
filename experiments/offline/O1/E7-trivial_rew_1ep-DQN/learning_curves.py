@@ -26,7 +26,10 @@ total_days = 14
 optimal_action = np.tile(np.hstack([np.ones(3*6), 2*np.ones(6*6), np.ones(3*6)]), total_days)[1:-1]
 
 def last_n_percent_sum(x, n=0.2):
-    return np.nansum(x[:, int((8/14)*x.shape[1]):int((10/14)*x.shape[1])], axis=1)
+    return np.nansum(
+        x[:, int((1-n)*x.shape[1]):], 
+        axis=1
+        )
 
 class TimeSummary(enum.Enum):
     last_n_percent_sum = enum.member(last_n_percent_sum)
@@ -58,7 +61,6 @@ def main():
         f, ax = plt.subplots(5, 1)
         for alg, alg_df in split_over_column(env_df, col='algorithm'):   
             sub_df = alg_df
-            sub_df = alg_df[alg_df['alpha']==0.1]
             report = Hypers.select_best_hypers(
                 sub_df,
                 metric='action_is_optimal', 

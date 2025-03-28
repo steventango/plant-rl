@@ -127,9 +127,9 @@ Very bad.
 None
 
 ## <u>E7-trivial_rew_1ep</u>
-Testing ESARSA with tile coding and DQN in the trivial reward env. The reward is just +1 if selected action matches the twilight policy else -1. 
+Testing TC ESARSA, DQN and GAC in the trivial reward env. The reward is just +1 if selected action matches the twilight policy else -1. 
 
-Note that DQN uses sin/cos time encoding while ESARSA uses linear time since it is being tile coded. 
+Note that DQN and GAC use sin/cos time encoding while ESARSA uses linear time since it is being tile coded. 
 
 DQN just uses the hypers we discussed in meeting. 
 
