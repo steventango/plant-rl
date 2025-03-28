@@ -224,6 +224,18 @@ What did help:
 ### Methods: 
 - Same as P12 but no more state/reward clipping to [0, 1], fixed overnight trace bug in sim
 ### Observations: 
-- the config ep = 0.05, alpha = 1.0, l1 = 0.0001 does pretty good, but only for one of the seeds.
+- the config ep = 0.05, alpha = 1.0, l1 = 0.0001, lambda = 0.5 does really good for seed 3!
 ### Conclusions & Outlooks: 
-- I feel that the agent interacts sufficiently well with the sim. In the real experiment, lambda should be higher for longer retro credit assignment. The most reasonable config is alpha = 0.1, ep = 0.05, lambda = 0.9, but what should L1 regularization be? 0.0001 as it's best in the sim? I do think L1 reg is helpful because P13 and P12 both perform better than P9 (but of course I did some relatively minor changes in sim, which may have influenced this conclusion)
+- I feel that the agent interacts sufficiently well with the sim. 
+- What should L1 regularization be? 0.0001 as it's best in the sim? I do think L1 reg is helpful because P13 and P12 both perform better than P9 (but of course I did some relatively minor changes in sim, which may have influenced this conclusion)
+
+
+## Phase P14
+### Objectives: 
+- Try out L2 regularization
+### Methods: 
+- Same as P13 but added L2 penalty in TC ESARSA
+### Observations: 
+- the config ep = 0.05, alpha = 1.0, l2 = 0.01, lambda = 0.5 does really good for seed 3!
+### Conclusions & Outlooks: 
+- I think L2 works better than L1 in this setup because I think the forgetting of weights should be proportional to the size of weight. In this env I don't see a reason to forget all weights evenly.
