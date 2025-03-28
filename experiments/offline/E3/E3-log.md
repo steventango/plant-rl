@@ -214,6 +214,16 @@ What did help:
 ### Methods: 
 - Basically P9 but with symmetric % change in sim and L1 reg in agent.
 ### Observations: 
-- ...
+- wow seed 2 is killing it.
 ### Conclusions & Outlooks: 
-- ..
+- i made some changes to the sim env. should test again if it still works. 
+
+## Phase P13
+### Objectives: 
+- Test out how all the latest agent and env work together
+### Methods: 
+- Same as P12 but no more state/reward clipping to [0, 1], fixed overnight trace bug in sim
+### Observations: 
+- the config ep = 0.05, alpha = 1.0, l1 = 0.0001 does pretty good, but only for one of the seeds.
+### Conclusions & Outlooks: 
+- I feel that the agent interacts sufficiently well with the sim. In the real experiment, lambda should be higher for longer retro credit assignment. The most reasonable config is alpha = 0.1, ep = 0.05, lambda = 0.9, but what should L1 regularization be? 0.0001 as it's best in the sim? I do think L1 reg is helpful because P13 and P12 both perform better than P9 (but of course I did some relatively minor changes in sim, which may have influenced this conclusion)

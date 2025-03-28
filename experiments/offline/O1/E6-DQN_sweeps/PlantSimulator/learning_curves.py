@@ -49,11 +49,11 @@ def main():
     exp = results.get_any_exp()
 
     for env, env_df in split_over_column(df, col='environment'):
-        f, ax = plt.subplots(2, 1)
+        f, ax = plt.subplots()
         for alg, sub_df in split_over_column(env_df, col='algorithm'):
             report = Hypers.select_best_hypers(
                 sub_df,
-                metric='action',  # picking the hypers that chose action "1" most
+                metric='action_is_optimal',  # picking the hypers that chose action "1" most
                 prefer=Hypers.Preference.high,
                 time_summary=TimeSummary.sum,
                 statistic=Statistic.mean,
@@ -63,24 +63,25 @@ def main():
             print(env, alg)
             Hypers.pretty_print(report)
             
-            # Plot action history averaged over 5 seeds
-            xs_a, ys_a = extract_learning_curves(sub_df, report.best_configuration, metric='action', interpolation=None)
+            xs_a, ys_a = extract_learning_curves(sub_df, report.best_configuration, metric='action_is_optimal', interpolation=None)
             xs_a = np.asarray(xs_a)
             ys_a = np.asarray(ys_a)
             
+
             res = curve_percentile_bootstrap_ci(
                 rng=np.random.default_rng(0),
                 y=ys_a,
                 statistic=Statistic.mean,
             )
 
-            ax[0].plot(rescale_time(xs_a[0], 1), res.sample_stat, label=alg, color=COLORS[alg], linewidth=0.5)
-            ax[0].fill_between(rescale_time(xs_a[0], 1), res.ci[0], res.ci[1], color=COLORS[alg], alpha=0.2)
-            ax[0].legend()
-            ax[0].set_title('Learning curves over 12 hours')
-            ax[0].set_ylabel('Action')
-            ax[0].set_xlabel('Day Time [Hours]')
+            ax.plot(rescale_time(xs_a[0], 1), res.sample_stat, label=alg, color=COLORS[alg], linewidth=0.5)
+            ax.fill_between(rescale_time(xs_a[0], 1), res.ci[0], res.ci[1], color=COLORS[alg], alpha=0.2)
+            ax.legend()
+            ax.set_title('Optimal action selected over 2 weeks')
+            ax.set_ylabel('action_is_optimal')
+            ax.set_xlabel('Day Time [Hours]')
             
+            '''
             # Plot reward history averaged over 5 seeds
             xs, ys = extract_learning_curves(sub_df, report.best_configuration, metric='return', interpolation=None)
             xs = np.asarray(xs)
@@ -97,9 +98,10 @@ def main():
             ax[1].legend()
             ax[1].set_ylabel('Accumulated Reward')
             ax[0].set_xlabel('Day Time [Hours]')
+            '''
 
 
-        save(save_path=f'{path}/plots', plot_name=f'{alg}', save_type='jpg')
+            save(save_path=f'{path}/plots', plot_name=f'{alg}', save_type='jpg')
 
 def rescale_time(x, stride):
     base_step = 10/60           # spreadsheet time step is 10 minutes
