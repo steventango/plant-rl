@@ -12,6 +12,6 @@
             "update_freq": 5
         },
         "filepath": "experiments/online/E5/P1/poisson_slow.xlsx",
-        "compatibility_mode": true
+        "compatibility_mode": false
     }
 }
