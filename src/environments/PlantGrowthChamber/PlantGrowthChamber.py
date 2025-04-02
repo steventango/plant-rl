@@ -11,7 +11,7 @@ from utils.metrics import iqm
 
 from utils.RlGlue.environment import BaseAsyncEnvironment
 
-from .utils import process_image
+from .cv import process_image
 from .zones import get_zone
 
 

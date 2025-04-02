@@ -8,7 +8,7 @@ from PIL import Image
 from tqdm import tqdm
 from tqdm.contrib.concurrent import process_map
 
-from environments.PlantGrowthChamber.utils import process_image
+from environments.PlantGrowthChamber.cv import process_image
 from environments.PlantGrowthChamber.zones import Rect, Tray, Zone
 from utils.metrics import iqm
 
