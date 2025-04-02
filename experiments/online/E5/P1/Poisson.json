@@ -8,8 +8,8 @@
             "zone": 1
         },
         "experiment": {
-            "step_duration": 60,
-            "update_freq": 5
+            "step_duration": 300,
+            "update_freq": 1
         },
         "filepath": "experiments/online/E5/P1/poisson.xlsx",
         "compatibility_mode": false
