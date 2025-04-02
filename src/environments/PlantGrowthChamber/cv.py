@@ -68,7 +68,7 @@ def process_tray(image: np.ndarray, tray: Tray, debug_images: dict[str, list[np.
     equalized = equalize_adapthist(gray_image, kernel_size=pot_width // 3, clip_limit=0.03)
     equalized = (equalized * 255).astype(np.uint8)
     debug_images["equalized"].append(equalized)
-    OFFSET = 90
+    OFFSET = 50
     mask = pcv.threshold.mean(gray_img=equalized, ksize=1 * pot_width, offset=OFFSET, object_type="dark")
     debug_images["mask"].append(mask)
     FILL_THRESHOLD = 0.001 * pot_width**2

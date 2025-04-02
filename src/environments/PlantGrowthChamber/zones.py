@@ -44,22 +44,22 @@ def get_zone(indentifier: int):
                 trays=[
                     Tray(
                         n_wide=6,
-                        n_tall=4,
+                        n_tall=3,
                         rect=Rect(
-                            top_left=(605, 54),
-                            top_right=(1872, 28),
-                            bottom_left=(549, 866),
-                            bottom_right=(1897, 916),
+                            top_left=(438, 261),
+                            top_right=(1715, 212),
+                            bottom_left=(410, 879),
+                            bottom_right=(1727, 906),
                         ),
                     ),
                     Tray(
                         n_wide=6,
-                        n_tall=4,
+                        n_tall=3,
                         rect=Rect(
-                            top_left=(537, 969),
-                            top_right=(1895, 1000),
-                            bottom_left=(591, 1747),
-                            bottom_right=(1791, 1830),
+                            top_left=(399, 965),
+                            top_right=(1700, 993),
+                            bottom_left=(437, 1548),
+                            bottom_right=(1655, 1646),
                         ),
                     ),
                 ],
@@ -73,22 +73,22 @@ def get_zone(indentifier: int):
                 trays=[
                     Tray(
                         n_wide=6,
-                        n_tall=4,
+                        n_tall=3,
                         rect=Rect(
-                            top_left=(656, 52),
-                            top_right=(1922, 66),
-                            bottom_left=(620, 927),
-                            bottom_right=(1974, 900),
+                            top_left=(882, 240),
+                            top_right=(2142, 276),
+                            bottom_left=(870, 933),
+                            bottom_right=(2190, 906),
                         ),
                     ),
                     Tray(
                         n_wide=6,
-                        n_tall=4,
+                        n_tall=3,
                         rect=Rect(
-                            top_left=(639, 1023),
-                            top_right=(1987, 979),
-                            bottom_left=(680, 1875),
-                            bottom_right=(1946, 1764),
+                            top_left=(891, 1014),
+                            top_right=(2193, 984),
+                            bottom_left=(936, 1680),
+                            bottom_right=(2160, 1578),
                         ),
                     ),
                 ],
@@ -130,13 +130,23 @@ def get_zone(indentifier: int):
                 lightbar_url="http://mitacs-zone6.ccis.ualberta.ca:8080/action",
                 trays=[
                     Tray(
-                        n_wide=4,
-                        n_tall=4,
+                        n_wide=2,
+                        n_tall=6,
                         rect=Rect(
-                            top_left=(1278, 137),
-                            top_right=(2133, 200),
-                            bottom_left=(1260, 1041),
-                            bottom_right=(2163, 1050),
+                            top_left=(742, 315),
+                            top_right=(1190, 293),
+                            bottom_left=(783, 1588),
+                            bottom_right=(1191, 1605),
+                        ),
+                    ),
+                    Tray(
+                        n_wide=2,
+                        n_tall=6,
+                        rect=Rect(
+                            top_left=(1269, 324),
+                            top_right=(1731, 337),
+                            bottom_left=(1269, 1638),
+                            bottom_right=(1685, 1635),
                         ),
                     )
                 ],
