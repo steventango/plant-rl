@@ -1,0 +1,26 @@
+{
+    "agent": "ESARSA",
+    "problem": "SimplePlantSimulator",
+    "total_steps": -1,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment":{
+            "num_plants": 48,
+            "q": 0.05,
+            "last_day": 10
+        },
+        "alpha": [1e-2, 1e-1, 1e0], 
+        "epsilon": 0.05,
+        "lambda": [0.0, 0.5, 0.9],
+        "w0": 0.0,
+        "l1": 0.0,
+        "l2": [1e-4, 1e-3, 1e-2],
+
+        "representation": {
+            "which_tc": "RichTileCoder",
+            "multi_call": false,
+            "tiles": 4,
+            "tilings": 32 
+        }
+    }
+}

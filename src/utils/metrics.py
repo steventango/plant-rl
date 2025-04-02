@@ -37,7 +37,8 @@ class UnbiasedExponentialMovingAverage:
         """
         self.alpha = alpha
         self.shape = shape
-        self.reset()
+        self.reset() 
+        self.default = 0.0   # or jnp.nan
 
     def reset(self) -> None:
         """Reset this ``UnbiasedExponentialMovingAverage``."""
@@ -59,8 +60,7 @@ class UnbiasedExponentialMovingAverage:
 
     def compute(self) -> jax.Array:
         """Compute and return the unbiased exponential moving average."""
-        return self.total if self.count_trace > 0 else jnp.full(self.shape, jnp.nan, dtype=jnp.float32)
-
+        return self.total if self.count_trace > 0 else jnp.full(self.shape, self.default, dtype=jnp.float32)
 
 def iqm(a: jax.Array, q: float) -> float:
     """

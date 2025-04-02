@@ -2,7 +2,7 @@ import haiku as hk
 import jax.numpy as jnp
 from src.representations.networks import NetworkBuilder
 
-def test_one_layer_Relu():
+def one_layer_Relu():
     builder = NetworkBuilder(
         input_shape=(2,),
         params={

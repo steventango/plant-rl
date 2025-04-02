@@ -99,12 +99,49 @@ Notably the smallest batch size did the best, interesting because 128 did best o
 Multiple updates per step. Maybe use 2 day period instead (Steven asked for this for experiment this weekend). Be sure to include small batch size too.
 
 
-## <u>E5-linearDQN</u>
+## <u>E4-linearDQN</u>
+Comparing SGD to ADAM for linear DQN
+
+#### Results
+ADAM a bit better
+
+#### TODO
+None
+
+## <u>E4-DQN_fta</u>
+Implemented DQN with FTA. 
+
+#### Results
+Didn't do well on 12 hr problem. 
+
+#### TODO
+None
+
+## <u>E6-DQN_sweeps</u>
+Big DQN sweep over batch size and learning rate with hypers decided by ADAM (the prof not the optimizer). Used 16k steps. 
+
+#### Results
+Very bad. 
+
+#### TODO
+None
+
+## <u>E7-trivial_rew_1ep</u>
+Testing TC ESARSA, DQN and GAC in the trivial reward env. The reward is just +1 if selected action matches the twilight policy else -1. 
+
+Note that DQN and GAC use sin/cos time encoding while ESARSA uses linear time since it is being tile coded. 
+
+DQN just uses the hypers we discussed in meeting. 
+
+Total exp len is just two weeks (one episode). 
 
 
 #### Results
-
+ESARSA solves the task easily. 
 
 #### TODO
+
+
+
 
 

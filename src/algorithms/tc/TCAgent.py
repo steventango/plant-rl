@@ -25,7 +25,7 @@ class TCAgent(BaseAgent):
                 tiles=self.rep_params['tiles'],
                 tilings=self.rep_params['tilings'],
                 dims=observations[0],
-                multi_call=self.rep_params['multi_call'],
+                wrap_time=self.rep_params['wrap_time'],
             ))
         elif self.rep_params['which_tc'] == 'AndyTileCoder':
             self.tile_coder = DenseTileCoder(TileCoderConfig(
