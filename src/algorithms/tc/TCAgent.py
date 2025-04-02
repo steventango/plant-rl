@@ -12,7 +12,7 @@ from representations.TileCoder import DenseTileCoder, TileCoderConfig
 from representations.RichTileCoder import RichTileCoder, RichTileCoderConfig
 from utils.checkpoint import checkpointable
 
-@checkpointable(('rep', 'lag'))
+@checkpointable(('lag'))
 class TCAgent(BaseAgent):
     def __init__(self, observations: Tuple[int, ...], actions: int, params: Dict, collector: Collector, seed: int):
         super().__init__(observations, actions, params, collector, seed)
@@ -34,8 +34,8 @@ class TCAgent(BaseAgent):
                 dims=observations[0],
             ))
         else:
-            raise ValueError(f"Please specify which tile coder to use with param which_tc.") 
-        
+            raise ValueError(f"Please specify which tile coder to use with param which_tc.")
+
         self.n_features = self.tile_coder.features()
 
     def get_rep(self, s):
@@ -54,7 +54,7 @@ class TCAgent(BaseAgent):
     # ----------------------
     def start(self, s: np.ndarray):
         self.lag.flush()
-        
+
         x = self.get_rep(s)
         pi = self.policy(x)
         a = sample(pi, rng=self.rng)
