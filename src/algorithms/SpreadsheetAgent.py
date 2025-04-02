@@ -24,7 +24,6 @@ class SpreadsheetAgent(BaseAgent):
         offset = datetime.datetime.now(datetime.timezone.utc).astimezone().utcoffset()
         assert offset is not None
         self.offset = offset.total_seconds()
-        self.df.to_csv("temp.csv")
 
     # ----------------------
     # -- RLGlue interface --
