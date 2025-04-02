@@ -10,8 +10,8 @@ class PlantGrowthChamberDiscrete(PlantGrowthChamber):
         reference_spectrum = np.array([0.398, 0.762, 0.324, 0.000, 0.332, 0.606])
         self.action_map = {
             0: reference_spectrum * 0.350,
-            1: reference_spectrum,
-            2: reference_spectrum * 0.675,
+            1: reference_spectrum * 0.675,
+            2: reference_spectrum,
             3: reference_spectrum * 1.652,
         }
 
