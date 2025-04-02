@@ -12,7 +12,7 @@ from representations.TileCoder import DenseTileCoder, TileCoderConfig
 from representations.RichTileCoder import RichTileCoder, RichTileCoderConfig
 from utils.checkpoint import checkpointable
 
-@checkpointable(('lag'))
+@checkpointable(('lag',))
 class TCAgent(BaseAgent):
     def __init__(self, observations: Tuple[int, ...], actions: int, params: Dict, collector: Collector, seed: int):
         super().__init__(observations, actions, params, collector, seed)
