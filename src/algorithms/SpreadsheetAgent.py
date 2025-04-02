@@ -17,7 +17,7 @@ class SpreadsheetAgent(BaseAgent):
         super().__init__(observations, actions, params, collector, seed)
         self.df = pd.read_excel(self.params["filepath"])
         self.compatibility_mode = self.params.get("compatibility_mode", False)
-        self.df["datetime"] = self.df["Day"] * 86400 + self.df["Time"].apply(
+        self.df["datetime"] = self.df["Day"] * 86400 + pd.to_datetime(self.df["Time"], format="%H:%M:%S").apply(
             lambda x: x.hour * 3600 + x.minute * 60 + x.second
         )
         # convert from local time to UTC time
