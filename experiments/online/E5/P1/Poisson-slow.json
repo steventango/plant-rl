@@ -1,17 +1,17 @@
 {
-    "agent": "Spreadsheet-Poisson",
+    "agent": "Spreadsheet-Poisson-slow",
     "problem": "TemporalPlantGrowthChamber",
     "total_steps": 40320,
     "episode_cutoff": -1,
     "metaParameters": {
         "environment": {
-            "zone": 1
+            "zone": 6
         },
         "experiment": {
             "step_duration": 60,
             "update_freq": 5
         },
-        "filepath": "experiments/online/E5/P1/poisson.xlsx",
+        "filepath": "experiments/online/E5/P1/poisson_slow.xlsx",
         "compatibility_mode": true
     }
 }
