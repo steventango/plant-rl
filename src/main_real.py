@@ -130,7 +130,8 @@ for idx in indices:
     # if we haven't started yet, then make the first interaction
     if glue.total_steps == 0:
         glue.start()
-        save_images(env, data_path)
+        if problem.exp_params.get("save_images", True):
+            save_images(env, data_path)
 
     for step in range(glue.total_steps, exp.total_steps):
         collector.next_frame()
@@ -144,7 +145,8 @@ for idx in indices:
         for key, value in interaction.extra.items():
             collector.collect(key, value)
 
-        save_images(env, data_path)
+        if Problem.exp_params.get("save_images", True):
+            save_images(env, data_path)
 
         if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
             # allow agent to cleanup traces or other stateful episodic info
