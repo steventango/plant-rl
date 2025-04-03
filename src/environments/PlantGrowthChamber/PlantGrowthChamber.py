@@ -28,14 +28,15 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         retries = Retry(total=3, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
         self.session.mount("http://", HTTPAdapter(max_retries=retries))
         self.session.mount("https://", HTTPAdapter(max_retries=retries))
-        
+
         # TODO: save self.observed_areas at the end of the run
         self.observed_areas = []          # stores a list of arrays of observed areas in mm^2. i.e. self.observed_areas[-1] contains the latest areas of individual plants
         self.q = 0.10                     # the bottom q and the top 1-q quantiles are excluded from iqm of areas
         self.gamma = 0.99
+        self.step = 0
 
     def get_observation(self):
-        self.time = datetime.now().timestamp()
+        self.time = self.get_time()
 
         self.get_image()
         if "left" in self.images and "right" in self.images:
@@ -49,10 +50,13 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         self.plant_stats = np.array(self.df, dtype=np.float32)
 
-        plant_areas = self.plant_stats[:, 2].reshape(1, -1)  
+        plant_areas = self.plant_stats[:, 2].reshape(1, -1)
         self.observed_areas.append(plant_areas.flatten())
 
         return self.time, self.image, self.plant_stats
+
+    def get_time(self):
+        return datetime.now().timestamp()
 
     def get_image(self):
 
@@ -89,6 +93,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
     def step_two(self):
         observation = self.get_observation()
         self.reward = self.reward_function()
+        self.step += 1
 
         return self.reward, observation, False, self.get_info()
 
