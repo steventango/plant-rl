@@ -14,7 +14,8 @@
         "experiment": {
             "step_duration": 0.01,
             "update_freq": 1,
-            "save_images": false
+            "image_save_keys": "*",
+            "checkpoint": false
         },
         "representation": {
             "which_tc": "RichTileCoder",
