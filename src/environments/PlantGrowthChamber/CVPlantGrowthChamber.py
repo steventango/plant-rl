@@ -46,7 +46,7 @@ class CVPlantGrowthChamber(PlantGrowthChamber):
     def percent_change(self, old, new):   # symmetric percentage change
         return 2 * (new - old) / (new + old)
     
-    def normalize(self, x, l=0.0005, u=0.0025):  
+    def normalize(self, x, l=-0.0020, u=0.0015):
         return (x - l) / (u - l)
     
     def transform_time_sine(self, time, total=86400.0):
