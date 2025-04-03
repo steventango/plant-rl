@@ -29,16 +29,13 @@ class CVPlantGrowthChamber(PlantGrowthChamber):
         return observation
     
     def start(self):
-        self.history.reset() 
-        self.observed_areas = []
-        self.current_state = self.get_observation()
+        self.current_state = super().start()
+        self.history.reset()
         return self.current_state
 
     def step_two(self):
-        self.current_state = self.get_observation()
-        self.reward = self.reward_function()
-
-        return self.reward, self.current_state, False, self.get_info()
+        self.reward, self.current_state, done, info = super().step_two()
+        return self.reward, self.current_state, done, info
 
     def reward_function(self):   # reward = last state input = smooth change in area
         return self.current_state[-1]
@@ -46,7 +43,7 @@ class CVPlantGrowthChamber(PlantGrowthChamber):
     def percent_change(self, old, new):   # symmetric percentage change
         return 2 * (new - old) / (new + old)
     
-    def normalize(self, x, l=0.0005, u=0.0025):  
+    def normalize(self, x, l=-0.0020, u=0.0015):
         return (x - l) / (u - l)
     
     def transform_time_sine(self, time, total=86400.0):
