@@ -14,14 +14,14 @@ class CVPlantGrowthChamber(PlantGrowthChamber):
         self.current_state = np.empty(2)
  
     def get_observation(self):
-        time, _, plant_stats = super().get_observation()
-
+        epoch_time, _, plant_stats = super().get_observation()
+        clock_time = epoch_time % 86400
         if len(self.observed_areas) >= 2:
             old_area = iqm(self.observed_areas[-2], self.q)
             new_area = iqm(self.observed_areas[-1], self.q)
             self.history.update(self.percent_change(old_area, new_area))
 
-        time_of_day = self.transform_time_linear(time)  # TODO: DQN needs sin/cos time, ESARSA needs linear
+        time_of_day = self.transform_time_linear(clock_time)  # TODO: DQN needs sin/cos time, ESARSA needs linear
         
         observation = np.hstack([time_of_day, 
                                  self.normalize(self.history.compute())])

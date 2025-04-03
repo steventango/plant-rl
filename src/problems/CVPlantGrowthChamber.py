@@ -11,5 +11,5 @@ class CVPlantGrowthChamber(BaseProblem):
 
         self.env = Env(**self.env_params)
         self.actions = 6
-        self.observations = (6,)
+        self.observations = (2,)
         self.gamma = 0.99
