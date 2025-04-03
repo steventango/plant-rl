@@ -99,6 +99,7 @@ for idx in indices:
                 "reward": Identity(),
                 "steps": Identity(),
                 "time": Identity(),
+                "area": Identity(),
             },
             # by default, ignore keys that are not explicitly listed above
             default=Ignore(),
@@ -140,6 +141,9 @@ for idx in indices:
         collector.collect('action', interaction.a)
         collector.collect('reward', interaction.r)
         collector.collect('steps', glue.num_steps)
+        for key, value in interaction.extra.items():
+            collector.collect(key, value)
+
         save_images(env, data_path)
 
         if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):

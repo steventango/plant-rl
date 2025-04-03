@@ -93,7 +93,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         return self.reward, observation, False, self.get_info()
 
     def get_info(self):
-        return {"gamma": self.gamma}
+        return {"area": self.plant_stats[:, 2].flatten()}
 
     def reward_function(self):
         new = iqm(self.observed_areas[-1], self.q)
