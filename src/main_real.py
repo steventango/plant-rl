@@ -143,7 +143,7 @@ for idx in indices:
         collector.collect('reward', interaction.r)
         collector.collect('steps', glue.num_steps)
         for key, value in interaction.extra.items():
-            collector.collect(key, value)
+            collector.collect(key, value.astype(np.float64))
 
         if Problem.exp_params.get("save_images", True):
             save_images(env, data_path)
