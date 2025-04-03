@@ -11,10 +11,11 @@ import pandas as pd
 import RlEvaluation.backend.statistics as bs
 import RlEvaluation.backend.temporal as bt
 import RlEvaluation.hypers as Hypers
+from utils.metrics import UnbiasedExponentialMovingAverage as uema
 from PyExpPlotting.matplot import save, setDefaultConference, setFonts
 from PyExpUtils.results.Collection import ResultCollection
 from RlEvaluation.config import DataDefinition, data_definition, maybe_global
-from RlEvaluation.interpolation import Interpolation
+from RlEvaluation.interpolation import Interpolation, compute_step_return
 from RlEvaluation.statistics import Statistic
 from RlEvaluation.temporal import (
     TimeSummary,
@@ -32,9 +33,13 @@ COLORS = {"tc-ESARSA": "blue"}
 
 
 def maybe_convert_to_array(x):
-    if isinstance(x, float):
+    if isinstance(x, float) or isinstance(x, int):
         return x
-    x = eval(x)
+    try:
+        x = eval(x)
+    except Exception as e:
+        print(f"Error converting to array: {x}")
+        return None
     if isinstance(x, bytes):
         return np.frombuffer(x)
     return x
@@ -96,7 +101,7 @@ def main():
         df[metric] = df[metric].apply(maybe_convert_to_array)
         for alg, sub_df in split_over_column(df, col="algorithm"):
             print("-" * 25)
-            print(alg)
+            print(metric, alg)
 
             xs, ys = extract_learning_curves(sub_df, tuple(), metric=metric, interpolation=None)
             x = xs[0]
@@ -108,10 +113,30 @@ def main():
             axs = axs.flatten()
             total_days = int(np.max(x) * 5 / 60 / 24)
             for j, (ax, yj) in enumerate(zip(axs, y.T)):
-                ax.step(rescale_time(x, 1), yj, label=f"{alg}")
-                ax.set_ylabel(metric.capitalize() + f"[{j}]")
+                x_plot = rescale_time(x, 1)
+                # Draw horizontal segments without vertical connectors
+                for i in range(len(x_plot) - 1):
+                    ax.hlines(
+                        y=yj[i], xmin=x_plot[i], xmax=x_plot[i + 1], color="C0", label=f"{alg}" if i == 0 else None
+                    )
+                ax.set_ylabel(metric + f"[{j}]" if y.shape[1] > 1 else metric)
                 for k in range(total_days + 1):
                     ax.axvline(x=12 * k, color="k", linestyle="--", linewidth=0.5)
+                if metric == "reward":
+                    ax.axhline(y=0, color="k", linestyle="--", linewidth=0.5)
+                    # ax.set_ylim(np.quantile(yj, 0.01) - .01, np.quantile(yj, 0.99) + .01)
+                    ax.set_ylim(-1, 1)
+                    # plot unbiased exponential moving average of the reward
+                    stat = []
+                    u = uema(alpha=0.1)
+                    for yj_i in yj:
+                        u.update(yj_i)
+                        stat.append(u.compute())
+                    stat = np.array(stat)
+                    ax.plot(x_plot, stat, color="C1", label="UEMA")
+                    _, returns = compute_step_return(x, yj, len(x))
+                    total_return = np.sum(returns)
+                    print(f"Return: {total_return:.2f}")
             axs[0].set_title(f"{metric.capitalize()}")
             axs[-1].set_xlabel("Time [Hours]")
 
