@@ -135,6 +135,7 @@ for idx in indices:
 
     for step in range(glue.total_steps, exp.total_steps):
         collector.next_frame()
+        if problem.exp_params.get("checkpoint", True):
         chk.save()
         interaction = glue.step()
         collector.collect('time', time.time())
