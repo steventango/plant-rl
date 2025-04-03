@@ -97,7 +97,7 @@ def main():
 
     df = pd.read_csv(f"{path}/data.csv")
 
-    for metric in ["area", "state", "action", "reward"]:
+    for metric in ["state", "action", "reward"]:
         df[metric] = df[metric].apply(maybe_convert_to_array)
         for alg, sub_df in split_over_column(df, col="algorithm"):
             print("-" * 25)
@@ -125,9 +125,6 @@ def main():
                     ax.axvline(x=12 * k, color="k", linestyle="--", linewidth=0.5)
                 if metric == "reward":
                     ax.axhline(y=0, color="k", linestyle="--", linewidth=0.5)
-                    # ax.set_ylim(np.quantile(yj, 0.01) - .01, np.quantile(yj, 0.99) + .01)
-                    ax.set_ylim(-1, 1)
-                    # plot unbiased exponential moving average of the reward
                     stat = []
                     u = uema(alpha=0.1)
                     for yj_i in yj:
