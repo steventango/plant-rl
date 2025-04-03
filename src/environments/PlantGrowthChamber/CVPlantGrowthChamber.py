@@ -29,16 +29,13 @@ class CVPlantGrowthChamber(PlantGrowthChamber):
         return observation
     
     def start(self):
-        self.history.reset() 
-        self.observed_areas = []
-        self.current_state = self.get_observation()
+        self.current_state = super().start()
+        self.history.reset()
         return self.current_state
 
     def step_two(self):
-        self.current_state = self.get_observation()
-        self.reward = self.reward_function()
-
-        return self.reward, self.current_state, False, self.get_info()
+        self.reward, self.current_state, done, info = super().step_two()
+        return self.reward, self.current_state, done, info
 
     def reward_function(self):   # reward = last state input = smooth change in area
         return self.current_state[-1]
