@@ -23,6 +23,8 @@ from utils.checkpoint import Checkpoint
 from utils.preempt import TimeoutHandler
 from utils.RlGlue.rl_glue import PlanningRlGlue
 
+default_save_keys = {"left", "right"}
+
 # ------------------
 # -- Command Args --
 # ------------------
@@ -68,14 +70,13 @@ def round_seconds(obj: datetime) -> datetime:
     return obj.replace(microsecond=0)
 
 
-def save_images(env, data_path: Path):
+def save_images(env, data_path: Path, save_keys):
     now = datetime.now()
     now = round_seconds(now)
     now = now.isoformat().replace(':', '')
     zone_identifier = env.zone.identifier
-    save_keys = {"left", "right"}
     for key, image in env.images.items():
-        if key not in save_keys:
+        if save_keys != "*" and key not in save_keys:
             continue
         img_path = data_path / f"z{zone_identifier}" / f"{now}_{key}.png"
         image.save(img_path)
@@ -130,8 +131,7 @@ for idx in indices:
     # if we haven't started yet, then make the first interaction
     if glue.total_steps == 0:
         glue.start()
-        if problem.exp_params.get("save_images", True):
-            save_images(env, data_path)
+        save_images(env, data_path, problem.exp_params.get("image_save_keys", default_save_keys))
 
     for step in range(glue.total_steps, exp.total_steps):
         collector.next_frame()
@@ -145,8 +145,7 @@ for idx in indices:
         for key, value in interaction.extra.items():
             collector.collect(key, value.astype(np.float64))
 
-        if Problem.exp_params.get("save_images", True):
-            save_images(env, data_path)
+        save_images(env, data_path, problem.exp_params.get("image_save_keys", default_save_keys))
 
         if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
             # allow agent to cleanup traces or other stateful episodic info
