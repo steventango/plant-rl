@@ -88,6 +88,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
     def start(self):
         self.observed_areas = []
         observation = self.get_observation()
+        self.step += 1
         return observation
 
     def step_two(self):
