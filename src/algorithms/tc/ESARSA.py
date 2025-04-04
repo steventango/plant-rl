@@ -19,6 +19,7 @@ def _update(w, x, a, xp, pi, r, gamma, alpha, z, lambda_, l1, l2):
 
     z *= gamma * lambda_
     z[a] += x
+    z[a] = np.minimum(z[a], 1.0)
 
     w += (alpha / np.count_nonzero(x)) * delta * z - l1 * np.sign(w) - l2 * w
 
