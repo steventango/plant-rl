@@ -20,8 +20,7 @@ def _update(w, x, a, xp, pi, r, gamma, alpha, z, lambda_, l1, l2):
     z *= gamma * lambda_
     z[a] += x
 
-    w[a] = w[a] + (alpha / np.count_nonzero(x)) * delta * z[a] - l1 * np.sign(w[a]) - l2 * w[a]
-    # TODO: check if l1 and l2 regularization should reduce all weights (not just w[a])
+    w += (alpha / np.count_nonzero(x)) * delta * z - l1 * np.sign(w) - l2 * w
 
 @njit(cache=True)
 def value(w, x):
