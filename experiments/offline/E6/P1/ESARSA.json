@@ -1,12 +1,12 @@
 {
   "agent": "ESARSA",
   "problem": "MountainCar",
-  "total_steps": 100000,
+  "total_steps": 120000,
   "episode_cutoff": 10000,
   "metaParameters": {
-      "alpha": [0.0625, 0.125, 0.1875],
+      "alpha": [0.06125, 0.125, 0.25, 0.5, 1, 1.5],
       "epsilon": [0],
-      "lambda": [0.99, 0.96, 0],
+      "lambda": [0.99, 0.96, 0.92, 0.84, 0.68, 0],
       "representation": {
         "which_tc": "RichTileCoder",
         "wrap_time": false,
