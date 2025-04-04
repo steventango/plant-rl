@@ -26,6 +26,7 @@ from RlEvaluation.utils.pandas import split_over_column, subset_df
 
 from experiment.ExperimentModel import ExperimentModel
 from experiment.tools import parseCmdLineArgs
+from utils.metrics import iqm
 
 setDefaultConference("neurips")
 
@@ -110,7 +111,10 @@ def main():
             if y.ndim == 1:
                 y = y[:, np.newaxis]
             m = y.shape[1]
-            f, axs = plt.subplots(m, 1, squeeze=False, sharex=True)
+            rows = m
+            if metric == "area":
+                rows += 1
+            f, axs = plt.subplots(rows, 1, squeeze=False, sharex=True)
             axs = axs.flatten()
             total_days = int(np.max(x) * 5 / 60 / 24)
             for j, (ax, yj) in enumerate(zip(axs, y.T)):
@@ -123,18 +127,37 @@ def main():
                 ax.set_ylabel(metric + f"[{j}]" if m > 1 else metric)
                 for k in range(total_days + 1):
                     ax.axvline(x=12 * k, color="k", linestyle="--", linewidth=0.5)
-                if metric == "reward":
-                    ax.axhline(y=0, color="k", linestyle="--", linewidth=0.5)
-                    stat = []
+                if metric in {"area", "reward"}:
                     u = uema(alpha=0.1)
+                    stat = []
                     for yj_i in yj:
                         u.update(yj_i)
                         stat.append(u.compute())
                     stat = np.array(stat)
                     ax.plot(x_plot, stat, color="C1", label="UEMA")
+                if metric == "reward":
+                    ax.axhline(y=0, color="k", linestyle="--", linewidth=0.5)
                     _, returns = compute_step_return(x, yj, len(x))
                     total_return = np.sum(returns)
                     print(f"Return: {total_return:.2f}")
+            if metric == "area":
+                # plot IQM of the area
+                x_plot = rescale_time(x, 1)
+                for i in range(len(x_plot) - 1):
+                    axs[-1].hlines(
+                        y=iqm(y.T[:, i], 0.05), xmin=x_plot[i], xmax=x_plot[i + 1], color="C0", label=f"{alg}" if i == 0 else None
+                    )
+                axs[-1].set_ylabel("IQM")
+                for k in range(total_days + 1):
+                    axs[-1].axvline(x=12 * k, color="k", linestyle="--", linewidth=0.5)
+                u = uema(alpha=0.1)
+                stat = []
+                for y_i in y:
+                    u.update(iqm(y_i, 0.05))
+                    stat.append(u.compute())
+                stat = np.array(stat)
+                axs[-1].plot(x_plot, stat, color="C1", label="UEMA")
+
             axs[0].set_title(f"{metric.capitalize()}")
             axs[-1].set_xlabel("Time [Hours]")
 
