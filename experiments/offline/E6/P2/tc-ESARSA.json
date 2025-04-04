@@ -1,0 +1,27 @@
+{
+    "agent": "ESARSA",
+    "problem": "MockCVPlantGrowthChamberDiscrete",
+    "total_steps": 40320,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": 2,
+            "path": "data/online/E5/P1/ESARSA/z2"
+        },
+        "alpha": 0.1,
+        "epsilon": 0.1,
+        "lambda": 0.9,
+        "experiment": {
+            "step_duration": 0.01,
+            "update_freq": 1,
+            "image_save_keys": "*",
+            "checkpoint": false
+        },
+        "representation": {
+            "which_tc": "RichTileCoder",
+            "wrap_time": true,
+            "tiles": 4,
+            "tilings": 32
+        }
+    }
+}

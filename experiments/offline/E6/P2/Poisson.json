@@ -1,0 +1,20 @@
+{
+    "agent": "Spreadsheet-Poisson",
+    "problem": "MockTemporalPlantGrowthChamber",
+    "total_steps": 40320,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": 1,
+            "path": "data/online/E5/P1/Spreadsheet-Poisson/z1"
+        },
+        "experiment": {
+            "step_duration": 0.01,
+            "update_freq": 1,
+            "image_save_keys": "*",
+            "checkpoint": false
+        },
+        "filepath": "experiments/online/E5/P1/poisson.xlsx",
+        "compatibility_mode": false
+    }
+}
