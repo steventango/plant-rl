@@ -33,17 +33,17 @@ setDefaultConference("neurips")
 COLORS = {"tc-ESARSA": "blue"}
 
 
-def maybe_convert_to_array(x):
-    if isinstance(x, float) or isinstance(x, int):
-        return x
+def to_numpy(string_list):
+    """Converts a string representation of a list of numbers to a NumPy array."""
+    if not isinstance(string_list, str):
+        return string_list
     try:
-        x = eval(x)
-    except Exception as e:
-        print(f"Error converting to array: {x}")
-        return None
-    if isinstance(x, bytes):
-        return np.frombuffer(x)
-    return x
+        # Remove the brackets and split by space
+        numbers_str = string_list.strip('[]').split()
+        # Convert the strings to floats and create a NumPy array
+        return np.array([float(num) for num in numbers_str])
+    except AttributeError:
+        return np.nan  # Or handle non-string elements as needed
 
 
 def extract_learning_curves(
@@ -99,7 +99,7 @@ def main():
     df = pd.read_csv(f"{path}/data.csv")
 
     for metric in ["area", "state", "action", "reward"]:
-        df[metric] = df[metric].apply(maybe_convert_to_array)
+        df[metric] = df[metric].apply(to_numpy)
         for alg, sub_df in split_over_column(df, col="algorithm"):
             print("-" * 25)
             print(metric, alg)
@@ -126,7 +126,7 @@ def main():
                     )
                 ax.set_ylabel(metric + f"[{j}]" if m > 1 else metric)
                 for k in range(total_days + 1):
-                    ax.axvline(x=12 * k, color="k", linestyle="--", linewidth=0.5)
+                    ax.axvline(x=24 * k, color="k", linestyle="--", linewidth=0.5)
                 if metric in {"area", "reward"}:
                     u = uema(alpha=0.1)
                     stat = []
@@ -145,15 +145,15 @@ def main():
                 x_plot = rescale_time(x, 1)
                 for i in range(len(x_plot) - 1):
                     axs[-1].hlines(
-                        y=iqm(y.T[:, i], 0.05), xmin=x_plot[i], xmax=x_plot[i + 1], color="C0", label=f"{alg}" if i == 0 else None
+                        y=iqm(y.T[:, i], 0.1), xmin=x_plot[i], xmax=x_plot[i + 1], color="C0", label=f"{alg}" if i == 0 else None
                     )
                 axs[-1].set_ylabel("IQM")
                 for k in range(total_days + 1):
-                    axs[-1].axvline(x=12 * k, color="k", linestyle="--", linewidth=0.5)
+                    axs[-1].axvline(x=24 * k, color="k", linestyle="--", linewidth=0.5)
                 u = uema(alpha=0.1)
                 stat = []
                 for y_i in y:
-                    u.update(iqm(y_i, 0.05))
+                    u.update(iqm(y_i, 0.1))
                     stat.append(u.compute())
                 stat = np.array(stat)
                 axs[-1].plot(x_plot, stat, color="C1", label="UEMA")
