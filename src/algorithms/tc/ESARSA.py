@@ -56,8 +56,9 @@ class ESARSA(TCAgent):
         if xp is None:
             xp = np.zeros_like(x)
             pi = np.zeros(self.actions)
-            self.z = np.zeros_like(self.z)
         else:
             pi = self.policy(xp)
 
         _update(self.w, x, a, xp, pi, r, gamma, self.alpha, self.z, self.lambda_, self.l1, self.l2)
+        if xp is None:
+            self.z = np.zeros_like(self.z)
