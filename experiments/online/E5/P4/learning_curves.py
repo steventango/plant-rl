@@ -125,6 +125,7 @@ def main():
                         y=yj[i], xmin=x_plot[i], xmax=x_plot[i + 1], color="C0", label=f"{alg}" if i == 0 else None
                     )
                 ax.set_ylabel(metric + f"[{j}]" if m > 1 else metric)
+                ax.set_xlim([60,72])
                 for k in range(total_days + 1):
                     ax.axvline(x=24 * k, color="k", linestyle="--", linewidth=0.5)
                 if metric in {"area", "reward"}:
@@ -139,6 +140,7 @@ def main():
                     ax.axhline(y=0, color="k", linestyle="--", linewidth=0.5)
                     _, returns = compute_step_return(x, yj, len(x))
                     total_return = np.sum(returns)
+                    ax.set_ylim([0,1])
                     print(f"Return: {total_return:.2f}")
             if metric == "area":
                 # plot IQM of the area
