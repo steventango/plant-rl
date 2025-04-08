@@ -83,7 +83,7 @@ def save_images(env, data_path: Path, save_keys):
         image.save(img_path)
 
 
-def backup_and_save(exp, collector, base):
+def backup_and_save(exp, collector, idx, base):
     context = exp.buildSaveContext(idx, base=base)
     db_file = context.resolve('results.db')
     db_file_bak = context.resolve('results.db.bak')
@@ -180,7 +180,7 @@ for idx in indices:
 
             glue.start()
 
-        backup_and_save(exp, collector, args.save_path)
+        backup_and_save(exp, collector, idx, args.save_path)
 
     collector.reset()
 
@@ -189,4 +189,4 @@ for idx in indices:
     # ------------
     # -- Saving --
     # ------------
-    backup_and_save(exp, collector, args.save_path)
+    backup_and_save(exp, collector, idx, args.save_path)
