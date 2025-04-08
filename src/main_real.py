@@ -1,4 +1,5 @@
 import os
+import shutil
 import sys
 
 sys.path.append(os.getcwd())
@@ -80,6 +81,16 @@ def save_images(env, data_path: Path, save_keys):
             continue
         img_path = data_path / f"z{zone_identifier}" / f"{now}_{key}.png"
         image.save(img_path)
+
+
+def backup_and_save(exp, collector, base):
+    context = exp.buildSaveContext(idx, base=base)
+    db_file = context.resolve('results.db')
+    db_file_bak = context.resolve('results.db.bak')
+    if os.path.exists(db_file):
+        shutil.move(db_file, db_file_bak)
+    saveCollector(exp, collector, base=base)
+
 
 for idx in indices:
     chk = Checkpoint(exp, idx, base_path=args.checkpoint_path)
@@ -169,7 +180,7 @@ for idx in indices:
 
             glue.start()
 
-        saveCollector(exp, collector, base=args.save_path)
+        backup_and_save(exp, collector, args.save_path)
 
     collector.reset()
 
@@ -178,4 +189,4 @@ for idx in indices:
     # ------------
     # -- Saving --
     # ------------
-    saveCollector(exp, collector, base=args.save_path)
+    backup_and_save(exp, collector, args.save_path)
