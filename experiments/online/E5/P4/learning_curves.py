@@ -137,6 +137,7 @@ def main():
                     ax.plot(x_plot, stat, color="C1", label="UEMA")
                 if metric == "reward":
                     ax.axhline(y=0, color="k", linestyle="--", linewidth=0.5)
+                    ax.set_ylim(bottom=-0.1)
                     _, returns = compute_step_return(x, yj, len(x))
                     total_return = np.sum(returns)
                     print(f"Return: {total_return:.2f}")
