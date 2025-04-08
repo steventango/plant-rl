@@ -38,7 +38,7 @@ COLORS = {
 if __name__ == "__main__":
     path, should_save, save_type = parseCmdLineArgs()
 
-    results = ResultCollection.fromExperiments(Model=ExperimentModel)
+    results = ResultCollection.fromExperiments(metrics=["episode", "return"], Model=ExperimentModel)
 
     data_definition(
         hyper_cols=results.get_hyperparameter_columns(),
@@ -70,6 +70,7 @@ if __name__ == "__main__":
     for lambda_val, lambda_df in split_over_column(df, col="lambda"):
         alphas = []
         best_scores = []
+        # TODO: make colors and font size consistent
         for alpha_val, sub_df in sorted(split_over_column(lambda_df, col="alpha"), key=lambda x: x[0]):
             sub_df = sub_df[sub_df["episode"] < 50]
             print(sub_df["return"].count())
