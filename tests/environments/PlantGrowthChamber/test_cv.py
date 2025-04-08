@@ -15,6 +15,8 @@ TEST_DIR = Path(__file__).parent.parent.parent / "test_data"
 OLD_TEST_DIR = TEST_DIR / "old"
 SC_TEST_DIR = TEST_DIR / "Spreadsheet-C"
 SC_V2_TEST_DIR = TEST_DIR / "Spreadsheet-C-v2"
+SC_V3_TEST_DIR = TEST_DIR / "Spreadsheet-C-v3"
+
 
 
 def get_plant_area(test_dir: Path, zone: Zone):
@@ -40,11 +42,6 @@ def get_plant_area(test_dir: Path, zone: Zone):
     plot_area_comparison(df, out_dir)
 
 
-def test_process_zone_1():
-    zone = get_zone(1)
-    get_plant_area(SC_V2_TEST_DIR, zone)
-
-
 def test_process_zone_2():
     zone = get_zone(2)
     get_plant_area(SC_V2_TEST_DIR, zone)
@@ -52,7 +49,17 @@ def test_process_zone_2():
 
 def test_process_zone_6():
     zone = get_zone(6)
-    get_plant_area(SC_V2_TEST_DIR, zone)
+    get_plant_area(SC_V3_TEST_DIR, zone)
+
+
+def test_process_zone_8():
+    zone = get_zone(8)
+    get_plant_area(SC_V3_TEST_DIR, zone)
+
+
+def test_process_zone_9():
+    zone = get_zone(9)
+    get_plant_area(SC_V3_TEST_DIR, zone)
 
 
 def test_process_old_zone_1():
