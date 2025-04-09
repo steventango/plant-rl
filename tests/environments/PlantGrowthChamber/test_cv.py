@@ -42,9 +42,13 @@ def get_plant_area(test_dir: Path, zone: Zone):
     plot_area_comparison(df, out_dir)
 
 
+def test_process_zone_1():
+    zone = get_zone(1)
+    get_plant_area(SC_V3_TEST_DIR, zone)
+
 def test_process_zone_2():
     zone = get_zone(2)
-    get_plant_area(SC_V2_TEST_DIR, zone)
+    get_plant_area(SC_V3_TEST_DIR, zone)
 
 
 def test_process_zone_6():
