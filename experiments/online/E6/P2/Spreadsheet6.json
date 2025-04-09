@@ -1,7 +1,7 @@
 {
-    "agent": "Spreadsheet-Poisson1",
+    "agent": "Spreadsheet-6",
     "problem": "TemporalPlantGrowthChamber",
-    "total_steps": 120,
+    "total_steps": 240,
     "episode_cutoff": -1,
     "metaParameters": {
         "environment": {
