@@ -1,0 +1,17 @@
+{
+    "agent": "Spreadsheet-Poisson9",
+    "problem": "TemporalPlantGrowthChamber",
+    "total_steps": 40320,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": 9
+        },
+        "experiment": {
+            "step_duration": 300,
+            "update_freq": 1
+        },
+        "filepath": "experiments/online/E6/P4/poisson9.xlsx",
+        "compatibility_mode": false
+    }
+}
