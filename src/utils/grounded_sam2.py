@@ -1,53 +1,84 @@
+from contextlib import nullcontext
+
 import numpy as np
 import torch
-from PIL import Image
+from PIL.Image import Image
 from sam2.sam2_image_predictor import SAM2ImagePredictor
 from transformers import AutoModelForZeroShotObjectDetection, AutoProcessor
 
 
-GROUNDING_MODEL = "IDEA-Research/grounding-dino-base"
-TEXT_PROMPT = "plant."
-IMG_PATH = "tmp/baseline/2025-04-02T165154_warped.jpg"
-SAM2_MODEL = "facebook/sam2.1-hiera-small"
+class GroundedSAM2:
+    def __init__(
+        self,
+        grounding_model="IDEA-Research/grounding-dino-base",
+        sam2_model="facebook/sam2.1-hiera-small",
+        device=None,
+    ):
+        if device is not None:
+            self.device = device
+        else:
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
+        # Configure environment if using CUDA
+        if self.device == "cuda":
+            if torch.cuda.get_device_properties(0).major >= 8:
+                torch.backends.cuda.matmul.allow_tf32 = True
+                torch.backends.cudnn.allow_tf32 = True
 
-# environment settings
-with torch.autocast(device_type=device, dtype=torch.bfloat16):
-    if torch.cuda.get_device_properties(0).major >= 8:
-        # turn on tfloat32 for Ampere GPUs (https://pytorch.org/docs/stable/notes/cuda.html#tensorfloat-32-tf32-on-ampere-devices)
-        torch.backends.cuda.matmul.allow_tf32 = True
-        torch.backends.cudnn.allow_tf32 = True
+        # Build SAM2 Image Predictor
+        self.sam2_predictor = SAM2ImagePredictor.from_pretrained(sam2_model)
+        # Load processor and grounding model
+        self.processor = AutoProcessor.from_pretrained(grounding_model)
+        self.grounding_model = AutoModelForZeroShotObjectDetection.from_pretrained(grounding_model).to(self.device)
 
-    # build SAM2 image predictor
-    sam2_predictor = SAM2ImagePredictor.from_pretrained(SAM2_MODEL)
+    def inference(self, image: Image, text_prompt: str, box_threshold: float = 0.3, text_threshold: float = 0.25):
+        """
+        Run inference on a single image.
 
-    processor = AutoProcessor.from_pretrained(GROUNDING_MODEL)
-    grounding_model = AutoModelForZeroShotObjectDetection.from_pretrained(GROUNDING_MODEL).to(device)
+        Args:
+            image (Image): Input image.
+            text_prompt (str): Text prompt for object detection.
+            box_threshold (float): Box threshold for filtering boxes.
+            text_threshold (float): Text threshold for filtering boxes.
 
-    # setup the input image and text prompt for SAM 2 and Grounding DINO
-    # VERY important: text queries need to be lowercased + end with a dot
-    text = TEXT_PROMPT
-    img_path = IMG_PATH
+        Returns:
+            boxes (np.ndarray): Bounding boxes of the detected objects.
+            masks (np.ndarray): Predicted masks.
+            scores (np.ndarray): Scores of the predicted masks.
+            logits (np.ndarray): Logits of the predicted masks.
+        """
+        # Ensure the text prompt is formatted correctly.
+        text_prompt = text_prompt.lower()
+        if not text_prompt.endswith("."):
+            text_prompt += "."
 
-    image = Image.open(img_path)
+        with (
+            torch.autocast(device_type=self.device, dtype=torch.bfloat16) if self.device == "cuda" else nullcontext(),
+            torch.no_grad(),
+        ):
+            inputs = self.processor(images=image, text=text_prompt, return_tensors="pt").to(self.device)
+            with torch.no_grad():
+                outputs = self.grounding_model(**inputs)
 
-    inputs = processor(images=image, text=text, return_tensors="pt").to(device)
-    with torch.no_grad():
-        outputs = grounding_model(**inputs)
+            results = self.processor.post_process_grounded_object_detection(
+                outputs,
+                inputs.input_ids,
+                box_threshold=box_threshold,
+                text_threshold=text_threshold,
+                target_sizes=[image.size[::-1]],
+            )
+            boxes = results[0]["boxes"].cpu().numpy()
 
-    results = processor.post_process_grounded_object_detection(
-        outputs, inputs.input_ids, box_threshold=0.3, text_threshold=0.25, target_sizes=[image.size[::-1]]
-    )
-    input_boxes = results[0]["boxes"].cpu().numpy()
+            # Setup image for SAM2 and predict masks
+            self.sam2_predictor.set_image(np.array(image.convert("RGB")))
+            masks, scores, logits = self.sam2_predictor.predict(
+                point_coords=None,
+                point_labels=None,
+                box=boxes,
+                multimask_output=False,
+            )
 
-    sam2_predictor.set_image(np.array(image.convert("RGB")))
-    masks, scores, logits = sam2_predictor.predict(
-        point_coords=None,
-        point_labels=None,
-        box=input_boxes,
-        multimask_output=False,
-    )
+            if masks.ndim == 4:
+                masks = masks.squeeze(1)
 
-    if masks.ndim == 4:
-        masks = masks.squeeze(1)
+        return boxes, masks, scores, logits
