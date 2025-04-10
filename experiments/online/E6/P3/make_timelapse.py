@@ -1,4 +1,3 @@
-import argparse
 import glob
 import os
 import re
@@ -18,13 +17,13 @@ def get_key(value):
     return int(re.findall(r"\d+", value)[-1])
 
 
-def get_image(image_path):
+def get_image(image_path, zone_identifier: int):
     image = imread(image_path)
     iso_format = os.path.basename(image_path).split("_")[0]
     timestamp = datetime.fromisoformat(iso_format)
     timestamp_str = timestamp.strftime("%Y-%m-%d %H:%M:%S")
     debug_images = {}
-    zone = get_zone(9)
+    zone = get_zone(zone_identifier)
     process_image(image, zone.trays, debug_images)
     shape_image = debug_images["shape_image"]
     shape_image = np.array(shape_image)
@@ -44,25 +43,18 @@ def get_image(image_path):
     return shape_image
 
 
-def make_timelapse(pattern, output_video):
+def make_timelapse(pattern, output_video, zone):
     image_files = sorted(glob.glob(pattern), key=get_key)
-    images = process_map(get_image, image_files, max_workers=16)
+    images = process_map(get_image, image_files, [zone] * len(image_files), max_workers=8)
     clip = ImageSequenceClip(images, fps=1)
     clip.write_videofile(output_video)
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Create a timelapse video from photos.")
-    parser.add_argument(
-        "pattern",
-        type=str,
-        nargs="?",
-        default="data/online/E6/P2/Spreadsheet-9/z9/*.jpg",
-        help="The glob pattern to match video files.",
-    )
-    parser.add_argument(
-        "output_video", type=str, nargs="?", default="timelapse.mp4", help="The name of the output video file."
-    )
-    args = parser.parse_args()
+def main():
+    for zone in [1, 2 , 6, 9]:
+        pattern = f"data/online/E6/P3/Spreadsheet-{zone}/z{zone}/*.jpg"
+        make_timelapse(pattern, output_video=f"timelapse_{zone}.mp4", zone=zone)
 
-    make_timelapse(args.pattern, args.output_video)
+
+if __name__ == "__main__":
+    main()
