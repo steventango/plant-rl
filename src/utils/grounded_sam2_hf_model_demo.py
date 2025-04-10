@@ -1,14 +1,11 @@
 import argparse
 import os
 import cv2
-import json
 import torch
 import numpy as np
 import supervision as sv
-import pycocotools.mask as mask_util
 from pathlib import Path
 from supervision.draw.color import ColorPalette
-from utils.supervision_utils import CUSTOM_COLOR_MAP
 from PIL import Image
 from sam2.build_sam import build_sam2
 from sam2.sam2_image_predictor import SAM2ImagePredictor
@@ -18,11 +15,11 @@ from transformers import AutoProcessor, AutoModelForZeroShotObjectDetection
 Hyper parameters
 """
 parser = argparse.ArgumentParser()
-parser.add_argument('--grounding-model', default="IDEA-Research/grounding-dino-tiny")
-parser.add_argument("--text-prompt", default="car. tire.")
-parser.add_argument("--img-path", default="notebooks/images/truck.jpg")
-parser.add_argument("--sam2-checkpoint", default="./checkpoints/sam2.1_hiera_large.pt")
-parser.add_argument("--sam2-model-config", default="configs/sam2.1/sam2.1_hiera_l.yaml")
+parser.add_argument('--grounding-model', default="IDEA-Research/grounding-dino-base")
+parser.add_argument("--text-prompt", default="plant.")
+parser.add_argument("--img-path", default="tmp/baseline/2025-04-02T165154_warped.jpg")
+parser.add_argument("--sam2-checkpoint", default=None)
+parser.add_argument("--sam2-model-config", default="configs/sam2.1/sam2.1_hiera_s.yaml")
 parser.add_argument("--output-dir", default="outputs/test_sam2.1")
 parser.add_argument("--no-dump-json", action="store_true")
 parser.add_argument("--force-cpu", action="store_true")
@@ -50,10 +47,7 @@ if torch.cuda.get_device_properties(0).major >= 8:
     torch.backends.cudnn.allow_tf32 = True
 
 # build SAM2 image predictor
-sam2_checkpoint = SAM2_CHECKPOINT
-model_cfg = SAM2_MODEL_CONFIG
-sam2_model = build_sam2(model_cfg, sam2_checkpoint, device=DEVICE)
-sam2_predictor = SAM2ImagePredictor(sam2_model)
+sam2_predictor = SAM2ImagePredictor.from_pretrained("facebook/sam2.1-hiera-small")
 
 # build grounding dino from huggingface
 model_id = GROUNDING_MODEL
@@ -77,8 +71,8 @@ with torch.no_grad():
 results = processor.post_process_grounded_object_detection(
     outputs,
     inputs.input_ids,
-    box_threshold=0.4,
-    text_threshold=0.3,
+    box_threshold=0.3,
+    text_threshold=0.25,
     target_sizes=[image.size[::-1]]
 )
 
@@ -116,7 +110,7 @@ if masks.ndim == 4:
 
 
 confidences = results[0]["scores"].cpu().numpy().tolist()
-class_names = results[0]["labels"]
+class_names = results[0]["text_labels"]
 class_ids = np.array(list(range(len(class_names))))
 
 labels = [
@@ -139,49 +133,13 @@ detections = sv.Detections(
 Note that if you want to use default color map,
 you can set color=ColorPalette.DEFAULT
 """
-box_annotator = sv.BoxAnnotator(color=ColorPalette.from_hex(CUSTOM_COLOR_MAP))
+box_annotator = sv.BoxAnnotator(color=ColorPalette.DEFAULT)
 annotated_frame = box_annotator.annotate(scene=img.copy(), detections=detections)
 
-label_annotator = sv.LabelAnnotator(color=ColorPalette.from_hex(CUSTOM_COLOR_MAP))
+label_annotator = sv.LabelAnnotator(color=ColorPalette.DEFAULT)
 annotated_frame = label_annotator.annotate(scene=annotated_frame, detections=detections, labels=labels)
 cv2.imwrite(os.path.join(OUTPUT_DIR, "groundingdino_annotated_image.jpg"), annotated_frame)
 
-mask_annotator = sv.MaskAnnotator(color=ColorPalette.from_hex(CUSTOM_COLOR_MAP))
-annotated_frame = mask_annotator.annotate(scene=annotated_frame, detections=detections)
+mask_annotator = sv.MaskAnnotator(color=ColorPalette.DEFAULT)
+annotated_frame = mask_annotator.annotate(annotated_frame, detections=detections)
 cv2.imwrite(os.path.join(OUTPUT_DIR, "grounded_sam2_annotated_image_with_mask.jpg"), annotated_frame)
-
-
-"""
-Dump the results in standard format and save as json files
-"""
-
-def single_mask_to_rle(mask):
-    rle = mask_util.encode(np.array(mask[:, :, None], order="F", dtype="uint8"))[0]
-    rle["counts"] = rle["counts"].decode("utf-8")
-    return rle
-
-if DUMP_JSON_RESULTS:
-    # convert mask into rle format
-    mask_rles = [single_mask_to_rle(mask) for mask in masks]
-
-    input_boxes = input_boxes.tolist()
-    scores = scores.tolist()
-    # save the results in standard format
-    results = {
-        "image_path": img_path,
-        "annotations" : [
-            {
-                "class_name": class_name,
-                "bbox": box,
-                "segmentation": mask_rle,
-                "score": score,
-            }
-            for class_name, box, mask_rle, score in zip(class_names, input_boxes, mask_rles, scores)
-        ],
-        "box_format": "xyxy",
-        "img_width": image.width,
-        "img_height": image.height,
-    }
-
-    with open(os.path.join(OUTPUT_DIR, "grounded_sam2_hf_model_demo_results.json"), "w") as f:
-        json.dump(results, f, indent=4)

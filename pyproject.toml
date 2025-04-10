@@ -44,6 +44,10 @@ dependencies = [
     'plantcv~=4.2.1',
     'pandas[excel]',
     'seaborn',
+    'sam-2 @ git+https://github.com/facebookresearch/segment-anything-2',
+    'supervision>=0.25.1',
+    'transformers>=4.51.2',
+
 ]
 
 [project.optional-dependencies]
