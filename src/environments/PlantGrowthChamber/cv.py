@@ -1,4 +1,5 @@
 from collections import defaultdict
+from math import ceil
 
 import cv2
 import numpy as np
@@ -14,7 +15,7 @@ from utils.grounded_sam2 import SAM2, GroundingDino
 
 from .zones import POT_HEIGHT, POT_WIDTH, SCALE, Tray
 
-CUSTOM_COLOR_PALETTE = DEFAULT_COLOR_PALETTE + ["#808080"] * 1000
+CUSTOM_COLOR_PALETTE = DEFAULT_COLOR_PALETTE * ceil(128 / len(DEFAULT_COLOR_PALETTE)) + ["#808080"] * 1000
 color_palette_custom = ColorPalette.from_hex(CUSTOM_COLOR_PALETTE)
 grounding_dino = GroundingDino()
 sam2 = SAM2()
@@ -125,7 +126,7 @@ def process_tray(image: np.ndarray, tray: Tray, debug_images: dict[str, list[np.
         class_id=class_ids
     )
     detections = detections.with_nms(threshold=0.01)
-    detections.class_id[detections.confidence < 0.03] = 902
+    detections.class_id[detections.confidence < 0.05] = 902
     reason_codes = {
         901: "relative low confidence",
         902: "low confidence",
