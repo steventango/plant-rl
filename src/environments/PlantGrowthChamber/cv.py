@@ -79,16 +79,13 @@ def process_tray(image: np.ndarray, tray: Tray, debug_images: dict[str, list[np.
 
     # filter out boxes that are bigger than 2 times the pot size
     size_filter = (boxes[:, 2] - boxes[:, 0] < pot_width * 2) & (boxes[:, 3] - boxes[:, 1] < pot_width * 2)
-    # filter out boxes with area > 0.6 * pot_width * pot_width
-    # box_areas = (boxes[:, 2] - boxes[:, 0]) * (boxes[:, 3] - boxes[:, 1])
-    # size_filter &= box_areas < 0.6 * pot_width * pot_width
 
     boxes = boxes[size_filter]
     confidences = confidences[size_filter]
     class_names = class_names[size_filter]
 
     coords = []
-    sigma = pot_width / 2
+    sigma = pot_width
     for j in range(tray.n_tall):
         for i in range(tray.n_wide):
             y = j * pot_width + pot_width // 2
@@ -102,24 +99,12 @@ def process_tray(image: np.ndarray, tray: Tray, debug_images: dict[str, list[np.
                 (box_centers[1] > y - pot_width // 2) & (box_centers[1] < y + pot_width // 2)
             )
 
-            # bonus for being relatively bigger than other boxes
-            box_areas = (boxes[:, 2] - boxes[:, 0]) * (boxes[:, 3] - boxes[:, 1])
-            confidences[boxes_in_range] *= box_areas[boxes_in_range] / box_areas.mean()
-
             # RBF score for boxes closer to the center of the pot
             score = np.exp(-((x - boxes[boxes_in_range, 0]) ** 2 + (y - boxes[boxes_in_range, 1]) ** 2) / (sigma / 2) ** 2)
             confidences[boxes_in_range] *= score
 
-            # also add a bonus for being relatively more green than the rest of the pot
-            pot_greenness = np.mean(equalized[y - pot_width // 2:y + pot_width // 2, x - pot_width // 2:x + pot_width // 2])
-            for index in boxes_in_range.nonzero()[0]:
-                box = boxes[index]
-                # calculate the greenness of the box
-                box_greenness = np.mean(equalized[int(box[1]):int(box[3]), int(box[0]):int(box[2])])
-                confidences[index] *= 1 + (box_greenness - pot_greenness) / 255
-
             # only keep the box with the highest confidence
-            if boxes_in_range.nonzero()[0].size == 0:
+            if boxes_in_range.nonzero()[0].size < 2:
                 continue
 
             max_confidence = confidences[boxes_in_range].max()
@@ -136,7 +121,7 @@ def process_tray(image: np.ndarray, tray: Tray, debug_images: dict[str, list[np.
         class_id=class_ids
     )
     detections = detections.with_nms(threshold=0.01)
-    detections = detections[detections.confidence > 0]
+    detections = detections[detections.confidence > 0.03]
 
     if not len(detections.xyxy):
         # TODO: better handling of no boxes
@@ -160,6 +145,11 @@ def process_tray(image: np.ndarray, tray: Tray, debug_images: dict[str, list[np.
     )
 
     detections.mask = masks.astype(bool)
+
+    # filter out masks with area > 0.6 * pot_width * pot_width
+    mask_areas = np.sum(detections.mask, axis=(1, 2))
+    size_filter = mask_areas < 0.6 * pot_width * pot_width
+    detections = detections[size_filter]
 
     mask_annotator = sv.MaskAnnotator()
     annotated_frame = mask_annotator.annotate(scene=warped_image.copy(), detections=detections)
