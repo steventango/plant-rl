@@ -7,13 +7,12 @@ import supervision as sv
 from PIL import Image
 from plantcv import plantcv as pcv
 from plantcv.plantcv import params
-from skimage.exposure import equalize_adapthist, match_histograms
-from supervision.draw.color import ColorPalette, DEFAULT_COLOR_PALETTE
+from skimage.exposure import equalize_adapthist
+from supervision.draw.color import DEFAULT_COLOR_PALETTE, ColorPalette
 
-from utils.grounded_sam2 import GroundingDino, SAM2
+from utils.grounded_sam2 import SAM2, GroundingDino
 
 from .zones import POT_HEIGHT, POT_WIDTH, SCALE, Tray
-
 
 CUSTOM_COLOR_PALETTE = DEFAULT_COLOR_PALETTE + ["#808080"] * 1000
 color_palette_custom = ColorPalette.from_hex(CUSTOM_COLOR_PALETTE)
@@ -84,8 +83,9 @@ def process_tray(image: np.ndarray, tray: Tray, debug_images: dict[str, list[np.
         text_threshold=0.05,
     )
 
-    # filter out boxes that are bigger than 2 times the pot size
-    size_filter = (boxes[:, 2] - boxes[:, 0] < pot_width * 2) & (boxes[:, 3] - boxes[:, 1] < pot_width * 2)
+    # filter out boxes that are bigger than the pot size
+    bigger_ratio = 1.2
+    size_filter = (boxes[:, 2] - boxes[:, 0] < pot_width * bigger_ratio) & (boxes[:, 3] - boxes[:, 1] < pot_width * bigger_ratio)
 
     boxes = boxes[size_filter]
     confidences = confidences[size_filter]
@@ -149,12 +149,14 @@ def process_tray(image: np.ndarray, tray: Tray, debug_images: dict[str, list[np.
     annotated_frame = label_annotator.annotate(scene=annotated_frame, detections=annotate_detections, labels=labels)
     debug_images["boxes"].append(annotated_frame)
 
-    masks, *_ = sam2.inference(
+    masks = np.zeros((len(detections), height, width), dtype=bool)
+    new_masks, *_ = sam2.inference(
         image=pil_image,
-        boxes=detections.xyxy,
+        boxes=detections.xyxy[detections.class_id < 901],
     )
+    masks[detections.class_id < 901] = new_masks.astype(bool)
 
-    detections.mask = masks.astype(bool)
+    detections.mask = masks
 
     mask_areas = np.sum(detections.mask, axis=(1, 2))
     size_filter = mask_areas > 0.8 * pot_width * pot_width
