@@ -1,244 +1,90 @@
 import datetime
+from itertools import chain
 from pathlib import Path
 
 import jax.numpy as jnp
 import numpy as np
 import pandas as pd
 from PIL import Image
-from tqdm import tqdm
 from tqdm.contrib.concurrent import process_map
 
 from environments.PlantGrowthChamber.cv import process_image
 from environments.PlantGrowthChamber.zones import Rect, Tray, Zone
-from utils.metrics import iqm
-
-timeframes = [
-  {
-    "date": "2025-02-23",
-    "ontime": "09:01",
-    "offtime": "21:01"
-  },
-  {
-    "date": "2025-02-24",
-    "ontime": "09:01",
-    "offtime": "21:01"
-  },
-  {
-    "date": "2025-02-25",
-    "ontime": "09:01",
-    "offtime": "21:01"
-  },
-  {
-    "date": "2025-02-26",
-    "ontime": "09:01",
-    "offtime": "21:01"
-  },
-  {
-    "date": "2025-02-27",
-    "ontime": "09:01",
-    "offtime": "21:01"
-  },
-  {
-    "date": "2025-02-28",
-    "ontime": "09:01",
-    "offtime": "21:01"
-  },
-  {
-    "date": "2025-03-01",
-    "ontime": "13:01",
-    "offtime": "23:59"
-  },
-  {
-    "date": "2025-03-02",
-    "ontime": "00:00",
-    "offtime": "01:01"
-  },
-  {
-    "date": "2025-03-02",
-    "ontime": "13:01",
-    "offtime": "23:59"
-  },
-  {
-    "date": "2025-03-03",
-    "ontime": "00:00",
-    "offtime": "01:01"
-  },
-  {
-    "date": "2025-03-03",
-    "ontime": "13:01",
-    "offtime": "23:59"
-  },
-  {
-    "date": "2025-03-04",
-    "ontime": "00:00",
-    "offtime": "01:01"
-  },
-  {
-    "date": "2025-03-04",
-    "ontime": "13:01",
-    "offtime": "16:01"
-  },
-  {
-    "date": "2025-03-04",
-    "ontime": "18:01",
-    "offtime": "23:59"
-  },
-  {
-    "date": "2025-03-05",
-    "ontime": "00:00",
-    "offtime": "01:01"
-  },
-  {
-    "date": "2025-03-05",
-    "ontime": "13:01",
-    "offtime": "16:01"
-  },
-  {
-    "date": "2025-03-05",
-    "ontime": "18:01",
-    "offtime": "23:59"
-  },
-  {
-    "date": "2025-03-06",
-    "ontime": "00:00",
-    "offtime": "01:01"
-  },
-  {
-    "date": "2025-03-06",
-    "ontime": "13:01",
-    "offtime": "16:01"
-  },
-  {
-    "date": "2025-03-06",
-    "ontime": "18:01",
-    "offtime": "23:59"
-  },
-  {
-    "date": "2025-03-07",
-    "ontime": "00:00",
-    "offtime": "01:01"
-  },
-  {
-    "date": "2025-03-07",
-    "ontime": "13:01",
-    "offtime": "16:01"
-  },
-  {
-    "date": "2025-03-07",
-    "ontime": "18:01",
-    "offtime": "23:59"
-  },
-  {
-    "date": "2025-03-08",
-    "ontime": "00:00",
-    "offtime": "01:01"
-  },
-  {
-    "date": "2025-03-08",
-    "ontime": "13:01",
-    "offtime": "16:01"
-  },
-  {
-    "date": "2025-03-08",
-    "ontime": "18:01",
-    "offtime": "23:59"
-  },
-  {
-    "date": "2025-03-09",
-    "ontime": "00:00",
-    "offtime": "01:01"
-  },
-  {
-    "date": "2025-03-09",
-    "ontime": "14:01",
-    "offtime": "17:01"
-  },
-  {
-    "date": "2025-03-09",
-    "ontime": "19:01",
-    "offtime": "23:59"
-  },
-  {
-    "date": "2025-03-10",
-    "ontime": "00:00",
-    "offtime": "02:01"
-  },
-  {
-    "date": "2025-03-10",
-    "ontime": "14:01",
-    "offtime": "23:59"
-  },
-  {
-    "date": "2025-03-11",
-    "ontime": "00:00",
-    "offtime": "02:01"
-  }
-]
 
 
 def main():
+    method = "baseline"
     dfs = []
     zone = Zone(
-        identifier=2,
-        camera_left_url=None,
-        camera_right_url="http://mitacs-zone02-camera02.ccis.ualberta.ca:8080/observation",
-        lightbar_url="http://mitacs-zone2.ccis.ualberta.ca:8080/action",
+        identifier=1,
+        camera_left_url="http://mitacs-zone01-camera02.ccis.ualberta.ca:8080/observation",
+        camera_right_url=None,
+        lightbar_url="http://mitacs-zone1.ccis.ualberta.ca:8080/action",
         trays=[
             Tray(
-                n_wide=4,
-                n_tall=4,
+                n_wide=6,
+                n_tall=3,
                 rect=Rect(
-                    top_left=(1241, 978),
-                    top_right=(2017, 952),
-                    bottom_left=(1258, 1804),
-                    bottom_right=(1972, 1667),
+                    top_left=(528, 232),
+                    top_right=(1806, 195),
+                    bottom_left=(504, 843),
+                    bottom_right=(1815, 882),
                 ),
-            )
+            ),
+            Tray(
+                n_wide=6,
+                n_tall=3,
+                rect=Rect(
+                    top_left=(489, 927),
+                    top_right=(1791, 978),
+                    bottom_left=(513, 1512),
+                    bottom_right=(1731, 1626),
+                ),
+            ),
         ],
     )
-    zone_dir = Path("data/first_exp/z2cR")
-    out_dir = Path("results") / zone_dir
+    zone_dirs = [
+        # Path("/data/plant-rl/online/E5/P0/Spreadsheet/z1"),
+        Path("/data/plant-rl/online/E5/P1/Spreadsheet-Poisson/z1")
+    ]
+    out_dir = Path(f"tmp/{method}")
     out_dir.mkdir(exist_ok=True, parents=True)
-    paths = sorted(zone_dir.glob("*.png"))
-    paths = [path for path in paths if datetime.datetime.fromisoformat(path.stem).minute % 5 == 0]
+    paths = []
+    for zone_dir in zone_dirs:
+        candidate_paths = zone_dir.glob("*.jpg")
+        candidate_paths = sorted(candidate_paths)
+        timestamp_last = None
+        for path in candidate_paths:
+            timestamp = datetime.datetime.fromisoformat(path.stem.split("_")[0])
+            if timestamp_last is None or (timestamp - timestamp_last).total_seconds() >= 5 * 60:
+                paths.append(path)
+                timestamp_last = timestamp
 
-    # Use process_map to parallelize the processing
     results = process_map(
         process_one_image,
-        [(zone, out_dir, path) for path in paths],
-        max_workers=4,
-        chunksize=10,
+        [zone] * len(paths),
+        [out_dir] * len(paths),
+        paths,
+        max_workers=30,
+        chunksize=1,
     )
 
-    # Collect results
     for df in results:
-        if df is not None:
-            dfs.append(df)
+        dfs.append(df)
 
     df = pd.concat(dfs)
     df.to_csv(out_dir / "all.csv", index=False)
 
 
-def process_one_image(args):
-    zone, out_dir, path = args
-    timestamp = datetime.datetime.fromisoformat(path.stem)
-    for timeframe in timeframes:
-        ontime = datetime.datetime.fromisoformat(f"{timeframe['date']}T{timeframe['ontime']}")
-        offtime = datetime.datetime.fromisoformat(f"{timeframe['date']}T{timeframe['offtime']}")
-        if ontime <= timestamp <= offtime:
-            break
-    else:
-        return None
+def process_one_image(zone, out_dir, path):
+    isoformat = path.stem.split("_")[0]
+    timestamp = datetime.datetime.fromisoformat(isoformat)
     image = np.array(Image.open(path))
     debug_images = {}
     df = process_image(image, zone.trays, debug_images)
-    df["intensity"] = path.stem
-
-    avg = iqm(jnp.array(df["area"]), 0.05)
-    df = pd.concat([df, pd.DataFrame({"plant_id": ["iqm"], "area": [avg], "intensity": [path.stem]})])
-    df.to_csv(out_dir / f"{path.stem}.csv", index=False)
-    for key, value in debug_images.items():
-        value.save(out_dir / f"{path.stem}_{key}.png")
+    debug_images["shape_image"].save(out_dir / f"{isoformat}_shape.jpg")
+    debug_images["warped"].save(out_dir / f"{isoformat}_warped.jpg")
+    df["timestamp"] = timestamp
     return df
 
 
