@@ -1,3 +1,4 @@
+from itertools import chain
 from pathlib import Path
 
 import jax.numpy as jnp
@@ -24,7 +25,7 @@ def get_plant_area(test_dir: Path, zone: Zone):
     zone_dir = test_dir / f"z{zone.identifier}"
     out_dir = zone_dir / "results"
     out_dir.mkdir(exist_ok=True)
-    paths = sorted(zone_dir.glob("*.png"))
+    paths = sorted(chain(zone_dir.glob("*.png"), zone_dir.glob("*.jpg")))
     for path in paths:
         image = np.array(Image.open(path))
         debug_images = {}
@@ -36,7 +37,7 @@ def get_plant_area(test_dir: Path, zone: Zone):
         dfs.append(df)
         df.to_csv(out_dir / f"{path.stem}.csv", index=False)
         for key, value in debug_images.items():
-            value.save(out_dir / f"{path.stem}_{key}.png")
+            value.save(out_dir / f"{path.stem}_{key}.jpg")
 
     df = pd.concat(dfs)
     plot_area_comparison(df, out_dir)
@@ -64,6 +65,37 @@ def test_process_zone_8():
 def test_process_zone_9():
     zone = get_zone(9)
     get_plant_area(SC_V3_TEST_DIR, zone)
+
+def test_process_v2_zone_1():
+    zone = Zone(
+        identifier=1,
+        camera_left_url="http://mitacs-zone01-camera02.ccis.ualberta.ca:8080/observation",
+        camera_right_url=None,
+        lightbar_url="http://mitacs-zone1.ccis.ualberta.ca:8080/action",
+        trays=[
+            Tray(
+                n_wide=6,
+                n_tall=3,
+                rect=Rect(
+                    top_left=(528, 232),
+                    top_right=(1806, 195),
+                    bottom_left=(504, 843),
+                    bottom_right=(1815, 882),
+                ),
+            ),
+            Tray(
+                n_wide=6,
+                n_tall=3,
+                rect=Rect(
+                    top_left=(489, 927),
+                    top_right=(1791, 978),
+                    bottom_left=(513, 1512),
+                    bottom_right=(1731, 1626),
+                ),
+            ),
+        ],
+    )
+    get_plant_area(SC_V2_TEST_DIR, zone)
 
 def test_process_v2_zone_2():
     zone = Zone(
