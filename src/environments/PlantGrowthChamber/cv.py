@@ -36,7 +36,11 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
     for key, images in debug_tray_images.items():
         images = np.array(images)
         images = images.reshape(len(trays), *images.shape[1:])
-        debug_images[key] = Image.fromarray(np.vstack(images))
+        # stack images on the longest axis
+        if images.shape[1] > images.shape[2]:
+            debug_images[key] = Image.fromarray(np.hstack(images))
+        else:
+            debug_images[key] = Image.fromarray(np.vstack(images))
     # convert all_plant_stats to pandas dataframe
     df = pd.DataFrame(all_plant_stats)
     df.plant_id = df.index
