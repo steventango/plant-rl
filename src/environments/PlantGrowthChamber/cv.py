@@ -1,20 +1,23 @@
 from collections import defaultdict
-from pathlib import Path
 
 import cv2
 import numpy as np
 import pandas as pd
+import supervision as sv
 from PIL import Image
 from plantcv import plantcv as pcv
-from skimage.exposure import match_histograms, equalize_adapthist
+from plantcv.plantcv import params
+from skimage.exposure import equalize_adapthist, match_histograms
+from supervision.draw.color import ColorPalette
+
+from utils.grounded_sam2 import GroundingDino, SAM2
 
 from .zones import POT_HEIGHT, POT_WIDTH, SCALE, Tray
 
-reference = np.array(Image.open(Path(__file__).parent / "reference.png"))
-reference = cv2.cvtColor(reference, cv2.COLOR_RGB2LAB)
+grounding_dino = GroundingDino()
+sam2 = SAM2()
 
-
-def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, Image]):
+def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, Image.Image]):
     if not trays:
         raise ValueError("No trays provided")
     all_plant_stats = []
@@ -53,27 +56,72 @@ def process_tray(image: np.ndarray, tray: Tray, debug_images: dict[str, list[np.
     warped_image = cv2.warpPerspective(image, homography_matrix, (width, height))
     debug_images["warped"].append(warped_image)
 
+    pil_image = Image.fromarray(warped_image)
+
+    boxes, confidences, class_names = grounding_dino.inference(
+        image=pil_image,
+        text_prompt="plant.",
+        box_threshold=0.16,
+        text_threshold=0.15,
+    )
+
+    # filter out boxes that are bigger than 2 times the pot size
+    size_filter = (boxes[:, 2] - boxes[:, 0] < pot_width * 2) & (boxes[:, 3] - boxes[:, 1] < pot_width * 2)
+
+    boxes = boxes[size_filter]
+    confidences = confidences[size_filter]
+    class_names = class_names[size_filter]
+
+    masks, *_ = sam2.inference(
+        image=pil_image,
+        boxes=boxes,
+    )
+
+    # class_names to int
+    is_plant = class_names == "plant"
+    mask_areas = masks.sum(axis=(1, 2))
+    area_too_big = mask_areas < 0.6 * pot_width * pot_width
+    valid_plant_mask = is_plant & area_too_big
+    class_name_id_map = {name: i + 1 for i, name in enumerate(np.unique(class_names))}
+    class_ids = np.array([class_name_id_map[name] if valid else 0 for name, valid in zip(class_names, valid_plant_mask)])
+    labels = [
+        f"{name} ({confidence:.2f}) A: {int(area)}" for name, confidence, area in zip(class_names, confidences, mask_areas)
+    ]
+
+    detections = sv.Detections(
+        xyxy=boxes,  # (n, 4)
+        mask=masks.astype(bool),  # (n, h, w)
+        class_id=class_ids
+    )
+
+    box_annotator = sv.BoxAnnotator()
+    annotated_frame = box_annotator.annotate(scene=warped_image.copy(), detections=detections)
+
+    label_annotator = sv.LabelAnnotator()
+    annotated_frame = label_annotator.annotate(scene=annotated_frame, detections=detections, labels=labels)
+    debug_images["boxes"].append(annotated_frame)
+
+    mask_annotator = sv.MaskAnnotator()
+    annotated_frame = mask_annotator.annotate(scene=annotated_frame, detections=detections)
+    debug_images["masks"].append(annotated_frame)
+
+    sam_mask = masks[valid_plant_mask].any(axis=0)
+    sam_mask = (sam_mask * 255).astype(np.uint8)
+    debug_images["sam_mask"].append(sam_mask)
+
     lab = cv2.cvtColor(warped_image, cv2.COLOR_RGB2LAB)
-    matched = match_histograms(lab, reference, channel_axis=-1)
-    matched = cv2.cvtColor(matched, cv2.COLOR_LAB2RGB)
-    debug_images["matched"].append(matched)
 
-    colorspaces = pcv.visualize.colorspaces(rgb_img=matched, original_img=False)
-    debug_images["colorspaces"].append(colorspaces)
-
-    gray_image = pcv.rgb2gray_lab(rgb_img=matched, channel="a")
+    gray_image = pcv.rgb2gray_lab(rgb_img=lab, channel="a")
+    gray_image = cv2.bitwise_and(gray_image, gray_image, mask=sam_mask)
     debug_images["gray"].append(gray_image)
 
     gray_image = gray_image.astype(np.uint8)
     equalized = equalize_adapthist(gray_image, kernel_size=pot_width // 3, clip_limit=0.03)
     equalized = (equalized * 255).astype(np.uint8)
     debug_images["equalized"].append(equalized)
-    OFFSET = 50
-    mask = pcv.threshold.mean(gray_img=equalized, ksize=1 * pot_width, offset=OFFSET, object_type="dark")
+    mask = pcv.threshold.binary(equalized, threshold=127, object_type="light")
     debug_images["mask"].append(mask)
-    FILL_THRESHOLD = 0.001 * pot_width**2
-    mask = pcv.fill(mask, FILL_THRESHOLD)
-    debug_images["mask_filled"].append(mask)
+
     stats = []
     r = int(POT_WIDTH / 3)
     coords = []
@@ -85,7 +133,7 @@ def process_tray(image: np.ndarray, tray: Tray, debug_images: dict[str, list[np.
 
     roi = pcv.roi.multi(warped_image, coord=coords, radius=r)
     labeled_mask, num_plants = pcv.create_labels(mask=mask, rois=roi, roi_type="partial")
-    from plantcv.plantcv import params
+
     params.line_thickness = 1
 
     shape_image = pcv.analyze.size(img=warped_image, labeled_mask=labeled_mask, n_labels=num_plants)
