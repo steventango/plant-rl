@@ -62,78 +62,121 @@ def process_tray(image: np.ndarray, tray: Tray, debug_images: dict[str, list[np.
 
     pil_image = Image.fromarray(warped_image)
 
+    lab = cv2.cvtColor(warped_image, cv2.COLOR_RGB2LAB)
+    gray_image = pcv.rgb2gray_lab(rgb_img=lab, channel="a")
+    debug_images["gray"].append(gray_image)
+
+    gray_image = gray_image.astype(np.uint8)
+    equalized = equalize_adapthist(gray_image, kernel_size=pot_width // 3, clip_limit=0.1)
+    equalized = (equalized * 255).astype(np.uint8)
+
     boxes, confidences, class_names = grounding_dino.inference(
         image=pil_image,
         text_prompt="plant.",
-        box_threshold=0.16,
-        text_threshold=0.15,
+        box_threshold=0.05,
+        text_threshold=0.05,
     )
 
     # filter out boxes that are bigger than 2 times the pot size
     size_filter = (boxes[:, 2] - boxes[:, 0] < pot_width * 2) & (boxes[:, 3] - boxes[:, 1] < pot_width * 2)
+    # filter out boxes with area > 0.6 * pot_width * pot_width
+    # box_areas = (boxes[:, 2] - boxes[:, 0]) * (boxes[:, 3] - boxes[:, 1])
+    # size_filter &= box_areas < 0.6 * pot_width * pot_width
 
     boxes = boxes[size_filter]
     confidences = confidences[size_filter]
     class_names = class_names[size_filter]
 
-    masks, *_ = sam2.inference(
-        image=pil_image,
-        boxes=boxes,
-    )
-
-    # class_names to int
-    is_plant = class_names == "plant"
-    mask_areas = masks.sum(axis=(1, 2))
-    area_too_big = mask_areas < 0.6 * pot_width * pot_width
-    valid_plant_mask = is_plant & area_too_big
-    class_name_id_map = {name: i + 1 for i, name in enumerate(np.unique(class_names))}
-    class_ids = np.array([class_name_id_map[name] if valid else 0 for name, valid in zip(class_names, valid_plant_mask)])
-    labels = [
-        f"{name} ({confidence:.2f}) A: {int(area)}" for name, confidence, area in zip(class_names, confidences, mask_areas)
-    ]
-
-    detections = sv.Detections(
-        xyxy=boxes,  # (n, 4)
-        mask=masks.astype(bool),  # (n, h, w)
-        class_id=class_ids
-    )
-
-    box_annotator = sv.BoxAnnotator()
-    annotated_frame = box_annotator.annotate(scene=warped_image.copy(), detections=detections)
-
-    label_annotator = sv.LabelAnnotator()
-    annotated_frame = label_annotator.annotate(scene=annotated_frame, detections=detections, labels=labels)
-    debug_images["boxes"].append(annotated_frame)
-
-    mask_annotator = sv.MaskAnnotator()
-    annotated_frame = mask_annotator.annotate(scene=annotated_frame, detections=detections)
-    debug_images["masks"].append(annotated_frame)
-
-    sam_mask = masks[valid_plant_mask].any(axis=0)
-    sam_mask = (sam_mask * 255).astype(np.uint8)
-    debug_images["sam_mask"].append(sam_mask)
-
-    lab = cv2.cvtColor(warped_image, cv2.COLOR_RGB2LAB)
-
-    gray_image = pcv.rgb2gray_lab(rgb_img=lab, channel="a")
-    gray_image = cv2.bitwise_and(gray_image, gray_image, mask=sam_mask)
-    debug_images["gray"].append(gray_image)
-
-    gray_image = gray_image.astype(np.uint8)
-    equalized = equalize_adapthist(gray_image, kernel_size=pot_width // 3, clip_limit=0.03)
-    equalized = (equalized * 255).astype(np.uint8)
-    debug_images["equalized"].append(equalized)
-    mask = pcv.threshold.binary(equalized, threshold=127, object_type="light")
-    debug_images["mask"].append(mask)
-
-    stats = []
-    r = int(POT_WIDTH / 3)
     coords = []
+    sigma = pot_width / 2
     for j in range(tray.n_tall):
         for i in range(tray.n_wide):
             y = j * pot_width + pot_width // 2
             x = i * pot_width + pot_width // 2
             coords.append((x, y))
+
+            # box is in range if box center is inside the pot
+            box_centers = (boxes[:, 0] + boxes[:, 2]) / 2, (boxes[:, 1] + boxes[:, 3]) / 2
+            boxes_in_range = (
+                (box_centers[0] > x - pot_width // 2) & (box_centers[0] < x + pot_width // 2) &
+                (box_centers[1] > y - pot_width // 2) & (box_centers[1] < y + pot_width // 2)
+            )
+
+            # bonus for being relatively bigger than other boxes
+            box_areas = (boxes[:, 2] - boxes[:, 0]) * (boxes[:, 3] - boxes[:, 1])
+            confidences[boxes_in_range] *= box_areas[boxes_in_range] / box_areas.mean()
+
+            # RBF score for boxes closer to the center of the pot
+            score = np.exp(-((x - boxes[boxes_in_range, 0]) ** 2 + (y - boxes[boxes_in_range, 1]) ** 2) / (sigma / 2) ** 2)
+            confidences[boxes_in_range] *= score
+
+            # also add a bonus for being relatively more green than the rest of the pot
+            pot_greenness = np.mean(equalized[y - pot_width // 2:y + pot_width // 2, x - pot_width // 2:x + pot_width // 2])
+            for index in boxes_in_range.nonzero()[0]:
+                box = boxes[index]
+                # calculate the greenness of the box
+                box_greenness = np.mean(equalized[int(box[1]):int(box[3]), int(box[0]):int(box[2])])
+                confidences[index] *= 1 + (box_greenness - pot_greenness) / 255
+
+            # only keep the box with the highest confidence
+            if boxes_in_range.nonzero()[0].size == 0:
+                continue
+
+            max_confidence = confidences[boxes_in_range].max()
+            for index in boxes_in_range.nonzero()[0]:
+                if confidences[index] < max_confidence:
+                    confidences[index] = 0
+
+    class_name_id_map = {name: i + 1 for i, name in enumerate(np.unique(class_names))}
+    class_ids = np.array([class_name_id_map[name] for name in class_names])
+
+    detections = sv.Detections(
+        xyxy=boxes,  # (n, 4)
+        confidence=confidences,  # (n,)
+        class_id=class_ids
+    )
+    detections = detections.with_nms(threshold=0.01)
+    detections = detections[detections.confidence > 0]
+
+    if not len(detections.xyxy):
+        # TODO: better handling of no boxes
+        return [{
+            "area": 0,
+        }]
+
+    box_annotator = sv.BoxAnnotator()
+    annotated_frame = box_annotator.annotate(scene=warped_image.copy(), detections=detections)
+
+    label_annotator = sv.LabelAnnotator()
+    labels = [
+        f"{confidence:.2f}" for confidence in detections.confidence
+    ]
+    annotated_frame = label_annotator.annotate(scene=annotated_frame, detections=detections, labels=labels)
+    debug_images["boxes"].append(annotated_frame)
+
+    masks, *_ = sam2.inference(
+        image=pil_image,
+        boxes=detections.xyxy,
+    )
+
+    detections.mask = masks.astype(bool)
+
+    mask_annotator = sv.MaskAnnotator()
+    annotated_frame = mask_annotator.annotate(scene=warped_image.copy(), detections=detections)
+    debug_images["masks"].append(annotated_frame)
+
+    sam_mask = detections.mask.any(axis=0)
+    sam_mask = (sam_mask * 255).astype(np.uint8)
+    debug_images["sam_mask"].append(sam_mask)
+
+    debug_images["equalized"].append(equalized)
+    equalized = cv2.bitwise_and(equalized, equalized, mask=sam_mask)
+    debug_images["equalized_post_and"].append(equalized)
+    mask = pcv.threshold.binary(equalized, threshold=127, object_type="light")
+    debug_images["mask"].append(mask)
+
+    stats = []
+    r = int(POT_WIDTH / 3)
 
     roi = pcv.roi.multi(warped_image, coord=coords, radius=r)
     labeled_mask, num_plants = pcv.create_labels(mask=mask, rois=roi, roi_type="partial")
