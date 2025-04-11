@@ -7,13 +7,13 @@ import numpy as np
 import pandas as pd
 from PIL import Image
 from tqdm.contrib.concurrent import process_map
-
+from tqdm import tqdm
 from environments.PlantGrowthChamber.cv import process_image
 from environments.PlantGrowthChamber.zones import Rect, Tray, Zone
 
 
 def main():
-    method = "baseline"
+    method = "grounded-sam2"
     dfs = []
     zone = Zone(
         identifier=1,
@@ -60,16 +60,8 @@ def main():
                 paths.append(path)
                 timestamp_last = timestamp
 
-    results = process_map(
-        process_one_image,
-        [zone] * len(paths),
-        [out_dir] * len(paths),
-        paths,
-        max_workers=30,
-        chunksize=1,
-    )
-
-    for df in results:
+    for path in tqdm(paths):
+        df = process_one_image(zone, out_dir, path)
         dfs.append(df)
 
     df = pd.concat(dfs)
@@ -82,8 +74,8 @@ def process_one_image(zone, out_dir, path):
     image = np.array(Image.open(path))
     debug_images = {}
     df = process_image(image, zone.trays, debug_images)
-    debug_images["shape_image"].save(out_dir / f"{isoformat}_shape.jpg")
-    debug_images["warped"].save(out_dir / f"{isoformat}_warped.jpg")
+    for key, image in debug_images.items():
+        image.save(out_dir / f"{isoformat}_{key}.jpg")
     df["timestamp"] = timestamp
     return df
 
