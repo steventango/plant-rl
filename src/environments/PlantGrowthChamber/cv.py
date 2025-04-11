@@ -133,12 +133,6 @@ def process_tray(image: np.ndarray, tray: Tray, debug_images: dict[str, list[np.
         903: "too large",
     }
 
-    if not len(detections.xyxy):
-        # TODO: better handling of no boxes
-        return [{
-            "area": 0,
-        }]
-
     box_annotator = sv.BoxAnnotator(color_palette_custom)
     annotate_detections = detections[np.argsort(detections.class_id)[::-1]]
     annotated_frame = box_annotator.annotate(scene=warped_image.copy(), detections=annotate_detections)
@@ -151,9 +145,15 @@ def process_tray(image: np.ndarray, tray: Tray, debug_images: dict[str, list[np.
     debug_images["boxes"].append(annotated_frame)
 
     masks = np.zeros((len(detections), height, width), dtype=bool)
+    valid_detections = detections[detections.class_id < 901]
+    if not len(valid_detections):
+        # TODO: better handling of no boxes
+        return [{
+            "area": 0,
+        }]
     new_masks, *_ = sam2.inference(
         image=pil_image,
-        boxes=detections.xyxy[detections.class_id < 901],
+        boxes=valid_detections.xyxy,
     )
     masks[detections.class_id < 901] = new_masks.astype(bool)
 
