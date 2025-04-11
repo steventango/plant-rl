@@ -65,6 +65,37 @@ def test_process_zone_9():
     zone = get_zone(9)
     get_plant_area(SC_V3_TEST_DIR, zone)
 
+def test_process_v2_zone_2():
+    zone = Zone(
+            identifier=2,
+            camera_left_url=None,
+            camera_right_url="http://mitacs-zone02-camera02.ccis.ualberta.ca:8080/observation",
+            lightbar_url="http://mitacs-zone2.ccis.ualberta.ca:8080/action",
+            trays=[
+                Tray(
+                    n_wide=6,
+                    n_tall=3,
+                    rect=Rect(
+                        top_left=(483, 279),
+                        top_right=(1752, 300),
+                        bottom_left=(471, 969),
+                        bottom_right=(1791, 909),
+                    ),
+                ),
+                Tray(
+                    n_wide=6,
+                    n_tall=3,
+                    rect=Rect(
+                        top_left=(498, 1068),
+                        top_right=(1806, 990),
+                        bottom_left=(585, 1722),
+                        bottom_right=(1812, 1572),
+                    ),
+                ),
+            ],
+        )
+    get_plant_area(SC_V2_TEST_DIR, zone)
+
 
 def test_process_old_zone_1():
     zone = Zone(
