@@ -39,8 +39,8 @@ class GroundingDino:
             text_prompt += "."
 
         with (
+            torch.inference_mode(),
             torch.autocast(device_type=self.device, dtype=torch.bfloat16) if self.device == "cuda" else nullcontext(),
-            torch.no_grad(),
         ):
             inputs = self.processor(images=image, text=text_prompt, return_tensors="pt").to(self.device)
             outputs = self.model(**inputs)
@@ -72,8 +72,8 @@ class SAM2:
     def inference(self, image: Image, boxes: np.ndarray, multimask_output: bool = False):
         # Setup image for SAM2 and predict masks
         with (
+            torch.inference_mode(),
             torch.autocast(device_type=self.device, dtype=torch.bfloat16) if self.device == "cuda" else nullcontext(),
-            torch.no_grad(),
         ):
             self.sam2_predictor.set_image(np.array(image.convert("RGB")))
             masks, scores, logits = self.sam2_predictor.predict(
