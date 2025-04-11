@@ -58,8 +58,8 @@ def get_zone(indentifier: int):
                         rect=Rect(
                             top_left=(489, 927),
                             top_right=(1791, 978),
-                            bottom_left=(513, 1512),
-                            bottom_right=(1731, 1626),
+                            bottom_left=(523, 1532),
+                            bottom_right=(1728, 1669),
                         ),
                     ),
                 ],
@@ -87,8 +87,8 @@ def get_zone(indentifier: int):
                         rect=Rect(
                             top_left=(498, 1068),
                             top_right=(1806, 990),
-                            bottom_left=(585, 1722),
-                            bottom_right=(1812, 1572),
+                            bottom_left=(590, 1750),
+                            bottom_right=(1817, 1593),
                         ),
                     ),
                 ],
@@ -130,23 +130,23 @@ def get_zone(indentifier: int):
                 lightbar_url="http://mitacs-zone6.ccis.ualberta.ca:8080/action",
                 trays=[
                     Tray(
-                        n_wide=2,
+                        n_wide=3,
                         n_tall=6,
                         rect=Rect(
-                            top_left=(744, 327),
-                            top_right=(1191, 309),
-                            bottom_left=(783, 1602),
-                            bottom_right=(1194, 1623),
+                            top_left=(541, 450),
+                            top_right=(1199, 421),
+                            bottom_left=(624, 1676),
+                            bottom_right=(1212, 1717),
                         ),
                     ),
                     Tray(
-                        n_wide=2,
+                        n_wide=3,
                         n_tall=6,
                         rect=Rect(
-                            top_left=(1269, 339),
-                            top_right=(1731, 357),
-                            bottom_left=(1269, 1647),
-                            bottom_right=(1684, 1644),
+                            top_left=(1295, 429),
+                            top_right=(1961, 446),
+                            bottom_left=(1291, 1717),
+                            bottom_right=(1893, 1690),
                         ),
                     )
                 ],
@@ -178,13 +178,23 @@ def get_zone(indentifier: int):
                 lightbar_url="http://mitacs-zone9.ccis.ualberta.ca:8080/action",
                 trays=[
                     Tray(
-                        n_wide=4,
-                        n_tall=4,
+                        n_wide=3,
+                        n_tall=6,
                         rect=Rect(
-                            top_left=(366, 702),
-                            top_right=(1188, 698),
-                            bottom_left=(377, 1533),
-                            bottom_right=(1188, 1604),
+                            top_left=(609, 116),
+                            top_right=(1195, 77),
+                            bottom_left=(544, 1347),
+                            bottom_right=(1190, 1367),
+                        ),
+                    ),
+                    Tray(
+                        n_wide=3,
+                        n_tall=6,
+                        rect=Rect(
+                            top_left=(1286, 73),
+                            top_right=(1878, 111),
+                            bottom_left=(1295, 1360),
+                            bottom_right=(1953, 1333),
                         ),
                     )
                 ],
