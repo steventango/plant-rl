@@ -1,0 +1,17 @@
+{
+    "agent": "Spreadsheet-2",
+    "problem": "TemporalPlantGrowthChamber",
+    "total_steps": 240,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": 2
+        },
+        "experiment": {
+            "step_duration": 60,
+            "update_freq": 1
+        },
+        "filepath": "experiments/online/E6/P2/plant_reaction_test.xlsx",
+        "compatibility_mode": false
+    }
+}

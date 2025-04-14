@@ -79,7 +79,8 @@ def save_images(env, data_path: Path, save_keys):
     for key, image in env.images.items():
         if save_keys != "*" and key not in save_keys:
             continue
-        img_path = data_path / f"z{zone_identifier}" / f"{now}_{key}.png"
+        img_path = data_path / f"z{zone_identifier}" / f"{now}_{key}.jpg"
+        image = image.convert("RGB")
         image.save(img_path)
 
 
