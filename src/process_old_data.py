@@ -16,63 +16,25 @@ def main():
     method = "grounded-sam2"
     dfs = []
     zone = Zone(
-            identifier=1,
-            camera_left_url="http://mitacs-zone01-camera02.ccis.ualberta.ca:8080/observation",
-            camera_right_url=None,
-            lightbar_url="http://mitacs-zone1.ccis.ualberta.ca:8080/action",
-            trays=[
-                Tray(
-                    n_wide=6,
-                    n_tall=4,
-                    rect=Rect(
-                        top_left=(612, 44),
-                        top_right=(1882, 24),
-                        bottom_left=(560, 888),
-                        bottom_right=(1918, 908),
-                    ),
-                ),
-                Tray(
-                    n_wide=6,
-                    n_tall=4,
-                    rect=Rect(
-                        top_left=(552, 974),
-                        top_right=(1892, 1002),
-                        bottom_left=(604, 1742),
-                        bottom_right=(1814, 1800),
-                    ),
-                ),
-            ],
-        )
-    zone_poisson = Zone(
-        identifier=1,
-        camera_left_url="http://mitacs-zone01-camera02.ccis.ualberta.ca:8080/observation",
+        identifier=8,
+        camera_left_url="http://mitacs-zone08-camera01.ccis.ualberta.ca:8080/observation",
         camera_right_url=None,
-        lightbar_url="http://mitacs-zone1.ccis.ualberta.ca:8080/action",
+        lightbar_url="http://mitacs-zone8.ccis.ualberta.ca:8080/action",
         trays=[
             Tray(
-                n_wide=6,
-                n_tall=3,
+                n_wide=4,
+                n_tall=4,
                 rect=Rect(
-                    top_left=(528, 232),
-                    top_right=(1806, 195),
-                    bottom_left=(504, 843),
-                    bottom_right=(1815, 882),
+                    top_left=(1320, 164),
+                    top_right=(2154, 264),
+                    bottom_left=(1306, 1078),
+                    bottom_right=(2140, 1088),
                 ),
-            ),
-            Tray(
-                n_wide=6,
-                n_tall=3,
-                rect=Rect(
-                    top_left=(489, 927),
-                    top_right=(1791, 978),
-                    bottom_left=(513, 1512),
-                    bottom_right=(1731, 1626),
-                ),
-            ),
+            )
         ],
     )
     zone_dirs = [
-        Path("/data/plant-rl/online/E5/P0/Spreadsheet/z1"),
+        Path("/data/plant-rl/online/E5/P0/Spreadsheet/z8"),
         # Path("/data/plant-rl/online/E5/P1/Spreadsheet-Poisson/z1")
     ]
     out_dir = Path(f"tmp/{method}")
@@ -84,7 +46,7 @@ def main():
         timestamp_last = None
         for path in candidate_paths:
             timestamp = datetime.datetime.fromisoformat(path.stem.split("_")[0])
-            if timestamp < datetime.datetime(2025, 3, 18, 10, 15, 0):
+            if timestamp < datetime.datetime(2025, 3, 20, 18, 21, 1):
                 continue
             if timestamp_last is None or (timestamp - timestamp_last).total_seconds() >= 5 * 60:
                 paths.append(path)
