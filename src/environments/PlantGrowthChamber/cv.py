@@ -9,6 +9,7 @@ from PIL import Image
 from plantcv import plantcv as pcv
 from plantcv.plantcv import params
 from skimage.exposure import equalize_adapthist
+from skimage.filters import threshold_otsu
 from supervision.draw.color import DEFAULT_COLOR_PALETTE, ColorPalette
 
 from utils.grounded_sam2 import SAM2, GroundingDino
@@ -19,6 +20,7 @@ CUSTOM_COLOR_PALETTE = DEFAULT_COLOR_PALETTE * ceil(128 / len(DEFAULT_COLOR_PALE
 color_palette_custom = ColorPalette.from_hex(CUSTOM_COLOR_PALETTE)
 grounding_dino = GroundingDino()
 sam2 = SAM2()
+
 
 def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, Image.Image]):
     if not trays:
@@ -32,6 +34,40 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
     image = cv2.cvtColor(image, cv2.COLOR_RGBA2RGB)
     undistorted_image = cv2.undistort(image, camera_matrix, dist_coeffs)
     debug_images["undistorted"] = Image.fromarray(undistorted_image)
+
+    boxes, confidences, class_names = grounding_dino.inference(
+        image=Image.fromarray(undistorted_image),
+        text_prompt="pot with soil.",
+        box_threshold=0.05,
+        text_threshold=0.05,
+    )
+    num_pots_wide = sum(tray.n_wide for tray in trays)
+    num_pots_tall = sum(tray.n_tall for tray in trays)
+    size_filter = (boxes[:, 2] - boxes[:, 0] < undistorted_image.shape[1] / num_pots_wide *1.2) & (
+        boxes[:, 3] - boxes[:, 1] < undistorted_image.shape[0] / num_pots_tall *1.2
+    )
+
+    boxes = boxes[size_filter]
+    confidences = confidences[size_filter]
+    class_names = class_names[size_filter]
+
+    class_ids = np.arange(len(class_names), dtype=int)
+    detections = sv.Detections(xyxy=boxes, confidence=confidences, class_id=class_ids)  # (n, 4)  # (n,)
+    detections = detections.with_nms(threshold=0.01)
+    detections.class_id[detections.confidence < 0.05] = 902
+
+    box_annotator = sv.BoxAnnotator(color_palette_custom)
+    annotate_detections = detections[np.argsort(detections.class_id)[::-1]]
+    annotated_frame = box_annotator.annotate(scene=undistorted_image.copy(), detections=annotate_detections)
+
+    label_annotator = sv.LabelAnnotator(color_palette_custom)
+    labels = [
+        f"{class_id} {confidence:.2f}"
+        for class_id, confidence in zip(annotate_detections.class_id, annotate_detections.confidence)
+    ]
+    annotated_frame = label_annotator.annotate(scene=annotated_frame, detections=annotate_detections, labels=labels)
+    debug_images["pot_boxes"] = Image.fromarray(annotated_frame)
+
     for tray in trays:
         plant_stats = process_tray(undistorted_image, tray, debug_tray_images)
         all_plant_stats.extend(plant_stats)
@@ -74,7 +110,7 @@ def process_tray(image: np.ndarray, tray: Tray, debug_images: dict[str, list[np.
     debug_images["gray"].append(gray_image)
 
     gray_image = gray_image.astype(np.uint8)
-    equalized = equalize_adapthist(gray_image, kernel_size=pot_width // 3, clip_limit=0.1)
+    equalized = equalize_adapthist(gray_image, kernel_size=pot_width, clip_limit=0.01)
     equalized = (equalized * 255).astype(np.uint8)
 
     boxes, confidences, class_names = grounding_dino.inference(
@@ -86,7 +122,9 @@ def process_tray(image: np.ndarray, tray: Tray, debug_images: dict[str, list[np.
 
     # filter out boxes that are bigger than the pot size
     bigger_ratio = 1.2
-    size_filter = (boxes[:, 2] - boxes[:, 0] < pot_width * bigger_ratio) & (boxes[:, 3] - boxes[:, 1] < pot_width * bigger_ratio)
+    size_filter = (boxes[:, 2] - boxes[:, 0] < pot_width * bigger_ratio) & (
+        boxes[:, 3] - boxes[:, 1] < pot_width * bigger_ratio
+    )
 
     boxes = boxes[size_filter]
     confidences = confidences[size_filter]
@@ -104,12 +142,16 @@ def process_tray(image: np.ndarray, tray: Tray, debug_images: dict[str, list[np.
             # box is in range if box center is inside the pot
             box_centers = (boxes[:, 0] + boxes[:, 2]) / 2, (boxes[:, 1] + boxes[:, 3]) / 2
             boxes_in_range = (
-                (box_centers[0] > x - pot_width // 2) & (box_centers[0] < x + pot_width // 2) &
-                (box_centers[1] > y - pot_width // 2) & (box_centers[1] < y + pot_width // 2)
+                (box_centers[0] > x - pot_width // 2)
+                & (box_centers[0] < x + pot_width // 2)
+                & (box_centers[1] > y - pot_width // 2)
+                & (box_centers[1] < y + pot_width // 2)
             )
 
             # RBF score for boxes closer to the center of the pot
-            score = np.exp(-((x - boxes[boxes_in_range, 0]) ** 2 + (y - boxes[boxes_in_range, 1]) ** 2) / (sigma / 2) ** 2)
+            score = np.exp(
+                -((x - boxes[boxes_in_range, 0]) ** 2 + (y - boxes[boxes_in_range, 1]) ** 2) / (sigma / 2) ** 2
+            )
             confidences[boxes_in_range] *= score
 
             # only keep the box with the highest confidence
@@ -120,11 +162,7 @@ def process_tray(image: np.ndarray, tray: Tray, debug_images: dict[str, list[np.
             max_confidence_index = boxes_in_range.nonzero()[0][np.argmax(confidences[boxes_in_range])]
             class_ids[max_confidence_index] = i + j * tray.n_wide
 
-    detections = sv.Detections(
-        xyxy=boxes,  # (n, 4)
-        confidence=confidences,  # (n,)
-        class_id=class_ids
-    )
+    detections = sv.Detections(xyxy=boxes, confidence=confidences, class_id=class_ids)  # (n, 4)  # (n,)
     detections = detections.with_nms(threshold=0.01)
     detections.class_id[detections.confidence < 0.05] = 902
     reason_codes = {
@@ -139,7 +177,8 @@ def process_tray(image: np.ndarray, tray: Tray, debug_images: dict[str, list[np.
 
     label_annotator = sv.LabelAnnotator(color_palette_custom)
     labels = [
-        f"{'R' if class_id in reason_codes else ''}{class_id} {confidence:.2f}" for class_id, confidence in zip(annotate_detections.class_id, annotate_detections.confidence)
+        f"{'R' if class_id in reason_codes else ''}{class_id} {confidence:.2f}"
+        for class_id, confidence in zip(annotate_detections.class_id, annotate_detections.confidence)
     ]
     annotated_frame = label_annotator.annotate(scene=annotated_frame, detections=annotate_detections, labels=labels)
     debug_images["boxes"].append(annotated_frame)
@@ -148,9 +187,11 @@ def process_tray(image: np.ndarray, tray: Tray, debug_images: dict[str, list[np.
     valid_detections = detections[detections.class_id < 901]
     if not len(valid_detections):
         # TODO: better handling of no boxes
-        return [{
-            "area": 0,
-        }]
+        return [
+            {
+                "area": 0,
+            }
+        ]
     new_masks, *_ = sam2.inference(
         image=pil_image,
         boxes=valid_detections.xyxy,
@@ -160,36 +201,36 @@ def process_tray(image: np.ndarray, tray: Tray, debug_images: dict[str, list[np.
     detections.mask = masks
 
     mask_areas = np.sum(detections.mask, axis=(1, 2))
-    size_filter = mask_areas > 0.8 * pot_width * pot_width
+    size_filter = mask_areas > 0.7 * pot_width * pot_width
     detections.class_id[size_filter] = 1003
 
     mask_annotator = sv.MaskAnnotator(color_palette_custom)
     annotate_detections = detections[(detections.class_id < 901) | (detections.class_id > 1000)]
     # sort by class_id
     annotate_detections = annotate_detections[np.argsort(annotate_detections.class_id)[::-1]]
-    annotated_frame = mask_annotator.annotate(
-        scene=warped_image.copy(),
-        detections=annotate_detections
-    )
+    annotated_frame = mask_annotator.annotate(scene=warped_image.copy(), detections=annotate_detections)
     debug_images["masks"].append(annotated_frame)
 
     label_annotator = sv.LabelAnnotator(color_palette_custom)
     labels = [
-        f"{'R' if class_id in reason_codes else ''}{class_id} {confidence:.2f}" for class_id, confidence in zip(annotate_detections.class_id, annotate_detections.confidence)
+        f"{'R' if class_id in reason_codes else ''}{class_id} {confidence:.2f}"
+        for class_id, confidence in zip(annotate_detections.class_id, annotate_detections.confidence)
     ]
     annotated_frame = label_annotator.annotate(scene=annotated_frame, detections=annotate_detections, labels=labels)
 
-    sam_mask = detections.mask.any(axis=0)
-    sam_mask = (sam_mask * 255).astype(np.uint8)
-    debug_images["sam_mask"].append(sam_mask)
-
     debug_images["equalized"].append(equalized)
-    equalized = cv2.bitwise_and(equalized, equalized, mask=sam_mask)
-    debug_images["equalized_post_and"].append(equalized)
-    mask = pcv.threshold.binary(equalized, threshold=127, object_type="light")
+    otsu_threshold = threshold_otsu(equalized[detections.mask.any(axis=0)].reshape((1, -1)))
+    mask = pcv.threshold.binary(equalized, threshold=otsu_threshold, object_type="light")
     debug_images["mask"].append(mask)
 
     detections.mask &= mask.astype(bool)
+
+    mask_annotator = sv.MaskAnnotator(color_palette_custom)
+    annotate_detections = detections[(detections.class_id < 901) | (detections.class_id > 1000)]
+    # sort by class_id
+    annotate_detections = annotate_detections[np.argsort(annotate_detections.class_id)[::-1]]
+    annotated_frame = mask_annotator.annotate(scene=warped_image.copy(), detections=annotate_detections)
+    debug_images["masks2"].append(annotated_frame)
 
     stats = []
     r = int(POT_WIDTH / 3)
@@ -219,7 +260,6 @@ def process_tray(image: np.ndarray, tray: Tray, debug_images: dict[str, list[np.
                 row[variable] = value["value"]
         row["area"] /= SCALE**2
         stats.append(row)
-
 
     for row, coord in zip(stats, coords):
         x, y = coord
