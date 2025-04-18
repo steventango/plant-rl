@@ -23,7 +23,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.image = None
         self.time = None
         self._start_time = start_time
-        self.min_action = 0.35 * np.array([0.398, 0.762, 0.324, 0.000, 0.332, 0.606])
+        # self.min_action = 0.35 * np.array([0.398, 0.762, 0.324, 0.000, 0.332, 0.606])
         self.session = requests.Session()
         retries = Retry(total=5, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
         self.session.mount("http://", HTTPAdapter(max_retries=retries))
@@ -80,7 +80,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     def put_action(self, action):
         # clip action to be between min_action and 1
-        action = np.clip(action, self.min_action, 1)
+        # action = np.clip(action, self.min_action, 1)
+        # clip action to be have max value 1
+        action = np.clip(action, None, 1)
         action = np.tile(action, (2, 1))
         response = self.session.put(self.zone.lightbar_url, json={"array": action.tolist()}, timeout=10)
         response.raise_for_status()
