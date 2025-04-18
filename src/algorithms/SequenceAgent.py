@@ -12,7 +12,7 @@ class SequenceAgent(BaseAgent):
         super().__init__(observations, actions, params, collector, seed)
         self.steps = 0
         self.updates = 0
-        self.actions = json.loads(self.params["actions"])
+        self.actions = [np.array(action) for action in json.loads(self.params["actions"])]
 
     # ----------------------
     # -- RLGlue interface --
