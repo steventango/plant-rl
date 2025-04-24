@@ -10,6 +10,6 @@ class CVPlantGrowthChamberDiscrete(BaseProblem):
         super().__init__(exp, idx, collector)
 
         self.env = Env(**self.env_params)
-        self.actions = 4
+        self.actions = 10
         self.observations = (2,)
         self.gamma = 0.99
