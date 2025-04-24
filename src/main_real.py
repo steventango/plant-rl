@@ -72,15 +72,15 @@ def round_seconds(obj: datetime) -> datetime:
 
 
 def save_images(env, data_path: Path, save_keys):
-    now = datetime.now()
-    now = round_seconds(now)
-    now = now.isoformat().replace(':', '')
+    timestamp = env.time
+    time = datetime.fromtimestamp(timestamp)
+    isoformat = time.isoformat().replace(':', '')
     zone_identifier = env.zone.identifier
     images_path = data_path / f"z{zone_identifier}" / "images"
     for key, image in env.images.items():
         if save_keys != "*" and key not in save_keys:
             continue
-        img_path = images_path / f"{now}_{key}.jpg"
+        img_path = images_path / f"{isoformat}_{key}.jpg"
         image = image.convert("RGB")
         image.save(img_path, "JPEG", quality=90)
 
@@ -152,7 +152,7 @@ for idx in indices:
         if problem.exp_params.get("checkpoint", True):
             chk.save()
         interaction = glue.step()
-        collector.collect('time', time.time())
+        collector.collect('time', env.time)
         collector.collect('state', interaction.o)
         collector.collect('action', interaction.a)
         collector.collect('reward', interaction.r)
