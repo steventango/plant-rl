@@ -126,8 +126,7 @@ for action, ax in zip(range(num_actions), axs):
     ax.set_xticks(np.arange(0, len(times) + 1, hour_interval))  # Set ticks every hour
     ax.set_xticklabels([f"{int(t * 24)}" for t in times[::hour_interval]] + [24])  # Format as hours
     ax.set_yticks(np.arange(0, len(areas) + 1, 20))  # Set y ticks every 10 areas
-    ax.set_yticklabels([f"{area:.1f}" for area in areas[::20]] + [1])  # Format as float
-    ax.set_yticklabels(ax.get_yticklabels(), rotation=0)  # Rotate y ticks
+    ax.set_yticklabels([f"{area:.1f}" for area in areas[::20]] + [f"{1:.1f}"])  # Format as float
     ax.invert_yaxis()  # Invert the y-axis
 
 fig.suptitle("ESARSA(λ) N(s, a)", fontsize=16)
