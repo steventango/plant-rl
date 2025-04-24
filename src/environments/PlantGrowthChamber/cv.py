@@ -265,8 +265,8 @@ def infer_pot_positions(trays, debug_images, undistorted_image):
     )
     num_pots_wide = sum(tray.n_wide for tray in trays)
     num_pots_tall = sum(tray.n_tall for tray in trays)
-    size_filter = (boxes[:, 2] - boxes[:, 0] < undistorted_image.shape[1] / num_pots_wide *1.2) & (
-        boxes[:, 3] - boxes[:, 1] < undistorted_image.shape[0] / num_pots_tall *1.2
+    size_filter = (boxes[:, 2] - boxes[:, 0] < undistorted_image.shape[1] / num_pots_wide * 1.2) & (
+        boxes[:, 3] - boxes[:, 1] < undistorted_image.shape[0] / num_pots_tall * 1.2
     )
 
     boxes = boxes[size_filter]
