@@ -62,8 +62,7 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
     height, width = warped_image.shape[:2]
     pil_image = Image.fromarray(warped_image)
 
-    lab = cv2.cvtColor(warped_image, cv2.COLOR_RGB2LAB)
-    gray_image = pcv.rgb2gray_lab(rgb_img=lab, channel="a")
+    gray_image = cv2.cvtColor(warped_image, cv2.COLOR_RGB2GRAY)
     debug_images["gray"] = Image.fromarray(gray_image)
 
     gray_image = gray_image.astype(np.uint8)
