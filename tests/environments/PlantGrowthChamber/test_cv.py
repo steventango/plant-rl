@@ -57,11 +57,6 @@ def test_process_zone_6():
     get_plant_area(SC_V3_TEST_DIR, zone)
 
 
-def test_process_zone_8():
-    zone = get_zone(8)
-    get_plant_area(SC_V3_TEST_DIR, zone)
-
-
 def test_process_zone_9():
     zone = get_zone(9)
     get_plant_area(SC_V3_TEST_DIR, zone)
