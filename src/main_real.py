@@ -76,10 +76,11 @@ def save_images(env, data_path: Path, save_keys):
     now = round_seconds(now)
     now = now.isoformat().replace(':', '')
     zone_identifier = env.zone.identifier
+    images_path = data_path / f"z{zone_identifier}" / "images"
     for key, image in env.images.items():
         if save_keys != "*" and key not in save_keys:
             continue
-        img_path = data_path / f"z{zone_identifier}" / f"{now}_{key}.jpg"
+        img_path = images_path / f"{now}_{key}.jpg"
         image = image.convert("RGB")
         image.save(img_path, "JPEG", quality=90)
 
@@ -133,7 +134,8 @@ for idx in indices:
     chk.initial_value('episode', 0)
 
     context = exp.buildSaveContext(idx, base=args.save_path)
-    data_path = Path('data') / Path(context.resolve()).relative_to('results')
+    data_path = Path('/data') / Path(context.resolve()).relative_to('results')
+    images_save_keys = problem.exp_params.get("image_save_keys", default_save_keys)
     (data_path / f"z{env.zone.identifier}").mkdir(parents=True, exist_ok=True)
     data_path.mkdir(parents=True, exist_ok=True)
 
@@ -143,7 +145,7 @@ for idx in indices:
     # if we haven't started yet, then make the first interaction
     if glue.total_steps == 0:
         glue.start()
-        save_images(env, data_path, problem.exp_params.get("image_save_keys", default_save_keys))
+        save_images(env, data_path, images_save_keys)
 
     for step in range(glue.total_steps, exp.total_steps):
         collector.next_frame()
@@ -158,7 +160,7 @@ for idx in indices:
         for key, value in interaction.extra.items():
             collector.collect(key, value.astype(np.float64))
 
-        save_images(env, data_path, problem.exp_params.get("image_save_keys", default_save_keys))
+        save_images(env, data_path, images_save_keys)
 
         if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
             # allow agent to cleanup traces or other stateful episodic info
