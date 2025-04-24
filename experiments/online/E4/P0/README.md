@@ -1,7 +1,7 @@
 # Experiment E4 / Phase P0
 
 Keep seedlings alive with 12h daylight and 12h night. Turns out medium here
-corresponds is half of the intended value.
+is equal to half of the intended value.
 
 ## Environment
 ### PlantGrowthChamber
