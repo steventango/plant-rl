@@ -1,3 +1,4 @@
+from itertools import chain
 from pathlib import Path
 
 from PIL import Image
@@ -13,9 +14,6 @@ def migrate(path: Path):
     if not new_path.parent.exists():
         new_path.parent.mkdir(parents=True, exist_ok=True)
 
-    if new_path.exists():
-        return
-
     img = Image.open(path)
     img = img.convert("RGB")
     img.save(new_path, "JPEG", quality=90)
@@ -28,7 +26,12 @@ def migrate(path: Path):
     path.unlink()
 
 
-paths = sorted(Path("data/online/E6").glob("**/*.png"))
+paths = sorted(
+    chain(
+        Path("data/online/").glob("**/*.png"),
+        Path("data/online/").glob("**/*.jpg"),
+    )
+)
 
 thread_map(
     migrate,
