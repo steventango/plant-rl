@@ -143,12 +143,27 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
     masks = np.zeros((len(detections), height, width), dtype=bool)
     valid_detections = detections[detections.class_id < 901]
     if not len(valid_detections):
-        # TODO: better handling of no boxes
-        return [
-            {
-                "area": 0,
-            }
+        columns = [
+            "in_bounds",
+            "area",
+            "convex_hull_area",
+            "solidity",
+            "perimeter",
+            "width",
+            "height",
+            "longest_path",
+            "center_of_mass_x",
+            "center_of_mass_y",
+            "convex_hull_vertices",
+            "object_in_frame",
+            "ellipse_center_x",
+            "ellipse_center_y",
+            "ellipse_major_axis",
+            "ellipse_minor_axis",
+            "ellipse_angle",
+            "ellipse_eccentricity",
         ]
+        return pd.DataFrame([{col: 0 for col in columns} + {"plant_id": i + 1} for i in range(num_plants)])
     new_masks, *_ = sam2.inference(
         image=pil_image,
         boxes=valid_detections.xyxy,
