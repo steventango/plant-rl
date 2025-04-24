@@ -1,7 +1,6 @@
 # Experiment E4 / Phase P1
 
-Afternoon nap experiment. Turns out medium here corresponds is half of the
-intended value.
+Afternoon nap experiment. Turns out the medium value is half of the intended value.
 
 ## Environment
 ### PlantGrowthChamber
