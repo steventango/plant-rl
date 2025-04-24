@@ -1,0 +1,4 @@
+services:
+  devcontainer:
+    volumes:
+      - /extra-storage:/data:cached
