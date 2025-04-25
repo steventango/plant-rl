@@ -1,8 +1,13 @@
 import jax.numpy as jnp
-import pytest
 import matplotlib.pyplot as plt
 import numpy as np
-from utils.metrics import UnbiasedExponentialMovingAverage, iqm
+import pytest
+
+from utils.metrics import (
+    UnbiasedExponentialMovingAverage,
+    UnbiasedExponentialMovingWelford,
+    iqm,
+)
 
 
 class TestUnbiasedExponentialMovingAverage:
@@ -114,11 +119,54 @@ class TestUnbiasedExponentialMovingAverage:
             uema.total = (1 - beta) * uema.total + beta * value
         fig, ax = plt.subplots(1, 2)
         ax[0].plot(count_trace_history)
-        ax[0].set_xlabel('count_trace')
-        ax[1].plot(beta_history, label=f'last beta={beta_history[-1]:.2g}')
+        ax[0].set_xlabel("count_trace")
+        ax[1].plot(beta_history, label=f"last beta={beta_history[-1]:.2g}")
         ax[1].legend()
-        ax[1].set_xlabel('beta')
-        plt.savefig('tests/utils/plot_trace.jpg')
+        ax[1].set_xlabel("beta")
+        plt.savefig("tests/utils/plot_trace.jpg")
+
+
+class TestUnbiasedExponentialMovingWelford:
+    def test___init__(self):
+        metric = UnbiasedExponentialMovingWelford()
+        uema, uemv = metric.compute()
+        assert jnp.equal(uema, 0)
+        assert jnp.equal(uemv, 0)
+
+    def test_reset(self):
+        metric = UnbiasedExponentialMovingWelford()
+        metric.update(values=jnp.array([1, 2, 3, 4]))
+        metric.reset()
+        uema, uemv = metric.compute()
+        assert jnp.equal(uema, 0)
+        assert jnp.equal(uemv, 0)
+
+    def test_update(self):
+        metric = UnbiasedExponentialMovingWelford()
+        metric.update(values=jnp.array([1, 2, 3, 4]))
+
+    def test_compute(self):
+        metric = UnbiasedExponentialMovingWelford()
+        metric.update(values=1)
+        uema, uemv = metric.compute()
+        assert uema == pytest.approx(1)
+        assert uemv == pytest.approx(0)
+        metric.update(values=2)
+        uema, uemv = metric.compute()
+        assert uema == pytest.approx(1.500250)
+        assert uemv == pytest.approx(0.250000)
+        metric.update(values=3)
+        uema, uemv = metric.compute()
+        assert uema == pytest.approx(2.000667)
+        assert uemv == pytest.approx(0.666667)
+        metric.update(values=4)
+        uema, uemv = metric.compute()
+        assert uema == pytest.approx(2.501251)
+        assert uemv == pytest.approx(1.249999)
+        metric.update(values=jnp.array([3, 2, 1, 0]))
+        uema, uemv = metric.compute()
+        assert uema == pytest.approx(1.998997)
+        assert uemv == pytest.approx(1.501250)
 
 
 def test_iqm():

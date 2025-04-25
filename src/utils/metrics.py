@@ -37,7 +37,7 @@ class UnbiasedExponentialMovingAverage:
         """
         self.alpha = alpha
         self.shape = shape
-        self.reset() 
+        self.reset()
         self.default = 0.0   # or jnp.nan
 
     def reset(self) -> None:
@@ -61,6 +61,73 @@ class UnbiasedExponentialMovingAverage:
     def compute(self) -> jax.Array:
         """Compute and return the unbiased exponential moving average."""
         return self.total if self.count_trace > 0 else jnp.full(self.shape, self.default, dtype=jnp.float32)
+
+
+class UnbiasedExponentialMovingWelford:
+    """Unbiased Exponential Moving Welford.
+
+    Example usage::
+
+      >>> import jax.numpy as jnp
+
+      >>> uemw = UnbiasedExponentialMovingWelford()
+      >>> uemw.update(values=jnp.array([1, 2, 3, 4]))
+      >>> uemw.compute()
+      Array(2.501251, dtype=float32)
+      >>> uemw.update(values=jnp.array([1, 2, 3, 4]))
+      >>> uemw.compute()
+      Array(2.501251, dtype=float32)
+      >>> uemw.update(values=jnp.array([3, 2, 1, 0]))
+      >>> uemw.compute()
+      Array(1.998997, dtype=float32)
+      >>> uemw.reset()
+      >>> uemw.compute()
+      Array(nan, dtype=float32)
+    """
+
+    def __init__(self, shape: tp.Union[int, tp.Sequence[int]] = 1, alpha: float = 0.001) -> None:
+        """Initialize the UnbiasedExponentialMovingWelford with the given shape and smoothing factor.
+
+        Args:
+          shape: int or sequence of ints specifying the shape of the created array.
+          alpha: the smoothing factor. Defaults to ``0.001``.
+        """
+        self.alpha = alpha
+        self.shape = shape
+        self.reset()
+        self.default = 0.0   # or jnp.nan
+
+    def reset(self) -> None:
+        """Reset this ``UnbiasedExponentialMovingWelford``."""
+        self.mean = jnp.zeros(self.shape, dtype=jnp.float32)
+        self.m2 = jnp.zeros(self.shape, dtype=jnp.float32)
+        self.count_trace = jnp.array(0, dtype=jnp.int32)
+
+
+    def update(self, values: tp.Union[int, float, jax.Array]) -> None:
+        """In-place update this ``UnbiasedExponentialMovingWelford``. This
+        method will use ``values`` to update the metric.
+
+        Args:
+            values: the values we want to use to update this metric.
+        """
+        values = jnp.atleast_1d(values).astype(jnp.float32)
+        for value in values:
+            delta = value - self.mean
+            self.count_trace += self.alpha * (1 - self.count_trace)
+            beta = self.alpha / self.count_trace
+            self.mean = (1 - beta) * self.mean + beta * value
+            delta2 = value - self.mean
+            m2 = delta * delta2
+            self.m2 = (1 - beta) * self.m2 + beta * m2
+
+    def compute(self) -> jax.Array:
+        """Compute and return the unbiased exponential moving mean and variance."""
+        return (self.mean, self.m2) if self.count_trace > 0 else (
+            jnp.full(self.shape, self.default, dtype=jnp.float32),
+            jnp.full(self.shape, self.default, dtype=jnp.float32),
+        )
+
 
 def iqm(a: jax.Array, q: float) -> float:
     """
