@@ -5,14 +5,25 @@ import seaborn as sns
 from matplotlib.dates import AutoDateLocator, DateFormatter
 
 methods = [
-    "baseline",
     "grounded-sam2",
 ]
+
+def zscore(s, window, thresh=3, return_all=False):
+    roll = s.rolling(window=window, min_periods=1, center=False)
+    avg = roll.mean()
+    std = roll.std(ddof=0)
+    z = s.sub(avg).div(std)
+    m = z.between(-thresh, thresh)
+
+    if return_all:
+        return z, avg, std, m
+    return s.where(m, avg)
 
 
 # Set the style
 sns.set_theme(style="whitegrid")
-fig, axs = plt.subplots(len(methods), 1, figsize=(20, 10), sharex=True, sharey=True)
+fig, axs = plt.subplots(len(methods), 1, figsize=(20, 10), sharex=True, sharey=True, squeeze=False)
+axs = axs.flatten()
 # Set the date format
 date_format = DateFormatter("%Y-%m-%d %H:%M")
 plt.gca().xaxis.set_major_formatter(date_format)
@@ -32,7 +43,9 @@ for method, ax in zip(methods, axs):
 
     # Plot the data
     for col in df_pivot.columns:
-        ax.plot(df_pivot.index, df_pivot[col], label=col)
+        areas = df_pivot[col]
+        areas = zscore(areas, window=12, thresh=2)
+        ax.plot(df_pivot.index, areas, label=col)
     ax.set_title(f"Plant Area Over Time ({method})")
     ax.set_xlabel("Timestamp")
     ax.set_ylabel("Area")
