@@ -1,0 +1,17 @@
+{
+    "agent": "Spreadsheet3",
+    "problem": "TemporalPlantGrowthChamber",
+    "total_steps": 40320,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": 3
+        },
+        "experiment": {
+            "step_duration": 10,
+            "update_freq": 1
+        },
+        "filepath": "experiments/online/E7/P0/z3-0min-100ppfd-Balanced_optima12_12.xlsx",
+        "compatibility_mode": true
+    }
+}
