@@ -3,7 +3,6 @@ import shutil
 import sys
 
 sys.path.append(os.getcwd())
-
 import argparse
 import logging
 import socket
@@ -18,6 +17,7 @@ from PyExpUtils.collection.Sampler import Identity, Ignore, MovingAverage, Subsa
 from PyExpUtils.collection.utils import Pipe
 from PyExpUtils.results.sqlite import saveCollector
 
+import wandb
 from experiment import ExperimentModel
 from problems.registry import getProblem
 from utils.checkpoint import Checkpoint
@@ -65,11 +65,11 @@ indices = args.idxs
 Problem = getProblem(exp.problem)
 
 
-def round_seconds(obj: datetime) -> datetime:
-    if obj.microsecond >= 500_000:
-        obj += timedelta(seconds=1)
-    return obj.replace(microsecond=0)
-
+def expand(key, value):
+    if isinstance(value, (list, tuple, np.ndarray)):
+        return {f"{key}.{i}": v for i, v in enumerate(value)}
+    else:
+        return {key: value}
 
 def save_images(env, data_path: Path, save_keys):
     timestamp = env.time
@@ -139,12 +139,28 @@ for idx in indices:
     (data_path / f"z{env.zone.identifier}").mkdir(parents=True, exist_ok=True)
     data_path.mkdir(parents=True, exist_ok=True)
 
+    wandb_run = wandb.init(
+        entity="plant-rl",
+        project="online-experiments",
+        config=problem.params,
+    )
+
     # Run the experiment
     start_time = time.time()
 
     # if we haven't started yet, then make the first interaction
     if glue.total_steps == 0:
-        glue.start()
+        s, a = glue.start()
+        expanded_info = {}
+        for key, value in env.get_info().items():
+            expanded_info.update(expand(key, value))
+        wandb_run.log({
+            "time": env.time,
+            **expand("state", s),
+            **expand("action", a),
+            "steps": glue.num_steps,
+            **expanded_info,
+        })
         save_images(env, data_path, images_save_keys)
 
     for step in range(glue.total_steps, exp.total_steps):
@@ -159,6 +175,17 @@ for idx in indices:
         collector.collect('steps', glue.num_steps)
         for key, value in interaction.extra.items():
             collector.collect(key, value.astype(np.float64))
+        expanded_info = {}
+        for key, value in interaction.extra.items():
+            expanded_info.update(expand(key, value))
+        wandb_run.log({
+            "time": env.time,
+            **expand("state", interaction.o),
+            **expand("action", interaction.a),
+            "reward": interaction.r,
+            "steps": glue.num_steps,
+            **expanded_info,
+        })
 
         save_images(env, data_path, images_save_keys)
 
@@ -193,3 +220,4 @@ for idx in indices:
     # -- Saving --
     # ------------
     backup_and_save(exp, collector, idx, args.save_path)
+    wandb_run.finish()
