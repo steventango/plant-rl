@@ -74,9 +74,10 @@ def expand(key, value):
 def save_images(env, data_path: Path, save_keys):
     timestamp = env.time
     time = datetime.fromtimestamp(timestamp)
-    isoformat = time.isoformat().replace(':', '')
+    isoformat = time.isoformat(timespec='seconds').replace(':', '')
     zone_identifier = env.zone.identifier
     images_path = data_path / f"z{zone_identifier}" / "images"
+    images_path.mkdir(parents=True, exist_ok=True)
     for key, image in env.images.items():
         if save_keys != "*" and key not in save_keys:
             continue
