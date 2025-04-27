@@ -20,8 +20,8 @@ def get_camera():
 @app.get("/observation", response_class=Response)
 def read_observation(camera: Annotated[any, Depends(get_camera)]):
     with io.BytesIO() as buf:
-        camera.capture(buf, format='png')
+        camera.capture(buf, format="jpeg", quality=90)
         image_bytes = buf.getvalue()
 
-    headers = {"Content-Disposition": 'inline; filename="observation.png"'}
-    return Response(image_bytes, headers=headers, media_type="image/png")
+    headers = {"Content-Disposition": 'inline; filename="observation.jpg"'}
+    return Response(image_bytes, headers=headers, media_type="image/jpeg")
