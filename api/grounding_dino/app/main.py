@@ -1,8 +1,15 @@
-import torch, torchvision, PIL, io, base64, os
+import base64
+import io
+import os
 from concurrent.futures import ThreadPoolExecutor
+
 import litserve as ls
+import PIL
+import torch
+import torchvision
 
 precision = torch.bfloat16
+
 
 class ImageClassifierAPI(ls.LitAPI):
     def setup(self, device):
@@ -17,6 +24,7 @@ class ImageClassifierAPI(ls.LitAPI):
 
     def batch(self, inputs):
         print(len(inputs))
+
         def process_batch(image_data):
             image = base64.b64decode(image_data)
             pil_image = PIL.Image.open(io.BytesIO(image)).convert("RGB")
@@ -37,7 +45,10 @@ class ImageClassifierAPI(ls.LitAPI):
     def encode_response(self, output):
         return {"output": output}
 
+
 if __name__ == "__main__":
     api = ImageClassifierAPI()
-    server = ls.LitServer(api, accelerator="gpu", devices=1, max_batch_size=16, workers_per_device=8, batch_timeout=0.01)
+    server = ls.LitServer(
+        api, accelerator="gpu", devices=1, max_batch_size=16, workers_per_device=8, batch_timeout=0.01
+    )
     server.run(port=8000, num_api_servers=4)
