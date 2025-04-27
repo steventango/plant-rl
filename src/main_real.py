@@ -2,6 +2,8 @@ import os
 import shutil
 import sys
 
+import pandas as pd
+
 sys.path.append(os.getcwd())
 import argparse
 import logging
@@ -135,15 +137,25 @@ for idx in indices:
     chk.initial_value('episode', 0)
 
     context = exp.buildSaveContext(idx, base=args.save_path)
-    data_path = Path('/data') / Path(context.resolve()).relative_to('results')
+    agent_path = Path(context.resolve()).relative_to('results')
+    data_path = Path('/data') / agent_path
     images_save_keys = problem.exp_params.get("image_save_keys", default_save_keys)
     (data_path / f"z{env.zone.identifier}").mkdir(parents=True, exist_ok=True)
     data_path.mkdir(parents=True, exist_ok=True)
 
+    config = {
+        **problem.params,
+        "context": str(agent_path)
+    }
+
     wandb_run = wandb.init(
         entity="plant-rl",
-        project="online-experiments",
-        config=problem.params,
+        project="main",
+        notes=str(agent_path),
+        config=config,
+        settings=wandb.Settings(
+            x_stats_disk_paths=("/", "/data"),
+        ),
     )
 
     # Run the experiment
@@ -154,13 +166,18 @@ for idx in indices:
         s, a = glue.start()
         expanded_info = {}
         for key, value in env.get_info().items():
-            expanded_info.update(expand(key, value))
+            if isinstance(value, pd.DataFrame):
+                table = wandb.Table(dataframe=value)
+                expanded_info.update({key: table})
+            else:
+                expanded_info.update(expand(key, value))
         wandb_run.log({
             "time": env.time,
             **expand("state", s),
             **expand("action", a),
             "steps": glue.num_steps,
             **expanded_info,
+            "raw_image": wandb.Image(env.image),
         })
         save_images(env, data_path, images_save_keys)
 
@@ -178,7 +195,11 @@ for idx in indices:
             collector.collect(key, value.astype(np.float64))
         expanded_info = {}
         for key, value in interaction.extra.items():
-            expanded_info.update(expand(key, value))
+            if isinstance(value, pd.DataFrame):
+                table = wandb.Table(dataframe=value)
+                expanded_info.update({key: table})
+            else:
+                expanded_info.update(expand(key, value))
         wandb_run.log({
             "time": env.time,
             **expand("state", interaction.o),
@@ -186,6 +207,7 @@ for idx in indices:
             "reward": interaction.r,
             "steps": glue.num_steps,
             **expanded_info,
+            "raw_image": wandb.Image(env.image),
         })
 
         save_images(env, data_path, images_save_keys)
