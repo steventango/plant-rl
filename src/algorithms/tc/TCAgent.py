@@ -65,7 +65,7 @@ class TCAgent(BaseAgent):
             gamma=0,
             terminal=False,
         ))
-        return a
+        return a, {}
 
     def step(self, r: float, sp: np.ndarray | None, extra: Dict[str, Any]):
         a = -1
@@ -97,7 +97,7 @@ class TCAgent(BaseAgent):
                 gamma=exp.gamma,
             )
 
-        return a
+        return a, {}
 
     def end(self, r: float, extra: Dict[str, Any]):
         interaction = Timestep(

@@ -18,10 +18,10 @@ class ContinuousRandomAgent(BaseAgent):
     # -- RLGlue interface --
     # ----------------------
     def start(self, observation: np.ndarray):
-        return self.rng.uniform(self.low, self.high, self.actions)
+        return self.rng.uniform(self.low, self.high, self.actions), {}
 
     def step(self, reward: float, observation: np.ndarray | None, extra: Dict[str, Any]):
-        return self.rng.uniform(self.low, self.high, self.actions)
+        return self.rng.uniform(self.low, self.high, self.actions), {}
 
     def end(self, reward: float, extra: Dict[str, Any]):
         pass

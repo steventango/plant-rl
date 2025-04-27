@@ -163,9 +163,9 @@ for idx in indices:
 
     # if we haven't started yet, then make the first interaction
     if glue.total_steps == 0:
-        s, a = glue.start()
+        s, a, info = glue.start()
         expanded_info = {}
-        for key, value in env.get_info().items():
+        for key, value in info.items():
             if isinstance(value, pd.DataFrame):
                 table = wandb.Table(dataframe=value)
                 expanded_info.update({key: table})

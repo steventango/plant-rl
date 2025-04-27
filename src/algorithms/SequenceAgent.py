@@ -20,12 +20,12 @@ class SequenceAgent(BaseAgent):
     def start(self, observation: np.ndarray):
         action = self.actions[self.steps]
         self.steps += 1
-        return action
+        return action, {}
 
     def step(self, reward: float, observation: np.ndarray | None, extra: Dict[str, Any]):
         action = self.actions[self.steps]
         self.steps += 1
-        return action
+        return action, {}
 
     def end(self, reward: float, extra: Dict[str, Any]):
         pass
