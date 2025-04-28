@@ -14,6 +14,9 @@ from transformers import AutoModelForZeroShotObjectDetection
 class GroundingDinoAPI(ls.LitAPI):
     def setup(self, device, pretrained_model_name_or_path="IDEA-Research/grounding-dino-base"):
         self.device = device
+        if device == "cuda" and torch.cuda.get_device_properties(0).major >= 8:
+            torch.backends.cuda.matmul.allow_tf32 = True
+            torch.backends.cudnn.allow_tf32 = True
         self.processor = BatchGroundingDinoProcessor.from_pretrained(pretrained_model_name_or_path)
         self.model = AutoModelForZeroShotObjectDetection.from_pretrained(pretrained_model_name_or_path).to(self.device)
         self.pool = ThreadPoolExecutor(os.cpu_count())

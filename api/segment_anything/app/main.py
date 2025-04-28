@@ -14,6 +14,9 @@ from sam2.sam2_image_predictor import SAM2ImagePredictor
 class SegmentAnythingAPI(ls.LitAPI):
     def setup(self, device, sam2_model="facebook/sam2.1-hiera-small"):
         self.device = device
+        if device == "cuda" and torch.cuda.get_device_properties(0).major >= 8:
+            torch.backends.cuda.matmul.allow_tf32 = True
+            torch.backends.cudnn.allow_tf32 = True
         # Build SAM2 Image Predictor
         self.sam2_predictor = SAM2ImagePredictor.from_pretrained(sam2_model)
         self.pool = ThreadPoolExecutor(os.cpu_count())
