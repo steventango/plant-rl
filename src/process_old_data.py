@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from PIL import Image
 from tqdm import tqdm
+from tqdm.contrib.concurrent import process_map
 
 from environments.PlantGrowthChamber.cv import process_image
 from environments.PlantGrowthChamber.zones import Rect, Tray, Zone
@@ -36,10 +37,10 @@ def get_zone_from_config(config):
 
 
 def main():
-    datasets = Path("/data/plant-rl").glob("nazmus_exp/z11c1")
+    datasets = Path("/data").glob("nazmus_exp/z11c1")
     datasets = sorted(datasets)
 
-    pipeline_version = "v3.3.2"
+    pipeline_version = "v3.3.3"
     for dataset in datasets:
         with open(next(dataset.rglob("config.json"))) as f:
             config = json.load(f)
@@ -54,12 +55,19 @@ def main():
         out_dir_images.mkdir(exist_ok=True, parents=True)
         paths = sorted((dataset / "images").glob("*.jpg"))[::2]
 
-        dfs = []
-        for i, path in tqdm(enumerate(paths), total=len(paths)):
-            df = process_one_image(zone, out_dir_images, path, i)
-            dfs.append(df)
+        # Create list of arguments for parallel processing
+        process_args = [(zone, out_dir_images, path, i) for i, path in enumerate(paths)]
 
-        new_df = pd.concat(dfs)
+        # Use process_map to parallelize the processing
+        results = process_map(
+            process_one_image,
+            process_args,
+            max_workers=4,
+            chunksize=1,
+        )
+
+        # Collect results
+        new_df = pd.concat(results)
 
         if raw_df.empty:
             # if raw_df is empty, just save new_df
@@ -74,7 +82,7 @@ def main():
         raw_df = raw_df.drop(columns=cols_to_drop)
         # TODO: temporary
         # if min plant_id is 0, add 1 to all plant_ids
-        if  raw_df["plant_id"].min() == 0:
+        if raw_df["plant_id"].min() == 0:
             raw_df["plant_id"] += 1
         df = pd.merge(
             raw_df,
@@ -86,7 +94,8 @@ def main():
         df.to_csv(out_dir / "all.csv", index=False)
 
 
-def process_one_image(zone, out_dir, path, index):
+def process_one_image(args):
+    zone, out_dir, path, index = args
     isoformat = path.stem.split("_")[0]
     image = np.array(Image.open(path))
     debug_images = {}
