@@ -1,24 +1,33 @@
-# Lightbar Server
+# GroundingDino Server
 
-This starts a FastAPI server that controls the lightbar.
+This starts a LitServe server that serves the GroundingDino model. The server is set up to run in a Docker container. GroundingDino is a model for performing zero-shot object detection by providing text prompts.
 
 ## Installation
 ```bash
-rsync -azP api/install-docker-buster.sh zone8:~/Desktop/
-ssh zone8 -t "cd ~/Desktop && ./install-docker-buster.sh"
-rsync -azP api/lightbar/ zone8:~/Desktop/lightbar
-ssh zone8 -t "cd ~/Desktop/lightbar && echo 'ZONE=8' > .env && docker compose up -d"
+docker compose up -d grounding-dino
 ```
-
-## Update
-```bash
-rsync -azP api/lightbar/ zone8:~/Desktop/lightbar
-ssh zone8 -t "cd ~/Desktop/lightbar && docker compose up -d"
-```
-
 
 ## Usage
+
+### API Endpoint
+
+```
+POST http://grounding-dino:8000/predict
+```
+
+### Request Format
+
+The API accepts a JSON payload with the following parameters:
+
+- `image_data`: Base64 encoded image string
+- `text_prompt`: Text description of the objects to detect
+- `threshold`: Detection confidence threshold (optional, default value depends on model configuration)
+- `text_threshold`: Text confidence threshold (optional, default value depends on model configuration)
+
+### Example cURL Request
+
 ```bash
-curl http://mitacs-zone8.ccis.ualberta.ca:8080/action -X PUT -H "Content-Type: application/json" -d '{"array": [[1.0, 1.0, 1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]]}'
-curl http://mitacs-zone8.ccis.ualberta.ca:8080/action/latest
+curl -X POST http://grounding-dino:8000/predict \
+-H "Content-Type: application/json" \
+-d '{"image_data": "base64_encoded_image", "text_prompt": "plant. leaf", "threshold": 0.3, "text_threshold": 0.25}'
 ```
