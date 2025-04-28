@@ -14,9 +14,9 @@ from utils.metrics import iqm
 
 TEST_DIR = Path(__file__).parent.parent.parent / "test_data"
 OLD_TEST_DIR = TEST_DIR / "old"
-SC_TEST_DIR = TEST_DIR / "Spreadsheet-C"
-SC_V2_TEST_DIR = TEST_DIR / "Spreadsheet-C-v2"
-SC_V3_TEST_DIR = TEST_DIR / "Spreadsheet-C-v3"
+E4_TEST_DIR = TEST_DIR / "Spreadsheet-C"
+E5_TEST_DIR = TEST_DIR / "Spreadsheet-C-v2"
+E6_TEST_DIR = TEST_DIR / "Spreadsheet-C-v3"
 
 
 
@@ -43,25 +43,25 @@ def get_plant_area(test_dir: Path, zone: Zone):
     plot_area_comparison(df, out_dir)
 
 
-def test_process_zone_1():
+def test_process_E6_zone_1():
     zone = get_zone(1)
-    get_plant_area(SC_V3_TEST_DIR, zone)
+    get_plant_area(E6_TEST_DIR, zone)
 
-def test_process_zone_2():
+def test_process_E6_zone_2():
     zone = get_zone(2)
-    get_plant_area(SC_V3_TEST_DIR, zone)
+    get_plant_area(E6_TEST_DIR, zone)
 
 
-def test_process_zone_6():
+def test_process_E6_zone_6():
     zone = get_zone(6)
-    get_plant_area(SC_V3_TEST_DIR, zone)
+    get_plant_area(E6_TEST_DIR, zone)
 
 
-def test_process_zone_9():
+def test_process_E6_zone_9():
     zone = get_zone(9)
-    get_plant_area(SC_V3_TEST_DIR, zone)
+    get_plant_area(E6_TEST_DIR, zone)
 
-def test_process_v2_zone_1():
+def test_process_E5_zone_1():
     zone = Zone(
         identifier=1,
         camera_left_url="http://mitacs-zone01-camera02.ccis.ualberta.ca:8080/observation",
@@ -90,9 +90,9 @@ def test_process_v2_zone_1():
             ),
         ],
     )
-    get_plant_area(SC_V2_TEST_DIR, zone)
+    get_plant_area(E5_TEST_DIR, zone)
 
-def test_process_v2_zone_2():
+def test_process_E5_zone_2():
     zone = Zone(
             identifier=2,
             camera_left_url=None,
@@ -121,10 +121,10 @@ def test_process_v2_zone_2():
                 ),
             ],
         )
-    get_plant_area(SC_V2_TEST_DIR, zone)
+    get_plant_area(E5_TEST_DIR, zone)
 
 
-def test_process_old_zone_1():
+def test_process_E4_zone_1():
     zone = Zone(
         identifier=1,
         camera_left_url="http://mitacs-zone01-camera02.ccis.ualberta.ca:8080/observation",
@@ -153,10 +153,10 @@ def test_process_old_zone_1():
             ),
         ],
     )
-    get_plant_area(SC_TEST_DIR, zone)
+    get_plant_area(E4_TEST_DIR, zone)
 
 
-def test_process_old_zone_6():
+def test_process_E4_zone_6():
     zone = Zone(
         identifier=6,
         camera_left_url="http://mitacs-zone06-camera01.ccis.ualberta.ca:8080/observation",
@@ -175,10 +175,10 @@ def test_process_old_zone_6():
             )
         ],
     )
-    get_plant_area(SC_TEST_DIR, zone)
+    get_plant_area(E4_TEST_DIR, zone)
 
 
-def test_process_old_zone_3():
+def test_process_E4_zone_3():
     zone = Zone(
         identifier=3,
         camera_left_url="http://mitacs-zone03-camera01.ccis.ualberta.ca:8080/observation",
