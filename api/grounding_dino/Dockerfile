@@ -7,4 +7,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["lightning", "serve", "app/main.py", "--local"]
+CMD ["lightning", "deploy", "app/main.py", "--local"]

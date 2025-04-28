@@ -15,7 +15,7 @@ def encode_image(image_path):
         encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
     return encoded_string
 
-def send_request(image_path, text_prompt="cat, dog", box_threshold=0.3, text_threshold=0.25, server_url="http://localhost:8000/predict"):
+def send_request(image_path, text_prompt="cat, dog", box_threshold=0.3, text_threshold=0.25, server_url="http://localhost:8932/predict"):
     """Sends a POST request to the Grounding Dino API with the base64 encoded image and text prompt."""
     try:
         base64_image = encode_image(image_path)
@@ -183,10 +183,10 @@ def visualize_detections(image_path, result, output_path=None):
         label_annotator = sv.LabelAnnotator()
 
         # Create labels dictionary (class_id -> label text)
-        labels = {
-            class_id: f"{text_labels[i]} {confidence[i]:.2f}"
+        labels = [
+            f"{text_labels[i]} {confidence[i]:.2f}"
             for i, class_id in enumerate(class_ids)
-        }
+        ]
 
         # First annotate boxes
         annotated_image = box_annotator.annotate(
@@ -214,7 +214,7 @@ def visualize_detections(image_path, result, output_path=None):
 
 if __name__ == "__main__":
     image_path = "cat.jpg"  # Make sure cat.jpg is in the same directory, or provide full path.
-    server_url = "http://localhost:8000/predict" # Or the address where your server is running
+    server_url = "http://grounding-dino:8000/predict" # Or the address where your server is running
 
     # Example 1: Basic request with default parameters
     result = send_request(image_path,text_prompt="tail", server_url=server_url)

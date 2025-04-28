@@ -8,3 +8,12 @@ services:
               count: 1
               capabilities:
                 - gpu
+  grounding-dino:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu

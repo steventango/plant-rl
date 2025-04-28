@@ -10,7 +10,8 @@
 	],
 	"service": "devcontainer",
 	"runServices": [
-		"devcontainer"
+		"devcontainer",
+		"grounding-dino"
 	],
 	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 	// Features to add to the dev container. More info: https://containers.dev/features.

@@ -91,13 +91,10 @@ class GroundingDinoAPI(ls.LitAPI):
             "boxes": detection["boxes"].cpu().numpy().tolist(),
             "scores": detection["scores"].cpu().numpy().tolist(),
             "text_labels": detection["text_labels"],
-            "labels": detection["labels"],
         }
 
 
 if __name__ == "__main__":
     api = GroundingDinoAPI()
-    server = ls.LitServer(
-        api, accelerator="gpu", devices=1, max_batch_size=16, workers_per_device=1, batch_timeout=0.01
-    )
+    server = ls.LitServer(api, max_batch_size=16, batch_timeout=0.01, generate_client_file=False)
     server.run(port=8000, num_api_servers=4)
