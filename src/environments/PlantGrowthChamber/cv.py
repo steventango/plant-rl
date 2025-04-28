@@ -77,7 +77,7 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
     )
 
     # filter out boxes that are bigger than the pot size
-    bigger_ratio = 1.2
+    bigger_ratio = 1.5
     size_filter = (boxes[:, 2] - boxes[:, 0] < pot_width * bigger_ratio) & (
         boxes[:, 3] - boxes[:, 1] < pot_width * bigger_ratio
     )
@@ -124,7 +124,6 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
     reason_codes = {
         901: "relative low confidence",
         902: "low confidence",
-        903: "too large",
     }
 
     box_annotator = sv.BoxAnnotator(color_palette_custom)
