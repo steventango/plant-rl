@@ -1,9 +1,12 @@
-from collections import defaultdict
+import base64
+import io
+import json
 from math import ceil
 
 import cv2
 import numpy as np
 import pandas as pd
+import requests
 import supervision as sv
 from PIL import Image
 from plantcv import plantcv as pcv
@@ -12,14 +15,63 @@ from skimage.exposure import equalize_adapthist
 from skimage.filters import threshold_otsu
 from supervision.draw.color import DEFAULT_COLOR_PALETTE, ColorPalette
 
-from utils.grounded_sam2 import SAM2, GroundingDino
+from utils.grounded_sam2 import SAM2
 
 from .zones import POT_HEIGHT, POT_WIDTH, SCALE, Tray
 
 CUSTOM_COLOR_PALETTE = DEFAULT_COLOR_PALETTE * ceil(128 / len(DEFAULT_COLOR_PALETTE)) + ["#808080"] * 1000
 color_palette_custom = ColorPalette.from_hex(CUSTOM_COLOR_PALETTE)
-grounding_dino = GroundingDino()
+
 sam2 = SAM2()
+
+
+def call_grounding_dino_api(
+    image, text_prompt, threshold=0.05, text_threshold=0.05, server_url="http://grounding-dino:8000/predict"
+):
+    """
+    Call the Grounding DINO API with an image and text prompt
+
+    Args:
+        image: PIL Image to be processed
+        text_prompt: Text prompt for object detection
+        threshold: Confidence threshold for boxes
+        text_threshold: Text threshold
+        server_url: URL of the Grounding DINO API server
+
+    Returns:
+        boxes: Numpy array of boxes in format [x1, y1, x2, y2]
+        confidences: Numpy array of confidence scores
+        class_names: List of detected class names
+    """
+
+    buffer = io.BytesIO()
+    image.save(buffer, format="JPEG")
+    img_str = base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+    # Prepare the payload
+    payload = json.dumps(
+        {
+            "image_data": img_str,
+            "text_prompt": text_prompt,
+            "threshold": threshold,
+            "text_threshold": text_threshold,
+        }
+    )
+
+    headers = {"Content-Type": "application/json"}
+
+    try:
+        response = requests.post(server_url, data=payload, headers=headers)
+        response.raise_for_status()
+        result = response.json()
+        boxes = np.array(result["boxes"])
+        confidences = np.array(result["scores"])
+        class_names = result["text_labels"]
+
+        return boxes, confidences, class_names
+    except Exception as e:
+        print(f"Error calling Grounding DINO API: {e}")
+        return np.array([]), np.array([]), []
 
 
 def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, Image.Image]):
@@ -69,12 +121,16 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
     equalized = equalize_adapthist(gray_image, kernel_size=pot_width, clip_limit=0.01)
     equalized = (equalized * 255).astype(np.uint8)
 
-    boxes, confidences, class_names = grounding_dino.inference(
+    # Replace direct grounding_dino.inference() call with API call
+    boxes, confidences, class_names = call_grounding_dino_api(
         image=pil_image,
         text_prompt="plant.",
-        box_threshold=0.05,
+        threshold=0.05,
         text_threshold=0.05,
     )
+
+    class_ids = np.full(len(class_names), 901, dtype=int)
+    detections = sv.Detections(xyxy=boxes, confidence=confidences, class_id=class_ids)
 
     # filter out boxes that are bigger than the pot size
     bigger_ratio = 1.5
@@ -82,10 +138,7 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
         boxes[:, 3] - boxes[:, 1] < pot_width * bigger_ratio
     )
 
-    boxes = boxes[size_filter]
-    confidences = confidences[size_filter]
-    class_names = class_names[size_filter]
-    class_ids = np.full(len(class_names), 901, dtype=int)
+    detections.class_id[~size_filter] = 903
 
     coords = []
     sigma = pot_width
@@ -116,14 +169,14 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
 
             # assign class_ids to the box with the highest confidence
             max_confidence_index = boxes_in_range.nonzero()[0][np.argmax(confidences[boxes_in_range])]
-            class_ids[max_confidence_index] = i + j * n_wide
+            detections.class_id[max_confidence_index] = i + j * n_wide
 
-    detections = sv.Detections(xyxy=boxes, confidence=confidences, class_id=class_ids)  # (n, 4)  # (n,)
     detections = detections.with_nms(threshold=0.01)
     detections.class_id[detections.confidence < 0.05] = 902
     reason_codes = {
         901: "relative low confidence",
         902: "low confidence",
+        903: "too big",
     }
 
     box_annotator = sv.BoxAnnotator(color_palette_custom)
@@ -211,9 +264,10 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
     debug_images["shape_image"] = Image.fromarray(shape_image)
 
     stats = []
+    area_map = {}
     for sample, variables in pcv.outputs.observations.items():
         row = {}
-        plant_num = int(sample.removeprefix("default_"))
+        plant_num = int(sample.removeprefix("default_")) - 1
         row["plant_id"] = plant_num
 
         for variable, value in variables.items():
@@ -224,17 +278,19 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
             else:
                 row[variable] = value["value"]
         row["area"] /= SCALE**2
+        area_map[plant_num] = row["area"]
         stats.append(row)
 
     # convert all_plant_stats to pandas dataframe
     df = pd.DataFrame(stats)
 
     # annotate with area
-    labels = [
-        f"Area: {area:.2f} mm^2"
-        for area in df["area"]
-    ]
-    label_annotator = sv.LabelAnnotator(color_palette_custom)
+    labels = [f"{plant_id}: {area_map.get(plant_id, 0):.2f} mm²" for plant_id in annotate_detections.class_id]
+    label_annotator = sv.RichLabelAnnotator(
+        color_palette_custom,
+        font_path="/usr/share/fonts/truetype/dejavu/DejaVuSans",
+        font_size=16,
+    )
     annotated_frame = label_annotator.annotate(scene=annotated_frame, detections=annotate_detections, labels=labels)
 
     debug_images["masks2"] = Image.fromarray(annotated_frame)
@@ -242,12 +298,13 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
 
 
 def infer_pot_positions(trays, debug_images, undistorted_image):
-    boxes, confidences, class_names = grounding_dino.inference(
+    boxes, confidences, class_names = call_grounding_dino_api(
         image=Image.fromarray(undistorted_image),
         text_prompt="pot with soil.",
-        box_threshold=0.05,
+        threshold=0.05,
         text_threshold=0.05,
     )
+
     num_pots_wide = sum(tray.n_wide for tray in trays)
     num_pots_tall = sum(tray.n_tall for tray in trays)
     size_filter = (boxes[:, 2] - boxes[:, 0] < undistorted_image.shape[1] / num_pots_wide * 1.2) & (
