@@ -40,10 +40,10 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
     for tray in trays:
         warped_tray_image = warp(undistorted_image, tray)
         warped_tray_images.append(warped_tray_image)
-    images = np.array(warped_tray_images)
+    images = warped_tray_images
     if len(images) > 1:
         # stack images on the longest axis
-        if images.shape[1] > images.shape[2]:
+        if images[0].shape[0] > images[0].shape[1]:
             warped_image = np.hstack(images)
             n_tall = max(tray.n_tall for tray in trays)
             n_wide = sum(tray.n_wide for tray in trays)
