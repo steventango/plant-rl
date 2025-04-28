@@ -7,8 +7,8 @@ from contextlib import nullcontext
 import litserve as ls
 import torch
 from PIL import Image
-from transformers import AutoModelForZeroShotObjectDetection
 from processing_grounding_dino import BatchGroundingDinoProcessor
+from transformers import AutoModelForZeroShotObjectDetection
 
 
 class GroundingDinoAPI(ls.LitAPI):
@@ -56,7 +56,7 @@ class GroundingDinoAPI(ls.LitAPI):
         images = [item["image"] for item in processed_items]
         text_prompts = [item["text_prompt"] for item in processed_items]
         thresholds = [item["box_threshold"] for item in processed_items]
-        text_thresholds =[item["text_threshold"] for item in processed_items]
+        text_thresholds = [item["text_threshold"] for item in processed_items]
         target_sizes = [item["target_size"] for item in processed_items]
 
         # Return lists directly
@@ -97,5 +97,7 @@ class GroundingDinoAPI(ls.LitAPI):
 
 if __name__ == "__main__":
     api = GroundingDinoAPI()
-    server = ls.LitServer(api, accelerator="gpu", devices=1, max_batch_size=16, workers_per_device=1, batch_timeout=0.01)
+    server = ls.LitServer(
+        api, accelerator="gpu", devices=1, max_batch_size=16, workers_per_device=1, batch_timeout=0.01
+    )
     server.run(port=8000, num_api_servers=4)

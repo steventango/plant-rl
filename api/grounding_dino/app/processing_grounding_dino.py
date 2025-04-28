@@ -1,16 +1,21 @@
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 
 from transformers.image_transforms import center_to_corners_format
-from transformers.models.grounding_dino.processing_grounding_dino import DictWithDeprecationWarning, GroundingDinoProcessor, get_phrases_from_posmap
+from transformers.models.grounding_dino.processing_grounding_dino import (
+    DictWithDeprecationWarning,
+    GroundingDinoProcessor,
+    get_phrases_from_posmap,
+)
 from transformers.utils import TensorType, is_torch_available
 from transformers.utils.deprecation import deprecate_kwarg
-
 
 if is_torch_available():
     import torch
 
 if TYPE_CHECKING:
-    from transformers.models.grounding_dino.modeling_grounding_dino import GroundingDinoObjectDetectionOutput
+    from transformers.models.grounding_dino.modeling_grounding_dino import (
+        GroundingDinoObjectDetectionOutput,
+    )
 
 
 AnnotationType = Dict[str, Union[int, str, List[Dict]]]
@@ -86,7 +91,9 @@ class BatchGroundingDinoProcessor(GroundingDinoProcessor):
             batch_boxes = batch_boxes * scale_fct[:, None, :]
 
         results = []
-        for idx, (scores, boxes, probs, threshold, text_threshold) in enumerate(zip(batch_scores, batch_boxes, batch_probs, thresholds, text_thresholds)):
+        for idx, (scores, boxes, probs, threshold, text_threshold) in enumerate(
+            zip(batch_scores, batch_boxes, batch_probs, thresholds, text_thresholds)
+        ):
             keep = scores > threshold
             scores = scores[keep]
             boxes = boxes[keep]
