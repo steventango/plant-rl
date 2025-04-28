@@ -17,13 +17,13 @@ AnnotationType = Dict[str, Union[int, str, List[Dict]]]
 
 
 class BatchGroundingDinoProcessor(GroundingDinoProcessor):
-    @deprecate_kwarg("box_threshold", new_name="threshold", version="4.51.0")
+    @deprecate_kwarg("box_thresholds", new_name="threshold", version="4.51.0")
     def post_process_grounded_object_detection(
         self,
         outputs: "GroundingDinoObjectDetectionOutput",
         input_ids: Optional[TensorType] = None,
-        threshold: float = 0.25,
-        text_threshold: float = 0.25,
+        thresholds: Union[float, List[float], TensorType] = 0.25,
+        text_thresholds: Union[float, List[float], TensorType] = 0.25,
         target_sizes: Optional[Union[TensorType, List[Tuple]]] = None,
         text_labels: Optional[List[List[str]]] = None,
     ):
@@ -36,10 +36,12 @@ class BatchGroundingDinoProcessor(GroundingDinoProcessor):
                 Raw outputs of the model.
             input_ids (`torch.LongTensor` of shape `(batch_size, sequence_length)`, *optional*):
                 The token ids of the input text. If not provided will be taken from the model output.
-            threshold (`float`, *optional*, defaults to 0.25):
-                Threshold to keep object detection predictions based on confidence score.
-            text_threshold (`float`, *optional*, defaults to 0.25):
-                Score threshold to keep text detection predictions.
+            thresholds (`float`, `List[float]`, or `torch.Tensor`, *optional*, defaults to 0.25):
+                Threshold(s) to keep object detection predictions based on confidence score. Can be a single float,
+                a list of floats (one per batch), or a tensor of shape `(batch_size,)`.
+            text_thresholds (`float`, `List[float]`, or `torch.Tensor`, *optional*, defaults to 0.25):
+                Score threshold(s) to keep text detection predictions. Can be a single float, a list of floats
+                (one per batch), or a tensor of shape `(batch_size,)`.
             target_sizes (`torch.Tensor` or `List[Tuple[int, int]]`, *optional*):
                 Tensor of shape `(batch_size, 2)` or list of tuples (`Tuple[int, int]`) containing the target size
                 `(height, width)` of each image in the batch. If unset, predictions will not be resized.
@@ -57,6 +59,11 @@ class BatchGroundingDinoProcessor(GroundingDinoProcessor):
         """
         batch_logits, batch_boxes = outputs.logits, outputs.pred_boxes
         input_ids = input_ids if input_ids is not None else outputs.input_ids
+        # if thresholds is a single value, convert it to a list of the same value
+        if isinstance(thresholds, float):
+            thresholds = [thresholds] * batch_logits.shape[0]
+        if isinstance(text_thresholds, float):
+            text_thresholds = [text_thresholds] * batch_logits.shape[0]
 
         if target_sizes is not None and len(target_sizes) != len(batch_logits):
             raise ValueError("Make sure that you pass in as many target sizes as the batch dimension of the logits")
@@ -79,7 +86,7 @@ class BatchGroundingDinoProcessor(GroundingDinoProcessor):
             batch_boxes = batch_boxes * scale_fct[:, None, :]
 
         results = []
-        for idx, (scores, boxes, probs) in enumerate(zip(batch_scores, batch_boxes, batch_probs)):
+        for idx, (scores, boxes, probs, threshold, text_threshold) in enumerate(zip(batch_scores, batch_boxes, batch_probs, thresholds, text_thresholds)):
             keep = scores > threshold
             scores = scores[keep]
             boxes = boxes[keep]
