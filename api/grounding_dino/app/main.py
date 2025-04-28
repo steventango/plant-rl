@@ -24,12 +24,12 @@ class GroundingDinoAPI(ls.LitAPI):
         text_prompt = text_prompt.lower()
         if not text_prompt.endswith("."):
             text_prompt += "."
-        box_threshold = request.get("box_threshold", 0.3)
+        threshold = request.get("threshold", 0.3)
         text_threshold = request.get("text_threshold", 0.25)
         return {
             "image_data": image_data,
             "text_prompt": text_prompt,
-            "box_threshold": box_threshold,
+            "threshold": threshold,
             "text_threshold": text_threshold,
         }
 
@@ -44,7 +44,7 @@ class GroundingDinoAPI(ls.LitAPI):
             return {
                 "image": pil_image,
                 "text_prompt": item["text_prompt"],
-                "box_threshold": item["box_threshold"],
+                "threshold": item["threshold"],
                 "text_threshold": item["text_threshold"],
                 "target_size": pil_image.size[::-1],
             }
@@ -55,7 +55,7 @@ class GroundingDinoAPI(ls.LitAPI):
         # Extract the results into separate lists
         images = [item["image"] for item in processed_items]
         text_prompts = [item["text_prompt"] for item in processed_items]
-        thresholds = [item["box_threshold"] for item in processed_items]
+        thresholds = [item["threshold"] for item in processed_items]
         text_thresholds = [item["text_threshold"] for item in processed_items]
         target_sizes = [item["target_size"] for item in processed_items]
 
