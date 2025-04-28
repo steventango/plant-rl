@@ -242,7 +242,6 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
     annotated_frame = label_annotator.annotate(scene=annotated_frame, detections=annotate_detections, labels=labels)
     debug_images["boxes"] = Image.fromarray(annotated_frame)
 
-    masks = np.zeros((len(detections), height, width), dtype=bool)
     valid_detections = detections[detections.class_id < 901]
     if not len(valid_detections):
         columns = [
@@ -270,12 +269,16 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
         image=pil_image,
         boxes=valid_detections.xyxy,
     )
-    masks[detections.class_id < 901] = new_masks.astype(bool)
 
-    detections.mask = masks
+    valid_detections.mask = new_masks.astype(bool)
+
+    mask_areas = np.sum(valid_detections.mask, axis=(1, 2))
+    median_mask_area = np.median(mask_areas)
+    size_filter = mask_areas > 10 * median_mask_area
+    valid_detections.class_id[size_filter] = 1003
 
     mask_annotator = sv.MaskAnnotator(color_palette_custom)
-    annotate_detections = detections[(detections.class_id < 901) | (detections.class_id > 1000)]
+    annotate_detections = valid_detections
     # sort by class_id
     annotate_detections = annotate_detections[np.argsort(annotate_detections.class_id)[::-1]]
     annotated_frame = mask_annotator.annotate(scene=warped_image.copy(), detections=annotate_detections)
@@ -289,19 +292,19 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
     annotated_frame = label_annotator.annotate(scene=annotated_frame, detections=annotate_detections, labels=labels)
 
     debug_images["equalized"] = Image.fromarray(equalized)
-    otsu_threshold = threshold_otsu(equalized[detections.mask.any(axis=0)].reshape((1, -1)))
+    otsu_threshold = threshold_otsu(equalized[valid_detections.mask.any(axis=0)].reshape((1, -1)))
     mask = pcv.threshold.binary(equalized, threshold=otsu_threshold, object_type="light")
     debug_images["mask"] = Image.fromarray(mask)
 
-    detections.mask &= mask.astype(bool)
+    valid_detections.mask &= mask.astype(bool)
 
     mask_annotator = sv.MaskAnnotator(color_palette_custom)
-    annotate_detections = detections[(detections.class_id < 901) | (detections.class_id > 1000)]
+    annotate_detections = valid_detections
     # sort by class_id
     annotate_detections = annotate_detections[np.argsort(annotate_detections.class_id)[::-1]]
     annotated_frame = mask_annotator.annotate(scene=warped_image.copy(), detections=annotate_detections)
 
-    labeled_mask = detections.mask.astype(np.uint8) * (detections.class_id[:, None, None] + 1)
+    labeled_mask = valid_detections.mask.astype(np.uint8) * (valid_detections.class_id[:, None, None] + 1)
     labeled_mask[labeled_mask > 900] = 0
     labeled_mask = np.sum(labeled_mask, axis=0)
 
