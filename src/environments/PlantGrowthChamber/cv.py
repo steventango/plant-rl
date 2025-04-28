@@ -32,9 +32,8 @@ def call_segment_anything_api(image, boxes, multimask_output=False, server_url="
         server_url: URL of the Segment Anything API server
 
     Returns:
-        masks: Numpy array of binary masks
+        masks: Numpy array of binary masks (converted from contours)
         scores: Numpy array of confidence scores for each mask
-        logits: Numpy array of logit values for each mask
     """
     # Convert image to base64
     buffer = io.BytesIO()
@@ -57,15 +56,24 @@ def call_segment_anything_api(image, boxes, multimask_output=False, server_url="
         response.raise_for_status()
         result = response.json()
 
-        # Convert lists back to numpy arrays
-        masks = np.array(result["masks"])
-        scores = np.array(result["scores"])
-        logits = np.array(result["logits"])
+        # Convert contours to masks
+        image_height, image_width = np.array(image).shape[:2]
+        masks = np.zeros((len(result["contours"]), image_height, image_width), dtype=np.uint8)
 
-        return masks, scores, logits
+        for i, contour in enumerate(result["contours"]):
+            if contour:
+                # Convert contour to numpy array with correct shape for fillPoly
+                contour_np = np.array(contour, dtype=np.int32)
+                # Create mask from contour
+                cv2.fillPoly(masks[i], [contour_np], 1)
+
+        # Convert lists back to numpy arrays
+        scores = np.array(result["scores"])
+
+        return masks, scores
     except Exception as e:
         print(f"Error calling Segment Anything API: {e}")
-        return np.array([]), np.array([]), np.array([])
+        return np.array([]), np.array([])
 
 
 def call_grounding_dino_api(

@@ -35,8 +35,7 @@ curl -X POST http://segment-anything:8000/predict \
 
 The API returns a JSON object with the following fields:
 
-- `masks`: List of binary masks for the segmented objects
-- `scores`: List of confidence scores for each mask
-- `logits`: List of logit values for each mask
+- `contours`: List of contours for the segmented objects. Each contour is a list of [x,y] points representing the boundary of the object.
+- `scores`: List of confidence scores for each contour
 
-Each mask is a 2D binary array where 1 indicates the object pixels and 0 indicates the background.
+This API uses contours instead of full masks to significantly reduce bandwidth usage. The contour representation provides significant bandwidth savings compared to transmitting full binary masks, especially for large images.

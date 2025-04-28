@@ -1,0 +1,425 @@
+2025-04-28 06:29:24,406 - sam_api - INFO - Setting up Segment Anything model on device: cuda:0, model: facebook/sam2.1-hiera-small
+2025-04-28 06:29:25,171 - root - INFO - Loaded checkpoint sucessfully
+2025-04-28 06:29:25,259 - sam_api - INFO - Model loading time: 0.8530s
+2025-04-28 06:29:25,259 - sam_api - INFO - Total setup time: 0.8531s
+2025-04-28 06:29:30,840 - sam_api - INFO - Decoding request
+2025-04-28 06:29:30,840 - sam_api - INFO - Request contains image data (449.3KB), 36 boxes
+2025-04-28 06:29:30,840 - sam_api - INFO - Request decode time: 0.0001s
+2025-04-28 06:29:30,840 - sam_api - INFO - Starting prediction
+2025-04-28 06:30:14,745 - sam_api - INFO - Setting up Segment Anything model on device: cuda:0, model: facebook/sam2.1-hiera-small
+2025-04-28 06:30:15,426 - root - INFO - Loaded checkpoint sucessfully
+2025-04-28 06:30:15,513 - sam_api - INFO - Model loading time: 0.7676s
+2025-04-28 06:30:15,513 - sam_api - INFO - Total setup time: 0.7677s
+2025-04-28 06:30:32,174 - sam_api - INFO - Decoding request
+2025-04-28 06:30:32,174 - sam_api - INFO - Request contains image data (449.3KB), 36 boxes
+2025-04-28 06:30:32,174 - sam_api - INFO - Request decode time: 0.0001s
+2025-04-28 06:30:32,174 - sam_api - INFO - Starting prediction
+2025-04-28 06:30:32,182 - sam_api - INFO - Processing image of size: (1440, 1440)
+2025-04-28 06:30:32,182 - sam_api - INFO - Number of boxes: 36, Multimask output: False
+2025-04-28 06:30:32,182 - sam_api - INFO - Image decode time: 0.0080s
+2025-04-28 06:30:32,184 - root - INFO - For numpy array image, we assume (HxWxC) format
+2025-04-28 06:30:32,215 - root - INFO - Computing image embeddings for the provided image...
+2025-04-28 06:30:32,296 - root - INFO - Image embeddings computed.
+2025-04-28 06:30:32,296 - sam_api - INFO - Set image time: 0.1142s
+2025-04-28 06:30:32,497 - sam_api - INFO - Predict time: 0.2006s
+2025-04-28 06:30:32,497 - sam_api - INFO - Generated 36 masks
+2025-04-28 06:30:32,506 - sam_api - INFO - Score range: min=0.8980, max=0.9505, mean=0.9319
+2025-04-28 06:30:32,506 - sam_api - INFO - Total prediction time: 0.3322s
+2025-04-28 06:35:57,386 - sam_api - INFO - Setting up Segment Anything model on device: cuda:0, model: facebook/sam2.1-hiera-small
+2025-04-28 06:35:58,075 - root - INFO - Loaded checkpoint sucessfully
+2025-04-28 06:35:58,162 - sam_api - INFO - Model loading time: 0.7755s
+2025-04-28 06:35:58,162 - sam_api - INFO - Total setup time: 0.7755s
+2025-04-28 06:36:08,860 - sam_api - INFO - Decoding request
+2025-04-28 06:36:08,860 - sam_api - INFO - Request contains image data (449.3KB), 36 boxes
+2025-04-28 06:36:08,860 - sam_api - INFO - Request decode time: 0.0001s
+2025-04-28 06:36:08,860 - sam_api - INFO - Starting prediction
+2025-04-28 06:36:08,868 - sam_api - INFO - Processing image of size: (1440, 1440)
+2025-04-28 06:36:08,869 - sam_api - INFO - Number of boxes: 36, Multimask output: False
+2025-04-28 06:36:08,869 - sam_api - INFO - Image decode time: 0.0084s
+2025-04-28 06:36:08,870 - root - INFO - For numpy array image, we assume (HxWxC) format
+2025-04-28 06:36:08,901 - root - INFO - Computing image embeddings for the provided image...
+2025-04-28 06:36:08,983 - root - INFO - Image embeddings computed.
+2025-04-28 06:36:08,983 - sam_api - INFO - Set image time: 0.1145s
+2025-04-28 06:36:09,190 - sam_api - INFO - Predict time: 0.2074s
+2025-04-28 06:36:09,191 - sam_api - INFO - Generated 36 masks
+2025-04-28 06:36:09,191 - sam_api - INFO - Score range: min=0.8980, max=0.9505, mean=0.9319
+2025-04-28 06:36:09,191 - sam_api - INFO - Response data sizes - Masks: 284.77MB, Scores: 0.00MB, Logits: 9.00MB
+2025-04-28 06:36:09,191 - sam_api - INFO - Total response data size: 293.77MB
+2025-04-28 06:36:09,191 - sam_api - INFO - Masks shape: (36, 1440, 1440), dtype: float32
+2025-04-28 06:36:09,191 - sam_api - INFO - Scores shape: (36, 1), dtype: float32
+2025-04-28 06:36:09,191 - sam_api - INFO - Logits shape: (36, 1, 256, 256), dtype: float32
+2025-04-28 06:36:09,191 - sam_api - INFO - Total prediction time: 0.3307s
+2025-04-28 06:36:10,904 - sam_api - INFO - Response encoding time: 1.7129s
+2025-04-28 06:36:14,345 - sam_api - INFO - Estimated serialized response size: 373.41MB
+2025-04-28 07:04:59,903 - sam_api - INFO - Setting up Segment Anything model on device: cuda:0, model: facebook/sam2.1-hiera-small
+2025-04-28 07:05:00,818 - root - INFO - Loaded checkpoint sucessfully
+2025-04-28 07:05:00,905 - sam_api - INFO - Model loading time: 1.0014s
+2025-04-28 07:05:00,905 - sam_api - INFO - Total setup time: 1.0015s
+2025-04-28 07:06:24,027 - sam_api - INFO - Decoding request
+2025-04-28 07:06:24,027 - sam_api - INFO - Request contains image data (449.3KB), 36 boxes
+2025-04-28 07:06:24,027 - sam_api - INFO - Request decode time: 0.0002s
+2025-04-28 07:06:24,027 - sam_api - INFO - Starting prediction
+2025-04-28 07:06:24,035 - sam_api - INFO - Processing image of size: (1440, 1440)
+2025-04-28 07:06:24,035 - sam_api - INFO - Number of boxes: 36, Multimask output: False
+2025-04-28 07:06:24,035 - sam_api - INFO - Image decode time: 0.0084s
+2025-04-28 07:06:24,037 - root - INFO - For numpy array image, we assume (HxWxC) format
+2025-04-28 07:06:24,071 - root - INFO - Computing image embeddings for the provided image...
+2025-04-28 07:06:24,151 - root - INFO - Image embeddings computed.
+2025-04-28 07:06:24,151 - sam_api - INFO - Set image time: 0.1156s
+2025-04-28 07:06:24,352 - sam_api - INFO - Predict time: 0.2016s
+2025-04-28 07:06:24,352 - sam_api - INFO - Generated 36 masks
+2025-04-28 07:06:24,353 - sam_api - INFO - Score range: min=0.8980, max=0.9505, mean=0.9319
+2025-04-28 07:06:24,371 - sam_api - INFO - Contour extraction time: 0.0183s
+2025-04-28 07:06:24,371 - sam_api - INFO - Original response data sizes - Masks: 284.77MB, Scores: 0.00MB, Logits: 9.00MB
+2025-04-28 07:06:24,371 - sam_api - INFO - Total original response data size: 293.77MB
+2025-04-28 07:06:24,371 - sam_api - INFO - New response data sizes - Contours: 0.04MB, Scores: 0.00MB
+2025-04-28 07:06:24,371 - sam_api - INFO - Total new response data size: 0.04MB
+2025-04-28 07:06:24,371 - sam_api - INFO - Bandwidth reduction: 293.73MB (99.99%)
+2025-04-28 07:06:24,371 - sam_api - INFO - Total prediction time: 0.3447s
+2025-04-28 07:06:24,384 - sam_api - INFO - Response encoding time: 0.0000s
+2025-04-28 07:06:24,385 - sam_api - INFO - Estimated serialized response size: 0.04MB
+2025-04-28 07:09:41,982 - sam_api - INFO - Decoding request
+2025-04-28 07:09:41,983 - sam_api - INFO - Request contains image data (557.8KB), 55 boxes
+2025-04-28 07:09:41,983 - sam_api - INFO - Request decode time: 0.0002s
+2025-04-28 07:09:41,983 - sam_api - INFO - Starting prediction
+2025-04-28 07:09:41,996 - sam_api - INFO - Processing image of size: (1920, 1680)
+2025-04-28 07:09:41,996 - sam_api - INFO - Number of boxes: 55, Multimask output: False
+2025-04-28 07:09:41,996 - sam_api - INFO - Image decode time: 0.0133s
+2025-04-28 07:09:42,003 - root - INFO - For numpy array image, we assume (HxWxC) format
+2025-04-28 07:09:42,028 - root - INFO - Computing image embeddings for the provided image...
+2025-04-28 07:09:42,031 - root - INFO - Image embeddings computed.
+2025-04-28 07:09:42,031 - sam_api - INFO - Set image time: 0.0354s
+2025-04-28 07:09:42,321 - sam_api - INFO - Predict time: 0.2899s
+2025-04-28 07:09:42,321 - sam_api - INFO - Generated 55 masks
+2025-04-28 07:09:42,322 - sam_api - INFO - Score range: min=0.7202, max=0.9377, mean=0.9114
+2025-04-28 07:09:42,429 - sam_api - INFO - Contour extraction time: 0.1070s
+2025-04-28 07:09:42,429 - sam_api - INFO - Original response data sizes - Masks: 676.76MB, Scores: 0.00MB, Logits: 13.75MB
+2025-04-28 07:09:42,429 - sam_api - INFO - Total original response data size: 690.51MB
+2025-04-28 07:09:42,429 - sam_api - INFO - New response data sizes - Contours: 0.04MB, Scores: 0.00MB
+2025-04-28 07:09:42,429 - sam_api - INFO - Total new response data size: 0.04MB
+2025-04-28 07:09:42,429 - sam_api - INFO - Bandwidth reduction: 690.47MB (99.99%)
+2025-04-28 07:09:42,429 - sam_api - INFO - Total prediction time: 0.4466s
+2025-04-28 07:09:42,460 - sam_api - INFO - Response encoding time: 0.0000s
+2025-04-28 07:09:42,460 - sam_api - INFO - Estimated serialized response size: 0.04MB
+2025-04-28 07:09:47,320 - sam_api - INFO - Decoding request
+2025-04-28 07:09:47,320 - sam_api - INFO - Request contains image data (606.7KB), 55 boxes
+2025-04-28 07:09:47,320 - sam_api - INFO - Request decode time: 0.0001s
+2025-04-28 07:09:47,320 - sam_api - INFO - Starting prediction
+2025-04-28 07:09:47,327 - sam_api - INFO - Processing image of size: (1920, 1680)
+2025-04-28 07:09:47,327 - sam_api - INFO - Number of boxes: 55, Multimask output: False
+2025-04-28 07:09:47,327 - sam_api - INFO - Image decode time: 0.0070s
+2025-04-28 07:09:47,330 - root - INFO - For numpy array image, we assume (HxWxC) format
+2025-04-28 07:09:47,342 - root - INFO - Computing image embeddings for the provided image...
+2025-04-28 07:09:47,345 - root - INFO - Image embeddings computed.
+2025-04-28 07:09:47,345 - sam_api - INFO - Set image time: 0.0178s
+2025-04-28 07:09:47,666 - sam_api - INFO - Predict time: 0.3207s
+2025-04-28 07:09:47,666 - sam_api - INFO - Generated 55 masks
+2025-04-28 07:09:47,666 - sam_api - INFO - Score range: min=0.7964, max=0.9382, mean=0.9119
+2025-04-28 07:09:47,703 - sam_api - INFO - Contour extraction time: 0.0372s
+2025-04-28 07:09:47,703 - sam_api - INFO - Original response data sizes - Masks: 676.76MB, Scores: 0.00MB, Logits: 13.75MB
+2025-04-28 07:09:47,703 - sam_api - INFO - Total original response data size: 690.51MB
+2025-04-28 07:09:47,704 - sam_api - INFO - New response data sizes - Contours: 0.04MB, Scores: 0.00MB
+2025-04-28 07:09:47,704 - sam_api - INFO - Total new response data size: 0.04MB
+2025-04-28 07:09:47,704 - sam_api - INFO - Bandwidth reduction: 690.47MB (99.99%)
+2025-04-28 07:09:47,704 - sam_api - INFO - Total prediction time: 0.3838s
+2025-04-28 07:09:47,733 - sam_api - INFO - Response encoding time: 0.0000s
+2025-04-28 07:09:47,734 - sam_api - INFO - Estimated serialized response size: 0.04MB
+2025-04-28 07:09:52,724 - sam_api - INFO - Decoding request
+2025-04-28 07:09:52,724 - sam_api - INFO - Request contains image data (668.5KB), 55 boxes
+2025-04-28 07:09:52,724 - sam_api - INFO - Request decode time: 0.0001s
+2025-04-28 07:09:52,724 - sam_api - INFO - Starting prediction
+2025-04-28 07:09:52,731 - sam_api - INFO - Processing image of size: (1920, 1680)
+2025-04-28 07:09:52,731 - sam_api - INFO - Number of boxes: 55, Multimask output: False
+2025-04-28 07:09:52,731 - sam_api - INFO - Image decode time: 0.0076s
+2025-04-28 07:09:52,734 - root - INFO - For numpy array image, we assume (HxWxC) format
+2025-04-28 07:09:52,746 - root - INFO - Computing image embeddings for the provided image...
+2025-04-28 07:09:52,749 - root - INFO - Image embeddings computed.
+2025-04-28 07:09:52,749 - sam_api - INFO - Set image time: 0.0175s
+2025-04-28 07:09:53,051 - sam_api - INFO - Predict time: 0.3017s
+2025-04-28 07:09:53,051 - sam_api - INFO - Generated 55 masks
+2025-04-28 07:09:53,051 - sam_api - INFO - Score range: min=0.7421, max=0.9353, mean=0.9082
+2025-04-28 07:09:53,092 - sam_api - INFO - Contour extraction time: 0.0406s
+2025-04-28 07:09:53,092 - sam_api - INFO - Original response data sizes - Masks: 676.76MB, Scores: 0.00MB, Logits: 13.75MB
+2025-04-28 07:09:53,092 - sam_api - INFO - Total original response data size: 690.51MB
+2025-04-28 07:09:53,092 - sam_api - INFO - New response data sizes - Contours: 0.04MB, Scores: 0.00MB
+2025-04-28 07:09:53,092 - sam_api - INFO - Total new response data size: 0.04MB
+2025-04-28 07:09:53,092 - sam_api - INFO - Bandwidth reduction: 690.47MB (99.99%)
+2025-04-28 07:09:53,092 - sam_api - INFO - Total prediction time: 0.3686s
+2025-04-28 07:09:53,124 - sam_api - INFO - Response encoding time: 0.0000s
+2025-04-28 07:09:53,125 - sam_api - INFO - Estimated serialized response size: 0.04MB
+2025-04-28 07:09:58,646 - sam_api - INFO - Decoding request
+2025-04-28 07:09:58,646 - sam_api - INFO - Request contains image data (692.8KB), 56 boxes
+2025-04-28 07:09:58,646 - sam_api - INFO - Request decode time: 0.0001s
+2025-04-28 07:09:58,646 - sam_api - INFO - Starting prediction
+2025-04-28 07:09:58,654 - sam_api - INFO - Processing image of size: (1920, 1680)
+2025-04-28 07:09:58,654 - sam_api - INFO - Number of boxes: 56, Multimask output: False
+2025-04-28 07:09:58,654 - sam_api - INFO - Image decode time: 0.0081s
+2025-04-28 07:09:58,657 - root - INFO - For numpy array image, we assume (HxWxC) format
+2025-04-28 07:09:58,666 - root - INFO - Computing image embeddings for the provided image...
+2025-04-28 07:09:58,669 - root - INFO - Image embeddings computed.
+2025-04-28 07:09:58,669 - sam_api - INFO - Set image time: 0.0149s
+2025-04-28 07:09:58,975 - sam_api - INFO - Predict time: 0.3061s
+2025-04-28 07:09:58,975 - sam_api - INFO - Generated 56 masks
+2025-04-28 07:09:58,976 - sam_api - INFO - Score range: min=0.7516, max=0.9350, mean=0.9037
+2025-04-28 07:09:59,018 - sam_api - INFO - Contour extraction time: 0.0420s
+2025-04-28 07:09:59,018 - sam_api - INFO - Original response data sizes - Masks: 689.06MB, Scores: 0.00MB, Logits: 14.00MB
+2025-04-28 07:09:59,018 - sam_api - INFO - Total original response data size: 703.06MB
+2025-04-28 07:09:59,018 - sam_api - INFO - New response data sizes - Contours: 0.04MB, Scores: 0.00MB
+2025-04-28 07:09:59,018 - sam_api - INFO - Total new response data size: 0.04MB
+2025-04-28 07:09:59,018 - sam_api - INFO - Bandwidth reduction: 703.02MB (99.99%)
+2025-04-28 07:09:59,018 - sam_api - INFO - Total prediction time: 0.3722s
+2025-04-28 07:09:59,050 - sam_api - INFO - Response encoding time: 0.0000s
+2025-04-28 07:09:59,050 - sam_api - INFO - Estimated serialized response size: 0.04MB
+2025-04-28 07:10:04,044 - sam_api - INFO - Decoding request
+2025-04-28 07:10:04,044 - sam_api - INFO - Request contains image data (691.2KB), 56 boxes
+2025-04-28 07:10:04,044 - sam_api - INFO - Request decode time: 0.0001s
+2025-04-28 07:10:04,044 - sam_api - INFO - Starting prediction
+2025-04-28 07:10:04,053 - sam_api - INFO - Processing image of size: (1920, 1680)
+2025-04-28 07:10:04,053 - sam_api - INFO - Number of boxes: 56, Multimask output: False
+2025-04-28 07:10:04,053 - sam_api - INFO - Image decode time: 0.0087s
+2025-04-28 07:10:04,055 - root - INFO - For numpy array image, we assume (HxWxC) format
+2025-04-28 07:10:04,064 - root - INFO - Computing image embeddings for the provided image...
+2025-04-28 07:10:04,067 - root - INFO - Image embeddings computed.
+2025-04-28 07:10:04,067 - sam_api - INFO - Set image time: 0.0147s
+2025-04-28 07:10:04,377 - sam_api - INFO - Predict time: 0.3095s
+2025-04-28 07:10:04,377 - sam_api - INFO - Generated 56 masks
+2025-04-28 07:10:04,377 - sam_api - INFO - Score range: min=0.8024, max=0.9348, mean=0.9070
+2025-04-28 07:10:04,416 - sam_api - INFO - Contour extraction time: 0.0393s
+2025-04-28 07:10:04,416 - sam_api - INFO - Original response data sizes - Masks: 689.06MB, Scores: 0.00MB, Logits: 14.00MB
+2025-04-28 07:10:04,416 - sam_api - INFO - Total original response data size: 703.06MB
+2025-04-28 07:10:04,417 - sam_api - INFO - New response data sizes - Contours: 0.04MB, Scores: 0.00MB
+2025-04-28 07:10:04,417 - sam_api - INFO - Total new response data size: 0.04MB
+2025-04-28 07:10:04,417 - sam_api - INFO - Bandwidth reduction: 703.02MB (99.99%)
+2025-04-28 07:10:04,417 - sam_api - INFO - Total prediction time: 0.3732s
+2025-04-28 07:10:04,450 - sam_api - INFO - Response encoding time: 0.0000s
+2025-04-28 07:10:04,450 - sam_api - INFO - Estimated serialized response size: 0.05MB
+2025-04-28 07:10:09,694 - sam_api - INFO - Decoding request
+2025-04-28 07:10:09,694 - sam_api - INFO - Request contains image data (688.3KB), 55 boxes
+2025-04-28 07:10:09,695 - sam_api - INFO - Request decode time: 0.0001s
+2025-04-28 07:10:09,695 - sam_api - INFO - Starting prediction
+2025-04-28 07:10:09,703 - sam_api - INFO - Processing image of size: (1920, 1680)
+2025-04-28 07:10:09,703 - sam_api - INFO - Number of boxes: 55, Multimask output: False
+2025-04-28 07:10:09,703 - sam_api - INFO - Image decode time: 0.0084s
+2025-04-28 07:10:09,706 - root - INFO - For numpy array image, we assume (HxWxC) format
+2025-04-28 07:10:09,718 - root - INFO - Computing image embeddings for the provided image...
+2025-04-28 07:10:09,721 - root - INFO - Image embeddings computed.
+2025-04-28 07:10:09,721 - sam_api - INFO - Set image time: 0.0182s
+2025-04-28 07:10:10,024 - sam_api - INFO - Predict time: 0.3031s
+2025-04-28 07:10:10,024 - sam_api - INFO - Generated 55 masks
+2025-04-28 07:10:10,024 - sam_api - INFO - Score range: min=0.8442, max=0.9359, mean=0.9090
+2025-04-28 07:10:10,065 - sam_api - INFO - Contour extraction time: 0.0404s
+2025-04-28 07:10:10,065 - sam_api - INFO - Original response data sizes - Masks: 676.76MB, Scores: 0.00MB, Logits: 13.75MB
+2025-04-28 07:10:10,065 - sam_api - INFO - Total original response data size: 690.51MB
+2025-04-28 07:10:10,065 - sam_api - INFO - New response data sizes - Contours: 0.04MB, Scores: 0.00MB
+2025-04-28 07:10:10,066 - sam_api - INFO - Total new response data size: 0.04MB
+2025-04-28 07:10:10,066 - sam_api - INFO - Bandwidth reduction: 690.46MB (99.99%)
+2025-04-28 07:10:10,066 - sam_api - INFO - Total prediction time: 0.3710s
+2025-04-28 07:10:10,098 - sam_api - INFO - Response encoding time: 0.0000s
+2025-04-28 07:10:10,099 - sam_api - INFO - Estimated serialized response size: 0.05MB
+2025-04-28 07:10:15,112 - sam_api - INFO - Decoding request
+2025-04-28 07:10:15,112 - sam_api - INFO - Request contains image data (687.9KB), 54 boxes
+2025-04-28 07:10:15,112 - sam_api - INFO - Request decode time: 0.0001s
+2025-04-28 07:10:15,112 - sam_api - INFO - Starting prediction
+2025-04-28 07:10:15,120 - sam_api - INFO - Processing image of size: (1920, 1680)
+2025-04-28 07:10:15,121 - sam_api - INFO - Number of boxes: 54, Multimask output: False
+2025-04-28 07:10:15,121 - sam_api - INFO - Image decode time: 0.0085s
+2025-04-28 07:10:15,123 - root - INFO - For numpy array image, we assume (HxWxC) format
+2025-04-28 07:10:15,135 - root - INFO - Computing image embeddings for the provided image...
+2025-04-28 07:10:15,139 - root - INFO - Image embeddings computed.
+2025-04-28 07:10:15,139 - sam_api - INFO - Set image time: 0.0183s
+2025-04-28 07:10:15,437 - sam_api - INFO - Predict time: 0.2981s
+2025-04-28 07:10:15,437 - sam_api - INFO - Generated 54 masks
+2025-04-28 07:10:15,437 - sam_api - INFO - Score range: min=0.8422, max=0.9379, mean=0.9110
+2025-04-28 07:10:15,477 - sam_api - INFO - Contour extraction time: 0.0403s
+2025-04-28 07:10:15,478 - sam_api - INFO - Original response data sizes - Masks: 664.45MB, Scores: 0.00MB, Logits: 13.50MB
+2025-04-28 07:10:15,478 - sam_api - INFO - Total original response data size: 677.95MB
+2025-04-28 07:10:15,478 - sam_api - INFO - New response data sizes - Contours: 0.04MB, Scores: 0.00MB
+2025-04-28 07:10:15,478 - sam_api - INFO - Total new response data size: 0.04MB
+2025-04-28 07:10:15,478 - sam_api - INFO - Bandwidth reduction: 677.91MB (99.99%)
+2025-04-28 07:10:15,478 - sam_api - INFO - Total prediction time: 0.3662s
+2025-04-28 07:10:15,511 - sam_api - INFO - Response encoding time: 0.0000s
+2025-04-28 07:10:15,512 - sam_api - INFO - Estimated serialized response size: 0.04MB
+2025-04-28 07:10:21,283 - sam_api - INFO - Decoding request
+2025-04-28 07:10:21,283 - sam_api - INFO - Request contains image data (689.7KB), 55 boxes
+2025-04-28 07:10:21,283 - sam_api - INFO - Request decode time: 0.0001s
+2025-04-28 07:10:21,283 - sam_api - INFO - Starting prediction
+2025-04-28 07:10:21,291 - sam_api - INFO - Processing image of size: (1920, 1680)
+2025-04-28 07:10:21,291 - sam_api - INFO - Number of boxes: 55, Multimask output: False
+2025-04-28 07:10:21,291 - sam_api - INFO - Image decode time: 0.0085s
+2025-04-28 07:10:21,294 - root - INFO - For numpy array image, we assume (HxWxC) format
+2025-04-28 07:10:21,303 - root - INFO - Computing image embeddings for the provided image...
+2025-04-28 07:10:21,306 - root - INFO - Image embeddings computed.
+2025-04-28 07:10:21,306 - sam_api - INFO - Set image time: 0.0145s
+2025-04-28 07:10:21,620 - sam_api - INFO - Predict time: 0.3145s
+2025-04-28 07:10:21,620 - sam_api - INFO - Generated 55 masks
+2025-04-28 07:10:21,620 - sam_api - INFO - Score range: min=0.7091, max=0.9349, mean=0.9069
+2025-04-28 07:10:21,661 - sam_api - INFO - Contour extraction time: 0.0406s
+2025-04-28 07:10:21,661 - sam_api - INFO - Original response data sizes - Masks: 676.76MB, Scores: 0.00MB, Logits: 13.75MB
+2025-04-28 07:10:21,661 - sam_api - INFO - Total original response data size: 690.51MB
+2025-04-28 07:10:21,662 - sam_api - INFO - New response data sizes - Contours: 0.04MB, Scores: 0.00MB
+2025-04-28 07:10:21,662 - sam_api - INFO - Total new response data size: 0.04MB
+2025-04-28 07:10:21,662 - sam_api - INFO - Bandwidth reduction: 690.47MB (99.99%)
+2025-04-28 07:10:21,662 - sam_api - INFO - Total prediction time: 0.3791s
+2025-04-28 07:10:21,696 - sam_api - INFO - Response encoding time: 0.0000s
+2025-04-28 07:10:21,697 - sam_api - INFO - Estimated serialized response size: 0.04MB
+2025-04-28 07:10:26,590 - sam_api - INFO - Decoding request
+2025-04-28 07:10:26,590 - sam_api - INFO - Request contains image data (697.3KB), 55 boxes
+2025-04-28 07:10:26,590 - sam_api - INFO - Request decode time: 0.0001s
+2025-04-28 07:10:26,590 - sam_api - INFO - Starting prediction
+2025-04-28 07:10:26,599 - sam_api - INFO - Processing image of size: (1920, 1680)
+2025-04-28 07:10:26,599 - sam_api - INFO - Number of boxes: 55, Multimask output: False
+2025-04-28 07:10:26,599 - sam_api - INFO - Image decode time: 0.0083s
+2025-04-28 07:10:26,602 - root - INFO - For numpy array image, we assume (HxWxC) format
+2025-04-28 07:10:26,615 - root - INFO - Computing image embeddings for the provided image...
+2025-04-28 07:10:26,618 - root - INFO - Image embeddings computed.
+2025-04-28 07:10:26,618 - sam_api - INFO - Set image time: 0.0193s
+2025-04-28 07:10:26,936 - sam_api - INFO - Predict time: 0.3176s
+2025-04-28 07:10:26,936 - sam_api - INFO - Generated 55 masks
+2025-04-28 07:10:26,936 - sam_api - INFO - Score range: min=0.7287, max=0.9337, mean=0.9077
+2025-04-28 07:10:26,975 - sam_api - INFO - Contour extraction time: 0.0390s
+2025-04-28 07:10:26,975 - sam_api - INFO - Original response data sizes - Masks: 676.76MB, Scores: 0.00MB, Logits: 13.75MB
+2025-04-28 07:10:26,975 - sam_api - INFO - Total original response data size: 690.51MB
+2025-04-28 07:10:26,976 - sam_api - INFO - New response data sizes - Contours: 0.04MB, Scores: 0.00MB
+2025-04-28 07:10:26,976 - sam_api - INFO - Total new response data size: 0.04MB
+2025-04-28 07:10:26,976 - sam_api - INFO - Bandwidth reduction: 690.46MB (99.99%)
+2025-04-28 07:10:26,976 - sam_api - INFO - Total prediction time: 0.3853s
+2025-04-28 07:10:27,007 - sam_api - INFO - Response encoding time: 0.0000s
+2025-04-28 07:10:27,008 - sam_api - INFO - Estimated serialized response size: 0.04MB
+2025-04-28 07:10:32,529 - sam_api - INFO - Decoding request
+2025-04-28 07:10:32,529 - sam_api - INFO - Request contains image data (690.8KB), 56 boxes
+2025-04-28 07:10:32,530 - sam_api - INFO - Request decode time: 0.0001s
+2025-04-28 07:10:32,530 - sam_api - INFO - Starting prediction
+2025-04-28 07:10:32,537 - sam_api - INFO - Processing image of size: (1920, 1680)
+2025-04-28 07:10:32,537 - sam_api - INFO - Number of boxes: 56, Multimask output: False
+2025-04-28 07:10:32,537 - sam_api - INFO - Image decode time: 0.0076s
+2025-04-28 07:10:32,540 - root - INFO - For numpy array image, we assume (HxWxC) format
+2025-04-28 07:10:32,552 - root - INFO - Computing image embeddings for the provided image...
+2025-04-28 07:10:32,555 - root - INFO - Image embeddings computed.
+2025-04-28 07:10:32,555 - sam_api - INFO - Set image time: 0.0181s
+2025-04-28 07:10:32,867 - sam_api - INFO - Predict time: 0.3119s
+2025-04-28 07:10:32,867 - sam_api - INFO - Generated 56 masks
+2025-04-28 07:10:32,867 - sam_api - INFO - Score range: min=0.6891, max=0.9358, mean=0.9042
+2025-04-28 07:10:32,909 - sam_api - INFO - Contour extraction time: 0.0416s
+2025-04-28 07:10:32,909 - sam_api - INFO - Original response data sizes - Masks: 689.06MB, Scores: 0.00MB, Logits: 14.00MB
+2025-04-28 07:10:32,909 - sam_api - INFO - Total original response data size: 703.06MB
+2025-04-28 07:10:32,910 - sam_api - INFO - New response data sizes - Contours: 0.04MB, Scores: 0.00MB
+2025-04-28 07:10:32,910 - sam_api - INFO - Total new response data size: 0.04MB
+2025-04-28 07:10:32,910 - sam_api - INFO - Bandwidth reduction: 703.02MB (99.99%)
+2025-04-28 07:10:32,910 - sam_api - INFO - Total prediction time: 0.3803s
+2025-04-28 07:10:32,946 - sam_api - INFO - Response encoding time: 0.0000s
+2025-04-28 07:10:32,946 - sam_api - INFO - Estimated serialized response size: 0.04MB
+2025-04-28 07:10:37,913 - sam_api - INFO - Decoding request
+2025-04-28 07:10:37,913 - sam_api - INFO - Request contains image data (690.4KB), 55 boxes
+2025-04-28 07:10:37,913 - sam_api - INFO - Request decode time: 0.0001s
+2025-04-28 07:10:37,913 - sam_api - INFO - Starting prediction
+2025-04-28 07:10:37,921 - sam_api - INFO - Processing image of size: (1920, 1680)
+2025-04-28 07:10:37,921 - sam_api - INFO - Number of boxes: 55, Multimask output: False
+2025-04-28 07:10:37,921 - sam_api - INFO - Image decode time: 0.0077s
+2025-04-28 07:10:37,924 - root - INFO - For numpy array image, we assume (HxWxC) format
+2025-04-28 07:10:37,933 - root - INFO - Computing image embeddings for the provided image...
+2025-04-28 07:10:37,936 - root - INFO - Image embeddings computed.
+2025-04-28 07:10:37,936 - sam_api - INFO - Set image time: 0.0150s
+2025-04-28 07:10:38,244 - sam_api - INFO - Predict time: 0.3079s
+2025-04-28 07:10:38,244 - sam_api - INFO - Generated 55 masks
+2025-04-28 07:10:38,244 - sam_api - INFO - Score range: min=0.8467, max=0.9357, mean=0.9089
+2025-04-28 07:10:38,284 - sam_api - INFO - Contour extraction time: 0.0401s
+2025-04-28 07:10:38,284 - sam_api - INFO - Original response data sizes - Masks: 676.76MB, Scores: 0.00MB, Logits: 13.75MB
+2025-04-28 07:10:38,284 - sam_api - INFO - Total original response data size: 690.51MB
+2025-04-28 07:10:38,285 - sam_api - INFO - New response data sizes - Contours: 0.04MB, Scores: 0.00MB
+2025-04-28 07:10:38,285 - sam_api - INFO - Total new response data size: 0.04MB
+2025-04-28 07:10:38,285 - sam_api - INFO - Bandwidth reduction: 690.47MB (99.99%)
+2025-04-28 07:10:38,285 - sam_api - INFO - Total prediction time: 0.3716s
+2025-04-28 07:10:38,321 - sam_api - INFO - Response encoding time: 0.0000s
+2025-04-28 07:10:38,321 - sam_api - INFO - Estimated serialized response size: 0.04MB
+2025-04-28 07:10:43,713 - sam_api - INFO - Decoding request
+2025-04-28 07:10:43,713 - sam_api - INFO - Request contains image data (691.2KB), 56 boxes
+2025-04-28 07:10:43,713 - sam_api - INFO - Request decode time: 0.0001s
+2025-04-28 07:10:43,713 - sam_api - INFO - Starting prediction
+2025-04-28 07:10:43,721 - sam_api - INFO - Processing image of size: (1920, 1680)
+2025-04-28 07:10:43,721 - sam_api - INFO - Number of boxes: 56, Multimask output: False
+2025-04-28 07:10:43,721 - sam_api - INFO - Image decode time: 0.0075s
+2025-04-28 07:10:43,723 - root - INFO - For numpy array image, we assume (HxWxC) format
+2025-04-28 07:10:43,732 - root - INFO - Computing image embeddings for the provided image...
+2025-04-28 07:10:43,736 - root - INFO - Image embeddings computed.
+2025-04-28 07:10:43,736 - sam_api - INFO - Set image time: 0.0150s
+2025-04-28 07:10:44,048 - sam_api - INFO - Predict time: 0.3118s
+2025-04-28 07:10:44,048 - sam_api - INFO - Generated 56 masks
+2025-04-28 07:10:44,048 - sam_api - INFO - Score range: min=0.7200, max=0.9345, mean=0.9049
+2025-04-28 07:10:44,089 - sam_api - INFO - Contour extraction time: 0.0415s
+2025-04-28 07:10:44,089 - sam_api - INFO - Original response data sizes - Masks: 689.06MB, Scores: 0.00MB, Logits: 14.00MB
+2025-04-28 07:10:44,089 - sam_api - INFO - Total original response data size: 703.06MB
+2025-04-28 07:10:44,090 - sam_api - INFO - New response data sizes - Contours: 0.05MB, Scores: 0.00MB
+2025-04-28 07:10:44,090 - sam_api - INFO - Total new response data size: 0.05MB
+2025-04-28 07:10:44,090 - sam_api - INFO - Bandwidth reduction: 703.02MB (99.99%)
+2025-04-28 07:10:44,090 - sam_api - INFO - Total prediction time: 0.3769s
+2025-04-28 07:10:44,125 - sam_api - INFO - Response encoding time: 0.0000s
+2025-04-28 07:10:44,126 - sam_api - INFO - Estimated serialized response size: 0.05MB
+2025-04-28 07:10:49,582 - sam_api - INFO - Decoding request
+2025-04-28 07:10:49,582 - sam_api - INFO - Request contains image data (692.3KB), 55 boxes
+2025-04-28 07:10:49,582 - sam_api - INFO - Request decode time: 0.0001s
+2025-04-28 07:10:49,582 - sam_api - INFO - Starting prediction
+2025-04-28 07:10:49,589 - sam_api - INFO - Processing image of size: (1920, 1680)
+2025-04-28 07:10:49,589 - sam_api - INFO - Number of boxes: 55, Multimask output: False
+2025-04-28 07:10:49,589 - sam_api - INFO - Image decode time: 0.0075s
+2025-04-28 07:10:49,592 - root - INFO - For numpy array image, we assume (HxWxC) format
+2025-04-28 07:10:49,601 - root - INFO - Computing image embeddings for the provided image...
+2025-04-28 07:10:49,604 - root - INFO - Image embeddings computed.
+2025-04-28 07:10:49,604 - sam_api - INFO - Set image time: 0.0145s
+2025-04-28 07:10:49,911 - sam_api - INFO - Predict time: 0.3069s
+2025-04-28 07:10:49,911 - sam_api - INFO - Generated 55 masks
+2025-04-28 07:10:49,911 - sam_api - INFO - Score range: min=0.7398, max=0.9318, mean=0.9086
+2025-04-28 07:10:49,948 - sam_api - INFO - Contour extraction time: 0.0372s
+2025-04-28 07:10:49,948 - sam_api - INFO - Original response data sizes - Masks: 676.76MB, Scores: 0.00MB, Logits: 13.75MB
+2025-04-28 07:10:49,948 - sam_api - INFO - Total original response data size: 690.51MB
+2025-04-28 07:10:49,949 - sam_api - INFO - New response data sizes - Contours: 0.04MB, Scores: 0.00MB
+2025-04-28 07:10:49,949 - sam_api - INFO - Total new response data size: 0.04MB
+2025-04-28 07:10:49,949 - sam_api - INFO - Bandwidth reduction: 690.46MB (99.99%)
+2025-04-28 07:10:49,949 - sam_api - INFO - Total prediction time: 0.3671s
+2025-04-28 07:10:49,982 - sam_api - INFO - Response encoding time: 0.0000s
+2025-04-28 07:10:49,983 - sam_api - INFO - Estimated serialized response size: 0.05MB
+2025-04-28 07:10:54,776 - sam_api - INFO - Decoding request
+2025-04-28 07:10:54,776 - sam_api - INFO - Request contains image data (693.7KB), 55 boxes
+2025-04-28 07:10:54,776 - sam_api - INFO - Request decode time: 0.0001s
+2025-04-28 07:10:54,777 - sam_api - INFO - Starting prediction
+2025-04-28 07:10:54,784 - sam_api - INFO - Processing image of size: (1920, 1680)
+2025-04-28 07:10:54,785 - sam_api - INFO - Number of boxes: 55, Multimask output: False
+2025-04-28 07:10:54,785 - sam_api - INFO - Image decode time: 0.0080s
+2025-04-28 07:10:54,787 - root - INFO - For numpy array image, we assume (HxWxC) format
+2025-04-28 07:10:54,796 - root - INFO - Computing image embeddings for the provided image...
+2025-04-28 07:10:54,800 - root - INFO - Image embeddings computed.
+2025-04-28 07:10:54,800 - sam_api - INFO - Set image time: 0.0150s
+2025-04-28 07:10:55,103 - sam_api - INFO - Predict time: 0.3038s
+2025-04-28 07:10:55,104 - sam_api - INFO - Generated 55 masks
+2025-04-28 07:10:55,104 - sam_api - INFO - Score range: min=0.7088, max=0.9301, mean=0.9054
+2025-04-28 07:10:55,140 - sam_api - INFO - Contour extraction time: 0.0365s
+2025-04-28 07:10:55,140 - sam_api - INFO - Original response data sizes - Masks: 676.76MB, Scores: 0.00MB, Logits: 13.75MB
+2025-04-28 07:10:55,140 - sam_api - INFO - Total original response data size: 690.51MB
+2025-04-28 07:10:55,141 - sam_api - INFO - New response data sizes - Contours: 0.05MB, Scores: 0.00MB
+2025-04-28 07:10:55,141 - sam_api - INFO - Total new response data size: 0.05MB
+2025-04-28 07:10:55,141 - sam_api - INFO - Bandwidth reduction: 690.46MB (99.99%)
+2025-04-28 07:10:55,141 - sam_api - INFO - Total prediction time: 0.3645s
+2025-04-28 07:10:55,175 - sam_api - INFO - Response encoding time: 0.0000s
+2025-04-28 07:10:55,176 - sam_api - INFO - Estimated serialized response size: 0.05MB
+2025-04-28 07:11:00,662 - sam_api - INFO - Decoding request
+2025-04-28 07:11:00,662 - sam_api - INFO - Request contains image data (693.5KB), 56 boxes
+2025-04-28 07:11:00,662 - sam_api - INFO - Request decode time: 0.0001s
+2025-04-28 07:11:00,662 - sam_api - INFO - Starting prediction
+2025-04-28 07:11:00,671 - sam_api - INFO - Processing image of size: (1920, 1680)
+2025-04-28 07:11:00,671 - sam_api - INFO - Number of boxes: 56, Multimask output: False
+2025-04-28 07:11:00,671 - sam_api - INFO - Image decode time: 0.0083s
+2025-04-28 07:11:00,673 - root - INFO - For numpy array image, we assume (HxWxC) format
+2025-04-28 07:11:00,682 - root - INFO - Computing image embeddings for the provided image...
+2025-04-28 07:11:00,685 - root - INFO - Image embeddings computed.
+2025-04-28 07:11:00,685 - sam_api - INFO - Set image time: 0.0145s
+2025-04-28 07:11:01,000 - sam_api - INFO - Predict time: 0.3149s
+2025-04-28 07:11:01,000 - sam_api - INFO - Generated 56 masks
+2025-04-28 07:11:01,000 - sam_api - INFO - Score range: min=0.7092, max=0.9315, mean=0.9061
+2025-04-28 07:11:01,042 - sam_api - INFO - Contour extraction time: 0.0413s
+2025-04-28 07:11:01,042 - sam_api - INFO - Original response data sizes - Masks: 689.06MB, Scores: 0.00MB, Logits: 14.00MB
+2025-04-28 07:11:01,042 - sam_api - INFO - Total original response data size: 703.06MB
+2025-04-28 07:11:01,042 - sam_api - INFO - New response data sizes - Contours: 0.05MB, Scores: 0.00MB
+2025-04-28 07:11:01,042 - sam_api - INFO - Total new response data size: 0.05MB
+2025-04-28 07:11:01,043 - sam_api - INFO - Bandwidth reduction: 703.01MB (99.99%)
+2025-04-28 07:11:01,043 - sam_api - INFO - Total prediction time: 0.3801s
+2025-04-28 07:11:01,078 - sam_api - INFO - Response encoding time: 0.0000s
+2025-04-28 07:11:01,078 - sam_api - INFO - Estimated serialized response size: 0.05MB
