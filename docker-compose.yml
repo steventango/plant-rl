@@ -27,7 +27,18 @@ services:
     volumes:
       - ./api/grounding_dino:/app
       - ~/.cache:/root/.cache:cached
-      
+  segment-anything:
+    build:
+      context: api/segment_anything
+      dockerfile: Dockerfile
+    networks:
+      - plant-rl
+    privileged: true
+    restart: unless-stopped
+    volumes:
+      - ./api/segment_anything:/app
+      - ~/.cache:/root/.cache:cached
+
 networks:
   plant-rl:
     name: plant-rl

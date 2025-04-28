@@ -15,14 +15,57 @@ from skimage.exposure import equalize_adapthist
 from skimage.filters import threshold_otsu
 from supervision.draw.color import DEFAULT_COLOR_PALETTE, ColorPalette
 
-from utils.grounded_sam2 import SAM2
-
 from .zones import POT_HEIGHT, POT_WIDTH, SCALE, Tray
 
 CUSTOM_COLOR_PALETTE = DEFAULT_COLOR_PALETTE * ceil(128 / len(DEFAULT_COLOR_PALETTE)) + ["#808080"] * 1000
 color_palette_custom = ColorPalette.from_hex(CUSTOM_COLOR_PALETTE)
 
-sam2 = SAM2()
+
+def call_segment_anything_api(image, boxes, multimask_output=False, server_url="http://segment-anything:8000/predict"):
+    """
+    Call the Segment Anything API with an image and bounding boxes
+
+    Args:
+        image: PIL Image to be processed
+        boxes: Numpy array of boxes in format [x1, y1, x2, y2]
+        multimask_output: Whether to return multiple masks per box
+        server_url: URL of the Segment Anything API server
+
+    Returns:
+        masks: Numpy array of binary masks
+        scores: Numpy array of confidence scores for each mask
+        logits: Numpy array of logit values for each mask
+    """
+    # Convert image to base64
+    buffer = io.BytesIO()
+    image.save(buffer, format="JPEG")
+    img_str = base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+    # Prepare the payload
+    payload = json.dumps(
+        {
+            "image_data": img_str,
+            "boxes": boxes.tolist(),
+            "multimask_output": multimask_output,
+        }
+    )
+
+    headers = {"Content-Type": "application/json"}
+
+    try:
+        response = requests.post(server_url, data=payload, headers=headers)
+        response.raise_for_status()
+        result = response.json()
+
+        # Convert lists back to numpy arrays
+        masks = np.array(result["masks"])
+        scores = np.array(result["scores"])
+        logits = np.array(result["logits"])
+
+        return masks, scores, logits
+    except Exception as e:
+        print(f"Error calling Segment Anything API: {e}")
+        return np.array([]), np.array([]), np.array([])
 
 
 def call_grounding_dino_api(
@@ -215,7 +258,7 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
             "ellipse_eccentricity",
         ]
         return pd.DataFrame([{**{col: 0 for col in columns}, "plant_id": i + 1} for i in range(num_plants)])
-    new_masks, *_ = sam2.inference(
+    new_masks, *_ = call_segment_anything_api(
         image=pil_image,
         boxes=valid_detections.xyxy,
     )
