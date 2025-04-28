@@ -1,15 +1,14 @@
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
-from tqdm import tqdm
 from tqdm.contrib.concurrent import process_map
 
 
 def main():
-    datasets = Path("/data/plant-rl/online/E6/P5").glob("Spreadsheet-Poisson*/z*")
+    datasets = Path("/data").glob("nazmus_exp/z11c1")
     datasets = sorted(datasets)
-    datasets = datasets[2:]
-    pipeline_version = "v3.3.1"
+    pipeline_version = "v3.6.0"
+
     for dataset in datasets:
         out_dir = dataset / "processed" / pipeline_version
         out_dir_images = out_dir / "images"
@@ -19,7 +18,6 @@ def main():
             generate_image_stack,
             out_dir_image_paths,
         )
-
 
 
 def generate_image_stack(image_path):

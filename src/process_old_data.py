@@ -40,7 +40,7 @@ def main():
     datasets = Path("/data").glob("nazmus_exp/z11c1")
     datasets = sorted(datasets)
 
-    pipeline_version = "v3.3.3"
+    pipeline_version = "v3.6.0"
     for dataset in datasets:
         with open(next(dataset.rglob("config.json"))) as f:
             config = json.load(f)
