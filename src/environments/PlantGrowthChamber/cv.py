@@ -200,9 +200,6 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
     # sort by class_id
     annotate_detections = annotate_detections[np.argsort(annotate_detections.class_id)[::-1]]
     annotated_frame = mask_annotator.annotate(scene=warped_image.copy(), detections=annotate_detections)
-    debug_images["masks2"] = Image.fromarray(annotated_frame)
-
-    r = int(POT_WIDTH / 3)
 
     labeled_mask = detections.mask.astype(np.uint8) * (detections.class_id[:, None, None] + 1)
     labeled_mask[labeled_mask > 900] = 0
@@ -211,8 +208,7 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
     params.line_thickness = 1
 
     shape_image = pcv.analyze.size(img=warped_image, labeled_mask=labeled_mask, n_labels=num_plants)
-    for x, y in coords:
-        shape_image = cv2.circle(shape_image, (x, y), r, (0, 255, 255), 1)
+    debug_images["shape_image"] = Image.fromarray(shape_image)
 
     stats = []
     for sample, variables in pcv.outputs.observations.items():
@@ -230,28 +226,18 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
         row["area"] /= SCALE**2
         stats.append(row)
 
-    for row, coord in zip(stats, coords):
-        x, y = coord
-        area = row["area"]
-        if area is not None:
-            text = f"{area:.2f} mm^2"
-            text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.4, 1)[0]
-            text_x = x - text_size[0] // 2
-            text_y = y + int(r * 1.25) + text_size[1] // 2
-            cv2.putText(
-                shape_image,
-                text,
-                (text_x, text_y),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.4,
-                (255, 255, 255),
-                1,
-                cv2.LINE_AA,
-            )
-
-    debug_images["shape_image"] = Image.fromarray(shape_image)
     # convert all_plant_stats to pandas dataframe
     df = pd.DataFrame(stats)
+
+    # annotate with area
+    labels = [
+        f"Area: {area:.2f} mm^2"
+        for area in df["area"]
+    ]
+    label_annotator = sv.LabelAnnotator(color_palette_custom)
+    annotated_frame = label_annotator.annotate(scene=annotated_frame, detections=annotate_detections, labels=labels)
+
+    debug_images["masks2"] = Image.fromarray(annotated_frame)
     return df
 
 
