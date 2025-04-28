@@ -192,7 +192,7 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
     detections.class_id[~size_filter] = 903
 
     coords = []
-    sigma = pot_width
+    sigma = 1.5 * pot_width
     for j in range(n_tall):
         for i in range(n_wide):
             y = j * pot_width + pot_width // 2
@@ -275,7 +275,16 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
     detections.mask = masks
 
     mask_areas = np.sum(detections.mask, axis=(1, 2))
-    size_filter = mask_areas > 0.7 * pot_width * pot_width
+    convex_hull = []
+    for mask in detections.mask:
+        contours, _ = cv2.findContours(mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        if contours:
+            hull = cv2.convexHull(np.vstack(contours))
+            convex_hull.append(hull)
+        else:
+            convex_hull.append(np.array([]))
+    convex_hull_areas = np.array([cv2.contourArea(hull) if hull.size > 0 else 0 for hull in convex_hull])
+    size_filter = (mask_areas > 0.7 * pot_width * pot_width) & (mask_areas > 0.95 * convex_hull_areas)
     detections.class_id[size_filter] = 1003
 
     mask_annotator = sv.MaskAnnotator(color_palette_custom)
