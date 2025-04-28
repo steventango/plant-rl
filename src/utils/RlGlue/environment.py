@@ -4,7 +4,7 @@ from typing import Any, Dict, Tuple
 
 class BaseAsyncEnvironment:
     @abstractmethod
-    def start(self) -> Any:
+    def start(self) -> Tuple[Any, Dict[str, Any]]:
         raise NotImplementedError("Expected `start` to be implemented")
 
     @abstractmethod

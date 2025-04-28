@@ -44,6 +44,8 @@ dependencies = [
     'plantcv~=4.2.1',
     'pandas[excel]',
     'seaborn',
+    'wandb[media]',
+    'torch',
 ]
 
 [project.optional-dependencies]

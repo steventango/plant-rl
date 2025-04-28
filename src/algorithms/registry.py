@@ -32,7 +32,7 @@ def getAgent(name) -> Type[BaseAgent]:
     if name == 'EQRC':
         return EQRC
 
-    if name == 'ESARSA':
+    if name.startswith("ESARSA"):
         return ESARSA
 
     if name == 'QL':
