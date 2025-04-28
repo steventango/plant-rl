@@ -1,0 +1,2 @@
+litserve>=0.2.8
+transformers>=4.51.2

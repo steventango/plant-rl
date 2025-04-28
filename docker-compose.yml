@@ -14,3 +14,13 @@ services:
       - ~/.cache:/root/.cache:cached
       - ~/.netrc:/root/.netrc:cached
     command: sleep infinity
+  grounding_dino:
+    build:
+      context: api/grounding_dino
+      dockerfile: Dockerfile
+    ports:
+      - 8000:80
+    privileged: true
+    restart: unless-stopped
+    volumes:
+      - api/grounding_dino:/app
