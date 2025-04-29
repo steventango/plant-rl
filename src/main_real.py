@@ -2,7 +2,6 @@ import os
 import shutil
 import sys
 
-from logging import log
 
 sys.path.append(os.getcwd())
 import argparse
@@ -23,6 +22,7 @@ import wandb
 from experiment import ExperimentModel
 from problems.registry import getProblem
 from utils.checkpoint import Checkpoint
+from utils.logger import log
 from utils.preempt import TimeoutHandler
 from utils.RlGlue.rl_glue import PlanningRlGlue
 
