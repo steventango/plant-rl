@@ -80,7 +80,7 @@ async def show_zones():
           const images = zone.querySelectorAll("img");
           const zoneId = zone.querySelector("h3").textContent.split(" ")[1];
           for (const [index, img] of images.entries()) {
-            const src = "/proxy/zone/0" + zoneId + "/camera/" + (index + 1).toString().padStart(2, "0") + ".png";
+            const src = "/proxy/zone/0" + zoneId + "/camera/" + (index + 1).toString().padStart(2, "0") + ".jpg";
             const newSrc = src + "?t=" + Date.now();
             const newImg = new Image();
             newImg.onload = () => {
@@ -123,7 +123,7 @@ async def proxy_latest(zone: int):
         return Response(content=resp.text, status_code=resp.status_code, media_type=resp.headers.get("Content-Type"))
 
 
-@app.get("/proxy/zone/{zone}/camera/{camera_id}.png")
+@app.get("/proxy/zone/{zone}/camera/{camera_id}.jpg")
 async def proxy_camera(zone: int, camera_id: int):
     async with httpx.AsyncClient() as client:
         resp = await client.get(
