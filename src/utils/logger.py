@@ -29,13 +29,15 @@ def log(env, glue, wandb_run, s, a, info, r=None):
         else:
             expanded_info.update(expand(key, value))
     data = {
-        "time": env.time,
         **expand("state", s),
         **expand("action", a),
         "steps": glue.num_steps,
         **expanded_info,
-        "raw_image": wandb.Image(env.image),
     }
+    if hasattr(env, "time"):
+        data["time"] = env.time
+    if hasattr(env, "image"):
+        data["raw_image"] = wandb.Image(env.image)
     if r is not None:
         data["reward"] = r
     wandb_run.log(data)
