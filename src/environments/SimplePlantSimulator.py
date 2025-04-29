@@ -39,19 +39,19 @@ class SimplePlantSimulator(BaseEnvironment):
         self.original_actual_areas, self.projection_factors, self.terminal_step = self.analyze_area_data()
 
         self.gamma = 0.99
-    
+
     def get_observation(self):
         # Compute observed areas by projecting actual areas
-        self.observed_areas.append(np.array([self.actual_areas[i](self.time)*self.projection_factors[i][self.num_steps] for i in range(self.num_plants)]))        
-        
+        self.observed_areas.append(np.array([self.actual_areas[i](self.time)*self.projection_factors[i][self.num_steps] for i in range(self.num_plants)]))
+
         # Compute history of % change in average area
         if self.num_steps % self.steps_per_day != 0:  # DO NOT trace overnight here!
             old_area = iqm(self.observed_areas[-2], self.q)
             new_area = iqm(self.observed_areas[-1], self.q)
             self.history.update(self.percent_change(old_area, new_area))
-        
+
         observation = np.hstack([self.time_of_day(), self.normalize(self.history.compute())])
-            
+
         return observation
 
     def start(self):
@@ -65,7 +65,7 @@ class SimplePlantSimulator(BaseEnvironment):
 
         self.current_state = self.get_observation()
 
-        return self.current_state
+        return self.current_state, {}
 
     def step(self, action):
         # Check if the agent selected optimal action given the time of day. This is env specific and should be overwritten by subclasses.
@@ -76,7 +76,7 @@ class SimplePlantSimulator(BaseEnvironment):
             pwl.insert_plateau(self.time, self.time + self.frozen_time(action))
         self.frozen_time_today += self.frozen_time(action)
 
-        # Keep track of time 
+        # Keep track of time
         self.time += 1   # must occur after the above action effect
         self.num_steps += 1
 
@@ -93,7 +93,7 @@ class SimplePlantSimulator(BaseEnvironment):
             self.frozen_time_today = 0
 
         self.current_state = self.get_observation()
-        
+
         self.reward = self.reward_function(action)
 
         if self.num_steps == self.terminal_step:
@@ -109,7 +109,7 @@ class SimplePlantSimulator(BaseEnvironment):
             last_night_pf = self.projection_factors[i][self.num_steps - 1]
             morning_pf = self.projection_factors[i][self.num_steps]
             delta_pf = (morning_pf - last_night_pf) / (self.steps_per_night + 1)
-            
+
             # Compute overnight observations
             overnight_ob = [last_night_obs[i]]
             for j in range(int(self.steps_per_night) + 1):
@@ -134,9 +134,9 @@ class SimplePlantSimulator(BaseEnvironment):
         step_today = self.num_steps % self.steps_per_day
         return step_today / self.steps_per_day
 
-    def normalize(self, x):  
+    def normalize(self, x):
         return (x - self.l) / (self.u - self.l)
-    
+
     def percent_change(self, old, new):   # symmetric percentage change
         return 2 * (new - old) / (new + old)
 
@@ -161,7 +161,7 @@ class SimplePlantSimulator(BaseEnvironment):
             return action == 1
         else:
             return action == 2
-        
+
     def analyze_area_data(self):    # Approximate the actual leaf sizes and the projection factor throughout the day
         PWL = []
         PF = []
@@ -195,7 +195,7 @@ class SimplePlantSimulator(BaseEnvironment):
 
             PWL.append(pwl)
             PF.append(projection_factor)
-        
+
         # Optionally set a larger time step than the one given in plant data
         assert self.steps_per_day % self.stride == 0 & self.steps_per_night % self.stride == 0, f"stride must be a divisor of steps_per_day={self.steps_per_day} and of steps_per_night={self.steps_per_night}."
         PF = [pf[::self.stride] for pf in PF]
@@ -239,14 +239,14 @@ class SimplePlantSimulator(BaseEnvironment):
         assert plant_area_data.shape[0] / steps_per_day - 2 >= self.last_day, f'The requested last_day exceeds available plant data, which has {plant_area_data.shape[0] / steps_per_day - 2} days.'
 
         return plant_area_data[:,:self.num_plants], steps_per_day, steps_per_night, time_increment.total_seconds(), first_second
-    
+
 
 class TrivialRewEnv(SimplePlantSimulator):
     '''
     Uses trivial +1 or -1 reward for following the twilight policy
     '''
     def __init__(self, num_plants=48, q=0.05, stride=1, l=0.0005, u=0.0025, last_day=14, **kwargs):
-        super().__init__(num_plants, q, stride, l, u, last_day, **kwargs)     
+        super().__init__(num_plants, q, stride, l, u, last_day, **kwargs)
 
     def reward_function(self, action):
         clock = (self.num_steps % self.steps_per_day)*self.interval    # seconds since beginning of day
@@ -263,14 +263,14 @@ class SineTimeEnv(SimplePlantSimulator):
     Uses sine/cos time encoding
     '''
     def __init__(self, num_plants=48, q=0.05, stride=1, l=0.0005, u=0.0025, last_day=14, **kwargs):
-        super().__init__(num_plants, q, stride, l, u, last_day, **kwargs)     
+        super().__init__(num_plants, q, stride, l, u, last_day, **kwargs)
         self.state_dim = (3,)
         self.current_state = np.empty(3)
 
     def time_of_day(self):
         clock = (self.num_steps % self.steps_per_day)*self.interval + self.first_second   # time of day in seconds
         return [(sin(2*pi*clock/86400)+1)/2, (cos(2*pi*clock/86400)+1)/2]
-    
+
 
 class TrivialRewSineTimeEnv(SineTimeEnv, TrivialRewEnv):
     '''
@@ -278,4 +278,3 @@ class TrivialRewSineTimeEnv(SineTimeEnv, TrivialRewEnv):
     '''
     def __init__(self, num_plants=48, q=0.05, stride=1, l=0.0005, u=0.0025, last_day=14, **kwargs):
         super().__init__(num_plants, q, stride, l, u, last_day, **kwargs)
-    
