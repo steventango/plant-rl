@@ -2,7 +2,7 @@ import os
 import shutil
 import sys
 
-import pandas as pd
+from logging import log
 
 sys.path.append(os.getcwd())
 import argparse
@@ -67,17 +67,6 @@ indices = args.idxs
 Problem = getProblem(exp.problem)
 
 
-def expand(key, value):
-    if isinstance(value, np.ndarray):
-        result = {}
-        for idx in np.ndindex(value.shape):
-            idx_str = ".".join(map(str, idx))
-            result[f"{key}.{idx_str}"] = value[idx]
-        return result
-    if isinstance(value, (list, tuple)):
-        return {f"{key}.{i}": v for i, v in enumerate(value)}
-    else:
-        return {key: value}
 
 def save_images(env, data_path: Path, save_keys):
     timestamp = env.time
@@ -101,30 +90,6 @@ def backup_and_save(exp, collector, idx, base):
     if os.path.exists(db_file):
         shutil.move(db_file, db_file_bak)
     saveCollector(exp, collector, base=base)
-
-
-def log(env, glue, wandb_run, s, a, info, r=None):
-    expanded_info = {}
-    for key, value in info.items():
-        if isinstance(value, pd.DataFrame):
-            table = wandb.Table(dataframe=value)
-            expanded_info.update({key: table})
-        elif isinstance(value, np.ndarray):
-            if value.size < 16:
-                expanded_info.update(expand(key, value))
-        else:
-            expanded_info.update(expand(key, value))
-    data = {
-        "time": env.time,
-        **expand("state", s),
-        **expand("action", a),
-        "steps": glue.num_steps,
-        **expanded_info,
-        "raw_image": wandb.Image(env.image),
-    }
-    if r is not None:
-        data["reward"] = r
-    wandb_run.log(data)
 
 
 for idx in indices:
