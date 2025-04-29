@@ -21,7 +21,7 @@ class SpreadsheetAgent(BaseAgent):
         self.df["datetime"] = self.df["Day"] * 86400 + pd.to_datetime(self.df["Time"], format="%H:%M:%S").apply(
             lambda x: x.hour * 3600 + x.minute * 60 + x.second
         )
-        tz = ZoneInfo(self.params.get("timezone", "	Etc/UTC"))
+        tz = ZoneInfo(self.params.get("timezone", "Etc/UTC"))
         dt = datetime.now(tz)
         offset = dt.utcoffset()
         assert offset is not None
