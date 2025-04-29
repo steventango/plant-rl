@@ -1,0 +1,13 @@
+finish data cleanup
+- raw data for nazmus and phytochrome_exp
+- convert time to UTC
+
+log other stuff
+- average area
+- merge new vision pipeline first., seg mask, bounding boxes
+
+UPDATE SPREADSHEET AGENT TO CONVERT FROM LOCAL TO UTC
+
+modify collector to log appropriately.
+
+consistent action logging, we always should log the 6D action, but maybe also log the agent_action
