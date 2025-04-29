@@ -110,7 +110,7 @@ def log(env, glue, wandb_run, s, a, info, r=None):
             table = wandb.Table(dataframe=value)
             expanded_info.update({key: table})
         elif isinstance(value, np.ndarray):
-            if value.size < 10:
+            if value.size < 16:
                 expanded_info.update(expand(key, value))
         else:
             expanded_info.update(expand(key, value))
