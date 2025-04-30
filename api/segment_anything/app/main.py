@@ -96,7 +96,7 @@ class SegmentAnythingAPI(ls.LitAPI):
                         point_labels_batch=[None] * len(images),
                         box_batch=boxes_list,
                         mask_input_batch=[None] * len(images),
-                        multimask_output=multimask_outputs[0],  # Using the first value as default
+                        multimask_output=any(multimask_outputs),
                     )
 
                     results = []
