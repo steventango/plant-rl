@@ -1,7 +1,6 @@
 import base64
 import json
-import os
-import threading
+import multiprocessing
 import time
 from pathlib import Path
 
@@ -24,22 +23,24 @@ def encode_image(image_path):
     return encoded_string
 
 
-def start_server(port=8000):
-    """Start the GroundingDinoAPI server for testing in a background thread."""
+def run_server_proc(port=8000):
+    """Run the server in a separate process."""
     api = GroundingDinoAPI()
     server = ls.LitServer(api, max_batch_size=2, batch_timeout=0.01)
+    server.run(port=port, num_api_servers=1, generate_client_file=False)
 
-    # Run server in a background thread
-    server_thread = threading.Thread(
-        target=server.run, kwargs={"port": port, "num_api_servers": 1, "generate_client_file": False}
+
+def start_server(port=8000):
+    """Start the GroundingDinoAPI server for testing in a background process."""
+    # Run server in a background process
+    server_process = multiprocessing.Process(
+        target=run_server_proc,
+        args=(port,),
     )
-    server_thread.daemon = True
-    server_thread.start()
-
+    server_process.start()
     # Give the server a moment to start
     time.sleep(5)
-
-    return server, server_thread
+    return server_process
 
 
 class TestGroundingDino:
@@ -48,13 +49,6 @@ class TestGroundingDino:
     @pytest.fixture
     def sample_image_path(self):
         return TEST_DIR / "cat.jpg"
-
-    @pytest.fixture(scope="class")
-    def api_server(self):
-        """Fixture to start and stop the API server for tests."""
-        port = 8932
-        start_server(port=port)
-        yield f"http://localhost:{port}/predict"
 
     def extract_detection_info(self, result):
         """Extract detection information from the API response in a consistent format."""
@@ -102,13 +96,12 @@ class TestGroundingDino:
         base_name = Path(image_path).stem
         results_dir = TEST_DIR / "results"
         results_dir.mkdir(parents=True, exist_ok=True)
-        output_path = results_dir / f"{base_name}_annotated.jpg"
+        output_path = results_dir / f"{base_name}_boxes.jpg"
 
         annotated_image_rgb = cv2.cvtColor(annotated_image, cv2.COLOR_RGB2BGR)
         cv2.imwrite(str(output_path), annotated_image_rgb)
 
-    @pytest.mark.integration
-    def test_predict(self, sample_image_path, api_server):
+    def test_predict(self, sample_image_path):
         """
         Integration test that sends a request to the Grounding DINO API.
         """
@@ -125,8 +118,12 @@ class TestGroundingDino:
             }
         )
         headers = {"Content-Type": "application/json"}
-        response = requests.post(api_server, data=payload, headers=headers)
+        port = 8932
+        server_process = start_server(port=port)
+        endpoint = f"http://localhost:{port}/predict"
+        response = requests.post(endpoint, data=payload, headers=headers)
         result = response.json()
+        server_process.kill()
 
         # Basic verification that we got a valid response
         assert result is not None, "API request failed"
