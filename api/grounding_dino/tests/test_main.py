@@ -129,8 +129,8 @@ class TestGroundingDino:
         assert result is not None, "API request failed"
 
         boxes, scores, text_labels = self.extract_detection_info(result)
-        assert boxes == [[199.7177734375, 46.13459777832031, 499.15631103515625, 374.36907958984375]]
-        assert scores == [0.3760952651500702]
-        assert text_labels == ["cat"]
+        assert np.allclose(boxes, [[199.7177734375, 46.13459777832031, 499.15631103515625, 374.36907958984375]], atol=1e-5), "Boxes do not match within tolerance"
+        assert scores == pytest.approx([0.3760952651500702], rel=1e-3), "Scores do not match within tolerance"
+        assert text_labels == ["cat"], "Text labels do not match"
 
         self.visualize_detections(sample_image_path, result)
