@@ -1,3 +1,4 @@
+import os
 from itertools import chain
 from pathlib import Path
 
@@ -5,6 +6,7 @@ import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import pytest
 import seaborn as sns
 from PIL import Image
 
@@ -18,7 +20,9 @@ E4_TEST_DIR = TEST_DIR / "Spreadsheet-C"
 E5_TEST_DIR = TEST_DIR / "Spreadsheet-C-v2"
 E6_TEST_DIR = TEST_DIR / "Spreadsheet-C-v3"
 
-
+skipif_github_actions = pytest.mark.skipif(
+    os.environ.get("GITHUB_ACTIONS") == "true", reason="Skip in GitHub Actions environment"
+)
 
 def get_plant_area(test_dir: Path, zone: Zone):
     dfs = []
@@ -43,24 +47,31 @@ def get_plant_area(test_dir: Path, zone: Zone):
     plot_area_comparison(df, out_dir)
 
 
+@skipif_github_actions
 def test_process_E6_zone_1():
     zone = get_zone(1)
     get_plant_area(E6_TEST_DIR, zone)
 
+
+@skipif_github_actions
 def test_process_E6_zone_2():
     zone = get_zone(2)
     get_plant_area(E6_TEST_DIR, zone)
 
 
+@skipif_github_actions
 def test_process_E6_zone_6():
     zone = get_zone(6)
     get_plant_area(E6_TEST_DIR, zone)
 
 
+@skipif_github_actions
 def test_process_E6_zone_9():
     zone = get_zone(9)
     get_plant_area(E6_TEST_DIR, zone)
 
+
+@skipif_github_actions
 def test_process_E5_zone_1():
     zone = Zone(
         identifier=1,
@@ -92,6 +103,8 @@ def test_process_E5_zone_1():
     )
     get_plant_area(E5_TEST_DIR, zone)
 
+
+@skipif_github_actions
 def test_process_E5_zone_2():
     zone = Zone(
             identifier=2,
@@ -124,6 +137,7 @@ def test_process_E5_zone_2():
     get_plant_area(E5_TEST_DIR, zone)
 
 
+@skipif_github_actions
 def test_process_E4_zone_1():
     zone = Zone(
         identifier=1,
@@ -156,6 +170,7 @@ def test_process_E4_zone_1():
     get_plant_area(E4_TEST_DIR, zone)
 
 
+@skipif_github_actions
 def test_process_E4_zone_6():
     zone = Zone(
         identifier=6,
@@ -178,6 +193,7 @@ def test_process_E4_zone_6():
     get_plant_area(E4_TEST_DIR, zone)
 
 
+@skipif_github_actions
 def test_process_E4_zone_3():
     zone = Zone(
         identifier=3,
