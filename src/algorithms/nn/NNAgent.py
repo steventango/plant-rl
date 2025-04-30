@@ -109,12 +109,12 @@ class NNAgent(BaseAgent):
         # if x is a vector, then jax handles a lack of "batch" dimension gracefully
         #   at a 5x speedup
         # if x is a tensor, jax does not handle lack of "batch" dim gracefully
-        
-        # Added extra condition for FTA because the vector becomes a tensor during 
+
+        # Added extra condition for FTA because the vector becomes a tensor during
         # the forward pass. So we need to add the batch dim manually
-        # at the start as if we were passing a tensor, otherwise modules 
-        # after the FTA application (i.e flatten) will think the (n_hidden x n_tiles) 
-        # tensor is (n_batch x n_hidden) and not behave correctly. 
+        # at the start as if we were passing a tensor, otherwise modules
+        # after the FTA application (i.e flatten) will think the (n_hidden x n_tiles)
+        # tensor is (n_batch x n_hidden) and not behave correctly.
         if len(x.shape) > 1 or self.rep_params.get('type', None) == 'FTA':
             x = np.expand_dims(x, 0)
             q = self._values(self.state, x)[0]
@@ -139,7 +139,7 @@ class NNAgent(BaseAgent):
             gamma=self.gamma,
             terminal=False,
         ))
-        return a
+        return a, {}
 
     def step(self, r: float, xp: np.ndarray | None, extra: Dict[str, Any]):
         a = -1
@@ -166,7 +166,7 @@ class NNAgent(BaseAgent):
         ))
 
         self.update()
-        return a
+        return a, {}
 
     def end(self, r: float, extra: Dict[str, Any]):
         # possibly process the reward

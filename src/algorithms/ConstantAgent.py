@@ -17,10 +17,10 @@ class ConstantAgent(BaseAgent):
     # -- RLGlue interface --
     # ----------------------
     def start(self, observation: np.ndarray):
-        return self.action
+        return self.action, {}
 
     def step(self, reward: float, observation: np.ndarray | None, extra: Dict[str, Any]):
-        return self.action
+        return self.action, {}
 
     def end(self, reward: float, extra: Dict[str, Any]):
         pass

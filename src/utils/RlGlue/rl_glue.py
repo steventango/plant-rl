@@ -24,32 +24,24 @@ class PlanningRlGlue(RlGlue):
         self._total_steps = exp_params.get('total_steps', 0)
 
     def start(self):
-        result = super().start()
+        s, env_info = self.environment.start()
+        self.last_action, agent_info = self.agent.start(s)
+        info = {**env_info, **agent_info}
+
         if self.start_time is None:
             self.start_time = time.time()
         self.total_steps = self._total_steps
-        s, last_action = result
-        logger.debug(f"#{self.total_steps} [{time.time() - self.start_time:.2f} s] env start: state[0] {int(s[0])}")
-        logger.debug(f"#{self.total_steps} [{time.time() - self.start_time:.2f} s] env start: action {last_action}")
-        return result
+        return s, self.last_action, info
 
     def step(self) -> Interaction:
         assert (
             self.last_action is not None
         ), "Action is None; make sure to call glue.start() before calling glue.step()."
         if self.total_steps % self.update_freq == 0:
-            logger.debug(f"#{self.total_steps} [{time.time() - self.start_time:.2f} s] env step one start: action {self.last_action}")
             self.environment.step_one(self.last_action)
-            logger.debug(f"#{self.total_steps} [{time.time() - self.start_time:.2f} s] env step one end")
-        logger.debug(f"#{self.total_steps} [{time.time() - self.start_time:.2f} s] agent planning start")
         while time.time() < self.start_time + self.step_duration * (self.total_steps + 1):
             self.agent.plan()
-        logger.debug(f"#{self.total_steps} [{time.time() - self.start_time:.2f} s] agent planning end")
-        logger.debug(f"#{self.total_steps} [{time.time() - self.start_time:.2f} s] env step two start")
-        (reward, s, term, extra) = self.environment.step_two()
-        logger.debug(f"#{self.total_steps} [{time.time() - self.start_time:.2f} s] env step two end")
-        logger.debug(f"state[0] {int(s[0])}")
-        logger.debug(f"reward {reward}")
+        (reward, s, term, env_info) = self.environment.step_two()
 
         self.total_reward += reward
 
@@ -57,23 +49,23 @@ class PlanningRlGlue(RlGlue):
         self.total_steps += 1
         if term:
             self.num_episodes += 1
-            self.agent.end(reward, extra)
+            self.agent.end(reward, env_info)
             return Interaction(
                 o=s,
                 a=None,
                 t=term,
                 r=reward,
-                extra=extra,
+                extra=env_info,
             )
 
+        agent_info = {}
         if self.total_steps % self.update_freq == 0:
-            logger.debug(f"#{self.total_steps} [{time.time() - self.start_time:.2f} s] agent step start")
-            self.last_action = self.agent.step(reward, s, extra)
-            logger.debug(f"#{self.total_steps} [{time.time() - self.start_time:.2f} s] agent step end")
+            self.last_action, agent_info = self.agent.step(reward, s, env_info)
+        info = {**env_info, **agent_info}
         return Interaction(
             o=s,
             a=self.last_action,
             t=term,
             r=reward,
-            extra=extra,
+            extra=info,
         )

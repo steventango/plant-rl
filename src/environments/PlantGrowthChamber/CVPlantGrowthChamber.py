@@ -29,9 +29,9 @@ class CVPlantGrowthChamber(PlantGrowthChamber):
         return observation
     
     def start(self):
-        self.current_state = super().start()
+        self.current_state, info = super().start()
         self.history.reset()
-        return self.current_state
+        return self.current_state, info
 
     def step_two(self):
         self.reward, self.current_state, done, info = super().step_two()

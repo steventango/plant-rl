@@ -1,11 +1,12 @@
-import numpy as np
-import RlGlue.agent
-
 from typing import Dict, Tuple
+
+import numpy as np
 from PyExpUtils.collection.Collector import Collector
 
+import utils.RlGlue.agent
 
-class BaseAgent(RlGlue.agent.BaseAgent):
+
+class BaseAgent(utils.RlGlue.agent.BaseAgent):
     def __init__(self, observations: Tuple[int, ...], actions: int, params: Dict, collector: Collector, seed: int):
         self.observations = observations
         self.actions = actions
