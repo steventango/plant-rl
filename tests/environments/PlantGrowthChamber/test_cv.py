@@ -1,9 +1,12 @@
+import os
+from itertools import chain
 from pathlib import Path
 
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import pytest
 import seaborn as sns
 from PIL import Image
 
@@ -13,18 +16,20 @@ from utils.metrics import iqm
 
 TEST_DIR = Path(__file__).parent.parent.parent / "test_data"
 OLD_TEST_DIR = TEST_DIR / "old"
-SC_TEST_DIR = TEST_DIR / "Spreadsheet-C"
-SC_V2_TEST_DIR = TEST_DIR / "Spreadsheet-C-v2"
-SC_V3_TEST_DIR = TEST_DIR / "Spreadsheet-C-v3"
+E4_TEST_DIR = TEST_DIR / "Spreadsheet-C"
+E5_TEST_DIR = TEST_DIR / "Spreadsheet-C-v2"
+E6_TEST_DIR = TEST_DIR / "Spreadsheet-C-v3"
 
-
+skipif_github_actions = pytest.mark.skipif(
+    os.environ.get("GITHUB_ACTIONS") == "true", reason="Skip in GitHub Actions environment"
+)
 
 def get_plant_area(test_dir: Path, zone: Zone):
     dfs = []
     zone_dir = test_dir / f"z{zone.identifier}"
     out_dir = zone_dir / "results"
     out_dir.mkdir(exist_ok=True)
-    paths = sorted(zone_dir.glob("*.png"))
+    paths = sorted(chain(zone_dir.glob("*.png"), zone_dir.glob("*.jpg")))
     for path in paths:
         image = np.array(Image.open(path))
         debug_images = {}
@@ -36,32 +41,104 @@ def get_plant_area(test_dir: Path, zone: Zone):
         dfs.append(df)
         df.to_csv(out_dir / f"{path.stem}.csv", index=False)
         for key, value in debug_images.items():
-            value.save(out_dir / f"{path.stem}_{key}.png")
+            value.save(out_dir / f"{path.stem}_{key}.jpg")
 
     df = pd.concat(dfs)
     plot_area_comparison(df, out_dir)
 
 
-def test_process_zone_1():
+@skipif_github_actions
+def test_process_E6_zone_1():
     zone = get_zone(1)
-    get_plant_area(SC_V3_TEST_DIR, zone)
+    get_plant_area(E6_TEST_DIR, zone)
 
-def test_process_zone_2():
+
+@skipif_github_actions
+def test_process_E6_zone_2():
     zone = get_zone(2)
-    get_plant_area(SC_V3_TEST_DIR, zone)
+    get_plant_area(E6_TEST_DIR, zone)
 
 
-def test_process_zone_6():
+@skipif_github_actions
+def test_process_E6_zone_6():
     zone = get_zone(6)
-    get_plant_area(SC_V3_TEST_DIR, zone)
+    get_plant_area(E6_TEST_DIR, zone)
 
 
-def test_process_zone_9():
+@skipif_github_actions
+def test_process_E6_zone_9():
     zone = get_zone(9)
-    get_plant_area(SC_V3_TEST_DIR, zone)
+    get_plant_area(E6_TEST_DIR, zone)
 
 
-def test_process_old_zone_1():
+@skipif_github_actions
+def test_process_E5_zone_1():
+    zone = Zone(
+        identifier=1,
+        camera_left_url="http://mitacs-zone01-camera02.ccis.ualberta.ca:8080/observation",
+        camera_right_url=None,
+        lightbar_url="http://mitacs-zone1.ccis.ualberta.ca:8080/action",
+        trays=[
+            Tray(
+                n_wide=6,
+                n_tall=3,
+                rect=Rect(
+                    top_left=(528, 232),
+                    top_right=(1806, 195),
+                    bottom_left=(504, 843),
+                    bottom_right=(1815, 882),
+                ),
+            ),
+            Tray(
+                n_wide=6,
+                n_tall=3,
+                rect=Rect(
+                    top_left=(489, 927),
+                    top_right=(1791, 978),
+                    bottom_left=(513, 1512),
+                    bottom_right=(1731, 1626),
+                ),
+            ),
+        ],
+    )
+    get_plant_area(E5_TEST_DIR, zone)
+
+
+@skipif_github_actions
+def test_process_E5_zone_2():
+    zone = Zone(
+            identifier=2,
+            camera_left_url=None,
+            camera_right_url="http://mitacs-zone02-camera02.ccis.ualberta.ca:8080/observation",
+            lightbar_url="http://mitacs-zone2.ccis.ualberta.ca:8080/action",
+            trays=[
+                Tray(
+                    n_wide=6,
+                    n_tall=3,
+                    rect=Rect(
+                        top_left=(483, 279),
+                        top_right=(1752, 300),
+                        bottom_left=(471, 969),
+                        bottom_right=(1791, 909),
+                    ),
+                ),
+                Tray(
+                    n_wide=6,
+                    n_tall=3,
+                    rect=Rect(
+                        top_left=(498, 1068),
+                        top_right=(1806, 990),
+                        bottom_left=(585, 1722),
+                        bottom_right=(1812, 1572),
+                    ),
+                ),
+            ],
+        )
+    get_plant_area(E5_TEST_DIR, zone)
+
+
+@skipif_github_actions
+def test_process_E4_zone_1():
     zone = Zone(
         identifier=1,
         camera_left_url="http://mitacs-zone01-camera02.ccis.ualberta.ca:8080/observation",
@@ -90,10 +167,11 @@ def test_process_old_zone_1():
             ),
         ],
     )
-    get_plant_area(SC_TEST_DIR, zone)
+    get_plant_area(E4_TEST_DIR, zone)
 
 
-def test_process_old_zone_6():
+@skipif_github_actions
+def test_process_E4_zone_6():
     zone = Zone(
         identifier=6,
         camera_left_url="http://mitacs-zone06-camera01.ccis.ualberta.ca:8080/observation",
@@ -112,10 +190,11 @@ def test_process_old_zone_6():
             )
         ],
     )
-    get_plant_area(SC_TEST_DIR, zone)
+    get_plant_area(E4_TEST_DIR, zone)
 
 
-def test_process_old_zone_3():
+@skipif_github_actions
+def test_process_E4_zone_3():
     zone = Zone(
         identifier=3,
         camera_left_url="http://mitacs-zone03-camera01.ccis.ualberta.ca:8080/observation",
