@@ -99,7 +99,7 @@ def process_one_image(args):
     isoformat = path.stem.split("_")[0]
     image = np.array(Image.open(path))
     debug_images = {}
-    df = process_image(image, zone.trays, debug_images)
+    df, _ = process_image(image, zone.trays, debug_images)
     df["frame"] = index
     df["image_name"] = path.name
     for key, image in debug_images.items():

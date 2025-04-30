@@ -33,7 +33,7 @@ def get_plant_area(test_dir: Path, zone: Zone):
     for path in paths:
         image = np.array(Image.open(path))
         debug_images = {}
-        df = process_image(image, zone.trays, debug_images)
+        df, _ = process_image(image, zone.trays, debug_images)
         df["intensity"] = path.stem
 
         avg = iqm(jnp.array(df["area"]), 0.05)

@@ -344,7 +344,7 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
     annotated_frame = label_annotator.annotate(scene=annotated_frame, detections=annotate_detections, labels=labels)
 
     debug_images["masks2"] = Image.fromarray(annotated_frame)
-    return df
+    return df, annotate_detections
 
 
 def infer_pot_positions(trays, debug_images, undistorted_image):
