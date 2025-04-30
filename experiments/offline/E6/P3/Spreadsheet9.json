@@ -1,0 +1,20 @@
+{
+    "agent": "Spreadsheet-9",
+    "problem": "MockTemporalPlantGrowthChamber",
+    "total_steps": 240,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": 9,
+            "path": "/data/plant-rl/online/E6/P3/Spreadsheet-9/z9"
+        },
+        "experiment": {
+            "step_duration": 0.01,
+            "update_freq": 1,
+            "image_save_keys": "*",
+            "checkpoint": false
+        },
+        "filepath": "experiments/online/E6/P3/plant_reaction_test.xlsx",
+        "compatibility_mode": false
+    }
+}

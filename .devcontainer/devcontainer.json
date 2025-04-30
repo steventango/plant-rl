@@ -8,9 +8,6 @@
 		"../docker-compose.gpu.yml"
 	],
 	"service": "devcontainer",
-	"runServices": [
-		"devcontainer"
-	],
 	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},

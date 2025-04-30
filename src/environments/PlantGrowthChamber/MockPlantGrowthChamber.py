@@ -1,4 +1,5 @@
 from datetime import datetime
+from itertools import chain
 from pathlib import Path
 
 from PIL import Image
@@ -10,7 +11,7 @@ class MockPlantGrowthChamber(PlantGrowthChamber):
 
     def __init__(self, zone: int, path: str):
         super().__init__(zone)
-        self.paths = sorted(Path(path).glob("*.png"))
+        self.paths = sorted(chain(Path(path).glob("*.png"), Path(path).glob("*.jpg")))
 
     def get_image(self):
         path = self.paths[self.step]
