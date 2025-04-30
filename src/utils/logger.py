@@ -95,8 +95,9 @@ def create_annotated_image(image_data, box_data, class_id_to_label, masks_dict):
             image_data,
             boxes=({"predictions": {"box_data": box_data, "class_labels": class_id_to_label}} if box_data else None),
             masks=masks_dict if masks_dict else None,
+            file_type="jpg",
         )
-    return wandb.Image(image_data)
+    return wandb.Image(image_data, file_type="jpg")
 
 
 def log(env, glue, wandb_run, s, a, info, r=None):
@@ -119,7 +120,7 @@ def log(env, glue, wandb_run, s, a, info, r=None):
     if hasattr(env, "time"):
         data["time"] = env.time
     if hasattr(env, "image"):
-        data["raw_image"] = wandb.Image(env.image)
+        data["raw_image"] = wandb.Image(env.image, file_type="jpg")
 
         if hasattr(env, "detections"):
             detections = env.detections
