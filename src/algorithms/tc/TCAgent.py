@@ -25,7 +25,7 @@ class TCAgent(BaseAgent):
                 tiles=self.rep_params['tiles'],
                 tilings=self.rep_params['tilings'],
                 dims=observations[0],
-                wrap_time=self.rep_params['wrap_time'],
+                strategy=self.rep_params['strategy'],
             ))
         elif self.rep_params['which_tc'] == 'AndyTileCoder':
             self.tile_coder = DenseTileCoder(TileCoderConfig(
@@ -36,7 +36,8 @@ class TCAgent(BaseAgent):
         else:
             raise ValueError(f"Please specify which tile coder to use with param which_tc.")
 
-        self.n_features = self.tile_coder.features()
+        self.n_features = self.tile_coder.features() 
+        self.nonzero_features = self.tile_coder.nonzero_features() 
 
     def get_rep(self, s):
         return self.tile_coder.encode(s)
