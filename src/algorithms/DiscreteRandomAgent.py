@@ -18,10 +18,10 @@ class DiscreteRandomAgent(BaseAgent):
     # -- RLGlue interface --
     # ----------------------
     def start(self, observation: np.ndarray):
-        return sample(self.pi, rng=self.rng)
+        return sample(self.pi, rng=self.rng), {}
 
     def step(self, reward: float, observation: np.ndarray | None, extra: Dict[str, Any]):
-        return sample(self.pi, rng=self.rng)
+        return sample(self.pi, rng=self.rng), {}
 
     def end(self, reward: float, extra: Dict[str, Any]):
         pass

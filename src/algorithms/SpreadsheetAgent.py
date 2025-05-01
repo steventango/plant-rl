@@ -30,11 +30,11 @@ class SpreadsheetAgent(BaseAgent):
     # ----------------------
     def start(self, observation: np.ndarray):
         current_time = observation[0]
-        return self.get_action(current_time)
+        return self.get_action(current_time), {}
 
     def step(self, reward: float, observation: np.ndarray | None, extra: Dict[str, Any]):
         current_time = observation[0]
-        return self.get_action(current_time)
+        return self.get_action(current_time), {}
 
     def end(self, reward: float, extra: Dict[str, Any]):
         pass

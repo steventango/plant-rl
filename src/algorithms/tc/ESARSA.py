@@ -25,6 +25,8 @@ def _update(w, x, a, xp, pi, r, gamma, alpha, z, lambda_):
     z[a] = np.minimum(z[a], 1.0)
 
     w += (alpha / np.count_nonzero(x)) * delta * z
+    return delta
+
 
 @njit(cache=True)
 def value(w, x):
@@ -45,9 +47,17 @@ class ESARSA(TCAgent):
         self.w = np.full((actions, self.n_features), self.w0, dtype=np.float64)
         self.z = np.zeros((actions, self.n_features), dtype=np.float64)
 
+        self.info = {
+            'w': self.w,
+            'z': self.z,
+        }
+
     def policy(self, obs: np.ndarray) -> np.ndarray:
         qs = self.values(obs)
-        return egreedy_probabilities(qs, self.actions, self.epsilon)
+        self.info['qs'] = qs
+        pi = egreedy_probabilities(qs, self.actions, self.epsilon)
+        self.info['pi'] = pi
+        return pi
 
     def values(self, x: np.ndarray):
         x = np.asarray(x)
@@ -60,7 +70,15 @@ class ESARSA(TCAgent):
         else:
             pi = self.policy(xp)
 
-        _update(self.w, x, a, xp, pi, r, gamma, self.alpha, self.z, self.lambda_)
-
+        delta = _update(self.w, x, a, xp, pi, r, gamma, self.alpha, self.z, self.lambda_)
         if xp is None:
             self.z = np.zeros_like(self.z)
+
+        self.info.update({
+            'delta': delta,
+            'w': self.w,
+            'z': self.z,
+        })
+
+    def get_info(self):
+        return self.info

@@ -23,8 +23,8 @@ def read_observation(camera: Annotated[any, Depends(get_camera)]):
     image = Image.fromarray(array)
 
     with io.BytesIO() as buf:
-        image.save(buf, format="PNG")
+        image.save(buf, "JPEG", quality=90)
         image_bytes = buf.getvalue()
 
-    headers = {"Content-Disposition": 'inline; filename="observation.png"'}
-    return Response(image_bytes, headers=headers, media_type="image/png")
+    headers = {"Content-Disposition": 'inline; filename="observation.jpg"'}
+    return Response(image_bytes, headers=headers, media_type="image/jpeg")

@@ -42,6 +42,9 @@ class TCAgent(BaseAgent):
     def get_rep(self, s):
         return self.tile_coder.encode(s)
 
+    def get_info(self):
+        return {}
+
     @abstractmethod
     def policy(self, obs: np.ndarray) -> np.ndarray:
         ...
@@ -66,7 +69,7 @@ class TCAgent(BaseAgent):
             gamma=0,
             terminal=False,
         ))
-        return a
+        return a, self.get_info()
 
     def step(self, r: float, sp: np.ndarray | None, extra: Dict[str, Any]):
         a = -1
@@ -98,7 +101,7 @@ class TCAgent(BaseAgent):
                 gamma=exp.gamma,
             )
 
-        return a
+        return a, self.get_info()
 
     def end(self, r: float, extra: Dict[str, Any]):
         interaction = Timestep(

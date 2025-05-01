@@ -2,8 +2,9 @@ import os
 import shutil
 import sys
 
-sys.path.append(os.getcwd())
+import pandas as pd
 
+sys.path.append(os.getcwd())
 import argparse
 import logging
 import socket
@@ -18,6 +19,7 @@ from PyExpUtils.collection.Sampler import Identity, Ignore, MovingAverage, Subsa
 from PyExpUtils.collection.utils import Pipe
 from PyExpUtils.results.sqlite import saveCollector
 
+import wandb
 from experiment import ExperimentModel
 from problems.registry import getProblem
 from utils.checkpoint import Checkpoint
@@ -65,23 +67,31 @@ indices = args.idxs
 Problem = getProblem(exp.problem)
 
 
-def round_seconds(obj: datetime) -> datetime:
-    if obj.microsecond >= 500_000:
-        obj += timedelta(seconds=1)
-    return obj.replace(microsecond=0)
-
+def expand(key, value):
+    if isinstance(value, np.ndarray):
+        result = {}
+        for idx in np.ndindex(value.shape):
+            idx_str = ".".join(map(str, idx))
+            result[f"{key}.{idx_str}"] = value[idx]
+        return result
+    if isinstance(value, (list, tuple)):
+        return {f"{key}.{i}": v for i, v in enumerate(value)}
+    else:
+        return {key: value}
 
 def save_images(env, data_path: Path, save_keys):
-    now = datetime.now()
-    now = round_seconds(now)
-    now = now.isoformat().replace(':', '')
+    timestamp = env.time
+    time = datetime.fromtimestamp(timestamp)
+    isoformat = time.isoformat(timespec='seconds').replace(':', '')
     zone_identifier = env.zone.identifier
+    images_path = data_path / f"z{zone_identifier}" / "images"
+    images_path.mkdir(parents=True, exist_ok=True)
     for key, image in env.images.items():
         if save_keys != "*" and key not in save_keys:
             continue
-        img_path = data_path / f"z{zone_identifier}" / f"{now}_{key}.jpg"
+        img_path = images_path / f"{isoformat}_{key}.jpg"
         image = image.convert("RGB")
-        image.save(img_path)
+        image.save(img_path, "JPEG", quality=90)
 
 
 def backup_and_save(exp, collector, idx, base):
@@ -91,6 +101,30 @@ def backup_and_save(exp, collector, idx, base):
     if os.path.exists(db_file):
         shutil.move(db_file, db_file_bak)
     saveCollector(exp, collector, base=base)
+
+
+def log(env, glue, wandb_run, s, a, info, r=None):
+    expanded_info = {}
+    for key, value in info.items():
+        if isinstance(value, pd.DataFrame):
+            table = wandb.Table(dataframe=value)
+            expanded_info.update({key: table})
+        elif isinstance(value, np.ndarray):
+            if value.size < 10:
+                expanded_info.update(expand(key, value))
+        else:
+            expanded_info.update(expand(key, value))
+    data = {
+        "time": env.time,
+        **expand("state", s),
+        **expand("action", a),
+        "steps": glue.num_steps,
+        **expanded_info,
+        "raw_image": wandb.Image(env.image),
+    }
+    if r is not None:
+        data["reward"] = r
+    wandb_run.log(data)
 
 
 for idx in indices:
@@ -133,32 +167,51 @@ for idx in indices:
     chk.initial_value('episode', 0)
 
     context = exp.buildSaveContext(idx, base=args.save_path)
-    data_path = Path('data') / Path(context.resolve()).relative_to('results')
+    agent_path = Path(context.resolve()).relative_to('results')
+    data_path = Path('/data') / agent_path
+    images_save_keys = problem.exp_params.get("image_save_keys", default_save_keys)
     (data_path / f"z{env.zone.identifier}").mkdir(parents=True, exist_ok=True)
     data_path.mkdir(parents=True, exist_ok=True)
+
+    config = {
+        **problem.params,
+        "context": str(agent_path)
+    }
+
+    wandb_run = wandb.init(
+        entity="plant-rl",
+        project="main",
+        notes=str(agent_path),
+        config=config,
+        settings=wandb.Settings(
+            x_stats_disk_paths=("/", "/data"),
+        ),
+    )
 
     # Run the experiment
     start_time = time.time()
 
     # if we haven't started yet, then make the first interaction
     if glue.total_steps == 0:
-        glue.start()
-        save_images(env, data_path, problem.exp_params.get("image_save_keys", default_save_keys))
+        s, a, info = glue.start()
+        log(env, glue, wandb_run, s, a, info)
+        save_images(env, data_path, images_save_keys)
 
     for step in range(glue.total_steps, exp.total_steps):
         collector.next_frame()
         if problem.exp_params.get("checkpoint", True):
             chk.save()
         interaction = glue.step()
-        collector.collect('time', time.time())
+        collector.collect('time', env.time)
         collector.collect('state', interaction.o)
         collector.collect('action', interaction.a)
         collector.collect('reward', interaction.r)
         collector.collect('steps', glue.num_steps)
-        for key, value in interaction.extra.items():
-            collector.collect(key, value.astype(np.float64))
+        # for key, value in interaction.extra.items():
+        #     collector.collect(key, value.astype(np.float64))
+        log(env, glue, wandb_run, interaction.o, interaction.a, interaction.extra, interaction.r)
 
-        save_images(env, data_path, problem.exp_params.get("image_save_keys", default_save_keys))
+        save_images(env, data_path, images_save_keys)
 
         if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
             # allow agent to cleanup traces or other stateful episodic info
@@ -191,3 +244,4 @@ for idx in indices:
     # -- Saving --
     # ------------
     backup_and_save(exp, collector, idx, args.save_path)
+    wandb_run.finish()
