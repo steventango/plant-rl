@@ -1,0 +1,23 @@
+{
+    "agent": "ESARSA",
+    "problem": "SimplePlantSimulator",
+    "total_steps": -1,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment":{
+            "type": "BanditEnv",
+            "last_day": 14
+        },
+        "alpha": 0.1, 
+        "epsilon": [0.0, 0.1],
+        "lambda": 0.0,
+        "w0": [0.0, 0.1],
+        
+        "representation": {
+            "which_tc": "RichTileCoder",
+            "strategy": -1,
+            "tiles": 1,
+            "tilings": 1
+        }
+    }
+}
