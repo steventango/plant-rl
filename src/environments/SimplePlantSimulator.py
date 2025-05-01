@@ -67,7 +67,7 @@ class SimplePlantSimulator(BaseEnvironment):
 
         self.current_state = self.get_observation()
 
-        return self.current_state
+        return self.current_state, {}
 
     def step(self, action):
         # Modify the interpolated actual_areas according to the action
