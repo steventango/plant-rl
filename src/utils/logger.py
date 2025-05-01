@@ -68,10 +68,10 @@ def format_masks(detections, class_id_to_label):
     if hasattr(detections, "mask") and detections.mask is not None and detections.mask.shape[0] > 0:
         if detections.mask.ndim == 3:  # (n, h, w)
             # Create a single mask where each pixel has the value of its class
-            mask_data = np.empty(detections.mask.shape[1:], dtype=np.int32)
+            mask_data = np.empty(detections.mask.shape[1:], dtype=np.uint8)
             for class_mask, class_id in zip(detections.mask, detections.class_id):
                 # Only update pixels that are part of this mask and weren't set by higher-confidence masks
-                mask_data = np.where(class_mask & (mask_data == 0), class_id, mask_data)
+                mask_data = np.where(class_mask, class_id, mask_data)
 
             masks_dict["predictions"] = {"mask_data": mask_data, "class_labels": class_id_to_label}
 
