@@ -33,7 +33,7 @@ def format_bounding_boxes(detections):
     if detections.xyxy is not None and len(detections.xyxy) > 0:
         for i, (box, conf, class_id) in enumerate(zip(detections.xyxy, detections.confidence, detections.class_id)):
             # Store class ID to label mapping
-            class_id_to_label[int(class_id)] = f"class_{class_id}"
+            class_id_to_label[int(class_id)] = str(class_id)
 
             # Create box entry
             box_entry = {
@@ -45,7 +45,7 @@ def format_bounding_boxes(detections):
                 },
                 "domain": "pixel",
                 "class_id": int(class_id),
-                "box_caption": f"class_{class_id}",
+                "box_caption": f"{class_id}: {conf:.2f}",
                 "scores": {"confidence": float(conf)},
             }
             box_data.append(box_entry)
@@ -68,10 +68,10 @@ def format_masks(detections, class_id_to_label):
     if hasattr(detections, "mask") and detections.mask is not None and detections.mask.shape[0] > 0:
         if detections.mask.ndim == 3:  # (n, h, w)
             # Create a single mask where each pixel has the value of its class
-            mask_data = np.zeros(detections.mask.shape[1:], dtype=np.int32)
-            for i, (class_mask, class_id) in enumerate(zip(detections.mask, detections.class_id)):
+            mask_data = np.empty(detections.mask.shape[1:], dtype=np.int32)
+            for class_mask, class_id in zip(detections.mask, detections.class_id):
                 # Only update pixels that are part of this mask and weren't set by higher-confidence masks
-                mask_data = np.where(class_mask & (mask_data == 0), class_id + 1, mask_data)
+                mask_data = np.where(class_mask & (mask_data == 0), class_id, mask_data)
 
             masks_dict["predictions"] = {"mask_data": mask_data, "class_labels": class_id_to_label}
 
