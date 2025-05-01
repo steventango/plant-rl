@@ -255,3 +255,14 @@ What did help:
 - stride = 2, 3 doesn't make it easier in the sim...
 ### Conclusions & Outlooks: 
 - TC linear ESARSA with 10 min time step does just fine in the simulator (at least for one of the seeds). But maybe a longer time step would be better in real experiment? Maybe we should use 10 min instead of 5 min.
+
+## Phase P16
+### Objectives: 
+- ESARSA(lambda) was incorrectly implemented. See how well the fixed agent does.
+### Methods: 
+- In agent: previously only w[a] was updated. Now the whole weight matrix is updated
+### Observations: 
+- best config during last 20% of run: alpha=1.0, epsilon=0.1, lambda = 0.0
+- The action selection appears worse than seed 3 of P15. Maybe the partial update of w in P15 made seed 3 somewhat lucky?
+### Conclusions & Outlooks: 
+- It is very very difficult for the agent to learn from the current reward signal. It does seem possible, as seen in the partial tracking of the optimal policy. But real experiments with more noise (due to changing lighting) might make the reward signal even weaker. Maybe we should reconsider the reward function (again!)

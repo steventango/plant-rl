@@ -140,6 +140,7 @@ def main():
                     ax.set_ylim(bottom=-0.1)
                     _, returns = compute_step_return(x, yj, len(x))
                     total_return = np.sum(returns)
+                    ax.set_ylim([0,1])
                     print(f"Return: {total_return:.2f}")
             if metric == "area":
                 # plot IQM of the area

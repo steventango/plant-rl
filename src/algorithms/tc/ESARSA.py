@@ -8,9 +8,12 @@ from algorithms.tc.TCAgent import TCAgent
 from utils.checkpoint import checkpointable
 from utils.policies import egreedy_probabilities
 
+import logging
+logger = logging.getLogger('rlglue')
+logger.setLevel(logging.DEBUG)
 
 @njit(cache=True)
-def _update(w, x, a, xp, pi, r, gamma, alpha, z, lambda_, l1, l2):
+def _update(w, x, a, xp, pi, r, gamma, alpha, z, lambda_):
     qsa = np.dot(w[a],x)
 
     qsp = np.dot(w, xp)
@@ -21,8 +24,9 @@ def _update(w, x, a, xp, pi, r, gamma, alpha, z, lambda_, l1, l2):
     z[a] += x
     z[a] = np.minimum(z[a], 1.0)
 
-    w += (alpha / np.count_nonzero(x)) * delta * z - l1 * np.sign(w) - l2 * w
+    w += (alpha / np.count_nonzero(x)) * delta * z
     return delta
+
 
 @njit(cache=True)
 def value(w, x):
@@ -37,9 +41,7 @@ class ESARSA(TCAgent):
         self.alpha = params['alpha']
         self.epsilon = params['epsilon']
         self.lambda_ = params.get('lambda', 0.0)
-        self.w0 = params.get('w0', 0.0)
-        self.l1 = params.get('l1', 0.0)
-        self.l2 = params.get('l2', 0.0)
+        self.w0 = params.get('w0', 0.0) / self.nonzero_features
 
         # create initial weights
         self.w = np.full((actions, self.n_features), self.w0, dtype=np.float64)
@@ -68,7 +70,7 @@ class ESARSA(TCAgent):
         else:
             pi = self.policy(xp)
 
-        delta = _update(self.w, x, a, xp, pi, r, gamma, self.alpha, self.z, self.lambda_, self.l1, self.l2)
+        delta = _update(self.w, x, a, xp, pi, r, gamma, self.alpha, self.z, self.lambda_)
         if xp is None:
             self.z = np.zeros_like(self.z)
 
