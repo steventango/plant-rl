@@ -264,7 +264,7 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
             "ellipse_angle",
             "ellipse_eccentricity",
         ]
-        return pd.DataFrame([{**{col: 0 for col in columns}, "plant_id": i + 1} for i in range(num_plants)])
+        return pd.DataFrame([{**{col: 0 for col in columns}, "plant_id": i + 1} for i in range(num_plants)]), sv.Detections(np.zeros((0, 4)))
     new_masks, *_ = call_segment_anything_api(
         image=pil_image,
         boxes=valid_detections.xyxy,
@@ -344,7 +344,7 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
     annotated_frame = label_annotator.annotate(scene=annotated_frame, detections=annotate_detections, labels=labels)
 
     debug_images["masks2"] = Image.fromarray(annotated_frame)
-    return df
+    return df, annotate_detections
 
 
 def infer_pot_positions(trays, debug_images, undistorted_image):

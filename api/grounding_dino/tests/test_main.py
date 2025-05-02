@@ -1,6 +1,7 @@
 import base64
 import json
 import multiprocessing
+import sys
 import time
 from pathlib import Path
 
@@ -11,7 +12,8 @@ import pytest
 import requests
 import supervision as sv
 
-from ..app.main import GroundingDinoAPI
+sys.path.append(str(Path(__file__).parent.parent / "app"))
+from main import GroundingDinoAPI
 
 TEST_DIR = Path(__file__).parent / "test_data"
 

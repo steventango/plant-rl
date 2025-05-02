@@ -69,3 +69,40 @@ class PlanningRlGlue(RlGlue):
             r=reward,
             extra=info,
         )
+
+
+class LoggingRlGlue(RlGlue):
+    def __init__(self, agent: BasePlanningAgent, env: BaseAsyncEnvironment):
+        super().__init__(agent, BaseEnvironment())
+        self.agent = agent
+        self.environment = env
+
+    def start(self):
+        self.num_steps = 0
+        self.total_reward = 0
+
+        s, env_info = self.environment.start()
+        self.last_action, agent_info = self.agent.start(s)
+        info = {**env_info, **agent_info}
+        return s, self.last_action, info
+
+    def step(self) -> Interaction:
+        assert self.last_action is not None, 'Action is None; make sure to call glue.start() before calling glue.step().'
+        (reward, s, term, env_info) = self.environment.step(self.last_action)
+
+        self.total_reward += reward
+
+        self.num_steps += 1
+        self.total_steps += 1
+        if term:
+            self.num_episodes += 1
+            self.agent.end(reward, env_info)
+            return Interaction(
+                o=s, a=None, t=term, r=reward, extra=env_info,
+            )
+
+        self.last_action, agent_info = self.agent.step(reward, s, env_info)
+        info = {**env_info, **agent_info}
+        return Interaction(
+            o=s, a=self.last_action, t=term, r=reward, extra=info,
+        )

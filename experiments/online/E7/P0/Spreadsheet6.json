@@ -1,11 +1,11 @@
 {
-    "agent": "Spreadsheet1",
+    "agent": "Spreadsheet6",
     "problem": "TemporalPlantGrowthChamber",
     "total_steps": 40320,
     "episode_cutoff": -1,
     "metaParameters": {
         "environment": {
-            "zone": 1
+            "zone": 6
         },
         "experiment": {
             "step_duration": 600,

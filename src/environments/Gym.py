@@ -14,7 +14,7 @@ class Gym(BaseEnvironment):
     def start(self):
         self.seed += 1
         s, info = self.env.reset(seed=self.seed)
-        return np.asarray(s, dtype=np.float64).reshape(-1,)
+        return np.asarray(s, dtype=np.float64).reshape(-1,), info
 
     def step(self, a):
         sp, r, t, _, info = self.env.step(a)

@@ -1,5 +1,6 @@
-import datetime
+from datetime import datetime
 from typing import Any, Dict, Tuple
+from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
@@ -20,8 +21,9 @@ class SpreadsheetAgent(BaseAgent):
         self.df["datetime"] = self.df["Day"] * 86400 + pd.to_datetime(self.df["Time"], format="%H:%M:%S").apply(
             lambda x: x.hour * 3600 + x.minute * 60 + x.second
         )
-        # convert from local time to UTC time
-        offset = datetime.datetime.now(datetime.timezone.utc).astimezone().utcoffset()
+        tz = ZoneInfo(self.params.get("timezone", "Etc/UTC"))
+        dt = datetime.now(tz)
+        offset = dt.utcoffset()
         assert offset is not None
         self.offset = offset.total_seconds()
 
@@ -29,20 +31,20 @@ class SpreadsheetAgent(BaseAgent):
     # -- RLGlue interface --
     # ----------------------
     def start(self, observation: np.ndarray):
-        current_time = observation[0]
-        return self.get_action(current_time), {}
+        utc_time = observation[0]
+        return self.get_action(utc_time), {}
 
     def step(self, reward: float, observation: np.ndarray | None, extra: Dict[str, Any]):
-        current_time = observation[0]
-        return self.get_action(current_time), {}
+        utc_time = observation[0]
+        return self.get_action(utc_time), {}
 
     def end(self, reward: float, extra: Dict[str, Any]):
         pass
 
-    def get_action(self, current_time: float):
-        current_time += self.offset
+    def get_action(self, utc_time: float):
+        local_time = utc_time + self.offset
         cycle_length = 86400 * (self.df["Day"].max() + 1)
-        clock_time = current_time % cycle_length
+        clock_time = local_time % cycle_length
 
         if clock_time >= self.df["datetime"].max():
             second_point = self.df.iloc[0]

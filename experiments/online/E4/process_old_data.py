@@ -236,7 +236,7 @@ def process_one_image(args):
     timestamp = datetime.datetime.fromisoformat(path.stem)
     image = np.array(Image.open(path))
     debug_images = {}
-    df = process_image(image, zone.trays, debug_images)
+    df, _ = process_image(image, zone.trays, debug_images)
     df["timestamp"] = timestamp
 
     avg = iqm(jnp.array(df["area"]), 0.05)

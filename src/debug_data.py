@@ -1,15 +1,15 @@
-from pathlib import Path
-import numpy as np
 import json
+from pathlib import Path
+
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 from PIL import Image, ImageDraw
-from utils.metrics import UnbiasedExponentialMovingWelford as UEMW
-
 
 from environments.PlantGrowthChamber.cv import process_image
 from environments.PlantGrowthChamber.zones import Rect, Tray, Zone
+from utils.metrics import UnbiasedExponentialMovingWelford as UEMW
 
 
 def get_zone_from_config(config):
@@ -168,7 +168,7 @@ def process_one_image(zone, out_dir, path, index):
     isoformat = path.stem.split("_")[0]
     image = np.array(Image.open(path))
     debug_images = {}
-    df = process_image(image, zone.trays, debug_images)
+    df, _ = process_image(image, zone.trays, debug_images)
     df["frame"] = index
     for key, image in debug_images.items():
         image.save(out_dir / f"{isoformat}_{key}.jpg")
