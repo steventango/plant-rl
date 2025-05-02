@@ -1,6 +1,9 @@
 import io
+import logging
+import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 import numpy as np
 import requests
@@ -8,20 +11,21 @@ from PIL import Image
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
-from utils.metrics import iqm
 from utils.RlGlue.environment import BaseAsyncEnvironment
 
 from .cv import process_image
 from .zones import get_zone
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 class PlantGrowthChamber(BaseAsyncEnvironment):
 
-    def __init__(self, zone: int, start_time: float | None = None):
+    def __init__(self, zone: int, start_time: float | None = None, timezone: str = "Etc/UTC"):
         self.zone = get_zone(zone)
         self.images = {}
         self.image = None
-        self.time = None
+        self.time = 0
         self._start_time = start_time
         # self.min_action = 0.35 * np.array([0.398, 0.762, 0.324, 0.000, 0.332, 0.606])
         self.session = requests.Session()
@@ -30,10 +34,20 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.session.mount("https://", HTTPAdapter(max_retries=retries))
 
         # TODO: save self.observed_areas at the end of the run
-        self.observed_areas = []          # stores a list of arrays of observed areas in mm^2. i.e. self.observed_areas[-1] contains the latest areas of individual plants
-        self.q = 0.10                     # the bottom q and the top 1-q quantiles are excluded from iqm of areas
+        self.observed_areas = (
+            []
+        )  # stores a list of arrays of observed areas in mm^2. i.e. self.observed_areas[-1] contains the latest areas of individual plants
         self.gamma = 0.99
         self.step = 0
+
+        self.enforce_night = True
+        self.reference_spectrum = np.array([0.398, 0.762, 0.324, 0.000, 0.332, 0.606])
+
+        tz = ZoneInfo(timezone)
+        dt = datetime.now(tz)
+        offset = dt.utcoffset()
+        assert offset is not None
+        self.offset = offset.total_seconds()
 
     def get_observation(self):
         self.time = self.get_time()
@@ -88,25 +102,53 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         response.raise_for_status()
 
     def start(self):
+        # TODO: deal with start logic...
         self.observed_areas = []
         observation = self.get_observation()
         self.step += 1
         return observation, self.get_info()
 
     def step_two(self):
+        terminal = False
+        # log the time
+        logger.info(f"Step {self.step} at time {self.time}")
+        if self.enforce_night:
+            local_time = self.time + self.offset
+            logger.info(f"Local time: {local_time}")
+            clock_time = local_time % 86400
+            logger.info(f"Clock time: {int(clock_time // 3600)}:{int((clock_time % 3600) // 60)}:{clock_time % 60}")
+            night_start = 15 * 3600 + 14 * 60
+            night_end = 15 * 3600 + 16 * 60
+            if night_end < night_start:
+                is_night = clock_time < night_end or clock_time >= night_start
+                seconds_to_wait = 86400 - (clock_time) + night_end
+            else:
+                is_night = night_start <= clock_time < night_end
+                seconds_to_wait = night_end - clock_time
+            if is_night:
+                terminal = True
+                self.put_action(np.zeros(6))
+                logger.info(f"Nighttime enforced. Waiting for {seconds_to_wait} seconds.")
+                time.sleep(seconds_to_wait)
+                self.put_action(self.reference_spectrum)
+                logger.info("Nighttime ended. Reference spectrum applied.")
+                # time.sleep(600)
+                time.sleep(60)
+
         observation = self.get_observation()
         self.reward = self.reward_function()
         self.step += 1
+        logger.info(f"Step {self.step} completed. Reward: {self.reward}, Terminal: {terminal}")
 
-        return self.reward, observation, False, self.get_info()
+        return self.reward, observation, terminal, self.get_info()
 
     def get_info(self):
         return {"df": self.df}
 
     def reward_function(self):
-        new = iqm(self.observed_areas[-1], self.q)
-        old = iqm(self.observed_areas[-2], self.q)
-        return 2 * (new - old) / (new + old)   # symmetric percent change
+        new = np.mean(self.observed_areas[-1])
+        old = np.mean(self.observed_areas[-2])
+        return new - old
 
     def close(self):
-        requests.put(self.zone.lightbar_url, json={"array": np.zeros((2, 6)).tolist()})
+        self.put_action(np.zeros(6))

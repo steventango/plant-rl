@@ -154,19 +154,20 @@ def get_zone(indentifier: int):
         case 8:
             return Zone(
                 identifier=8,
-                camera_left_url="http://mitacs-zone08-camera01.ccis.ualberta.ca:8080/observation",
-                camera_right_url=None,
+                # camera_left_url="http://mitacs-zone08-camera01.ccis.ualberta.ca:8080/observation",
+                camera_left_url=None,
+                camera_right_url="http://mitacs-zone08-camera02.ccis.ualberta.ca:8080/observation",
                 lightbar_url="http://mitacs-zone8.ccis.ualberta.ca:8080/action",
                 trays=[
                     Tray(
-                        n_wide=3,
-                        n_tall=6,
+                        n_wide=4,
+                        n_tall=3,
                         rect=Rect(
-                            top_left=(1341, 433),
-                            top_right=(1998, 487),
-                            bottom_left=(1289, 1733),
-                            bottom_right=(1883, 1705),
-                        ),
+                            top_left=(1776, 564),
+                            top_right=(2346, 567),
+                            bottom_left=(1784, 1425),
+                            bottom_right=(2327, 1352),
+                        )
                     )
                 ],
             )

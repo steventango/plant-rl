@@ -6,28 +6,28 @@ from utils.metrics import UnbiasedExponentialMovingAverage as uema
 
 
 class CVPlantGrowthChamber(PlantGrowthChamber):
-    def __init__(self, zone: int, total_steps: int = 40320):
-        super().__init__(zone)
+    def __init__(self, zone: int, total_steps: int = 40320, **kwargs):
+        super().__init__(zone, **kwargs)
         self.total_steps = total_steps
 
         self.history = uema(alpha=0.01)   # growth rate = trace of (% change in area over 1 time step)
         self.current_state = np.empty(2)
- 
+
     def get_observation(self):
         epoch_time, _, plant_stats = super().get_observation()
         clock_time = epoch_time % 86400
         if len(self.observed_areas) >= 2:
-            old_area = iqm(self.observed_areas[-2], self.q)
-            new_area = iqm(self.observed_areas[-1], self.q)
+            old_area = np.mean(self.observed_areas[-2])
+            new_area = np.mean(self.observed_areas[-1])
             self.history.update(self.percent_change(old_area, new_area))
 
         time_of_day = self.transform_time_linear(clock_time)  # TODO: DQN needs sin/cos time, ESARSA needs linear
-        
-        observation = np.hstack([time_of_day, 
+
+        observation = np.hstack([time_of_day,
                                  self.normalize(self.history.compute())])
-        
+
         return observation
-    
+
     def start(self):
         self.current_state, info = super().start()
         self.history.reset()
@@ -42,13 +42,12 @@ class CVPlantGrowthChamber(PlantGrowthChamber):
 
     def percent_change(self, old, new):   # symmetric percentage change
         return 2 * (new - old) / (new + old)
-    
+
     def normalize(self, x, l=-0.0020, u=0.0015):
         return (x - l) / (u - l)
-    
+
     def transform_time_sine(self, time, total=86400.0):
         return np.array([np.sin(2 * np.pi * time / total), np.cos(2 * np.pi * time / total)])
 
     def transform_time_linear(self, time, total=86400.0):
         return time / total
-        
