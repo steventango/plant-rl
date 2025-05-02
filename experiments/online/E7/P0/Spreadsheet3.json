@@ -5,7 +5,8 @@
     "episode_cutoff": -1,
     "metaParameters": {
         "environment": {
-            "zone": 3
+            "zone": 3,
+            "timezone": "America/Edmonton"
         },
         "experiment": {
             "step_duration": 600,
