@@ -23,7 +23,7 @@ setDefaultConference('neurips')
 total_days = 14
 
 W0 = 0.0
-EP = 0.0
+EP = 0.1
 
 def last_n_percent_sum(x, n=0.2):
     return np.nansum(x[:, int((1-n)*x.shape[1]):], axis=1)
@@ -78,7 +78,9 @@ def main():
             
             for i in range(5):
                 ys_w = np.vstack([ys_w3[i], ys_w2[i], ys_w1[i], ys_w0[i]])
-                ax[i].imshow(ys_w, aspect=40, extent=(0, 1008, 0, 3), cmap='Purples')
+                print(np.max(ys_w))
+                print(np.min(ys_w))
+                ax[i].imshow(ys_w, aspect=40, extent=(0, 1008, 0, 3), vmin=-0.03, vmax=0.03, cmap='Purples')
                 ax[i].set_ylabel('Action')       
                 ax[i].set_xlim([0, 1008])
                 for j in range(total_days + 1):

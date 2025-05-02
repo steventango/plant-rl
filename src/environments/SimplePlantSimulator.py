@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 from RlGlue.environment import BaseEnvironment
 from utils.functions import PiecewiseLinear
+from math import floor
+import datetime
 
 class SimplePlantSimulator(BaseEnvironment):
     '''
@@ -10,11 +12,11 @@ class SimplePlantSimulator(BaseEnvironment):
     State = [linear time-of-day, 
              average area, 
              percentage change in average area over 1 step (for tracking plant motion)
-             ] 
+            ] 
     Action = [moonlight, low, standard, high]
     Reward = raw change in average area over 1 step (includes large overnight growth)
     '''
-    def __init__(self, last_day=14, **kwargs):
+    def __init__(self, last_day=12, **kwargs):
         self.state_dim = (3,)
         self.current_state = np.empty(3)
         self.action_dim = 4
@@ -52,7 +54,7 @@ class SimplePlantSimulator(BaseEnvironment):
             plant_motion = new_area / old_area - 1
         
         observation = np.hstack([self.time_of_day(), 
-                                 self.normalize(new_area, l=0, u=8000),
+                                 self.normalize(new_area, l=0, u=600),
                                  self.normalize(plant_motion, l=-0.05, u=0.05)])
             
         return observation
@@ -112,9 +114,10 @@ class SimplePlantSimulator(BaseEnvironment):
         return (x - l) / (u - l)
 
     def frozen_time(self, action):
+        a = action[0]
         # Amount of frozen time (in unit of time step), given action
         all_time = {0: 1.0, 1: 1.0, 2: 0.0, 3: 1.0}  
-        return all_time[action]
+        return all_time[a]
         
     def analyze_area_data(self):    # Approximate the actual leaf sizes and the projection factor throughout the day
         PWL = []
@@ -133,7 +136,7 @@ class SimplePlantSimulator(BaseEnvironment):
             pwl = PiecewiseLinear(max_time, max_area)
 
             # Number of remaining daytime time stamps (since we truncate the first and last day)
-            terminal_step = min((observed_area.shape[0]-2)*self.steps_per_day - 1, self.last_day*self.steps_per_day)
+            terminal_step = min((observed_area.shape[0]-2)*self.steps_per_day, self.last_day*self.steps_per_day)
 
             # Compute the actual area at all daytime time stamps
             actual_area_daytime = []
@@ -141,10 +144,12 @@ class SimplePlantSimulator(BaseEnvironment):
                 x_values = np.arange(i*(self.steps_per_day+self.steps_per_night), i*(self.steps_per_day+self.steps_per_night)+self.steps_per_day)
                 y_values = [pwl(x) for x in x_values]
                 actual_area_daytime.append(y_values)
+            last_x = (observed_area.shape[0]-2)*(self.steps_per_day+self.steps_per_night)
+            actual_area_daytime.append(pwl(last_x))
             actual_area_daytime = np.hstack(actual_area_daytime)
-
+            
             # Compute projection factor
-            truncated_data = ep_data[self.steps_per_day:-self.steps_per_day]
+            truncated_data = ep_data[self.steps_per_day:-self.steps_per_day + 1]
             projection_factor = truncated_data/actual_area_daytime
 
             PWL.append(pwl)
@@ -152,50 +157,96 @@ class SimplePlantSimulator(BaseEnvironment):
 
         return PWL, PF, terminal_step
 
-    def load_area_data(self):
+    def load_area_data(self, time_increment = 10):
         # Load historic plant area data
-        data_path = os.path.dirname(os.path.abspath(__file__)) + "/plant_data/plant_area_data.csv"
-        df = pd.read_csv(data_path).sort_values(by='timestamp')
+        data_path = os.path.dirname(os.path.abspath(__file__)) + "/plant_data/reprocessed.csv"
+        full_df = pd.read_csv(data_path)
+        
+        # Number of plants in the dataset
+        self.num_plants = full_df['plant_id'].max()
 
-        # Filter out any plants that have sensor reading errors (area randomly goes to 0 at some timesteps)
-        # TODO impute missing values by repeating previous values
-        df = df.loc[:, ~(df == 0).any()]
-
+        # Remove night time filler data
+        full_df['time'] = pd.to_datetime(full_df['time'])
+        full_df['time_only'] = full_df['time'].dt.time
+        start_time = datetime.time(9, 25)
+        end_time = datetime.time(20, 45)
+        df = full_df[(full_df['time_only'] >= start_time) & (full_df['time_only'] <= end_time)]
+        
         # Number of time steps per day
-        df['timestamp'] = pd.to_datetime(df['timestamp'])
-        timestamps_per_day = df['timestamp'].dt.date.value_counts()
+        timestamps_per_day = df['time'].dt.date.value_counts() / self.num_plants
         if timestamps_per_day.nunique() != 1:
             raise ValueError(f"Inconsistent timestamps per day: {timestamps_per_day.to_dict()}")
-        steps_per_day = timestamps_per_day.iloc[0]
+        steps_per_day = int(timestamps_per_day.iloc[0])
 
         # Number of time steps per night
-        time_increment = df['timestamp'].diff().mode()[0]
-        night_duration = df.groupby(df['timestamp'].dt.date)['timestamp'].first().shift(-1) - df.groupby(df['timestamp'].dt.date)['timestamp'].last()
-        steps_per_night = int((night_duration.mode()[0] / time_increment) - 1)
+        first_date = df['time'].dt.date.min()
+        second_date = df[df['time'].dt.date > first_date]['time'].dt.date.min()
+        night_duration = df[df['time'].dt.date == second_date]['time'].min() - df[df['time'].dt.date == first_date]['time'].max()
+        steps_per_night = int((int(night_duration.total_seconds()/60) / time_increment) - 1)
 
         # The second when the first day starts
-        first_second = pd.to_datetime(df['timestamp'].iloc[0]).time().hour * 3600 + pd.to_datetime(df['timestamp'].iloc[0]).time().minute * 60
+        first_second = pd.to_datetime(df['time'].iloc[0]).time().hour * 3600 + pd.to_datetime(df['time'].iloc[0]).time().minute * 60
 
         # Observed areas of plants (in unit of pixels)
-        plant_area_data = np.array(df.drop(columns=['timestamp']))
+        plant_area_data = df['clean_area'].to_numpy()
+        plant_area_data = np.reshape(plant_area_data, (-1, self.num_plants))  
 
         # Check if we have enough data for the requested last_day
         assert plant_area_data.shape[0] / steps_per_day - 2 >= self.last_day, f'The requested last_day exceeds available plant data, which has {plant_area_data.shape[0] / steps_per_day - 2} days.'
 
-        self.num_plants = plant_area_data.shape[1]
-
-        return plant_area_data, steps_per_day, steps_per_night, time_increment.total_seconds(), first_second
+        return plant_area_data, steps_per_day, steps_per_night, time_increment*60, first_second
     
-class BanditEnv(SimplePlantSimulator):
+
+class Daily_ContextBandit(SimplePlantSimulator):
     '''
+    Start a new episode every day.
+    State is hour of day.
+    '''
+    def __init__(self, last_day=12, **kwargs):
+        super().__init__(last_day, **kwargs)     
+        self.state_dim = (1,)
+        self.current_state = np.empty(1)
+        self.gamma = 1.0
+        self.actual_areas = [pwl.copy() for pwl in self.original_actual_areas]
+
+    def start(self):
+        self.current_state = self.get_observation()
+        return self.current_state
+    
+    def step(self, action):
+        super().step(action)      
+        if self.num_steps % self.steps_per_day == 0:
+            return self.reward, self.current_state, True, self.get_info()
+        else:
+            return self.reward, self.current_state, False, self.get_info()
+
+    def get_observation(self):      
+        super().get_observation()
+        return np.array([floor(self.num_steps % self.steps_per_day / 6)])
+        
+class Daily_Bandit(SimplePlantSimulator):
+    '''
+    Start a new episode every day.
     Only one state. Gamma = 0. Overnight reward is set to 0.
     '''
-    def __init__(self, last_day=14, **kwargs):
+    def __init__(self, last_day=12, **kwargs):
         super().__init__(last_day, **kwargs)     
         self.state_dim = (1,)
         self.current_state = np.empty(1)
         self.gamma = 0.0
+        self.actual_areas = [pwl.copy() for pwl in self.original_actual_areas]
 
+    def start(self):
+        self.current_state = self.get_observation()
+        return self.current_state
+    
+    def step(self, action):
+        super().step(action)      
+        if self.num_steps % self.steps_per_day == 0:
+            return self.reward, self.current_state, True, self.get_info()
+        else:
+            return self.reward, self.current_state, False, self.get_info()
+    
     def get_observation(self):      
         super().get_observation()
         return np.array([1])
