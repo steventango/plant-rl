@@ -110,15 +110,14 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     def step_two(self):
         terminal = False
-        # log the time
         logger.info(f"Step {self.step} at time {self.time}")
         if self.enforce_night:
             local_time = self.time + self.offset
             logger.info(f"Local time: {local_time}")
             clock_time = local_time % 86400
             logger.info(f"Clock time: {int(clock_time // 3600)}:{int((clock_time % 3600) // 60)}:{clock_time % 60}")
-            night_start = 15 * 3600 + 14 * 60
-            night_end = 15 * 3600 + 16 * 60
+            night_start = 21 * 3600 + 00 * 60
+            night_end = 9 * 3600 + 00 * 60
             if night_end < night_start:
                 is_night = clock_time < night_end or clock_time >= night_start
                 seconds_to_wait = 86400 - (clock_time) + night_end
@@ -132,8 +131,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 time.sleep(seconds_to_wait)
                 self.put_action(self.reference_spectrum)
                 logger.info("Nighttime ended. Reference spectrum applied.")
-                # time.sleep(600)
-                time.sleep(60)
+                time.sleep(600)
 
         observation = self.get_observation()
         self.reward = self.reward_function()
