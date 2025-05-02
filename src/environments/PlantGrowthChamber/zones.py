@@ -96,8 +96,8 @@ def get_zone(indentifier: int):
         case 3:
             return Zone(
                 identifier=3,
-                camera_left_url="http://mitacs-zone03-camera01.ccis.ualberta.ca:8080/observation",
-                camera_right_url=None,
+                camera_left_url=None,
+                camera_right_url="http://mitacs-zone03-camera02.ccis.ualberta.ca:8080/observation",
                 lightbar_url="http://mitacs-zone3.ccis.ualberta.ca:8080/action",
                 trays=[
                     Tray(
@@ -125,8 +125,8 @@ def get_zone(indentifier: int):
         case 6:
             return Zone(
                 identifier=6,
-                camera_left_url="http://mitacs-zone06-camera01.ccis.ualberta.ca:8080/observation",
-                camera_right_url=None,
+                camera_left_url=None,
+                camera_right_url="http://mitacs-zone06-camera02.ccis.ualberta.ca:8080/observation",
                 lightbar_url="http://mitacs-zone6.ccis.ualberta.ca:8080/action",
                 trays=[
                     Tray(
@@ -154,7 +154,6 @@ def get_zone(indentifier: int):
         case 8:
             return Zone(
                 identifier=8,
-                # camera_left_url="http://mitacs-zone08-camera01.ccis.ualberta.ca:8080/observation",
                 camera_left_url=None,
                 camera_right_url="http://mitacs-zone08-camera02.ccis.ualberta.ca:8080/observation",
                 lightbar_url="http://mitacs-zone8.ccis.ualberta.ca:8080/action",
@@ -175,7 +174,7 @@ def get_zone(indentifier: int):
             return Zone(
                 identifier=9,
                 camera_left_url=None,
-                camera_right_url="http://mitacs-zone09-camera01.ccis.ualberta.ca:8080/observation",
+                camera_right_url="http://mitacs-zone09-camera02.ccis.ualberta.ca:8080/observation",
                 lightbar_url="http://mitacs-zone9.ccis.ualberta.ca:8080/action",
                 trays=[
                     Tray(
