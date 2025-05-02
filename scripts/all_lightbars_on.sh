@@ -5,5 +5,5 @@
 zones=(1 2 3 6 8 9)
 
 for zone in "${zones[@]}"; do
-  curl http://mitacs-zone$zone.ccis.ualberta.ca:8080/action -X PUT -H "Content-Type: application/json" -d '{"array": [[1.0, 1.0, 1.0, 1.0, 1.0, 1.0], [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]]}' &
+  curl http://mitacs-zone$zone.ccis.ualberta.ca:8080/action -X PUT -H "Content-Type: application/json" -d '{"array": [[0.398, 0.762, 0.324, 0.000, 0.332, 0.606], [0.398, 0.762, 0.324, 0.000, 0.332, 0.606]]}' &
 done
