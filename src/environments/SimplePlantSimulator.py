@@ -7,10 +7,10 @@ from utils.functions import PiecewiseLinear
 class SimplePlantSimulator(BaseEnvironment):
     '''
     Simulate a tray of plants under the same lighting agent.
-    State = [linear time-of-day, 
-             average area, 
+    State = [linear time-of-day,
+             average area,
              percentage change in average area over 1 step (for tracking plant motion)
-             ] 
+             ]
     Action = [moonlight, low, standard, high]
     Reward = raw change in average area over 1 step (includes large overnight growth)
     '''
@@ -32,29 +32,29 @@ class SimplePlantSimulator(BaseEnvironment):
         self.original_actual_areas, self.projection_factors, self.terminal_step = self.analyze_area_data()
 
         self.gamma = 1.0
-    
+
     def get_observation(self):
         # Compute observed areas by projecting actual areas
-        self.observed_areas.append(np.array([self.actual_areas[i](self.time)*self.projection_factors[i][self.num_steps] for i in range(self.num_plants)]))        
-        
+        self.observed_areas.append(np.array([self.actual_areas[i](self.time)*self.projection_factors[i][self.num_steps] for i in range(self.num_plants)]))
+
         # Compute the average of the current observed areas
         new_area = np.mean(self.observed_areas[-1])
 
         # Compute plant motion, defined as percent change in average area per step
-        if self.num_steps == 0: 
+        if self.num_steps == 0:
             plant_motion = 0
-        elif self.num_steps % self.steps_per_day == 0:   # calculate % growth per overnight step, assuming constant % growth  
-            old_area = np.mean(self.observed_areas[-2]) 
+        elif self.num_steps % self.steps_per_day == 0:   # calculate % growth per overnight step, assuming constant % growth
+            old_area = np.mean(self.observed_areas[-2])
             total_growth = new_area / old_area - 1
             plant_motion = (total_growth + 1)**(1 / self.steps_per_night) - 1
-        else: 
-            old_area = np.mean(self.observed_areas[-2]) 
+        else:
+            old_area = np.mean(self.observed_areas[-2])
             plant_motion = new_area / old_area - 1
-        
-        observation = np.hstack([self.time_of_day(), 
+
+        observation = np.hstack([self.time_of_day(),
                                  self.normalize(new_area, l=0, u=8000),
                                  self.normalize(plant_motion, l=-0.05, u=0.05)])
-            
+
         return observation
 
     def start(self):
@@ -67,7 +67,7 @@ class SimplePlantSimulator(BaseEnvironment):
 
         self.current_state = self.get_observation()
 
-        return self.current_state
+        return self.current_state, {}
 
     def step(self, action):
         # Modify the interpolated actual_areas according to the action
@@ -75,7 +75,7 @@ class SimplePlantSimulator(BaseEnvironment):
             pwl.insert_plateau(self.time, self.time + self.frozen_time(action))
         self.frozen_time_today += self.frozen_time(action)
 
-        # Keep track of time 
+        # Keep track of time
         self.time += 1   # must occur after the above action effect
         self.num_steps += 1
 
@@ -88,7 +88,7 @@ class SimplePlantSimulator(BaseEnvironment):
             self.frozen_time_today = 0
 
         self.current_state = self.get_observation()
-        
+
         self.reward = self.reward_function()
 
         if self.num_steps == self.terminal_step:
@@ -108,14 +108,14 @@ class SimplePlantSimulator(BaseEnvironment):
         step_today = self.num_steps % self.steps_per_day
         return step_today / self.steps_per_day
 
-    def normalize(self, x, l, u): 
+    def normalize(self, x, l, u):
         return (x - l) / (u - l)
 
     def frozen_time(self, action):
         # Amount of frozen time (in unit of time step), given action
-        all_time = {0: 1.0, 1: 1.0, 2: 0.0, 3: 1.0}  
+        all_time = {0: 1.0, 1: 1.0, 2: 0.0, 3: 1.0}
         return all_time[action]
-        
+
     def analyze_area_data(self):    # Approximate the actual leaf sizes and the projection factor throughout the day
         PWL = []
         PF = []
@@ -185,25 +185,25 @@ class SimplePlantSimulator(BaseEnvironment):
         self.num_plants = plant_area_data.shape[1]
 
         return plant_area_data, steps_per_day, steps_per_night, time_increment.total_seconds(), first_second
-    
+
 class BanditEnv(SimplePlantSimulator):
     '''
     Only one state. Gamma = 0. Overnight reward is set to 0.
     '''
     def __init__(self, last_day=14, **kwargs):
-        super().__init__(last_day, **kwargs)     
+        super().__init__(last_day, **kwargs)
         self.state_dim = (1,)
         self.current_state = np.empty(1)
         self.gamma = 0.0
 
-    def get_observation(self):      
+    def get_observation(self):
         super().get_observation()
         return np.array([1])
 
     def reward_function(self):
-        if self.num_steps % self.steps_per_day == 0: 
-            return 0 
-        else: 
+        if self.num_steps % self.steps_per_day == 0:
+            return 0
+        else:
             new_area = np.mean(self.observed_areas[-1])
             old_area = np.mean(self.observed_areas[-2])
             return self.normalize(new_area - old_area, 0, 500)   # normalize typical reward to [0, 1]

@@ -13,7 +13,7 @@ ssh zone06-camera01 -t "cd ~/Desktop/camera && docker-compose up -d"
 ## Update
 ```bash
 rsync -azP api/camera/ zone06-camera01:~/Desktop/camera
-ssh zone06-camera01 -t "cd ~/Desktop/camera && docker-compose up -d"
+ssh zone06-camera01 -t "cd ~/Desktop/camera && docker-compose pull && docker-compose restart"
 ```
 
 

@@ -7,8 +7,8 @@ import requests
 from PIL import Image
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
-from utils.metrics import iqm
 
+from utils.metrics import iqm
 from utils.RlGlue.environment import BaseAsyncEnvironment
 
 from .cv import process_image
@@ -46,7 +46,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         elif "right" in self.images:
             self.image = np.array(self.images["right"])
 
-        self.df = process_image(self.image, self.zone.trays, self.images)
+        self.df, self.detections = process_image(self.image, self.zone.trays, self.images)
 
         self.plant_stats = np.array(self.df, dtype=np.float32)
 

@@ -39,15 +39,15 @@ class PlantSimulator(BaseEnvironment):
         self.original_actual_areas, self.projection_factors, self.terminal_step = self.analyze_area_data()
 
         self.gamma = 1.0
-    
+
     def get_observation(self):
         # Compute observed areas by projecting actual areas
-        self.observed_areas.append(np.array([self.actual_areas[i](self.time)*self.projection_factors[i][self.num_steps] for i in range(self.num_plants)]))        
-        
+        self.observed_areas.append(np.array([self.actual_areas[i](self.time)*self.projection_factors[i][self.num_steps] for i in range(self.num_plants)]))
+
         # Compute history of change in average area
         if self.num_steps > 0:
             self.history.update(iqm(self.observed_areas[-1], self.q) - iqm(self.observed_areas[-2], self.q))
-        
+
         observation = np.hstack([self.time_of_day(),
                                  self.countdown(),
                                  self.normalize(iqm(self.observed_areas[-1], self.q)),
@@ -65,7 +65,7 @@ class PlantSimulator(BaseEnvironment):
 
         self.current_state = self.get_observation()
 
-        return self.current_state
+        return self.current_state, {}
 
     def step(self, action):
         # Check if the agent selected optimal action given the time of day. This is env specific and should be overwritten by subclasses.
@@ -76,7 +76,7 @@ class PlantSimulator(BaseEnvironment):
             pwl.insert_plateau(self.time, self.time + self.frozen_time(action))
         self.frozen_time_today += self.frozen_time(action)
 
-        # Keep track of time 
+        # Keep track of time
         self.time += 1   # must occur after the above action effect
         self.num_steps += 1
 
@@ -93,7 +93,7 @@ class PlantSimulator(BaseEnvironment):
             self.frozen_time_today = 0
 
         self.current_state = self.get_observation()
-        
+
         self.reward = self.reward_function()
 
         if self.num_steps == self.terminal_step:
@@ -255,7 +255,7 @@ class PlantSimulator_OneTime(PlantSimulator):
         self.current_state = np.empty(3)
 
     def get_observation(self):
-        super().get_observation() 
+        super().get_observation()
         observation = np.hstack([self.linear_time_of_day(),
                                  self.normalize(iqm(self.observed_areas[-1], self.q)),
                                  self.normalize(self.history.compute(), l=-5, u=30)])
@@ -264,7 +264,7 @@ class PlantSimulator_OneTime(PlantSimulator):
     def linear_time_of_day(self):
         step_today = self.num_steps % self.steps_per_day
         return step_today / self.steps_per_day
-    
+
 class PlantSimulator_OnlyTime(PlantSimulator):
     '''
     State = (time-of-day)
@@ -277,7 +277,7 @@ class PlantSimulator_OnlyTime(PlantSimulator):
         self.current_state = np.empty(1)
 
     def get_observation(self):
-        super().get_observation() 
+        super().get_observation()
         observation = np.hstack([self.linear_time_of_day()])
         return observation
 
