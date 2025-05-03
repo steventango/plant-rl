@@ -191,9 +191,6 @@ async def main():
             save_images(env, data_path, images_save_keys)
 
             if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
-                # allow agent to cleanup traces or other stateful episodic info
-                agent.cleanup()
-
                 # collect some data
                 collector.collect('return', glue.total_reward)
                 collector.collect('episode', chk['episode'])
