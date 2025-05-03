@@ -135,9 +135,8 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.observed_areas = []
         # calculate the time left until the next round duration
         next_time = datetime.fromtimestamp((datetime.now().timestamp() // self.duration + 1) * self.duration)
-        logger.info(f"Next round time: {next_time}")
         time_left = next_time - datetime.now()
-        logger.info(f"Time left until start: {time_left}")
+        logger.info(f"Next round time: {next_time} ({time_left})")
         await asyncio.sleep(time_left.total_seconds())
         observation = await self.get_observation()
         self.n_step += 1
@@ -151,13 +150,13 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         duration = self.duration
         if self.enforce_night and self.is_night():
-                time_to_wait = self.get_time_until_night_end()
-                terminal = True
-                await self.put_action(np.zeros(6))
-                logger.info(f"Nighttime enforced. Waiting for {time_to_wait}.")
-                await asyncio.sleep(time_to_wait.total_seconds())
-                await self.put_action(self.reference_spectrum)
-                logger.info("Nighttime ended. Reference spectrum applied.")
+            time_to_wait = self.get_time_until_night_end()
+            terminal = True
+            await self.put_action(np.zeros(6))
+            logger.info(f"Nighttime enforced. Waiting for {time_to_wait}.")
+            await asyncio.sleep(time_to_wait.total_seconds())
+            await self.put_action(self.reference_spectrum)
+            logger.info("Nighttime ended. Reference spectrum applied.")
             duration /= 2
 
         # calculate the time left until the next step
@@ -183,16 +182,16 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     # def is_night(self):
     #     local_time = datetime.now(tz=self.tz)
-    #     logger.info(f"Local time: {local_time}")
     #     night_start = datetime.now(tz=self.tz).replace(hour=21, minute=0, second=0, microsecond=0)
     #     night_end = datetime.now(tz=self.tz).replace(hour=9, minute=0, second=0, microsecond=0) + timedelta(days=1)
     #     is_night = night_start <= local_time < night_end
+    #     logger.info(f"Local time: {local_time}, is_night: {is_night}")
     #     return is_night
 
     def is_night(self):
         local_time = datetime.now(tz=self.tz)
-        logger.info(f"Local time: {local_time}")
-        is_night = local_time.hour % 2 == 0
+        is_night = local_time.hour % 2 == 1
+        logger.info(f"Local time: {local_time}, is_night: {is_night}")
         return is_night
 
     def get_time_until_night_end(self):
