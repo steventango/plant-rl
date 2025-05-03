@@ -24,7 +24,7 @@ class MockPlantGrowthChamber(PlantGrowthChamber):
         return datetime.fromisoformat(time).timestamp()
 
     async def put_action(self, action: int):
-        pass
+        self.last_action = action
 
     async def close(self):
         pass

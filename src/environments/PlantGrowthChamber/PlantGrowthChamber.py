@@ -117,6 +117,8 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     async def put_action(self, action):
         """Send action to the lightbar using aiohttp with retry logic"""
+        self.last_action = action
+
         # clip action to have max value 1
         action = np.clip(action, None, 1)
         action = np.tile(action, (2, 1))
@@ -130,6 +132,8 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             raise
 
     async def start(self):
+        if self.enforce_night and self.is_night():
+            await self.sleep_night()
         await self.put_action(self.dim_action)
         # TODO: deal with start logic...
         self.observed_areas = []
@@ -148,20 +152,13 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         duration = self.duration
         if self.enforce_night and self.is_night():
-            time_to_wait = self.get_time_until_night_end()
             terminal = True
-            action = np.zeros(6)
-            await self.put_action(action)
-            self.last_action = action
-            logger.info(f"Nighttime enforced. Waiting for {time_to_wait}.")
-            await asyncio.sleep(time_to_wait.total_seconds())
-            await self.put_action(self.dim_action)
+            await self.sleep_night()
+            action = self.dim_action
             logger.info("Nighttime ended. Reference spectrum applied.")
             duration /= 2
-        else:
-            await self.put_action(action)
 
-        self.last_action = action
+        await self.put_action(action)
 
         # calculate the time left until the next step
         next_time = datetime.fromtimestamp((datetime.now().timestamp() // duration + 1) * duration)
@@ -174,6 +171,13 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.n_step += 1
 
         return self.reward, observation, terminal, self.get_info()
+
+    async def sleep_night(self):
+        time_to_wait = self.get_time_until_night_end()
+        action = np.zeros(6)
+        await self.put_action(action)
+        logger.info(f"Nighttime enforced. Waiting for {time_to_wait}.")
+        await asyncio.sleep(time_to_wait.total_seconds())
 
     def get_info(self):
         return {"df": self.df}
