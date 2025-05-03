@@ -67,6 +67,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         offset = dt.utcoffset()
         assert offset is not None
         self.offset = offset.total_seconds()
+        self.last_action = None
 
     async def get_observation(self):
         self.time = self.get_time()
@@ -143,6 +144,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         return observation, self.get_info()
 
     async def step(self, action: np.ndarray):
+        self.last_action = action
         logger.info(f"Step {self.n_step} with action {action}")
         await self.put_action(action)
         terminal = False

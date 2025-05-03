@@ -113,7 +113,8 @@ def log(env, glue, wandb_run, s, a, info, r=None):
             expanded_info.update(expand(key, value))
     data = {
         **expand("state", s),
-        **expand("action", a),
+        **expand("action", env.last_action),
+        **expand("agent_action", a),
         "steps": glue.num_steps,
         **expanded_info,
     }
