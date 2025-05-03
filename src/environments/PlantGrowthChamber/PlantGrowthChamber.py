@@ -166,7 +166,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         # calculate the time left until the next step
         next_time = datetime.fromtimestamp((datetime.now().timestamp() // duration + 1) * duration)
         time_left = next_time - datetime.now()
-        logger.info(f"Time left until next time: {time_left}")
+        logger.info(f"Next time: {next_time} ({time_left})")
         await asyncio.sleep(time_left.total_seconds())
         observation = await self.get_observation()
         self.reward = self.reward_function()
@@ -193,7 +193,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     def is_night(self):
         local_time = datetime.now(tz=self.tz)
-        is_night = local_time.hour % 2 == 1
+        is_night = local_time.hour % 2 == 0
         logger.info(f"Local time: {local_time}, is_night: {is_night}")
         return is_night
 
