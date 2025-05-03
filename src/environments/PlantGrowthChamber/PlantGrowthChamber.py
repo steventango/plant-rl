@@ -183,30 +183,18 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         old = np.mean(self.observed_areas[-2])
         return new - old
 
-    # def is_night(self):
-    #     local_time = datetime.now(tz=self.tz)
-    #     night_start = datetime.now(tz=self.tz).replace(hour=21, minute=0, second=0, microsecond=0)
-    #     night_end = datetime.now(tz=self.tz).replace(hour=9, minute=0, second=0, microsecond=0) + timedelta(days=1)
-    #     is_night = night_start <= local_time < night_end
-    #     logger.info(f"Local time: {local_time}, is_night: {is_night}")
-    #     return is_night
-
     def is_night(self):
         local_time = datetime.now(tz=self.tz)
-        is_night = local_time.hour % 2 == 0
+        night_start = local_time.replace(hour=21, minute=0, second=0, microsecond=0)
+        night_end = local_time.replace(hour=9, minute=0, second=0, microsecond=0) + timedelta(days=1)
+        is_night = night_start <= local_time < night_end
         logger.info(f"Local time: {local_time}, is_night: {is_night}")
         return is_night
 
     def get_time_until_night_end(self):
         local_time = datetime.now(tz=self.tz)
-        night_end = local_time + timedelta(hours=1)
-        night_end = night_end.replace(minute=0, second=0, microsecond=0)
+        night_end = local_time.replace(hour=9, minute=0, second=0, microsecond=0) + timedelta(days=1)
         return night_end - local_time
-
-    # def get_time_until_night_end(self):
-    #     local_time = datetime.now(tz=self.tz)
-    #     night_end = datetime.now(tz=self.tz).replace(hour=9, minute=0, second=0, microsecond=0) + timedelta(days=1)
-    #     return night_end - local_time
 
     async def close(self):
         """Close the environment and clean up resources."""
