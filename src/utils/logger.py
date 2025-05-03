@@ -71,7 +71,7 @@ def format_masks(detections, class_id_to_label):
             mask_data = np.empty(detections.mask.shape[1:], dtype=np.uint8)
             for class_mask, class_id in zip(detections.mask, detections.class_id):
                 # Only update pixels that are part of this mask and weren't set by higher-confidence masks
-                mask_data = np.where(class_mask, class_id, mask_data)
+                mask_data = np.where(class_mask, min(class_id, 255), mask_data)
 
             masks_dict["predictions"] = {"mask_data": mask_data, "class_labels": class_id_to_label}
 
