@@ -133,10 +133,10 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     async def start(self):
         if self.enforce_night and self.is_night():
-            await self.sleep_night()
+            await self.lights_off_and_sleep_until_morning()
         await self.put_action(self.dim_action)
         self.observed_areas = []
-        await self.sleep(self.duration)
+        await self.sleep_until_next_step(self.duration)
         observation = await self.get_observation()
         self.n_step += 1
         return observation, self.get_info()
@@ -148,7 +148,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         duration = self.duration
         if self.enforce_night and self.is_night():
             terminal = True
-            await self.sleep_night()
+            await self.lights_off_and_sleep_until_morning()
             action = self.dim_action
             logger.info("Nighttime ended. Reference spectrum applied.")
             duration /= 2
@@ -156,7 +156,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         await self.put_action(action)
 
         # calculate the time left until the next step
-        await self.sleep(duration)
+        await self.sleep_until_next_step(duration)
         observation = await self.get_observation()
         self.reward = self.reward_function()
         logger.info(f"Step {self.n_step} completed. Reward: {self.reward}, Terminal: {terminal}")
@@ -164,18 +164,42 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         return self.reward, observation, terminal, self.get_info()
 
-    async def sleep(self, duration):
-        next_time = datetime.fromtimestamp((datetime.now().timestamp() // duration + 1) * duration)
-        time_left = next_time - datetime.now()
-        logger.info(f"Next time: {next_time} ({time_left})")
+    def is_night(self):
+        local_time = datetime.now(tz=self.tz)
+        is_night = local_time.minute < 30
+        logger.info(f"Local time: {local_time}, is_night: {is_night}")
+        return is_night
+
+    def get_next_step_time(self, duration):
+        wake_time = datetime.fromtimestamp((datetime.now().timestamp() // duration + 1) * duration)
+        return wake_time
+
+    def get_morning_time(self):
+        local_time = datetime.now(tz=self.tz)
+        # round to the next half hour
+        night_end = local_time.replace(
+            hour=(local_time.hour + 1) % 24 if local_time.minute >= 30 else local_time.hour,
+            minute=0,
+            second=0,
+            microsecond=0,
+        ) + timedelta(minutes=30)
+        return night_end
+
+    async def sleep_until(self, wake_time):
+        time_left = wake_time - datetime.now()
+        logger.info(f"Sleeping until {wake_time} (in {time_left})")
         await asyncio.sleep(time_left.total_seconds())
 
-    async def sleep_night(self):
-        time_to_wait = self.get_time_until_night_end()
+    async def sleep_until_next_step(self, duration):
+        next_step_time = self.get_next_step_time(duration)
+        await self.sleep_until(next_step_time)
+
+    async def lights_off_and_sleep_until_morning(self):
         action = np.zeros(6)
         await self.put_action(action)
-        logger.info(f"Nighttime enforced. Waiting for {time_to_wait}.")
-        await asyncio.sleep(time_to_wait.total_seconds())
+        logger.info(f"Nighttime enforced!")
+        morning_time = self.get_morning_time()
+        await self.sleep_until(morning_time)
 
     def get_info(self):
         return {"df": self.df}
@@ -184,19 +208,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         new = np.mean(self.observed_areas[-1])
         old = np.mean(self.observed_areas[-2])
         return new - old
-
-    def is_night(self):
-        local_time = datetime.now(tz=self.tz)
-        night_start = local_time.replace(hour=21, minute=0, second=0, microsecond=0)
-        night_end = local_time.replace(hour=9, minute=0, second=0, microsecond=0) + timedelta(days=1)
-        is_night = night_start <= local_time < night_end
-        logger.info(f"Local time: {local_time}, is_night: {is_night}")
-        return is_night
-
-    def get_time_until_night_end(self):
-        local_time = datetime.now(tz=self.tz)
-        night_end = local_time.replace(hour=9, minute=0, second=0, microsecond=0) + timedelta(days=1)
-        return night_end - local_time
 
     async def close(self):
         """Close the environment and clean up resources."""
