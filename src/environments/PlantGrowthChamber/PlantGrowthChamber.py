@@ -60,7 +60,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.duration = 60
 
         self.enforce_night = True
-        self.reference_spectrum = np.array([0.398, 0.762, 0.324, 0.000, 0.332, 0.606])
+        self.dim_action = 0.675 * np.array([0.398, 0.762, 0.324, 0.000, 0.332, 0.606])
 
         self.tz = ZoneInfo(timezone)
         dt = datetime.now(self.tz)
@@ -130,7 +130,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             raise
 
     async def start(self):
-        await self.put_action(self.reference_spectrum)
+        await self.put_action(self.dim_action)
         # TODO: deal with start logic...
         self.observed_areas = []
         # calculate the time left until the next round duration
@@ -155,7 +155,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             await self.put_action(np.zeros(6))
             logger.info(f"Nighttime enforced. Waiting for {time_to_wait}.")
             await asyncio.sleep(time_to_wait.total_seconds())
-            await self.put_action(self.reference_spectrum)
+            await self.put_action(self.dim_action)
             logger.info("Nighttime ended. Reference spectrum applied.")
             duration /= 2
 
