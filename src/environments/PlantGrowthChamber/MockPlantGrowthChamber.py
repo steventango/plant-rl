@@ -13,18 +13,18 @@ class MockPlantGrowthChamber(PlantGrowthChamber):
         super().__init__(zone)
         self.paths = sorted(chain(Path(path).glob("*.png"), Path(path).glob("*.jpg")))
 
-    def get_image(self):
-        path = self.paths[self.step]
+    async def get_image(self):
+        path = self.paths[self.n_step]
         _, side = path.stem.split("_")
         self.images[side] = Image.open(path)
 
     def get_time(self):
-        path = self.paths[self.step]
+        path = self.paths[self.n_step]
         time, _ = path.stem.split("_")
         return datetime.fromisoformat(time).timestamp()
 
-    def put_action(self, action: int):
+    async def put_action(self, action: int):
         pass
 
-    def close(self):
+    async def close(self):
         pass

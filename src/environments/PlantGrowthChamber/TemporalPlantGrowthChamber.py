@@ -8,6 +8,6 @@ class TemporalPlantGrowthChamber(PlantGrowthChamber):
     def __init__(self, zone: int, **kwargs):
         super().__init__(zone, **kwargs)
 
-    def get_observation(self):
-        super().get_observation()
+    async def get_observation(self):
+        await super().get_observation()
         return np.array([self.time])

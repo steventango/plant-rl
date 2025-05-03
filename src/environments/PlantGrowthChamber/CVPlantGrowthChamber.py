@@ -13,8 +13,8 @@ class CVPlantGrowthChamber(PlantGrowthChamber):
         self.history = uema(alpha=0.01)   # growth rate = trace of (% change in area over 1 time step)
         self.current_state = np.empty(2)
 
-    def get_observation(self):
-        epoch_time, _, plant_stats = super().get_observation()
+    async def get_observation(self):
+        epoch_time, _, plant_stats = await super().get_observation()
         clock_time = epoch_time % 86400
         if len(self.observed_areas) >= 2:
             old_area = np.mean(self.observed_areas[-2])
@@ -28,13 +28,13 @@ class CVPlantGrowthChamber(PlantGrowthChamber):
 
         return observation
 
-    def start(self):
-        self.current_state, info = super().start()
+    async def start(self):
+        self.current_state, info = await super().start()
         self.history.reset()
         return self.current_state, info
 
-    def step_two(self):
-        self.reward, self.current_state, done, info = super().step_two()
+    async def step(self, action: np.ndarray):
+        self.reward, self.current_state, done, info = await super().step(action)
         return self.reward, self.current_state, done, info
 
     def reward_function(self):   # reward = last state input = smooth change in area

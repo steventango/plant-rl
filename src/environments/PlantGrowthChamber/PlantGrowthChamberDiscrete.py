@@ -13,6 +13,6 @@ class PlantGrowthChamberDiscrete(PlantGrowthChamber):
             1: reference_spectrum,
         }
 
-    def step_one(self, action: int):
+    async def step(self, action: int):
         action = self.action_map[action]
-        return super().step_one(action)
+        return await super().step(action)

@@ -2,10 +2,10 @@ from PyExpUtils.collection.Collector import Collector
 
 from environments.PlantGrowthChamber.CVPlantGrowthChamberDiscrete import CVPlantGrowthChamberDiscrete as Env
 from experiment.ExperimentModel import ExperimentModel
-from problems.BaseProblem import BaseProblem
+from problems.BaseAsyncProblem import BaseAsyncProblem
 
 
-class CVPlantGrowthChamberDiscrete(BaseProblem):
+class CVPlantGrowthChamberDiscrete(BaseAsyncProblem):
     def __init__(self, exp: ExperimentModel, idx: int, collector: Collector):
         super().__init__(exp, idx, collector)
 
