@@ -143,25 +143,28 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         return observation, self.get_info()
 
     async def step(self, action: np.ndarray):
-        self.last_action = action
         logger.info(f"Step {self.n_step} with action {action}")
-        await self.put_action(action)
         terminal = False
 
         duration = self.duration
         if self.enforce_night and self.is_night():
             time_to_wait = self.get_time_until_night_end()
             terminal = True
-            await self.put_action(np.zeros(6))
+            action = np.zeros(6)
+            await self.put_action(action)
+            self.last_action = action
             logger.info(f"Nighttime enforced. Waiting for {time_to_wait}.")
             await asyncio.sleep(time_to_wait.total_seconds())
             await self.put_action(self.dim_action)
             logger.info("Nighttime ended. Reference spectrum applied.")
             duration /= 2
+        else:
+            await self.put_action(action)
+
+        self.last_action = action
 
         # calculate the time left until the next step
         next_time = datetime.fromtimestamp((datetime.now().timestamp() // duration + 1) * duration)
-        logger.info(f"Next time: {next_time}")
         time_left = next_time - datetime.now()
         logger.info(f"Time left until next time: {time_left}")
         await asyncio.sleep(time_left.total_seconds())
