@@ -149,8 +149,8 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         await self.put_action(action)
         terminal = False
 
-        if self.enforce_night:
-            if self.is_night():
+        duration = self.duration
+        if self.enforce_night and self.is_night():
                 time_to_wait = self.get_time_until_night_end()
                 terminal = True
                 await self.put_action(np.zeros(6))
@@ -158,9 +158,10 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 await asyncio.sleep(time_to_wait.total_seconds())
                 await self.put_action(self.reference_spectrum)
                 logger.info("Nighttime ended. Reference spectrum applied.")
+            duration /= 2
 
         # calculate the time left until the next step
-        next_time = datetime.fromtimestamp((datetime.now().timestamp() // self.duration + 1) * self.duration)
+        next_time = datetime.fromtimestamp((datetime.now().timestamp() // duration + 1) * duration)
         logger.info(f"Next time: {next_time}")
         time_left = next_time - datetime.now()
         logger.info(f"Time left until next time: {time_left}")
