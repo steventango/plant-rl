@@ -36,8 +36,8 @@ class TCAgent(BaseAgent):
         else:
             raise ValueError(f"Please specify which tile coder to use with param which_tc.")
 
-        self.n_features = self.tile_coder.features() 
-        self.nonzero_features = self.tile_coder.nonzero_features() 
+        self.n_features = self.tile_coder.features()
+        self.nonzero_features = self.tile_coder.nonzero_features()
 
     def get_rep(self, s):
         return self.tile_coder.encode(s)
@@ -121,3 +121,4 @@ class TCAgent(BaseAgent):
             )
 
         self.lag.flush()
+        return {}

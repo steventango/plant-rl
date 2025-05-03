@@ -24,4 +24,4 @@ class DiscreteRandomAgent(BaseAgent):
         return sample(self.pi, rng=self.rng), {}
 
     def end(self, reward: float, extra: Dict[str, Any]):
-        pass
+        return {}

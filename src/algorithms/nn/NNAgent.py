@@ -182,3 +182,4 @@ class NNAgent(BaseAgent):
         ))
 
         self.update()
+        return {}
