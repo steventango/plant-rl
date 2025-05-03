@@ -135,13 +135,8 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         if self.enforce_night and self.is_night():
             await self.sleep_night()
         await self.put_action(self.dim_action)
-        # TODO: deal with start logic...
         self.observed_areas = []
-        # calculate the time left until the next round duration
-        next_time = datetime.fromtimestamp((datetime.now().timestamp() // self.duration + 1) * self.duration)
-        time_left = next_time - datetime.now()
-        logger.info(f"Next round time: {next_time} ({time_left})")
-        await asyncio.sleep(time_left.total_seconds())
+        await self.sleep(self.duration)
         observation = await self.get_observation()
         self.n_step += 1
         return observation, self.get_info()
@@ -161,16 +156,19 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         await self.put_action(action)
 
         # calculate the time left until the next step
-        next_time = datetime.fromtimestamp((datetime.now().timestamp() // duration + 1) * duration)
-        time_left = next_time - datetime.now()
-        logger.info(f"Next time: {next_time} ({time_left})")
-        await asyncio.sleep(time_left.total_seconds())
+        await self.sleep(duration)
         observation = await self.get_observation()
         self.reward = self.reward_function()
         logger.info(f"Step {self.n_step} completed. Reward: {self.reward}, Terminal: {terminal}")
         self.n_step += 1
 
         return self.reward, observation, terminal, self.get_info()
+
+    async def sleep(self, duration):
+        next_time = datetime.fromtimestamp((datetime.now().timestamp() // duration + 1) * duration)
+        time_left = next_time - datetime.now()
+        logger.info(f"Next time: {next_time} ({time_left})")
+        await asyncio.sleep(time_left.total_seconds())
 
     async def sleep_night(self):
         time_to_wait = self.get_time_until_night_end()
