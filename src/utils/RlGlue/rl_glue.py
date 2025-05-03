@@ -14,6 +14,7 @@ logger.setLevel(logging.DEBUG)
 
 
 background_tasks = set()
+lock = asyncio.Lock()
 
 
 class AsyncRLGlue:
@@ -26,7 +27,6 @@ class AsyncRLGlue:
         self.num_steps: int = 0
         self.total_steps: int = 0
         self.num_episodes: int = 0
-        self.lock = asyncio.Lock()
 
     async def start(self):
         self.num_steps = 0
@@ -52,7 +52,7 @@ class AsyncRLGlue:
         self.total_steps += 1
         if term:
             return await self.end(reward, s, term, env_info)
-        async with self.lock:
+        async with lock:
             self.last_action, agent_info = await self.agent.step(reward, s, env_info)
         info = {**env_info, **agent_info}
         return Interaction(
@@ -67,7 +67,7 @@ class AsyncRLGlue:
         try:
             while True:
                 await asyncio.sleep(0)
-                async with self.lock:
+                async with lock:
                     await self.agent.plan()
         except asyncio.CancelledError:
             pass
