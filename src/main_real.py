@@ -1,7 +1,8 @@
+import asyncio
 import os
 import shutil
 import sys
-import asyncio
+
 sys.path.append(os.getcwd())
 import argparse
 import logging
@@ -157,6 +158,8 @@ async def main():
 
         # Run the experiment
         start_time = time.time()
+        # Track the current active save task (if any)
+        current_save_task = None
 
         # if we haven't started yet, then make the first interaction
         if glue.total_steps == 0:
@@ -167,7 +170,14 @@ async def main():
         for step in range(glue.total_steps, exp.total_steps):
             collector.next_frame()
             if problem.exp_params.get("checkpoint", True):
-                chk.save()
+                # Cancel the previous save task if it's still running and not completed
+                if current_save_task and not current_save_task.done():
+                    current_save_task.cancel()
+                    logger.debug(f"Cancelled previous checkpoint save at step {step}")
+
+                # Create a new task to run chk.save concurrently
+                current_save_task = asyncio.create_task(asyncio.to_thread(chk.save))
+
             interaction = await glue.step()
             collector.collect('time', env.time)
             collector.collect('state', interaction.o)
@@ -208,6 +218,12 @@ async def main():
         collector.reset()
 
         env.close()
+
+        # Wait for all checkpoint save tasks to complete before exiting
+        if current_save_task and not current_save_task.done():
+            logger.debug("Waiting for the last checkpoint save task to complete...")
+            await current_save_task
+            logger.debug("Last checkpoint save task completed.")
 
         # ------------
         # -- Saving --
