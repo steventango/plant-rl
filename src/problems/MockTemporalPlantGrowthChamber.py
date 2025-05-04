@@ -14,4 +14,4 @@ class MockTemporalPlantGrowthChamber(BaseAsyncProblem):
         self.env = Env(**self.env_params)
         self.actions = 6
         self.observations = (1,)
-        self.gamma = 0.99
+        self.gamma = 1

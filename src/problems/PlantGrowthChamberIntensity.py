@@ -12,4 +12,4 @@ class PlantGrowthChamberIntensity(BaseAsyncProblem):
         self.env = Env(**self.env_params)
         self.actions = 1
         self.observations = (1,)
-        self.gamma = 0.99
+        self.gamma = 1
