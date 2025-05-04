@@ -46,10 +46,12 @@ async def get_session():
 
 class PlantGrowthChamber(BaseAsyncEnvironment):
 
-    def __init__(self, zone: int, start_time: float | None = None, timezone: str = "Etc/UTC"):
+    def __init__(self, zone: int, timezone: str = "Etc/UTC"):
         self.zone = get_zone(zone)
         self.images = {}
         self.image = None
+        self.tz = ZoneInfo(timezone)
+        self.tz_utc = ZoneInfo("Etc/UTC")
         self.time = self.get_time()
 
         self.observed_areas = []
@@ -57,16 +59,12 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         # i.e. self.observed_areas[-1] contains the latest areas of individual plants
         self.gamma = 0.99
         self.n_step = 0
-        self.duration = 60
+        self.duration = timedelta(seconds=60)
 
         self.enforce_night = True
         self.dim_action = 0.675 * np.array([0.398, 0.762, 0.324, 0.000, 0.332, 0.606])
 
-        self.tz = ZoneInfo(timezone)
-        dt = datetime.now(self.tz)
-        offset = dt.utcoffset()
-        assert offset is not None
-        self.offset = offset.total_seconds()
+
         self.last_action = None
 
     async def get_observation(self):
@@ -90,7 +88,10 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         return self.time, self.image, self.plant_stats
 
     def get_time(self):
-        return datetime.now()
+        return datetime.now(tz=self.tz_utc)
+
+    def get_local_time(self):
+        return self.get_time().astimezone(self.tz)
 
     async def get_image(self):
         """Fetch images from cameras using aiohttp"""
@@ -165,26 +166,27 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         return self.reward, observation, terminal, self.get_info()
 
     def is_night(self):
-        local_time = datetime.now(tz=self.tz)
-        is_night = 5 <= local_time.minute < 10
+        local_time = self.get_local_time()
+        is_night = 20 <= local_time.minute < 22
         logger.info(f"Local time: {local_time}, is_night: {is_night}")
         return is_night
 
-    def get_next_step_time(self, duration):
-        wake_time = datetime.fromtimestamp((datetime.now().timestamp() // duration + 1) * duration)
+    def get_next_step_time(self, duration: timedelta):
+        duration_s = duration.total_seconds()
+        wake_time = datetime.fromtimestamp((self.get_time().timestamp() // duration_s + 1) * duration_s, tz=self.tz_utc)
         return wake_time
 
     def get_morning_time(self):
-        local_time = datetime.now(tz=self.tz)
-        night_end = local_time.replace(hour=18, minute=10, second=0, microsecond=0)
-        return night_end
+        local_time = self.get_local_time()
+        morning_time = local_time.replace(hour=18, minute=22, second=0, microsecond=0)
+        return morning_time
 
-    async def sleep_until(self, wake_time):
-        time_left = wake_time - datetime.now()
+    async def sleep_until(self, wake_time: datetime):
+        time_left = wake_time - self.get_time()
         logger.info(f"Sleeping until {wake_time} (in {time_left})")
         await asyncio.sleep(time_left.total_seconds())
 
-    async def sleep_until_next_step(self, duration):
+    async def sleep_until_next_step(self, duration: timedelta):
         next_step_time = self.get_next_step_time(duration)
         await self.sleep_until(next_step_time)
 
