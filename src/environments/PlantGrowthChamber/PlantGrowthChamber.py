@@ -4,11 +4,10 @@ import logging
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-import aiohttp
 import numpy as np
-from aiohttp_retry import ExponentialRetry, RetryClient
 from PIL import Image
 
+from environments.PlantGrowthChamber.utils import get_session
 from utils.RlGlue.environment import BaseAsyncEnvironment
 
 from .cv import process_image
@@ -16,32 +15,6 @@ from .zones import get_zone
 
 logger = logging.getLogger("PlantGrowthChamber")
 logger.setLevel(logging.DEBUG)
-
-_session = None
-
-
-async def get_session():
-    global _session
-    if _session is not None:
-        return _session
-    # Configure retry options with exponential backoff
-    retry_options = ExponentialRetry(
-        attempts=3,  # Maximum 3 retry attempts
-        start_timeout=0.5,  # Start with 0.5s delay
-        max_timeout=10,  # Maximum 10s delay
-        factor=2,  # Double the delay each retry
-        statuses={500, 502, 503, 504, 429},  # Retry on server errors and rate limiting
-    )
-
-    # Create RetryClient with retry options
-    timeout = aiohttp.ClientTimeout(total=60)
-    connector = aiohttp.TCPConnector(limit=10, ttl_dns_cache=300)
-    _session = RetryClient(
-        client_session=aiohttp.ClientSession(timeout=timeout, connector=connector),
-        retry_options=retry_options,
-        raise_for_status=True,  # Automatically raise for HTTP errors
-    )
-    return _session
 
 
 class PlantGrowthChamber(BaseAsyncEnvironment):
@@ -63,7 +36,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         self.enforce_night = True
         self.dim_action = 0.675 * np.array([0.398, 0.762, 0.324, 0.000, 0.332, 0.606])
-
 
         self.last_action = None
 
@@ -168,7 +140,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     def is_night(self):
         local_time = self.get_local_time()
-        is_night = 20 <= local_time.minute < 22
+        is_night = local_time.hour % 2 == 1
         logger.info(f"Local time: {local_time}, is_night: {is_night}")
         return is_night
 
@@ -179,7 +151,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     def get_morning_time(self):
         local_time = self.get_local_time()
-        morning_time = local_time.replace(hour=18, minute=22, second=0, microsecond=0)
+        morning_time = local_time.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(hours=1)
         return morning_time
 
     async def sleep_until(self, wake_time: datetime):

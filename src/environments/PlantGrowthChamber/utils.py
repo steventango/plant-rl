@@ -1,0 +1,28 @@
+import aiohttp
+from aiohttp_retry import ExponentialRetry, RetryClient
+
+_session = None
+
+
+async def get_session():
+    global _session
+    if _session is not None:
+        return _session
+    # Configure retry options with exponential backoff
+    retry_options = ExponentialRetry(
+        attempts=3,  # Maximum 3 retry attempts
+        start_timeout=0.5,  # Start with 0.5s delay
+        max_timeout=10,  # Maximum 10s delay
+        factor=2,  # Double the delay each retry
+        statuses={500, 502, 503, 504, 429},  # Retry on server errors and rate limiting
+    )
+
+    # Create RetryClient with retry options
+    timeout = aiohttp.ClientTimeout(total=60)
+    connector = aiohttp.TCPConnector(limit=10, ttl_dns_cache=300)
+    _session = RetryClient(
+        client_session=aiohttp.ClientSession(timeout=timeout, connector=connector),
+        retry_options=retry_options,
+        raise_for_status=True,  # Automatically raise for HTTP errors
+    )
+    return _session
