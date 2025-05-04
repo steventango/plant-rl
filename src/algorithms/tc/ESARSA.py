@@ -80,6 +80,8 @@ class ESARSA(TCAgent):
             'delta': delta,
             'w': self.w,
             'z': self.z,
+            'x': x,
+            'xp': xp,
         })
 
     def get_info(self):

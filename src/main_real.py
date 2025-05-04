@@ -162,7 +162,8 @@ async def main():
         # if we haven't started yet, then make the first interaction
         if glue.total_steps == 0:
             s, a, info = await glue.start()
-            log(env, glue, wandb_run, s, a, info)
+            episode = chk['episode']
+            log(env, glue, wandb_run, s, a, info, episode=episode)
             save_images(env, data_path, images_save_keys)
 
         for step in range(glue.total_steps, exp.total_steps):
@@ -184,7 +185,9 @@ async def main():
             collector.collect('steps', glue.num_steps)
             # for key, value in interaction.extra.items():
             #     collector.collect(key, value.astype(np.float64))
-            log(env, glue, wandb_run, interaction.o, interaction.a, interaction.extra, interaction.r)
+            episodic_return = glue.total_reward if interaction.t else None
+            episode = chk['episode']
+            log(env, glue, wandb_run, interaction.o, interaction.a, interaction.extra, interaction.r, interaction.t, episodic_return, episode)
 
             save_images(env, data_path, images_save_keys)
 

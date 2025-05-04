@@ -100,14 +100,14 @@ def create_annotated_image(image_data, box_data, class_id_to_label, masks_dict):
     return wandb.Image(image_data, file_type="jpg")
 
 
-def log(env, glue, wandb_run, s, a, info, r=None):
+def log(env, glue, wandb_run, s, a, info, r=None, t=None, episodic_return=None, episode=None):
     expanded_info = {}
     for key, value in info.items():
         if isinstance(value, pd.DataFrame):
             table = wandb.Table(dataframe=value)
             expanded_info.update({key: table})
         elif isinstance(value, np.ndarray):
-            if value.size < 16:
+            if value.size < 100:
                 expanded_info.update(expand(key, value))
         else:
             expanded_info.update(expand(key, value))
@@ -140,4 +140,10 @@ def log(env, glue, wandb_run, s, a, info, r=None):
 
     if r is not None:
         data["reward"] = r
+    if t is not None:
+        data["terminal"] = t
+    if episodic_return is not None:
+        data["return"] = episodic_return
+    if episode is not None:
+        data["episode"] = episode
     wandb_run.log(data)
