@@ -11,10 +11,6 @@
         "alpha": 0.1,
         "epsilon": 0.1,
         "lambda": 0.9,
-        "experiment": {
-            "step_duration": 60,
-            "update_freq": 1
-        },
         "representation": {
             "which_tc": "RichTileCoder",
             "strategy": -1,
