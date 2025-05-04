@@ -113,11 +113,12 @@ def log(env, glue, wandb_run, s, a, info, r=None):
             expanded_info.update(expand(key, value))
     data = {
         **expand("state", s),
-        **expand("action", env.last_action),
         **expand("agent_action", a),
         "steps": glue.num_steps,
         **expanded_info,
     }
+    if hasattr(env, "last_action"):
+        data.update(expand("action", env.last_action))
     if hasattr(env, "time"):
         data["time"] = env.time.timestamp()
     if hasattr(env, "image"):
