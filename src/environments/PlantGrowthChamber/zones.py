@@ -25,12 +25,34 @@ class Zone:
     identifier: int
     camera_left_url: str | None
     camera_right_url: str | None
-    lightbar_url: str
+    lightbar_url: str | None
     trays: list[Tray]
 
     @property
     def num_plants(self) -> int:
         return sum(tray.num_plants for tray in self.trays)
+
+
+def deserialize_zone(zone: dict) -> Zone:
+    return Zone(
+        identifier=zone["identifier"],
+        camera_left_url=zone.get("camera_left_url"),
+        camera_right_url=zone.get("camera_right_url"),
+        lightbar_url=zone.get("lightbar_url"),
+        trays=[
+            Tray(
+                n_wide=tray["n_wide"],
+                n_tall=tray["n_tall"],
+                rect=Rect(
+                    top_left=tray["rect"]["top_left"],
+                    top_right=tray["rect"]["top_right"],
+                    bottom_left=tray["rect"]["bottom_left"],
+                    bottom_right=tray["rect"]["bottom_right"],
+                ),
+            )
+            for tray in zone["trays"]
+        ],
+    )
 
 
 def get_zone(indentifier: int):

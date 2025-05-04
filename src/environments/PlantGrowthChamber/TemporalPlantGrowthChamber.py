@@ -5,8 +5,8 @@ from environments.PlantGrowthChamber.PlantGrowthChamber import PlantGrowthChambe
 
 class TemporalPlantGrowthChamber(PlantGrowthChamber):
 
-    def __init__(self, zone: int, **kwargs):
-        super().__init__(zone, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     async def get_observation(self):
         await super().get_observation()

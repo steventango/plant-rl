@@ -19,8 +19,9 @@ logger.setLevel(logging.DEBUG)
 
 class PlantGrowthChamber(BaseAsyncEnvironment):
 
-    def __init__(self, zone: int, timezone: str = "Etc/UTC"):
-        self.zone = get_zone(zone)
+    def __init__(self, zone: int | None = None, timezone: str = "Etc/UTC", **kwargs):
+        if zone is not None:
+            self.zone = get_zone(zone) if isinstance(zone, int) else zone
         self.images = {}
         self.image = None
         self.tz = ZoneInfo(timezone)
@@ -32,7 +33,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         # i.e. self.observed_areas[-1] contains the latest areas of individual plants
         self.gamma = 0.99
         self.n_step = 0
-        self.duration = timedelta(seconds=60)
+        self.duration = timedelta(minutes=10)
 
         self.enforce_night = True
         self.dim_action = 0.675 * np.array([0.398, 0.762, 0.324, 0.000, 0.332, 0.606])
@@ -117,7 +118,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     async def step(self, action: np.ndarray):
         logger.info(f"Step {self.n_step} with action {action}")
-        terminal = False
+        terminal = self.get_terminal()
 
         duration = self.duration
         if self.enforce_night and self.is_night():
@@ -140,7 +141,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     def is_night(self):
         local_time = self.get_local_time()
-        is_night = local_time.hour % 2 == 1
+        is_night = local_time.hour >= 21 or local_time.hour < 9
         logger.info(f"Local time: {local_time}, is_night: {is_night}")
         return is_night
 
@@ -151,7 +152,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     def get_morning_time(self):
         local_time = self.get_local_time()
-        morning_time = local_time.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(hours=1)
+        morning_time = local_time.replace(hour=9, minute=0, second=0, microsecond=0) + timedelta(days=1)
         return morning_time
 
     async def sleep_until(self, wake_time: datetime):
@@ -173,9 +174,14 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
     def get_info(self):
         return {"df": self.df}
 
+    def get_terminal(self) -> bool:
+        return False
+
     def reward_function(self):
         new = np.mean(self.observed_areas[-1])
         old = np.mean(self.observed_areas[-2])
+        if new == 0 or old == 0:
+            return 0
         return new - old
 
     async def close(self):

@@ -5,8 +5,8 @@ from environments.PlantGrowthChamber.PlantGrowthChamber import PlantGrowthChambe
 
 class PlantGrowthChamberDiscrete(PlantGrowthChamber):
 
-    def __init__(self, zone: int, **kwargs):
-        super().__init__(zone, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         reference_spectrum = np.array([0.398, 0.762, 0.324, 0.000, 0.332, 0.606])
         self.action_map = {
             0: reference_spectrum * 0.675,
