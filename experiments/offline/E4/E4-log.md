@@ -97,7 +97,7 @@ Agent:
 
 ##  Phase P7
 ### Objectives: 
-- Build a subclass for bandit agent
+- Test out bandit agent
 ### Methods: 
 Sim: 
 - Added a subclass to SimplePlantSimulator s.t. there is only one state, gamma = 0, and overnight reward is set to 0.
@@ -105,7 +105,28 @@ Agent:
 - Use tc-ESARSA with only 1 state
 - lambda = 0
 ### Observations: 
--  
+- Plotted the bandit's value function using imshow. vmin=-0.03, vmax=0.03. Observe that the agents do converge to action 2.
+- During the last few days, the value of action 2 decreases towards the end of each day. This is because the reward goes down as the plants close up (this closing motion is pronounced in Curtis's old data).
 ### Conclusions & Outlooks: 
--  
+- Bandit agent works as expected. It learned that 2 is best but the value of action 2 decreases when the plants are closing.
+
+##  Phase P8
+### Objectives: 
+- Implement daily episode in simpleplantsim
+- Try both bandit and contextual bandit
+### Methods: 
+Sim: 
+- Added a subclass that starts a new episode everyday 
+- Added one final data point to complete the 14th day
+- Replaced old data with Steven's reprocessed "clean_area"
+Agent: 
+- Use tc-ESARSA with only 1 state
+- lambda = 0
+### Observations: 
+- Plotted the bandit's value function using imshow. vmin=-0.03, vmax=0.03. Observe that the agents do converge to action 2.
+- During the last few days, the value of action 2 decreases towards the end of each day. This is because the reward goes down as the plants close up (this closing motion is pronounced in Curtis's old data).
+### Conclusions & Outlooks: 
+- Bandit agent works as expected. It learned that 2 is best but the value of action 2 decreases when the plants are closing.
+- Try contextual bandit
+
 
