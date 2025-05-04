@@ -57,7 +57,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         self.get_plant_stats()
 
-        self.plant_areas = self.plant_stats[:, 2].reshape(1, -1).flatten()
+        self.plant_areas = self.df["area"].to_numpy().flatten()
 
         clean_area = self.get_clean_area(self.plant_areas)
 
