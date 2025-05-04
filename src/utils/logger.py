@@ -119,7 +119,7 @@ def log(env, glue, wandb_run, s, a, info, r=None):
         **expanded_info,
     }
     if hasattr(env, "time"):
-        data["time"] = env.time
+        data["time"] = env.time.timestamp()
     if hasattr(env, "image"):
         data["raw_image"] = wandb.Image(env.image, file_type="jpg")
 

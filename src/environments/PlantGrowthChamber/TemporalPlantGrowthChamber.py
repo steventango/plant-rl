@@ -10,4 +10,4 @@ class TemporalPlantGrowthChamber(PlantGrowthChamber):
 
     async def get_observation(self):
         await super().get_observation()
-        return np.array([self.time])
+        return np.array([self.time.timestamp()])

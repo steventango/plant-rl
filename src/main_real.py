@@ -72,9 +72,7 @@ Problem = getProblem(exp.problem)
 
 
 def save_images(env, data_path: Path, save_keys):
-    timestamp = env.time
-    time = datetime.fromtimestamp(timestamp)
-    isoformat = time.isoformat(timespec='seconds').replace(':', '')
+    isoformat = env.time.isoformat(timespec='seconds').replace(':', '')
     zone_identifier = env.zone.identifier
     images_path = data_path / f"z{zone_identifier}" / "images"
     images_path.mkdir(parents=True, exist_ok=True)
@@ -179,7 +177,7 @@ async def main():
                 current_save_task = asyncio.create_task(asyncio.to_thread(chk.save))
 
             interaction = await glue.step()
-            collector.collect('time', env.time)
+            collector.collect('time', env.time.timestamp())
             collector.collect('state', interaction.o)
             collector.collect('action', interaction.a)
             collector.collect('reward', interaction.r)

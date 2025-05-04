@@ -50,7 +50,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.zone = get_zone(zone)
         self.images = {}
         self.image = None
-        self.time = 0
+        self.time = self.get_time()
 
         self.observed_areas = []
         # stores a list of arrays of observed areas in mm^2.
@@ -90,7 +90,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         return self.time, self.image, self.plant_stats
 
     def get_time(self):
-        return datetime.now().timestamp()
+        return datetime.now()
 
     async def get_image(self):
         """Fetch images from cameras using aiohttp"""
@@ -166,7 +166,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     def is_night(self):
         local_time = datetime.now(tz=self.tz)
-        is_night = local_time.minute < 30
+        is_night = 5 <= local_time.minute < 10
         logger.info(f"Local time: {local_time}, is_night: {is_night}")
         return is_night
 
@@ -176,13 +176,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     def get_morning_time(self):
         local_time = datetime.now(tz=self.tz)
-        # round to the next half hour
-        night_end = local_time.replace(
-            hour=(local_time.hour + 1) % 24 if local_time.minute >= 30 else local_time.hour,
-            minute=0,
-            second=0,
-            microsecond=0,
-        ) + timedelta(minutes=30)
+        night_end = local_time.replace(hour=18, minute=10, second=0, microsecond=0)
         return night_end
 
     async def sleep_until(self, wake_time):

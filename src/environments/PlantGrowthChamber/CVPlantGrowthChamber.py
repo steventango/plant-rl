@@ -15,7 +15,7 @@ class CVPlantGrowthChamber(PlantGrowthChamber):
 
     async def get_observation(self):
         epoch_time, _, plant_stats = await super().get_observation()
-        clock_time = epoch_time % 86400
+        clock_time = epoch_time.timestamp() % 86400
         if len(self.observed_areas) >= 2:
             old_area = np.mean(self.observed_areas[-2])
             new_area = np.mean(self.observed_areas[-1])

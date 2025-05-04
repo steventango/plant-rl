@@ -21,10 +21,14 @@ class MockPlantGrowthChamber(PlantGrowthChamber):
     def get_time(self):
         path = self.paths[self.n_step]
         time, _ = path.stem.split("_")
-        return datetime.fromisoformat(time).timestamp()
+        return datetime.fromisoformat(time)
 
     async def put_action(self, action: int):
         self.last_action = action
+
+    async def sleep_until(self, wake_time: datetime):
+        while self.get_time() < wake_time:
+            self.n_step += 1
 
     async def close(self):
         pass
