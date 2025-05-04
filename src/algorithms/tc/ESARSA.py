@@ -51,10 +51,18 @@ class ESARSA(TCAgent):
             'w': self.w,
             'z': self.z,
         }
+        if len(observations) == 1:
+            self.all_obs = np.eye(self.tile_coder.maxSize)
+        else:
+            self.all_obs = None
+
 
     def policy(self, obs: np.ndarray) -> np.ndarray:
         qs = self.values(obs)
         self.info['qs'] = qs
+        if self.all_obs is not None:
+            q = self.w @ self.all_obs
+            self.info['q'] = q
         pi = egreedy_probabilities(qs, self.actions, self.epsilon)
         self.info['pi'] = pi
         return pi
@@ -71,7 +79,7 @@ class ESARSA(TCAgent):
             pi = self.policy(xp)
 
         logger.debug(x)
-        
+
         delta = _update(self.w, x, a, xp, pi, r, gamma, self.alpha, self.z, self.lambda_)
         if xp is None:
             self.z = np.zeros_like(self.z)
