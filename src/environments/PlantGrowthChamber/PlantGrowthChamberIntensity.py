@@ -9,6 +9,6 @@ class PlantGrowthChamberIntensity(PlantGrowthChamber):
         super().__init__(zone)
         self.reference_spectrum = np.array([0.398, 0.762, 0.324, 0.000, 0.332, 0.606])
 
-    def put_action(self, action: float):
+    async def step(self, action: float):
         action = self.reference_spectrum * action
-        return super().put_action(action)
+        return await super().step(action)

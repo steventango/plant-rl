@@ -5,9 +5,9 @@ from environments.PlantGrowthChamber.PlantGrowthChamber import PlantGrowthChambe
 
 class TemporalPlantGrowthChamber(PlantGrowthChamber):
 
-    def __init__(self, zone: int):
-        super().__init__(zone)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-    def get_observation(self):
-        super().get_observation()
-        return np.array([self.time])
+    async def get_observation(self):
+        await super().get_observation()
+        return np.array([self.time.timestamp()])

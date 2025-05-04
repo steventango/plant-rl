@@ -1,30 +1,86 @@
+import json
 from datetime import datetime
-from itertools import chain
 from pathlib import Path
 
+import numpy as np
+import pandas as pd
 from PIL import Image
 
 from environments.PlantGrowthChamber.PlantGrowthChamber import PlantGrowthChamber
+from environments.PlantGrowthChamber.zones import deserialize_zone
 
 
 class MockPlantGrowthChamber(PlantGrowthChamber):
 
-    def __init__(self, zone: int, path: str):
-        super().__init__(zone)
-        self.paths = sorted(chain(Path(path).glob("*.png"), Path(path).glob("*.jpg")))
+    def __init__(self, *args, **kwargs):
+        self.dataset_path = Path(kwargs["dataset_path"])
+        self.config_path = self.dataset_path / "config.json"
+        self.procesed_csv_paths = sorted(self.dataset_path.glob("processed/**/all.csv"))
+        if len(self.procesed_csv_paths) == 0:
+            self.dataset_df = pd.read_csv(self.dataset_path / "raw.csv")
+        else:
+            self.dataset_df = pd.read_csv(self.procesed_csv_paths[-1])
+        self.dataset_df["time"] = pd.to_datetime(self.dataset_df["time"])
+        with open(self.config_path) as f:
+            self.config = json.load(f)
+        kwargs["zone"] = deserialize_zone(self.config["zone"])
+        self.index = 0
+        self.mock_area = kwargs.get("mock_area", False)
+        self.plant_stat_columns = [
+            "in_bounds",
+            "area",
+            "convex_hull_area",
+            "solidity",
+            "perimeter",
+            "width",
+            "height",
+            "longest_path",
+            "center_of_mass_x",
+            "center_of_mass_y",
+            "convex_hull_vertices",
+            "object_in_frame",
+            "ellipse_center_x",
+            "ellipse_center_y",
+            "ellipse_major_axis",
+            "ellipse_minor_axis",
+            "ellipse_angle",
+            "ellipse_eccentricity",
+        ]
+        super().__init__(*args, **kwargs)
 
-    def get_image(self):
-        path = self.paths[self.step]
-        _, side = path.stem.split("_")
-        self.images[side] = Image.open(path)
+        self.images_path = self.dataset_path / "images"
+
+    async def start(self):
+        result = await super().start()
+        return result
+
+    async def get_image(self):
+        row = self.dataset_df[self.dataset_df["frame"] == self.index].iloc[0]
+        path = self.images_path / row["image_name"]
+        self.images["left"] = Image.open(path)
 
     def get_time(self):
-        path = self.paths[self.step]
-        time, _ = path.stem.split("_")
-        return datetime.fromisoformat(time).timestamp()
+        row = self.dataset_df[self.dataset_df["frame"] == self.index].iloc[0]
+        return row["time"]
 
-    def put_action(self, action: int):
-        pass
+    def get_terminal(self):
+        return self.index >= self.dataset_df["frame"].max()
 
-    def close(self):
+    def get_plant_stats(self):
+        if self.mock_area:
+            self.df = self.dataset_df[self.dataset_df["frame"] == self.index]
+            self.df = self.df[self.plant_stat_columns]
+            self.plant_stats = np.array(self.df, dtype=np.float32)
+        else:
+            super().get_plant_stats()
+
+    async def put_action(self, action: int):
+        self.last_action = action
+
+    async def sleep_until(self, wake_time: datetime):
+        while self.get_time() < wake_time:
+            self.index += 1
+            self.index = min(self.index, self.dataset_df["frame"].max())
+
+    async def close(self):
         pass

@@ -23,4 +23,4 @@ class ConstantAgent(BaseAgent):
         return self.action, {}
 
     def end(self, reward: float, extra: Dict[str, Any]):
-        pass
+        return {}

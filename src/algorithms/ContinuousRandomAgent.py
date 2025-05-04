@@ -24,4 +24,4 @@ class ContinuousRandomAgent(BaseAgent):
         return self.rng.uniform(self.low, self.high, self.actions), {}
 
     def end(self, reward: float, extra: Dict[str, Any]):
-        pass
+        return {}

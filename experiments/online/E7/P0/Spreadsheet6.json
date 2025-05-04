@@ -5,11 +5,8 @@
     "episode_cutoff": -1,
     "metaParameters": {
         "environment": {
-            "zone": 6
-        },
-        "experiment": {
-            "step_duration": 600,
-            "update_freq": 1
+            "zone": 6,
+            "timezone": "America/Edmonton"
         },
         "filepath": "experiments/online/E7/P0/z3-0min-100ppfd-Balanced_optima12_12.xlsx",
         "compatibility_mode": true,

@@ -7,4 +7,6 @@ python src/main_real.py -e experiments/online/E7/P0/Spreadsheet1.json -i 0
 python src/main_real.py -e experiments/online/E7/P0/Spreadsheet2.json -i 0
 python src/main_real.py -e experiments/online/E7/P0/Spreadsheet3.json -i 0
 python src/main_real.py -e experiments/online/E7/P0/Spreadsheet6.json -i 0
+python src/main_real.py -e experiments/online/E7/P0/Spreadsheet9.json -i 0
 python src/main_real.py -e experiments/online/E7/P1/ESARSA2.json -i 0
+python src/main_real.py -e experiments/online/E7/P1/ESARSA8.json -i 0

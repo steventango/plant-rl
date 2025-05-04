@@ -25,12 +25,34 @@ class Zone:
     identifier: int
     camera_left_url: str | None
     camera_right_url: str | None
-    lightbar_url: str
+    lightbar_url: str | None
     trays: list[Tray]
 
     @property
     def num_plants(self) -> int:
         return sum(tray.num_plants for tray in self.trays)
+
+
+def deserialize_zone(zone: dict) -> Zone:
+    return Zone(
+        identifier=zone["identifier"],
+        camera_left_url=zone.get("camera_left_url"),
+        camera_right_url=zone.get("camera_right_url"),
+        lightbar_url=zone.get("lightbar_url"),
+        trays=[
+            Tray(
+                n_wide=tray["n_wide"],
+                n_tall=tray["n_tall"],
+                rect=Rect(
+                    top_left=tray["rect"]["top_left"],
+                    top_right=tray["rect"]["top_right"],
+                    bottom_left=tray["rect"]["bottom_left"],
+                    bottom_right=tray["rect"]["bottom_right"],
+                ),
+            )
+            for tray in zone["trays"]
+        ],
+    )
 
 
 def get_zone(indentifier: int):
@@ -96,8 +118,8 @@ def get_zone(indentifier: int):
         case 3:
             return Zone(
                 identifier=3,
-                camera_left_url="http://mitacs-zone03-camera01.ccis.ualberta.ca:8080/observation",
-                camera_right_url=None,
+                camera_left_url=None,
+                camera_right_url="http://mitacs-zone03-camera02.ccis.ualberta.ca:8080/observation",
                 lightbar_url="http://mitacs-zone3.ccis.ualberta.ca:8080/action",
                 trays=[
                     Tray(
@@ -125,8 +147,8 @@ def get_zone(indentifier: int):
         case 6:
             return Zone(
                 identifier=6,
-                camera_left_url="http://mitacs-zone06-camera01.ccis.ualberta.ca:8080/observation",
-                camera_right_url=None,
+                camera_left_url=None,
+                camera_right_url="http://mitacs-zone06-camera02.ccis.ualberta.ca:8080/observation",
                 lightbar_url="http://mitacs-zone6.ccis.ualberta.ca:8080/action",
                 trays=[
                     Tray(
@@ -154,19 +176,19 @@ def get_zone(indentifier: int):
         case 8:
             return Zone(
                 identifier=8,
-                camera_left_url="http://mitacs-zone08-camera01.ccis.ualberta.ca:8080/observation",
-                camera_right_url=None,
+                camera_left_url=None,
+                camera_right_url="http://mitacs-zone08-camera02.ccis.ualberta.ca:8080/observation",
                 lightbar_url="http://mitacs-zone8.ccis.ualberta.ca:8080/action",
                 trays=[
                     Tray(
-                        n_wide=3,
-                        n_tall=6,
+                        n_wide=4,
+                        n_tall=3,
                         rect=Rect(
-                            top_left=(1341, 433),
-                            top_right=(1998, 487),
-                            bottom_left=(1289, 1733),
-                            bottom_right=(1883, 1705),
-                        ),
+                            top_left=(1776, 564),
+                            top_right=(2346, 567),
+                            bottom_left=(1784, 1425),
+                            bottom_right=(2327, 1352),
+                        )
                     )
                 ],
             )
@@ -174,7 +196,7 @@ def get_zone(indentifier: int):
             return Zone(
                 identifier=9,
                 camera_left_url=None,
-                camera_right_url="http://mitacs-zone09-camera01.ccis.ualberta.ca:8080/observation",
+                camera_right_url="http://mitacs-zone09-camera02.ccis.ualberta.ca:8080/observation",
                 lightbar_url="http://mitacs-zone9.ccis.ualberta.ca:8080/action",
                 trays=[
                     Tray(

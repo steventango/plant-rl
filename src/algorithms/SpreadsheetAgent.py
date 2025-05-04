@@ -39,7 +39,7 @@ class SpreadsheetAgent(BaseAgent):
         return self.get_action(utc_time), {}
 
     def end(self, reward: float, extra: Dict[str, Any]):
-        pass
+        return {}
 
     def get_action(self, utc_time: float):
         local_time = utc_time + self.offset

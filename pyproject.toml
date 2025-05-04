@@ -47,6 +47,8 @@ dependencies = [
     'supervision>=0.25.1',
     'wandb[media]',
     'torch',
+    'aiohttp>=3.11.18',
+    'aiohttp-retry',
 ]
 
 [project.optional-dependencies]
