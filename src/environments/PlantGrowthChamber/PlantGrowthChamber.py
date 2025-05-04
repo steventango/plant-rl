@@ -55,9 +55,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         elif "right" in self.images:
             self.image = np.array(self.images["right"])
 
-        self.df, self.detections = process_image(self.image, self.zone.trays, self.images)
-
-        self.plant_stats = np.array(self.df, dtype=np.float32)
+        self.get_plant_stats()
 
         self.plant_areas = self.plant_stats[:, 2].reshape(1, -1).flatten()
 
@@ -66,6 +64,10 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.clean_areas.append(clean_area)
 
         return self.time, self.image, self.plant_stats
+
+    def get_plant_stats(self):
+        self.df, self.detections = process_image(self.image, self.zone.trays, self.images)
+        self.plant_stats = np.array(self.df, dtype=np.float32)
 
     def get_clean_area(self, plant_areas):
         clean_area = plant_areas.copy()

@@ -6,7 +6,12 @@
     "metaParameters": {
         "environment":{
             "dataset_path": "/data/nazmus_exp/z11c1",
-            "timezone": "America/Edmonton"
+            "timezone": "America/Edmonton",
+            "mock_area": true
+        },
+        "experiment": {
+            "checkpoint": false,
+            "image_save_keys": "*"
         },
         "alpha": 0.1,
         "epsilon": [0.0, 0.1],
