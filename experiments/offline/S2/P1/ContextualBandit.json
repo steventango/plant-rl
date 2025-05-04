@@ -1,0 +1,28 @@
+{
+    "agent": "ESARSA-ContextualBandit",
+    "problem": "MockTemporalPlantGrowthChamberDiscrete",
+    "total_steps": 4032,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment":{
+            "dataset_path": "/data/nazmus_exp/z11c1",
+            "timezone": "America/Edmonton",
+            "mock_area": true
+        },
+        "experiment": {
+            "checkpoint": false,
+            "image_save_keys": "*"
+        },
+        "alpha": 0.1,
+        "epsilon": 0.1,
+        "lambda": 0.0,
+        "gamma": 0,
+        "w0": 0.1,
+        "representation": {
+            "which_tc": "RichTileCoder",
+            "strategy": -1,
+            "tiles": 12,
+            "tilings": 1
+        }
+    }
+}

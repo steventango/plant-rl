@@ -1,7 +1,7 @@
 {
-    "agent": "ESARSA",
+    "agent": "Constant-DIM",
     "problem": "MockTemporalPlantGrowthChamberDiscrete",
-    "total_steps": 4034,
+    "total_steps": 4032,
     "episode_cutoff": -1,
     "metaParameters": {
         "environment":{
@@ -13,15 +13,6 @@
             "checkpoint": false,
             "image_save_keys": "*"
         },
-        "alpha": 0.1,
-        "epsilon": [0.0, 0.1],
-        "lambda": 0.0,
-        "w0": [0.0, 0.1],
-        "representation": {
-            "which_tc": "RichTileCoder",
-            "strategy": -1,
-            "tiles": 1,
-            "tilings": 1
-        }
+        "constant_action": 0
     }
 }
