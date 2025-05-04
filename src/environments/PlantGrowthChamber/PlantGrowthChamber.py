@@ -133,13 +133,14 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             raise
 
     async def start(self):
+        self.n_step = 0
         if self.enforce_night and self.is_night():
             await self.lights_off_and_sleep_until_morning()
         await self.put_action(self.dim_action)
         self.observed_areas = []
         await self.sleep_until_next_step(self.duration)
         observation = await self.get_observation()
-        self.n_step += 1
+        self.n_step = 1
         return observation, self.get_info()
 
     async def step(self, action: np.ndarray):
