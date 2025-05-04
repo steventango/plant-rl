@@ -1,7 +1,7 @@
 {
     "agent": "ESARSA-B",
-    "problem": "MockTemporalPlantGrowthChamberDiscrete",
-    "total_steps": 4032,
+    "problem": "MockCVPlantGrowthChamberDiscrete",
+    "total_steps": 2016,
     "episode_cutoff": -1,
     "metaParameters": {
         "environment":{
