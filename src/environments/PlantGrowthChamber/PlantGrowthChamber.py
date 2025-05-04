@@ -144,7 +144,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         terminal = self.get_terminal()
 
         duration = self.duration
-        if self.enforce_night and self.is_night():
+        if self.enforce_night and self.is_night() and not terminal:
             terminal = True
             await self.lights_off_and_sleep_until_morning()
             action = self.dim_action
