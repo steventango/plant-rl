@@ -78,7 +78,7 @@ class MockPlantGrowthChamber(PlantGrowthChamber):
         self.last_action = action
 
     async def sleep_until(self, wake_time: datetime):
-        while self.get_time() < wake_time:
+        while self.get_time() < wake_time and not self.get_terminal():
             self.index += 1
             self.index = min(self.index, self.dataset_df["frame"].max())
 
