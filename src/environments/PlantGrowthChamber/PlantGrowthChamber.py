@@ -9,7 +9,7 @@ from PIL import Image
 
 from environments.PlantGrowthChamber.utils import get_session
 from utils.RlGlue.environment import BaseAsyncEnvironment
-
+from utils.metrics import UnbiasedExponentialMovingAverage as UEMA
 from .cv import process_image
 from .zones import get_zone
 
@@ -28,13 +28,17 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.tz_utc = ZoneInfo("Etc/UTC")
         self.time = self.get_time()
 
-        self.observed_areas = []
+        self.clean_areas = []
         # stores a list of arrays of observed areas in mm^2.
-        # i.e. self.observed_areas[-1] contains the latest areas of individual plants
+        # i.e. self.clean_areas[-1] contains the latest areas of individual plants
         self.gamma = 0.99
         self.n_step = 0
         self.duration = timedelta(minutes=10)
-
+        self.clean_area_lower, self.clean_area_upper = 0.1, 0.3
+        self.uema_areas = [UEMA(alpha=0.1) for _ in range(self.zone.num_plants)]
+        self.area_count = 0
+        self.minimum_area_count = 5
+        self.prev_plant_areas = np.zeros(self.zone.num_plants)
         self.enforce_night = True
         self.dim_action = 0.675 * np.array([0.398, 0.762, 0.324, 0.000, 0.332, 0.606])
 
@@ -55,10 +59,27 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         self.plant_stats = np.array(self.df, dtype=np.float32)
 
-        plant_areas = self.plant_stats[:, 2].reshape(1, -1)
-        self.observed_areas.append(plant_areas.flatten())
+        self.plant_areas = self.plant_stats[:, 2].reshape(1, -1).flatten()
+
+        clean_area = self.get_clean_area(self.plant_areas)
+
+        self.clean_areas.append(clean_area)
 
         return self.time, self.image, self.plant_stats
+
+    def get_clean_area(self, plant_areas):
+        clean_area = plant_areas.copy()
+        mean = np.array([self.uema_areas[i].compute() for i in range(self.zone.num_plants)]).flatten()
+        cond = (self.area_count > self.minimum_area_count) & ((plant_areas < (1 - self.clean_area_lower) * mean) | (
+            plant_areas > (1 + self.clean_area_upper) * mean
+        ))
+        clean_area[cond] = self.prev_plant_areas[cond]
+        self.prev_plant_areas[~cond] = plant_areas[~cond]
+        for i, area in enumerate(plant_areas):
+            if area > 0:
+                self.uema_areas[i].update(area)
+        self.area_count += 1
+        return clean_area
 
     def get_time(self):
         return datetime.now(tz=self.tz_utc)
@@ -110,7 +131,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         if self.enforce_night and self.is_night():
             await self.lights_off_and_sleep_until_morning()
         await self.put_action(self.dim_action)
-        self.observed_areas = []
+        self.clean_areas = []
         await self.sleep_until_next_step(self.duration)
         observation = await self.get_observation()
         self.n_step = 1
@@ -172,15 +193,28 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         await self.sleep_until(morning_time)
 
     def get_info(self):
-        return {"df": self.df}
+        N = 3
+        raw_area = self.plant_areas[:N]
+        mean = np.array([self.uema_areas[i].compute() for i in range(self.zone.num_plants)]).flatten()[:N]
+        upper = mean * (1 + self.clean_area_upper)
+        lower = mean * (1 - self.clean_area_lower)
+        return {
+            "df": self.df,
+            "mean_clean_area": np.mean(self.clean_areas[-1]),
+            "clean_area": self.clean_areas[-1][:N],
+            "raw_area": raw_area,
+            "uema_area": mean,
+            "upper_area": upper,
+            "lower_area": lower,
+        }
 
     def get_terminal(self) -> bool:
         return False
 
     def reward_function(self):
-        new = np.mean(self.observed_areas[-1])
-        old = np.mean(self.observed_areas[-2])
-        if new == 0 or old == 0:
+        new = np.mean(self.clean_areas[-1])
+        old = np.mean(self.clean_areas[-2])
+        if old == 0 or new == 0:
             return 0
         return new - old
 
