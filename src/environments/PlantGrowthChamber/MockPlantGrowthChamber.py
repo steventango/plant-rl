@@ -64,7 +64,7 @@ class MockPlantGrowthChamber(PlantGrowthChamber):
         return row["time"]
 
     def get_terminal(self):
-        return self.index >= len(self.dataset_df) - 1
+        return self.index >= self.dataset_df["frame"].max()
 
     def get_plant_stats(self):
         if self.mock_area:
@@ -80,7 +80,7 @@ class MockPlantGrowthChamber(PlantGrowthChamber):
     async def sleep_until(self, wake_time: datetime):
         while self.get_time() < wake_time:
             self.index += 1
-            self.index = min(self.index, len(self.dataset_df) - 1)
+            self.index = min(self.index, self.dataset_df["frame"].max())
 
     async def close(self):
         pass
