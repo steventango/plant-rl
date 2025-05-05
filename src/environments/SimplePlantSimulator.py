@@ -6,6 +6,10 @@ from utils.functions import PiecewiseLinear
 from math import floor
 import datetime
 
+import logging
+logger = logging.getLogger('rlglue')
+logger.setLevel(logging.DEBUG)
+
 class SimplePlantSimulator(BaseEnvironment):
     '''
     Simulate a tray of plants under the same lighting agent.
@@ -14,14 +18,14 @@ class SimplePlantSimulator(BaseEnvironment):
              percentage change in average area over 1 step (for tracking plant motion)
             ] 
              ]
-    Action = [moonlight, low, standard, high]
+    Action = [low, standard]
     Reward = raw change in average area over 1 step (includes large overnight growth)
     '''
     def __init__(self, last_day=12, **kwargs):
         self.state_dim = (3,)
         self.current_state = np.empty(3)
-        self.action_dim = 4
-        self.actions = [0, 1, 2, 3]
+        self.action_dim = 2
+        self.actions = [0, 1]
 
         self.observed_areas = []        # stores a list of lists of daytime observed areas in pixels. i.e. self.observed_areas[-1] contains the latest areas of individual plants
 
@@ -102,7 +106,7 @@ class SimplePlantSimulator(BaseEnvironment):
     def reward_function(self):
         new_area = np.mean(self.observed_areas[-1])
         old_area = np.mean(self.observed_areas[-2])
-        return self.normalize(new_area - old_area, 0, 500)   # normalize typical reward to [0, 1]
+        return self.normalize(new_area - old_area, 0, 50)   # normalize typical reward to [0, 1]
 
     def get_info(self):
         return {"gamma": self.gamma}
@@ -115,10 +119,9 @@ class SimplePlantSimulator(BaseEnvironment):
         return (x - l) / (u - l)
 
     def frozen_time(self, action):
-        a = action[0]
         # Amount of frozen time (in unit of time step), given action
-        all_time = {0: 1.0, 1: 1.0, 2: 0.0, 3: 1.0}  
-        return all_time[a]
+        all_time = {0: 1.0, 1: 0.0}  
+        return all_time[action[0]]
         
     def analyze_area_data(self):    # Approximate the actual leaf sizes and the projection factor throughout the day
         PWL = []
@@ -207,7 +210,7 @@ class Daily_ContextBandit(SimplePlantSimulator):
         super().__init__(last_day, **kwargs)     
         self.state_dim = (1,)
         self.current_state = np.empty(1)
-        self.gamma = 1.0
+        self.gamma = 0.0
         self.actual_areas = [pwl.copy() for pwl in self.original_actual_areas]
 
     def start(self):
@@ -224,6 +227,11 @@ class Daily_ContextBandit(SimplePlantSimulator):
     def get_observation(self):      
         super().get_observation()
         return np.array([floor(self.num_steps % self.steps_per_day / 6)])
+
+class Daily_ESARSA_TOD(Daily_ContextBandit):
+    def __init__(self, last_day=12, **kwargs):
+        super().__init__(last_day, **kwargs)     
+        self.gamma = 1.0
         
 class Daily_Bandit(SimplePlantSimulator):
     '''
@@ -258,4 +266,4 @@ class Daily_Bandit(SimplePlantSimulator):
         else:
             new_area = np.mean(self.observed_areas[-1])
             old_area = np.mean(self.observed_areas[-2])
-            return self.normalize(new_area - old_area, 0, 500)   # normalize typical reward to [0, 1]
+            return self.normalize(new_area - old_area, 0, 50)   # normalize typical reward to [0, 1]
