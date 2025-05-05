@@ -227,6 +227,11 @@ class Daily_ContextBandit(SimplePlantSimulator):
     def get_observation(self):      
         super().get_observation()
         return np.array([floor(self.num_steps % self.steps_per_day / 6)])
+
+class Daily_ESARSA_TOD(Daily_ContextBandit):
+    def __init__(self, last_day=12, **kwargs):
+        super().__init__(last_day, **kwargs)     
+        self.gamma = 1.0
         
 class Daily_Bandit(SimplePlantSimulator):
     '''

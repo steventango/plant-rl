@@ -22,10 +22,11 @@ setDefaultConference('neurips')
 
 total_days = 12
 
-THIS_AGENT = 'Bandit'
+THIS_AGENT = 'ESARSA0_TOD'
 
 W0 = 0.0
 EP = 0.1
+ALPHA = 0.25
 
 def last_n_percent_sum(x, n=0.2):
     return np.nansum(x[:, int((1-n)*x.shape[1]):], axis=1)
@@ -60,7 +61,7 @@ def main():
         for alg, alg_df in split_over_column(env_df, col='algorithm'):   
             if alg == THIS_AGENT:
                 sub_df = alg_df
-                sub_df = alg_df[(alg_df['w0']==W0) & (alg_df['epsilon']==EP)]
+                sub_df = alg_df[(alg_df['w0']==W0) & (alg_df['epsilon']==EP) & (alg_df['alpha']==ALPHA)]
                 report = Hypers.select_best_hypers(
                     sub_df,
                     metric='reward', 
@@ -109,9 +110,9 @@ def main():
 
                 cbar_ax = f.add_axes([0.15, 0.03, 0.7, 0.02])  # [left, bottom, width, height]
                 cbar = f.colorbar(im, cax=cbar_ax, orientation='horizontal')
-                ax[0].set_title(f"{alg} Value function; w0={W0}, ep={EP}; best_score={report.best_score:.3f}")
+                ax[0].set_title(f"{alg} Value function; w0={W0}, ep={EP}, alpha={ALPHA}; best_score={report.best_score:.3f}")
                 ax[4].set_xlabel('Daytime Steps')
-                save(save_path=f'{path}/plots', plot_name=f'{alg}-w0={W0}-ep={EP}', save_type='jpg')
+                save(save_path=f'{path}/plots', plot_name=f'{alg}-w0={W0}-ep={EP}-alpha={ALPHA}', save_type='jpg')
 
 def rescale_time(x, stride):
     base_step = 10/60           # spreadsheet time step is 10 minutes
