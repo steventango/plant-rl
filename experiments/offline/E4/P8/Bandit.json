@@ -5,17 +5,17 @@
     "episode_cutoff": -1,
     "metaParameters": {
         "environment":{
-            "type": "Daily_ContextBandit"
+            "type": "Daily_Bandit"
         },
-        "alpha": 0.1, 
-        "epsilon": 0.1,
+        "alpha": [0.1, 0.3], 
+        "epsilon": 0.0,
         "lambda": 0.0,
-        "w0": 0.0,
+        "w0": [0.0, 0.01, 0.1],
         
         "representation": {
             "which_tc": "RichTileCoder",
             "strategy": -1,
-            "tiles": 12,
+            "tiles": 1,
             "tilings": 1
         }
     }

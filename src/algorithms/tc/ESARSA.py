@@ -69,8 +69,6 @@ class ESARSA(TCAgent):
             pi = np.zeros(self.actions)
         else:
             pi = self.policy(xp)
-
-        logger.debug(x)
         
         delta = _update(self.w, x, a, xp, pi, r, gamma, self.alpha, self.z, self.lambda_)
         if xp is None:

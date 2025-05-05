@@ -1,32 +1,26 @@
+import Box2D     # we need to import this first because cedar is stupid
 import os
 import sys
-
-import Box2D  # we need to import this first because cedar is stupid
-
 sys.path.append(os.getcwd())
-import argparse
-import logging
-import random
-import socket
-import time
-from pathlib import Path
-
-import numpy as np
-import torch
-from PyExpUtils.collection.Collector import Collector
-from PyExpUtils.collection.Sampler import Identity, Ignore, MovingAverage, Subsample
-from PyExpUtils.collection.utils import Pipe
-from PyExpUtils.results.sqlite import saveCollector
 from tqdm import tqdm
 
-import wandb
+import time
+import random
+import socket
+import logging
+import argparse
+import numpy as np
+import torch
+from RlGlue import RlGlue
 from experiment import ExperimentModel
-from problems.registry import getProblem
 from utils.checkpoint import Checkpoint
-from utils.logger import log
 from utils.preempt import TimeoutHandler
+from problems.registry import getProblem
+from PyExpUtils.results.sqlite import saveCollector
+from PyExpUtils.collection.Collector import Collector
+from PyExpUtils.collection.Sampler import Ignore, MovingAverage, Subsample, Identity
 from utils.window_avg import WindowAverage
-from utils.RlGlue.rl_glue import LoggingRlGlue
+from PyExpUtils.collection.utils import Pipe
 
 # ------------------
 # -- Command Args --
@@ -45,7 +39,6 @@ args = parser.parse_args()
 # -- Library Configuration --
 # ---------------------------
 import jax
-
 device = 'gpu' if args.gpu else 'cpu'
 jax.config.update('jax_platform_name', device)
 
@@ -80,7 +73,10 @@ for idx in indices:
             'reward': Identity(),       # reward at each step
             'episode': Identity(),
             'steps': Identity(),
-            'action': Identity(),
+            'weight0': Identity(),
+            'weight1': Identity(),
+            'weight2': Identity(),
+            'weight3': Identity(),
         },
         default=Ignore(),
     ))
@@ -108,46 +104,29 @@ for idx in indices:
         problem.params['total_steps'] = env.terminal_step
         exp.total_steps = env.terminal_step
 
-    glue = chk.build('glue', lambda: LoggingRlGlue(agent, env))
+    glue = chk.build('glue', lambda: RlGlue(agent, env))
     chk.initial_value('episode', 0)
-
-    context = exp.buildSaveContext(idx, base=args.save_path)
-    agent_path = Path(context.resolve()).relative_to('results')
-
-    config = {
-        **problem.params,
-        "context": str(agent_path)
-    }
-
-    wandb_run = wandb.init(
-        entity="plant-rl",
-        project="main",
-        notes=str(agent_path),
-        config=config,
-        settings=wandb.Settings(
-            x_stats_disk_paths=("/", "/data"),
-        ),
-    )
 
     # Run the experiment
     start_time = time.time()
 
     # if we haven't started yet, then make the first interaction
     if glue.total_steps == 0:
-        s, a, info = glue.start()
-        log(env, glue, wandb_run, s, a, info)
+        glue.start()
 
     for step in range(glue.total_steps, exp.total_steps):
         collector.next_frame()
         chk.maybe_save()
         interaction = glue.step()
-        log(env, glue, wandb_run, interaction.o, interaction.a, interaction.extra, interaction.r)
 
         collector.collect('reward', interaction.r)
         collector.collect('episode', chk['episode'])
         collector.collect('steps', glue.num_steps)
-        collector.collect('action', interaction.a)  # or int.from_bytes(glue.last_action, byteorder='little') for GAC
-
+        collector.collect('weight0', chk["a"].w[0, 0])         
+        collector.collect('weight1', chk["a"].w[1, 0])   
+        collector.collect('weight2', chk["a"].w[2, 0])   
+        collector.collect('weight3', chk["a"].w[3, 0])     
+        
         if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
             # allow agent to cleanup traces or other stateful episodic info
             agent.cleanup()

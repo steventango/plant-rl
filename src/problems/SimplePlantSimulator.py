@@ -17,7 +17,7 @@ class SimplePlantSimulator(BaseProblem):
             self.env = Daily_ContextBandit(**self.env_params)
             self.actions = 4
             self.observations = (1,)
-            self.gamma = 1.0
+            self.gamma = 0.0
         elif self.env_params['type'] == 'Daily_Bandit':
             self.env = Daily_Bandit(**self.env_params)
             self.actions = 4
