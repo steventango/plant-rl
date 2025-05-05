@@ -70,6 +70,8 @@ class ESARSA(TCAgent):
         else:
             pi = self.policy(xp)
         
+        #logger.info(x)
+        
         delta = _update(self.w, x, a, xp, pi, r, gamma, self.alpha, self.z, self.lambda_)
         if xp is None:
             self.z = np.zeros_like(self.z)

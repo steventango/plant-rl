@@ -10,17 +10,17 @@ class SimplePlantSimulator(BaseProblem):
         super().__init__(exp, idx, collector)
         if 'type' not in self.env_params: 
             self.env = DefaultEnv(**self.env_params)
-            self.actions = 4
+            self.actions = 2
             self.observations = (3,)
             self.gamma = 1.0
         elif self.env_params['type'] == 'Daily_ContextBandit':
             self.env = Daily_ContextBandit(**self.env_params)
-            self.actions = 4
+            self.actions = 2
             self.observations = (1,)
             self.gamma = 0.0
         elif self.env_params['type'] == 'Daily_Bandit':
             self.env = Daily_Bandit(**self.env_params)
-            self.actions = 4
+            self.actions = 2
             self.observations = (1,)
             self.gamma = 0.0
         else:

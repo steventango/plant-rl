@@ -18,14 +18,14 @@ class SimplePlantSimulator(BaseEnvironment):
              percentage change in average area over 1 step (for tracking plant motion)
             ] 
              ]
-    Action = [moonlight, low, standard, high]
+    Action = [low, standard]
     Reward = raw change in average area over 1 step (includes large overnight growth)
     '''
     def __init__(self, last_day=12, **kwargs):
         self.state_dim = (3,)
         self.current_state = np.empty(3)
-        self.action_dim = 4
-        self.actions = [0, 1, 2, 3]
+        self.action_dim = 2
+        self.actions = [0, 1]
 
         self.observed_areas = []        # stores a list of lists of daytime observed areas in pixels. i.e. self.observed_areas[-1] contains the latest areas of individual plants
 
@@ -120,7 +120,7 @@ class SimplePlantSimulator(BaseEnvironment):
 
     def frozen_time(self, action):
         # Amount of frozen time (in unit of time step), given action
-        all_time = {0: 1.0, 1: 1.0, 2: 0.0, 3: 1.0}  
+        all_time = {0: 1.0, 1: 0.0}  
         return all_time[action[0]]
         
     def analyze_area_data(self):    # Approximate the actual leaf sizes and the projection factor throughout the day

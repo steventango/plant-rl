@@ -75,8 +75,6 @@ for idx in indices:
             'steps': Identity(),
             'weight0': Identity(),
             'weight1': Identity(),
-            'weight2': Identity(),
-            'weight3': Identity(),
         },
         default=Ignore(),
     ))
@@ -124,8 +122,6 @@ for idx in indices:
         collector.collect('steps', glue.num_steps)
         collector.collect('weight0', chk["a"].w[0, 0])         
         collector.collect('weight1', chk["a"].w[1, 0])   
-        collector.collect('weight2', chk["a"].w[2, 0])   
-        collector.collect('weight3', chk["a"].w[3, 0])     
         
         if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
             # allow agent to cleanup traces or other stateful episodic info
