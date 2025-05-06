@@ -293,10 +293,10 @@ def append_csv(chk, env, glue, raw_csv_path, img_name, interaction):
         left_on=["frame"],
         right_on=["frame"],
     )
-    df_old = pd.read_csv(raw_csv_path)
-    # backup old csv
-    shutil.copy(raw_csv_path, raw_csv_path.with_suffix('.bak'))
-    df = pd.concat([df_old, df], ignore_index=True)
+    if raw_csv_path.exists():
+        df_old = pd.read_csv(raw_csv_path)
+        shutil.copy(raw_csv_path, raw_csv_path.with_suffix('.bak'))
+        df = pd.concat([df_old, df], ignore_index=True)
     df.to_csv(raw_csv_path, index=False)
 
 
