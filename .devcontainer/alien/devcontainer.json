@@ -4,9 +4,12 @@
 	"name": "plant-rl-alien",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
 	"dockerComposeFile": [
-		"../../docker-compose.yml",
+		"../../docker-compose.devcontainer.yml",
 		"../../docker-compose.gpu.yml",
 		"../../docker-compose.alien.yml"
+	],
+	"runServices": [
+		"devcontainer"
 	],
 	"service": "devcontainer",
 	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",

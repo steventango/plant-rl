@@ -1,12 +1,11 @@
 services:
-  devcontainer:
+  zone1:
     build:
       context: .
       dockerfile: Dockerfile
     networks:
       - plant-rl
     volumes:
-      - ..:/workspaces:cached
       - .:/app:cached
       - /var/run/docker.sock:/var/run/docker.sock
       - ~/.ssh:/root/.ssh:cached
@@ -15,7 +14,152 @@ services:
       - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
       - ~/.cache:/root/.cache:cached
       - ~/.netrc:/root/.netrc:cached
-    command: sleep infinity
+      - /extra-storage:/data:cached
+    restart: unless-stopped
+    command: python src/main_real.py -e experiments/online/E7/P2/Constant1.json -i 0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+  zone2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - plant-rl
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/root/.ssh:cached
+      - ~/.gitconfig:/root/.gitconfig:cached
+      - ~/.config:/root/.config:cached
+      - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
+      - ~/.cache:/root/.cache:cached
+      - ~/.netrc:/root/.netrc:cached
+      - /extra-storage:/data:cached
+    restart: unless-stopped
+    command: python src/main_real.py -e experiments/online/E7/P2/Constant2.json -i 0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  zone3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - plant-rl
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/root/.ssh:cached
+      - ~/.gitconfig:/root/.gitconfig:cached
+      - ~/.config:/root/.config:cached
+      - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
+      - ~/.cache:/root/.cache:cached
+      - ~/.netrc:/root/.netrc:cached
+      - /extra-storage:/data:cached
+    restart: unless-stopped
+    command: python src/main_real.py -e experiments/online/E7/P3/Bandit3.json -i 0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  zone6:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - plant-rl
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/root/.ssh:cached
+      - ~/.gitconfig:/root/.gitconfig:cached
+      - ~/.config:/root/.config:cached
+      - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
+      - ~/.cache:/root/.cache:cached
+      - ~/.netrc:/root/.netrc:cached
+      - /extra-storage:/data:cached
+    restart: unless-stopped
+    command: python src/main_real.py -e experiments/online/E7/P3/ContextualBandit6.json -i 0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  zone8:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - plant-rl
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/root/.ssh:cached
+      - ~/.gitconfig:/root/.gitconfig:cached
+      - ~/.config:/root/.config:cached
+      - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
+      - ~/.cache:/root/.cache:cached
+      - ~/.netrc:/root/.netrc:cached
+      - /extra-storage:/data:cached
+    restart: unless-stopped
+    command: python src/main_real.py -e experiments/online/E7/P2/ESARSA8.json -i 0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  zone9:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - plant-rl
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/root/.ssh:cached
+      - ~/.gitconfig:/root/.gitconfig:cached
+      - ~/.config:/root/.config:cached
+      - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
+      - ~/.cache:/root/.cache:cached
+      - ~/.netrc:/root/.netrc:cached
+      - /extra-storage:/data:cached
+    restart: unless-stopped
+    command: python src/main_real.py -e experiments/online/E7/P2/ESARSA9.json -i 0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
   grounding-dino:
     build:
       context: api/grounding_dino
@@ -27,6 +171,15 @@ services:
     volumes:
       - ./api/grounding_dino:/app
       - ~/.cache:/root/.cache:cached
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
   segment-anything:
     build:
       context: api/segment_anything
@@ -38,6 +191,14 @@ services:
     volumes:
       - ./api/segment_anything:/app
       - ~/.cache:/root/.cache:cached
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
 
 networks:
   plant-rl:
