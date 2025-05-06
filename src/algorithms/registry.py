@@ -56,7 +56,7 @@ def getAgent(name) -> Type[BaseAgent]:
     if name == 'SoftmaxAC':
         return SoftmaxAC
 
-    if name == 'Constant':
+    if name.startswith("Constant"):
         return ConstantAgent
 
     if name == 'DiscreteRandom':

@@ -1,4 +1,8 @@
+import json
 from dataclasses import dataclass, field
+from pathlib import Path
+
+CONFIG_DIR = Path(__file__).parent / "configs"
 
 
 @dataclass
@@ -55,174 +59,29 @@ def deserialize_zone(zone: dict) -> Zone:
     )
 
 
+def load_zone_from_config(identifier: int) -> Zone:
+    with open(CONFIG_DIR / f"z{identifier}.json") as f:
+        config = json.load(f)
+    return deserialize_zone(config["zone"])
+
+
 def get_zone(indentifier: int):
     match indentifier:
         case 1:
-            return Zone(
-                identifier=1,
-                camera_left_url="http://mitacs-zone01-camera02.ccis.ualberta.ca:8080/observation",
-                camera_right_url=None,
-                lightbar_url="http://mitacs-zone1.ccis.ualberta.ca:8080/action",
-                trays=[
-                    Tray(
-                        n_wide=6,
-                        n_tall=3,
-                        rect=Rect(
-                            top_left=(658, 75),
-                            top_right=(2060, 180),
-                            bottom_left=(639, 758),
-                            bottom_right=(2092, 756),
-                        ),
-                    ),
-                    Tray(
-                        n_wide=6,
-                        n_tall=3,
-                        rect=Rect(
-                            top_left=(629, 842),
-                            top_right=(2084, 818),
-                            bottom_left=(666, 1528),
-                            bottom_right=(2062, 1390),
-                        ),
-                    ),
-                ],
-            )
+            return load_zone_from_config(1)
         case 2:
-            return Zone(
-                identifier=2,
-                camera_left_url=None,
-                camera_right_url="http://mitacs-zone02-camera02.ccis.ualberta.ca:8080/observation",
-                lightbar_url="http://mitacs-zone2.ccis.ualberta.ca:8080/action",
-                trays=[
-                    Tray(
-                        n_wide=6,
-                        n_tall=3,
-                        rect=Rect(
-                            top_left=(483, 279),
-                            top_right=(1752, 300),
-                            bottom_left=(471, 969),
-                            bottom_right=(1791, 909),
-                        ),
-                    ),
-                    Tray(
-                        n_wide=6,
-                        n_tall=3,
-                        rect=Rect(
-                            top_left=(498, 1068),
-                            top_right=(1806, 990),
-                            bottom_left=(590, 1750),
-                            bottom_right=(1817, 1593),
-                        ),
-                    ),
-                ],
-            )
+            return load_zone_from_config(2)
         case 3:
-            return Zone(
-                identifier=3,
-                camera_left_url=None,
-                camera_right_url="http://mitacs-zone03-camera02.ccis.ualberta.ca:8080/observation",
-                lightbar_url="http://mitacs-zone3.ccis.ualberta.ca:8080/action",
-                trays=[
-                    Tray(
-                        n_wide=8,
-                        n_tall=3,
-                        rect=Rect(
-                            top_left=(105, 405),
-                            top_right=(1717, 198),
-                            bottom_left=(110, 992),
-                            bottom_right=(1813, 843),
-                        ),
-                    ),
-                    Tray(
-                        n_wide=8,
-                        n_tall=3,
-                        rect=Rect(
-                            top_left=(90, 1061),
-                            top_right=(1806, 926),
-                            bottom_left=(170, 1654),
-                            bottom_right=(1833, 1594),
-                        ),
-                    )
-                ],
-            )
+            return load_zone_from_config(3)
         case 6:
-            return Zone(
-                identifier=6,
-                camera_left_url=None,
-                camera_right_url="http://mitacs-zone06-camera02.ccis.ualberta.ca:8080/observation",
-                lightbar_url="http://mitacs-zone6.ccis.ualberta.ca:8080/action",
-                trays=[
-                    Tray(
-                        n_wide=3,
-                        n_tall=6,
-                        rect=Rect(
-                            top_left=(541, 450),
-                            top_right=(1199, 421),
-                            bottom_left=(624, 1676),
-                            bottom_right=(1212, 1717),
-                        ),
-                    ),
-                    Tray(
-                        n_wide=3,
-                        n_tall=6,
-                        rect=Rect(
-                            top_left=(1295, 429),
-                            top_right=(1961, 446),
-                            bottom_left=(1291, 1717),
-                            bottom_right=(1893, 1690),
-                        ),
-                    )
-                ],
-            )
+            return load_zone_from_config(6)
         case 8:
-            return Zone(
-                identifier=8,
-                camera_left_url=None,
-                camera_right_url="http://mitacs-zone08-camera02.ccis.ualberta.ca:8080/observation",
-                lightbar_url="http://mitacs-zone8.ccis.ualberta.ca:8080/action",
-                trays=[
-                    Tray(
-                        n_wide=4,
-                        n_tall=3,
-                        rect=Rect(
-                            top_left=(1776, 564),
-                            top_right=(2346, 567),
-                            bottom_left=(1784, 1425),
-                            bottom_right=(2327, 1352),
-                        )
-                    )
-                ],
-            )
+            return load_zone_from_config(8)
         case 9:
-            return Zone(
-                identifier=9,
-                camera_left_url=None,
-                camera_right_url="http://mitacs-zone09-camera02.ccis.ualberta.ca:8080/observation",
-                lightbar_url="http://mitacs-zone9.ccis.ualberta.ca:8080/action",
-                trays=[
-                    Tray(
-                        n_wide=3,
-                        n_tall=6,
-                        rect=Rect(
-                            top_left=(609, 116),
-                            top_right=(1195, 77),
-                            bottom_left=(544, 1347),
-                            bottom_right=(1190, 1367),
-                        ),
-                    ),
-                    Tray(
-                        n_wide=3,
-                        n_tall=6,
-                        rect=Rect(
-                            top_left=(1286, 73),
-                            top_right=(1878, 111),
-                            bottom_left=(1295, 1360),
-                            bottom_right=(1953, 1333),
-                        ),
-                    )
-                ],
-            )
+            return load_zone_from_config(9)
         case _:
             raise ValueError(f"Unknown zone indentifier: {indentifier}")
+
 
 SCALE = 4
 POT_HEIGHT = 60 * SCALE

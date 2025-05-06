@@ -51,12 +51,23 @@ class ESARSA(TCAgent):
             'w': self.w,
             'z': self.z,
         }
+        if len(observations) == 1:
+            self.all_obs = np.eye(self.tile_coder.maxSize)
+        else:
+            self.all_obs = None
+
 
     def policy(self, obs: np.ndarray) -> np.ndarray:
         qs = self.values(obs)
         self.info['qs'] = qs
         pi = egreedy_probabilities(qs, self.actions, self.epsilon)
         self.info['pi'] = pi
+        if self.all_obs is not None:
+            q = self.w @ self.all_obs
+            self.info['q'] = q
+            # calculate advantage
+            advantage = q - pi @ q
+            self.info['advantage'] = advantage
         return pi
 
     def values(self, x: np.ndarray):
@@ -69,9 +80,9 @@ class ESARSA(TCAgent):
             pi = np.zeros(self.actions)
         else:
             pi = self.policy(xp)
-        
-        #logger.info(x)
-        
+
+        logger.debug(x)
+
         delta = _update(self.w, x, a, xp, pi, r, gamma, self.alpha, self.z, self.lambda_)
         if xp is None:
             self.z = np.zeros_like(self.z)
@@ -80,6 +91,8 @@ class ESARSA(TCAgent):
             'delta': delta,
             'w': self.w,
             'z': self.z,
+            'x': x,
+            'xp': xp,
         })
 
     def get_info(self):

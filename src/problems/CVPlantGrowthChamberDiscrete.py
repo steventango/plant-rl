@@ -11,5 +11,4 @@ class CVPlantGrowthChamberDiscrete(BaseAsyncProblem):
 
         self.env = Env(**self.env_params)
         self.actions = 2
-        self.observations = (2,)
-        self.gamma = 0.99
+        self.observations = (1,)
