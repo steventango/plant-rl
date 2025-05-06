@@ -15,7 +15,7 @@ services:
       - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
       - ~/.cache:/root/.cache:cached
       - ~/.netrc:/root/.netrc:cached
-      - /extra-storage:/data:cached
+      - /data/plant-rl:/data:cached
     command: sleep infinity
     deploy:
       resources:
