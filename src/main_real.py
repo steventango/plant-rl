@@ -90,7 +90,7 @@ def backup_and_save(exp, collector, idx, base):
     db_file = context.resolve('results.db')
     db_file_bak = context.resolve('results.db.bak')
     if os.path.exists(db_file):
-        shutil.move(db_file, db_file_bak)
+        shutil.copy(db_file, db_file_bak)
     saveCollector(exp, collector, base=base)
 
 async def main():
@@ -229,7 +229,15 @@ async def main():
 
                 s, a, info = await glue.start()
                 log(env, glue, wandb_run, s, a, info)
-                save_images(env, dataset_path, images_save_keys)
+                img_name = save_images(env, dataset_path, images_save_keys)
+                interaction = Interaction(
+                    o=s,
+                    a=a,
+                    t=False,
+                    r=None,
+                    extra=info,
+                )
+                append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
 
             backup_and_save(exp, collector, idx, args.save_path)
 
@@ -250,32 +258,46 @@ async def main():
         wandb_run.finish()
 
 def append_csv(chk, env, glue, raw_csv_path, img_name, interaction):
+    expanded_info = {}
+    for key, value in interaction.extra.items():
+        if isinstance(value, pd.DataFrame):
+            continue
+        elif isinstance(value, np.ndarray):
+            expanded_info.update(expand(key, value))
+        else:
+            expanded_info.update(expand(key, value))
     df = pd.DataFrame(
-                {
-                    "time": [env.time],
-                    "frame": [glue.num_steps],
-                    **expand("state", interaction.o),
-                    **expand("action", env.last_action),
-                    "agent_action": [interaction.a],
-                    "reward": [interaction.r],
-                    "terminal": [interaction.t],
-                    "steps": [glue.num_steps],
-                    "image_name": [img_name],
-                    "return": [glue.total_reward if interaction.t else None],
-                    "episode": [chk['episode']],
-                }
-            )
+        {
+            "time": [env.time],
+            "frame": [glue.num_steps],
+            **expand("state", interaction.o),
+            **expand("action", env.last_action),
+            "agent_action": [interaction.a],
+            "reward": [interaction.r],
+            "terminal": [interaction.t],
+            "steps": [glue.num_steps],
+            "image_name": [img_name],
+            "return": [glue.total_reward if interaction.t else None],
+            "episode": [chk['episode']],
+            **expanded_info,
+        }
+    )
+
     interaction.extra["df"].reset_index(inplace=True)
     interaction.extra["df"]["plant_id"] = interaction.extra["df"].index
     interaction.extra["df"]["frame"] = glue.num_steps
     df = pd.merge(
-                df,
-                interaction.extra["df"],
-                how="left",
-                left_on=["frame"],
-                right_on=["frame"],
-            )
-    df.to_csv(raw_csv_path, mode='a', header=not raw_csv_path.exists(), index=False)
+        df,
+        interaction.extra["df"],
+        how="left",
+        left_on=["frame"],
+        right_on=["frame"],
+    )
+    df_old = pd.read_csv(raw_csv_path)
+    # backup old csv
+    shutil.copy(raw_csv_path, raw_csv_path.with_suffix('.bak'))
+    df = pd.concat([df_old, df], ignore_index=True)
+    df.to_csv(raw_csv_path, index=False)
 
 
 if __name__ == "__main__":
