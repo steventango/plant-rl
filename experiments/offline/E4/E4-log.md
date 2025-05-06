@@ -112,21 +112,23 @@ Agent:
 
 ##  Phase P8
 ### Objectives: 
-- Implement daily episode in simpleplantsim
-- Try both bandit and contextual bandit
+- Implement daily episode in SimplePlantSimulator
+- Try bandit, contextual bandit, and ESARSA(0)
 ### Methods: 
 Sim: 
 - Added a subclass that starts a new episode everyday 
-- Added one final data point to complete the 14th day
+- Added one final data point to complete the last day
 - Replaced old data with Steven's reprocessed "clean_area"
+- Only 2 actions
+- gamma = 0 for bandits and gamma = 1 for ESARSA
+- overnight reward is manually set to zero for bandit
+- state for contextual bandit and ESARSA is time steps binned to 12 hours, one-hot encoded by trivial tile coding
 Agent: 
-- Use tc-ESARSA with only 1 state
-- lambda = 0
+- All three agents use ESARSA algo. 
 ### Observations: 
-- Plotted the bandit's value function using imshow. vmin=-0.03, vmax=0.03. Observe that the agents do converge to action 2.
-- During the last few days, the value of action 2 decreases towards the end of each day. This is because the reward goes down as the plants close up (this closing motion is pronounced in Curtis's old data).
+- All cases converge to optimal action 1 except when optimistic initial value w0=0.1. We decided to drop OIV.
+- As previously observed, Bandit's value of action 1 decreases towards the end of day.
+- Contextual bandit: the value of action 1 mysteriously decreases after reaching its peak value on day 8. 
+- ESARSA(0) smoothly converges to action 1. alpha=0.1 seems more certain than alpha=0.25.
 ### Conclusions & Outlooks: 
-- Bandit agent works as expected. It learned that 2 is best but the value of action 2 decreases when the plants are closing.
-- Try contextual bandit
-
-
+- Our agents are functioning well in sim. 
