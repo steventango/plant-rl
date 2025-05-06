@@ -8,6 +8,9 @@
 		"../../docker-compose.gpu.yml",
 		"../../docker-compose.aurora.yml"
 	],
+	"runServices": [
+		"devcontainer"
+	],
 	"service": "devcontainer",
 	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 	// Features to add to the dev container. More info: https://containers.dev/features.

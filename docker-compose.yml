@@ -16,28 +16,6 @@ services:
       - ~/.cache:/root/.cache:cached
       - ~/.netrc:/root/.netrc:cached
     command: sleep infinity
-  grounding-dino:
-    build:
-      context: api/grounding_dino
-      dockerfile: Dockerfile
-    networks:
-      - plant-rl
-    privileged: true
-    restart: unless-stopped
-    volumes:
-      - ./api/grounding_dino:/app
-      - ~/.cache:/root/.cache:cached
-  segment-anything:
-    build:
-      context: api/segment_anything
-      dockerfile: Dockerfile
-    networks:
-      - plant-rl
-    privileged: true
-    restart: unless-stopped
-    volumes:
-      - ./api/segment_anything:/app
-      - ~/.cache:/root/.cache:cached
 
 networks:
   plant-rl:
