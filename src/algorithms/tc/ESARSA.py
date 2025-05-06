@@ -60,11 +60,14 @@ class ESARSA(TCAgent):
     def policy(self, obs: np.ndarray) -> np.ndarray:
         qs = self.values(obs)
         self.info['qs'] = qs
+        pi = egreedy_probabilities(qs, self.actions, self.epsilon)
+        self.info['pi'] = pi
         if self.all_obs is not None:
             q = self.w @ self.all_obs
             self.info['q'] = q
-        pi = egreedy_probabilities(qs, self.actions, self.epsilon)
-        self.info['pi'] = pi
+            # calculate advantage
+            advantage = q - pi @ q
+            self.info['advantage'] = advantage
         return pi
 
     def values(self, x: np.ndarray):
