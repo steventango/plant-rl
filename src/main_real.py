@@ -23,10 +23,9 @@ import wandb
 from experiment import ExperimentModel
 from problems.registry import getProblem
 from utils.checkpoint import Checkpoint
-from utils.logger import log
+from utils.logger import expand, log
 from utils.preempt import TimeoutHandler
-from utils.RlGlue.rl_glue import AsyncRLGlue
-
+from utils.RlGlue.rl_glue import AsyncRLGlue, Interaction
 default_save_keys = {"left", "right"}
 
 # ------------------
@@ -72,17 +71,18 @@ indices = args.idxs
 Problem = getProblem(exp.problem)
 
 
-def save_images(env, data_path: Path, save_keys):
+def save_images(env, dataset_path: Path, save_keys):
     isoformat = env.time.isoformat(timespec='seconds').replace(':', '')
-    zone_identifier = env.zone.identifier
-    images_path = data_path / f"z{zone_identifier}" / "images"
+    images_path = dataset_path / "images"
     images_path.mkdir(parents=True, exist_ok=True)
+    img_path = None
     for key, image in env.images.items():
         if save_keys != "*" and key not in save_keys:
             continue
         img_path = images_path / f"{isoformat}_{key}.jpg"
         image = image.convert("RGB")
         image.save(img_path, "JPEG", quality=90)
+    return img_path.name if img_path else None
 
 
 def backup_and_save(exp, collector, idx, base):
@@ -136,10 +136,10 @@ async def main():
 
         context = exp.buildSaveContext(idx, base=args.save_path)
         agent_path = Path(context.resolve()).relative_to('results')
-        data_path = Path('/data') / agent_path
+        dataset_path = Path('/data') / agent_path  / f"z{env.zone.identifier}"
         images_save_keys = problem.exp_params.get("image_save_keys", default_save_keys)
-        (data_path / f"z{env.zone.identifier}").mkdir(parents=True, exist_ok=True)
-        data_path.mkdir(parents=True, exist_ok=True)
+        dataset_path.mkdir(parents=True, exist_ok=True)
+        raw_csv_path = dataset_path / "raw.csv"
 
         config = {
             **problem.params,
@@ -166,7 +166,15 @@ async def main():
             s, a, info = await glue.start()
             episode = chk['episode']
             log(env, glue, wandb_run, s, a, info, episode=episode)
-            save_images(env, data_path, images_save_keys)
+            img_name = save_images(env, dataset_path, images_save_keys)
+            interaction = Interaction(
+                o=s,
+                a=a,
+                t=False,
+                r=None,
+                extra=info,
+            )
+            append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
 
         for step in range(glue.total_steps, exp.total_steps):
             collector.next_frame()
@@ -182,7 +190,8 @@ async def main():
             interaction = await glue.step()
             collector.collect('time', env.time.timestamp())
             collector.collect('state', interaction.o)
-            collector.collect('action', interaction.a)
+            collector.collect('action', env.last_action)
+            collector.collect('agent_action', interaction.a)
             collector.collect('reward', interaction.r)
             collector.collect('terminal', interaction.t)
             collector.collect('steps', glue.num_steps)
@@ -194,11 +203,13 @@ async def main():
                         collector.collect(f"{key}_{col}", value[col].to_numpy().astype(np.float64))
                     continue
                 collector.collect(key, value)
+
             episodic_return = glue.total_reward if interaction.t else None
             episode = chk['episode']
             log(env, glue, wandb_run, interaction.o, interaction.a, interaction.extra, interaction.r, interaction.t, episodic_return, episode)
 
-            save_images(env, data_path, images_save_keys)
+            img_name = save_images(env, dataset_path, images_save_keys)
+            append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
 
             if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
                 # collect some data
@@ -218,7 +229,7 @@ async def main():
 
                 s, a, info = await glue.start()
                 log(env, glue, wandb_run, s, a, info)
-                save_images(env, data_path, images_save_keys)
+                save_images(env, dataset_path, images_save_keys)
 
             backup_and_save(exp, collector, idx, args.save_path)
 
@@ -237,6 +248,34 @@ async def main():
         # ------------
         backup_and_save(exp, collector, idx, args.save_path)
         wandb_run.finish()
+
+def append_csv(chk, env, glue, raw_csv_path, img_name, interaction):
+    df = pd.DataFrame(
+                {
+                    "time": [env.time],
+                    "frame": [glue.num_steps],
+                    **expand("state", interaction.o),
+                    **expand("action", env.last_action),
+                    "agent_action": [interaction.a],
+                    "reward": [interaction.r],
+                    "terminal": [interaction.t],
+                    "steps": [glue.num_steps],
+                    "image_name": [img_name],
+                    "return": [glue.total_reward if interaction.t else None],
+                    "episode": [chk['episode']],
+                }
+            )
+    interaction.extra["df"].reset_index(inplace=True)
+    interaction.extra["df"]["plant_id"] = interaction.extra["df"].index
+    interaction.extra["df"]["frame"] = glue.num_steps
+    df = pd.merge(
+                df,
+                interaction.extra["df"],
+                how="left",
+                left_on=["frame"],
+                right_on=["frame"],
+            )
+    df.to_csv(raw_csv_path, mode='a', header=not raw_csv_path.exists(), index=False)
 
 
 if __name__ == "__main__":
