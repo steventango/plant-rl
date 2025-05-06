@@ -1,5 +1,5 @@
 services:
-  devcontainer:
+  devcontainer-oliver:
     build:
       context: .
       dockerfile: Dockerfile
@@ -15,7 +15,17 @@ services:
       - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
       - ~/.cache:/root/.cache:cached
       - ~/.netrc:/root/.netrc:cached
+      - /extra-storage:/data:cached
     command: sleep infinity
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
 
 networks:
   plant-rl:

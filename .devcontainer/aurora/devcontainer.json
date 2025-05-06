@@ -4,14 +4,12 @@
 	"name": "plant-rl-aurora",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
 	"dockerComposeFile": [
-		"../../docker-compose.devcontainer.yml",
-		"../../docker-compose.gpu.yml",
 		"../../docker-compose.aurora.yml"
 	],
 	"runServices": [
-		"devcontainer"
+		"devcontainer-aurora"
 	],
-	"service": "devcontainer",
+	"service": "devcontainer-aurora",
 	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
