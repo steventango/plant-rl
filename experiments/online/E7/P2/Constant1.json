@@ -1,0 +1,13 @@
+{
+    "agent": "Constant1",
+    "problem": "CVPlantGrowthChamberDiscrete",
+    "total_steps": 2016,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": 1,
+            "timezone": "America/Edmonton"
+        },
+        "constant_action": 0
+    }
+}

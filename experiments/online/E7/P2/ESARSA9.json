@@ -1,0 +1,24 @@
+{
+    "agent": "ESARSA9",
+    "problem": "CVPlantGrowthChamberDiscrete",
+    "total_steps": 2016,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": 9,
+            "timezone": "America/Edmonton"
+        },
+        "alpha": 0.25,
+        "epsilon": 0.1,
+        "lambda": 0.0,
+        "w0": 0.0,
+        "gamma": 1.0,
+
+        "representation": {
+            "which_tc": "RichTileCoder",
+            "strategy": -1,
+            "tiles": 12,
+            "tilings": 1
+        }
+    }
+}
