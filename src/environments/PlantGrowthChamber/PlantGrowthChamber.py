@@ -17,6 +17,10 @@ logger = logging.getLogger("PlantGrowthChamber")
 logger.setLevel(logging.DEBUG)
 
 
+def normalize(x, lower, upper):
+    return (x - lower) / (upper - lower)
+
+
 class PlantGrowthChamber(BaseAsyncEnvironment):
 
     def __init__(self, zone: int | None = None, timezone: str = "Etc/UTC", **kwargs):
@@ -216,9 +220,11 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
     def reward_function(self):
         new = np.mean(self.clean_areas[-1])
         old = np.mean(self.clean_areas[-2])
-        if old == 0 or new == 0:
+        if old == 0:
             return 0
-        return new - old
+        reward = new - old
+        normalized_reward = normalize(reward, 0, 50)
+        return normalized_reward
 
     async def close(self):
         """Close the environment and clean up resources."""
