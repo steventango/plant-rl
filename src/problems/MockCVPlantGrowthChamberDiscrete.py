@@ -14,4 +14,3 @@ class MockCVPlantGrowthChamberDiscrete(BaseAsyncProblem):
         self.env = Env(**self.env_params)
         self.actions = 2
         self.observations = (1,)
-        self.gamma = 1
