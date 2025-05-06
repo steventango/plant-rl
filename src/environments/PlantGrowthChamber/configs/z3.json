@@ -1,0 +1,53 @@
+{
+    "zone": {
+        "identifier": 3,
+        "camera_right_url": "http://mitacs-zone03-camera02.ccis.ualberta.ca:8080/observation",
+        "lightbar_url": "http://mitacs-zone3.ccis.ualberta.ca:8080/action",
+        "trays": [
+            {
+                "n_tall": 3,
+                "n_wide": 6,
+                "rect": {
+                    "top_left": [
+                        1167,
+                        145
+                    ],
+                    "top_right": [
+                        2341,
+                        339
+                    ],
+                    "bottom_left": [
+                        1088,
+                        763
+                    ],
+                    "bottom_right": [
+                        2339,
+                        925
+                    ]
+                }
+            },
+            {
+                "n_tall": 3,
+                "n_wide": 6,
+                "rect": {
+                    "top_left": [
+                        1070,
+                        870
+                    ],
+                    "top_right": [
+                        2331,
+                        1020
+                    ],
+                    "bottom_left": [
+                        1001,
+                        1546
+                    ],
+                    "bottom_right": [
+                        2228,
+                        1642
+                    ]
+                }
+            }
+        ]
+    }
+}
