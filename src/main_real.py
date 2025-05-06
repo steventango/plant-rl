@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 from PIL import Image
 from PyExpUtils.collection.Collector import Collector
 from PyExpUtils.collection.Sampler import Identity, Ignore, MovingAverage, Subsample
@@ -109,13 +110,14 @@ async def main():
                 config={
                     "state": Identity(),
                     "action": Identity(),
+                    "terminal": Identity(),
                     "reward": Identity(),
                     "steps": Identity(),
                     "time": Identity(),
                     "area": Identity(),
                 },
                 # by default, ignore keys that are not explicitly listed above
-                default=Ignore(),
+                default=Identity(),
             ),
         )
         collector.setIdx(idx)
@@ -182,9 +184,16 @@ async def main():
             collector.collect('state', interaction.o)
             collector.collect('action', interaction.a)
             collector.collect('reward', interaction.r)
+            collector.collect('terminal', interaction.t)
             collector.collect('steps', glue.num_steps)
-            # for key, value in interaction.extra.items():
-            #     collector.collect(key, value.astype(np.float64))
+            for key, value in interaction.extra.items():
+                if isinstance(value, np.ndarray):
+                    value = value.astype(np.float64)
+                elif isinstance(value, pd.DataFrame):
+                    for col in value.columns:
+                        collector.collect(f"{key}_{col}", value[col].to_numpy().astype(np.float64))
+                    continue
+                collector.collect(key, value)
             episodic_return = glue.total_reward if interaction.t else None
             episode = chk['episode']
             log(env, glue, wandb_run, interaction.o, interaction.a, interaction.extra, interaction.r, interaction.t, episodic_return, episode)
