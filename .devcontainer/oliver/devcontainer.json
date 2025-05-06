@@ -4,14 +4,12 @@
 	"name": "plant-rl-oliver",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
 	"dockerComposeFile": [
-		"../../docker-compose.devcontainer.yml",
-		"../../docker-compose.gpu.yml",
-		"../../docker-compose.alien.yml"
+		"../../docker-compose.oliver.yml"
 	],
 	"runServices": [
-		"devcontainer"
+		"devcontainer-oliver"
 	],
-	"service": "devcontainer",
+	"service": "devcontainer-oliver",
 	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},

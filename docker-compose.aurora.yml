@@ -1,4 +1,32 @@
 services:
-  devcontainer:
+  devcontainer-aurora:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - plant-rl
     volumes:
-      - /data/plant-rl:/data:cached
+      - ..:/workspaces:cached
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/root/.ssh:cached
+      - ~/.gitconfig:/root/.gitconfig:cached
+      - ~/.config:/root/.config:cached
+      - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
+      - ~/.cache:/root/.cache:cached
+      - ~/.netrc:/root/.netrc:cached
+      - /extra-storage:/data:cached
+    command: sleep infinity
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+
+networks:
+  plant-rl:
+    name: plant-rl

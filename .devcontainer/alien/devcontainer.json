@@ -4,14 +4,12 @@
 	"name": "plant-rl-alien",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
 	"dockerComposeFile": [
-		"../../docker-compose.devcontainer.yml",
-		"../../docker-compose.gpu.yml",
 		"../../docker-compose.alien.yml"
 	],
 	"runServices": [
-		"devcontainer"
+		"devcontainer-alien"
 	],
-	"service": "devcontainer",
+	"service": "devcontainer-alien",
 	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
