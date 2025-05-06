@@ -1,4 +1,5 @@
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
 
@@ -9,6 +10,8 @@ from PIL import Image
 from environments.PlantGrowthChamber.PlantGrowthChamber import PlantGrowthChamber
 from environments.PlantGrowthChamber.zones import deserialize_zone
 
+logger = logging.getLogger("MockPlantGrowthChamber")
+logger.setLevel(logging.DEBUG)
 
 class MockPlantGrowthChamber(PlantGrowthChamber):
 
@@ -50,6 +53,10 @@ class MockPlantGrowthChamber(PlantGrowthChamber):
 
         self.images_path = self.dataset_path / "images"
 
+        self.simulate = kwargs.get("simulate", False)
+        self.dim_action_penalty = 0
+        self.awoken = False
+
     async def start(self):
         result = await super().start()
         return result
@@ -74,13 +81,22 @@ class MockPlantGrowthChamber(PlantGrowthChamber):
         else:
             super().get_plant_stats()
 
+    async def step(self, action: np.ndarray):
+        reward, observation, terminal, info = await super().step(action)
+        if self.simulate and action == 0:
+            reward -= 0.5 * abs(reward)
+        return reward, observation, terminal, info
+
     async def put_action(self, action: int):
         self.last_action = action
 
     async def sleep_until(self, wake_time: datetime):
         while self.get_time() < wake_time and not self.get_terminal():
             self.index += 1
-            self.index = min(self.index, self.dataset_df["frame"].max())
+            if self.index >= self.dataset_df["frame"].max():
+                self.index = 0
+                break
+
 
     async def close(self):
         pass

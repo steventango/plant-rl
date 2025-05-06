@@ -7,7 +7,8 @@
         "environment":{
             "dataset_path": "/data/nazmus_exp/z11c1",
             "timezone": "America/Edmonton",
-            "mock_area": true
+            "mock_area": true,
+            "simulate": true
         },
         "experiment": {
             "checkpoint": false,
@@ -17,7 +18,7 @@
         "epsilon": 0.1,
         "lambda": 0.0,
         "gamma": 0,
-        "w0": 0.1,
+        "w0": 0,
         "representation": {
             "which_tc": "RichTileCoder",
             "strategy": -1,

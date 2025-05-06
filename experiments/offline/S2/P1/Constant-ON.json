@@ -7,7 +7,8 @@
         "environment":{
             "dataset_path": "/data/nazmus_exp/z11c1",
             "timezone": "America/Edmonton",
-            "mock_area": true
+            "mock_area": true,
+            "simulate": true
         },
         "experiment": {
             "checkpoint": false,
