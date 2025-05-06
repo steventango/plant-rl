@@ -2,6 +2,7 @@ import asyncio
 import os
 import shutil
 import sys
+import warnings
 
 sys.path.append(os.getcwd())
 import argparse
@@ -26,6 +27,7 @@ from utils.checkpoint import Checkpoint
 from utils.logger import expand, log
 from utils.preempt import TimeoutHandler
 from utils.RlGlue.rl_glue import AsyncRLGlue, Interaction
+
 default_save_keys = {"left", "right"}
 
 # ------------------
@@ -296,7 +298,13 @@ def append_csv(chk, env, glue, raw_csv_path, img_name, interaction):
     if raw_csv_path.exists():
         df_old = pd.read_csv(raw_csv_path)
         shutil.copy(raw_csv_path, raw_csv_path.with_suffix('.bak'))
-        df = pd.concat([df_old, df], ignore_index=True)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                message="The behavior of DataFrame concatenation with empty or all-NA entries is deprecated.",
+                category=FutureWarning
+            )
+            df = pd.concat([df_old, df], ignore_index=True)
     df.to_csv(raw_csv_path, index=False)
 
 
