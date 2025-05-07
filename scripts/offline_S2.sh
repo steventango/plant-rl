@@ -3,10 +3,7 @@
 # exit script on error
 set -e
 
-python src/main_real.py -e experiments/offline/S2/P1/Bandit.json -i 0 &
-python src/main_real.py -e experiments/offline/S2/P1/ContextualBandit.json -i 0 &
-python src/main_real.py -e experiments/offline/S2/P1/Constant-DIM.json -i 0 &
-python src/main_real.py -e experiments/offline/S2/P1/Constant-ON.json -i 0 &
-python src/main_real.py -e experiments/offline/S2/P1/ESARSA-A.json -i 0 &
-python src/main_real.py -e experiments/offline/S2/P1/ESARSA-B.json -i 0 &
+python scripts/local_sim.py --runs 5 --cpus 5 -e experiments/offline/S2/P2/ESARSA0_TOD.json &
+python scripts/local_sim.py --runs 5 --cpus 5 -e experiments/offline/S2/P2/ESARSABoltzmann.json &
+python scripts/local_sim.py --runs 1 --cpus 5 -e experiments/offline/S2/P2/Context_Bandit.json &
 wait

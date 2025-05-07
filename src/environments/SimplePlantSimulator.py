@@ -16,7 +16,7 @@ class SimplePlantSimulator(BaseEnvironment):
     State = [linear time-of-day,
              average area,
              percentage change in average area over 1 step (for tracking plant motion)
-            ] 
+            ]
              ]
     Action = [low, standard]
     Reward = raw change in average area over 1 step (includes large overnight growth)
@@ -60,13 +60,12 @@ class SimplePlantSimulator(BaseEnvironment):
             plant_motion = new_area / old_area - 1
 
         observation = np.hstack([self.time_of_day(),
-                                 self.normalize(new_area, l=0, u=600),
-                                 self.normalize(plant_motion, l=-0.05, u=0.05)])
+                                 self.normalize(new_area, l=0, u=600)])
 
         return observation
-    
+
     def start(self):
-        if self.num_steps == 0 or self.num_steps == self.total_data_step: 
+        if self.num_steps == 0 or self.num_steps == self.total_data_step:
             self.actual_areas = [pwl.copy() for pwl in self.original_actual_areas]   # Make a copy because actual_areas will be modified at each step
             self.frozen_time_today = 0
             self.all_steps = 0
@@ -94,7 +93,7 @@ class SimplePlantSimulator(BaseEnvironment):
                 pwl.insert_plateau(self.all_steps, self.all_steps + self.frozen_time_today)
             self.all_steps += self.steps_per_night - 1   # fastforward time
             self.frozen_time_today = 0
- 
+
         self.current_state = self.get_observation()
 
         self.reward = self.reward_function()
@@ -111,9 +110,9 @@ class SimplePlantSimulator(BaseEnvironment):
             return self.normalize(new_area - old_area, 0, 50)
         elif self.reward_label == 'r1_percent':
             return self.normalize(new_area / old_area - 1, 0, 0.25)
-        else: 
+        else:
             raise ValueError(f"{self.reward_label} is an invalid argument for env.reward_label.")
-        
+
     def get_info(self):
         return {"gamma": self.gamma}
 
@@ -126,9 +125,9 @@ class SimplePlantSimulator(BaseEnvironment):
 
     def frozen_time(self, action):
         # Amount of frozen time (in unit of time step), given action
-        all_time = {0: 1.0, 1: 0.0}  
+        all_time = {0: 1.0, 1: 0.0}
         return all_time[action]
-        
+
     def analyze_area_data(self):    # Approximate the actual leaf sizes and the projection factor throughout the day
         PWL = []
         PF = []
@@ -157,7 +156,7 @@ class SimplePlantSimulator(BaseEnvironment):
             last_x = (observed_area.shape[0]-2)*(self.steps_per_day+self.steps_per_night)
             actual_area_daytime.append(pwl(last_x))
             actual_area_daytime = np.hstack(actual_area_daytime)
-            
+
             # Compute projection factor
             truncated_data = ep_data[self.steps_per_day:-self.steps_per_day + 1]
             projection_factor = truncated_data / actual_area_daytime
@@ -170,7 +169,7 @@ class SimplePlantSimulator(BaseEnvironment):
         # Load historic plant area data
         data_path = os.path.dirname(os.path.abspath(__file__)) + "/plant_data/reprocessed.csv"
         full_df = pd.read_csv(data_path)
-        
+
         # Number of plants in the dataset
         self.num_plants = full_df['plant_id'].max()
 
@@ -180,7 +179,7 @@ class SimplePlantSimulator(BaseEnvironment):
         start_time = datetime.time(9, 25)
         end_time = datetime.time(20, 45)
         df = full_df[(full_df['time_only'] >= start_time) & (full_df['time_only'] <= end_time)]
-        
+
         # Number of time steps per day
         timestamps_per_day = df['time'].dt.date.value_counts() / self.num_plants
         if timestamps_per_day.nunique() != 1:
@@ -198,57 +197,57 @@ class SimplePlantSimulator(BaseEnvironment):
 
         # Observed areas of plants (in unit of pixels)
         plant_area_data = df['clean_area'].to_numpy()
-        plant_area_data = np.reshape(plant_area_data, (-1, self.num_plants))  
+        plant_area_data = np.reshape(plant_area_data, (-1, self.num_plants))
 
         return plant_area_data, steps_per_day, steps_per_night, time_increment*60, first_second
-    
+
 class Daily_ContextBandit(SimplePlantSimulator):
     '''
     Start a new episode every day.
     State is hour of day.
     '''
     def __init__(self, reward_label='r1', **kwargs):
-        super().__init__(reward_label, **kwargs)     
+        super().__init__(reward_label, **kwargs)
         self.state_dim = (1,)
         self.current_state = np.empty(1)
         self.gamma = 0.0
-    
+
     def step(self, action):
-        super().step(action)      
+        super().step(action)
         if self.num_steps % self.steps_per_day == 0:
             self.current_state = np.array([12])
             return self.reward, self.current_state, True, self.get_info()
         else:
             return self.reward, self.current_state, False, self.get_info()
 
-    def get_observation(self):      
+    def get_observation(self):
         super().get_observation()
         return np.array([floor(self.num_steps % self.steps_per_day / 6)])
 
 class Daily_ESARSA_TOD(Daily_ContextBandit):
     def __init__(self, reward_label='r1',**kwargs):
-        super().__init__(reward_label, **kwargs)     
+        super().__init__(reward_label, **kwargs)
         self.gamma = 1.0
-        
+
 class Daily_Bandit(SimplePlantSimulator):
     '''
     Start a new episode every day.
     Only one state. Gamma = 0. Overnight reward is set to 0.
     '''
     def __init__(self, reward_label='r1', **kwargs):
-        super().__init__(reward_label, **kwargs)     
+        super().__init__(reward_label, **kwargs)
         self.state_dim = (1,)
         self.current_state = np.empty(1)
         self.gamma = 0.0
-    
+
     def step(self, action):
-        super().step(action)      
+        super().step(action)
         if self.num_steps % self.steps_per_day == 0:
             return self.reward, self.current_state, True, self.get_info()
         else:
             return self.reward, self.current_state, False, self.get_info()
-    
-    def get_observation(self):      
+
+    def get_observation(self):
         super().get_observation()
         return np.array([1])
 
@@ -262,9 +261,5 @@ class Daily_Bandit(SimplePlantSimulator):
                 return self.normalize(new_area - old_area, 0, 50)
             elif self.reward_label == 'r1_percent':
                 return self.normalize(new_area / old_area - 1, 0, 0.25)
-            else: 
+            else:
                 raise ValueError(f"{self.reward_label} is an invalid argument for env.reward_label.")
-
-
-
-        

@@ -1,0 +1,20 @@
+{
+    "agent": "ESARSA",
+    "problem": "SimplePlantSimulator",
+    "total_steps": 10000,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment":{},
+        "alpha": 0.1,
+        "epsilon": 0.1,
+        "lambda": 0.0,
+        "w0": 0.0,
+
+        "representation": {
+            "which_tc": "RichTileCoder",
+            "strategy": -1,
+            "tiles": [[4, 4]],
+            "tilings": 32
+        }
+    }
+}

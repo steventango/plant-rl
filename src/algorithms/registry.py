@@ -1,23 +1,25 @@
 from typing import Type
 
 from algorithms.BaseAgent import BaseAgent
-from algorithms.nn.DQN import DQN
-from algorithms.nn.DynamicBatchDQN import DynamicBatchDQN
-from algorithms.linear.linearDQN.LinearDynamicBatchDQN import LinearDynamicBatchDQN
-from algorithms.nn.EQRC import EQRC
 from algorithms.ConstantAgent import ConstantAgent
 from algorithms.ContinuousRandomAgent import ContinuousRandomAgent
 from algorithms.DiscreteRandomAgent import DiscreteRandomAgent
+from algorithms.linear.ESARSA import ESARSA as LinearESARSA
+from algorithms.linear.linearDQN.LinearDynamicBatchDQN import LinearDynamicBatchDQN
+from algorithms.linear.LinearQL import LinearQL
+from algorithms.nn.DQN import DQN
+from algorithms.nn.DynamicBatchDQN import DynamicBatchDQN
+from algorithms.nn.EQRC import EQRC
+from algorithms.nn.GreedyAC.GreedyAC import GreedyAC
 from algorithms.SequenceAgent import SequenceAgent
 from algorithms.SpreadsheetAgent import SpreadsheetAgent
 from algorithms.tc.ESARSA import ESARSA
+from algorithms.tc.ESARSABoltzmann import ESARSABoltzmann
 from algorithms.tc.QL import QL
+from algorithms.tc.SoftmaxAC import SoftmaxAC
 from algorithms.tc.tc_replay.ESARSA import ESARSA as ESARSAReplay
 from algorithms.tc.tc_replay.QL import QL as QLReplay
-from algorithms.tc.SoftmaxAC import SoftmaxAC
-from algorithms.linear.ESARSA import ESARSA as LinearESARSA
-from algorithms.linear.LinearQL import LinearQL
-from algorithms.nn.GreedyAC.GreedyAC import GreedyAC
+
 
 def getAgent(name) -> Type[BaseAgent]:
     if name.startswith("DQN"):
@@ -31,6 +33,9 @@ def getAgent(name) -> Type[BaseAgent]:
 
     if name == 'EQRC':
         return EQRC
+
+    if name == "ESARSABoltzmann":
+        return ESARSABoltzmann
 
     if name.startswith("ESARSA"):
         return ESARSA

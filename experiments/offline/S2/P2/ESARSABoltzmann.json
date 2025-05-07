@@ -1,0 +1,24 @@
+{
+    "agent": "ESARSABoltzmann",
+    "problem": "SimplePlantSimulator",
+    "total_steps": 100000,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment":{
+            "type": "Daily_ESARSA_TOD",
+            "reward_label": "r1"
+        },
+        "alpha": 0.1,
+        "temperature": 0.001,
+        "gamma": 1.0,
+        "lambda": 0.0,
+        "w0": 0.0,
+
+        "representation": {
+            "which_tc": "RichTileCoder",
+            "strategy": -1,
+            "tiles": 12,
+            "tilings": 1
+        }
+    }
+}

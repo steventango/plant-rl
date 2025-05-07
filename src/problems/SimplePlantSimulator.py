@@ -9,10 +9,10 @@ from problems.BaseProblem import BaseProblem
 class SimplePlantSimulator(BaseProblem):
     def __init__(self, exp: ExperimentModel, idx: int, collector: Collector):
         super().__init__(exp, idx, collector)
-        if 'type' not in self.env_params: 
+        if 'type' not in self.env_params:
             self.env = DefaultEnv(**self.env_params)
             self.actions = 2
-            self.observations = (3,)
+            self.observations = (2,)
             self.gamma = 1.0
         elif self.env_params['type'] == 'Daily_ContextBandit':
             self.env = Daily_ContextBandit(**self.env_params)
