@@ -30,3 +30,4 @@ services:
 networks:
   plant-rl:
     name: plant-rl
+    external: true

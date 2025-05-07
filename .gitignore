@@ -1,6 +1,9 @@
 # ignore data folder
 data
 
+# VSCode workspace configs
+*.code-workspace
+
 # ignore all results
 results
 results/
