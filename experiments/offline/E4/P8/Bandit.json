@@ -1,11 +1,12 @@
 {
     "agent": "ESARSA",
     "problem": "SimplePlantSimulator",
-    "total_steps": -1,
+    "total_steps": 10000,
     "episode_cutoff": -1,
     "metaParameters": {
         "environment":{
-            "type": "Daily_Bandit"
+            "type": "Daily_Bandit",
+            "reward_label": ["r1", "r1_percent"]
         },
         "alpha": 0.1, 
         "epsilon": 0.1,

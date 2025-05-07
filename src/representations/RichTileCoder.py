@@ -45,7 +45,7 @@ class RichTileCoder():
         else:     
             return tiles(self.iht, self._c.tilings, [s[i]*self.scale[i] for i in range(self._c.dims)])          
 
-    def features(self):
+    def features(self): 
         return self.maxSize
     
     def nonzero_features(self):
