@@ -1,4 +1,7 @@
+from datetime import datetime
+
 import aiohttp
+import numpy as np
 from aiohttp_retry import ExponentialRetry, RetryClient
 
 _session = None
@@ -26,3 +29,10 @@ async def get_session():
         raise_for_status=True,  # Automatically raise for HTTP errors
     )
     return _session
+
+
+def get_one_hot_time_observation(local_time: datetime):
+    one_hot = np.zeros(13, dtype=np.float32)
+    index = max(0, min(12, local_time.hour - 9))
+    one_hot[index] = 1.0
+    return one_hot
