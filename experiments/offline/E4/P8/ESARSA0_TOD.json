@@ -1,13 +1,14 @@
 {
     "agent": "ESARSA",
     "problem": "SimplePlantSimulator",
-    "total_steps": -1,
+    "total_steps": 10000,
     "episode_cutoff": -1,
     "metaParameters": {
         "environment":{
-            "type": "Daily_ESARSA_TOD"
+            "type": "Daily_ESARSA_TOD",
+            "reward_label": ["r1", "r1_percent"]
         },
-        "alpha": [0.1, 0.25], 
+        "alpha": 0.1, 
         "epsilon": 0.1,
         "lambda": 0.0,
         "w0": 0.0,

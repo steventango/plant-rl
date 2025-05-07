@@ -103,11 +103,6 @@ for idx in indices:
     agent = chk.build('a', problem.getAgent)
     env = chk.build('e', problem.getEnvironment)
 
-    # If exp.total_steps is -1, then set total steps such that each run lasts for "environment.last_day" days.
-    if (exp.problem == 'PlantSimulator' or exp.problem == 'SimplePlantSimulator') and exp.total_steps == -1:
-        problem.params['total_steps'] = env.terminal_step
-        exp.total_steps = env.terminal_step
-
     glue = chk.build('glue', lambda: LoggingRlGlue(agent, env))
     chk.initial_value('episode', 0)
 

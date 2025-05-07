@@ -52,7 +52,7 @@ class ESARSA(TCAgent):
             'z': self.z,
         }
         if len(observations) == 1:
-            self.all_obs = np.eye(self.tile_coder.maxSize)
+            self.all_obs = np.eye(self.tile_coder.features())
         else:
             self.all_obs = None
 
@@ -81,7 +81,7 @@ class ESARSA(TCAgent):
         else:
             pi = self.policy(xp)
 
-        logger.debug(x)
+        #logger.debug(x)
 
         delta = _update(self.w, x, a, xp, pi, r, gamma, self.alpha, self.z, self.lambda_)
         if xp is None:
