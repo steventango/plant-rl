@@ -44,7 +44,7 @@ def getAgent(name) -> Type[BaseAgent]:
     if name == 'QLReplay':
         return QLReplay
 
-    if name == 'LinearESARSA':
+    if name.startswith("LinearESARSA"):
         return LinearESARSA
 
     if name == 'LinearQL':
