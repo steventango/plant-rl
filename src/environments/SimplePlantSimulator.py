@@ -17,11 +17,10 @@ class SimplePlantSimulator(BaseEnvironment):
              average area,
              percentage change in average area over 1 step (for tracking plant motion)
             ] 
-             ]
     Action = [low, standard]
     Reward = raw change in average area over 1 step (includes large overnight growth)
     '''
-    def __init__(self, reward_label='r1', **kwargs):
+    def __init__(self, reward_label, **kwargs):
         self.state_dim = (3,)
         self.current_state = np.empty(3)
         self.action_dim = 2
@@ -30,7 +29,7 @@ class SimplePlantSimulator(BaseEnvironment):
         self.observed_areas = []        # stores a list of lists of daytime observed areas in pixels. i.e. self.observed_areas[-1] contains the latest areas of individual plants
 
         self.all_steps = 0              # step counter that counts both day and night, even though agent is sleeping at night
-        self.num_steps = 0
+        self.day_steps = 0
         self.frozen_time_today = 0      # how long the plant has be frozen during daytime today
         self.num_plants = None          # num_plants will be the total number of plants in the data
 
@@ -41,17 +40,18 @@ class SimplePlantSimulator(BaseEnvironment):
 
         self.reward_label = reward_label
 
-    def get_observation(self):
-        # Compute observed areas by projecting actual areas
-        self.observed_areas.append(np.array([self.actual_areas[i](self.all_steps)*self.projection_factors[i][self.num_steps] for i in range(self.num_plants)]))
+    def get_observation(self, new_ob=True):
+        # Append new observation if new_ob
+        if new_ob: 
+            self.observed_areas.append(np.array([self.actual_areas[i](self.all_steps)*self.projection_factors[i][self.day_steps] for i in range(self.num_plants)]))
 
         # Compute the average of the current observed areas
         new_area = np.mean(self.observed_areas[-1])
 
         # Compute plant motion, defined as percent change in average area per step
-        if self.num_steps == 0:
+        if self.day_steps == 0:
             plant_motion = 0
-        elif self.num_steps % self.steps_per_day == 0:   # calculate % growth per overnight step, assuming constant % growth
+        elif self.day_steps % self.steps_per_day == 0:   # calculate % growth per overnight step, assuming constant % growth
             old_area = np.mean(self.observed_areas[-2])
             total_growth = new_area / old_area - 1
             plant_motion = (total_growth + 1)**(1 / self.steps_per_night) - 1
@@ -66,12 +66,11 @@ class SimplePlantSimulator(BaseEnvironment):
         return observation
     
     def start(self):
-        if self.num_steps == 0 or self.num_steps == self.total_data_step: 
-            self.actual_areas = [pwl.copy() for pwl in self.original_actual_areas]   # Make a copy because actual_areas will be modified at each step
-            self.frozen_time_today = 0
-            self.all_steps = 0
-            self.num_steps = 0
-            self.observed_areas = []
+        self.actual_areas = [pwl.copy() for pwl in self.original_actual_areas]   # Make a copy because actual_areas will be modified at each step
+        self.frozen_time_today = 0
+        self.all_steps = 0
+        self.day_steps = 0
+        self.observed_areas = []
 
         self.current_state = self.get_observation()
 
@@ -85,10 +84,10 @@ class SimplePlantSimulator(BaseEnvironment):
 
         # Keep track of time
         self.all_steps += 1   # must occur after the above action effect
-        self.num_steps += 1
+        self.day_steps += 1
 
         # Overnight behaviors
-        if self.num_steps % self.steps_per_day == 0:  # if transitioning into the next day
+        if self.day_steps % self.steps_per_day == 0:  # if transitioning into the next day
             # freeze growth at night by the same amount as daytime today
             for pwl in self.actual_areas:
                 pwl.insert_plateau(self.all_steps, self.all_steps + self.frozen_time_today)
@@ -99,7 +98,7 @@ class SimplePlantSimulator(BaseEnvironment):
 
         self.reward = self.reward_function()
 
-        if self.num_steps == self.total_data_step:
+        if self.day_steps == self.total_data_steps:
             return self.reward, self.current_state, True, self.get_info()
         else:
             return self.reward, self.current_state, False, self.get_info()
@@ -118,7 +117,7 @@ class SimplePlantSimulator(BaseEnvironment):
         return {"gamma": self.gamma}
 
     def time_of_day(self):
-        step_today = self.num_steps % self.steps_per_day
+        step_today = self.day_steps % self.steps_per_day
         return step_today / self.steps_per_day
 
     def normalize(self, x, l, u):
@@ -141,12 +140,12 @@ class SimplePlantSimulator(BaseEnvironment):
             max_time = []
             max_area = []
             for i in range(observed_area.shape[0]):
-                max_time.append((i-1)*(self.steps_per_day+self.steps_per_night) + max_indices[i])  # Let time begins at the first time stamp of day 2
+                max_time.append((i-1)*(self.steps_per_day+self.steps_per_night) + max_indices[i])  # Let time=0 be at the first time stamp of day 2
                 max_area.append(ep_data[i*self.steps_per_day + max_indices[i]])
             pwl = PiecewiseLinear(max_time, max_area)
 
             # Number of remaining daytime time stamps (since we truncate the first and last day)
-            self.total_data_step = (observed_area.shape[0]-2)*self.steps_per_day
+            self.total_data_steps = (observed_area.shape[0]-2)*self.steps_per_day
 
             # Compute the actual area at all daytime time stamps
             actual_area_daytime = []
@@ -202,69 +201,72 @@ class SimplePlantSimulator(BaseEnvironment):
 
         return plant_area_data, steps_per_day, steps_per_night, time_increment*60, first_second
     
-class Daily_ContextBandit(SimplePlantSimulator):
+class Daily_Sim(SimplePlantSimulator):
     '''
     Start a new episode every day.
-    State is hour of day.
+    ''' 
+    def start(self):
+        if self.day_steps == 0 or self.day_steps == self.total_data_steps: 
+            self.actual_areas = [pwl.copy() for pwl in self.original_actual_areas]
+            self.frozen_time_today = 0
+            self.all_steps = 0
+            self.day_steps = 0
+            self.observed_areas = []
+
+        if self.day_steps % self.steps_per_day == 0 and self.day_steps > 0: 
+            self.current_state = self.get_observation(new_ob=False)   # reuse last step of previous episode (morning) as the first step of current episode
+        else: 
+            self.current_state = self.get_observation(new_ob=True)
+
+        return self.current_state, self.get_info()
+    
+    def step(self, action):
+        super().step(action)      
+        if self.day_steps % self.steps_per_day == 0:
+            return self.reward, self.current_state, True, self.get_info()
+        else:
+            return self.reward, self.current_state, False, self.get_info()
+            
+
+class Daily_Bandit(Daily_Sim):
     '''
-    def __init__(self, reward_label='r1', **kwargs):
+    State = trivial
+    Overnight reward = 0
+    '''
+    def __init__(self, reward_label, **kwargs):
         super().__init__(reward_label, **kwargs)     
         self.state_dim = (1,)
         self.current_state = np.empty(1)
         self.gamma = 0.0
     
-    def step(self, action):
-        super().step(action)      
-        if self.num_steps % self.steps_per_day == 0:
-            self.current_state = np.array([12])
-            return self.reward, self.current_state, True, self.get_info()
-        else:
-            return self.reward, self.current_state, False, self.get_info()
-
-    def get_observation(self):      
-        super().get_observation()
-        return np.array([floor(self.num_steps % self.steps_per_day / 6)])
-
-class Daily_ESARSA_TOD(Daily_ContextBandit):
-    def __init__(self, reward_label='r1',**kwargs):
-        super().__init__(reward_label, **kwargs)     
-        self.gamma = 1.0
-        
-class Daily_Bandit(SimplePlantSimulator):
-    '''
-    Start a new episode every day.
-    Only one state. Gamma = 0. Overnight reward is set to 0.
-    '''
-    def __init__(self, reward_label='r1', **kwargs):
-        super().__init__(reward_label, **kwargs)     
-        self.state_dim = (1,)
-        self.current_state = np.empty(1)
-        self.gamma = 0.0
-    
-    def step(self, action):
-        super().step(action)      
-        if self.num_steps % self.steps_per_day == 0:
-            return self.reward, self.current_state, True, self.get_info()
-        else:
-            return self.reward, self.current_state, False, self.get_info()
-    
-    def get_observation(self):      
-        super().get_observation()
+    def get_observation(self, new_ob=True):      
+        super().get_observation(new_ob)
         return np.array([1])
 
     def reward_function(self):
-        if self.num_steps % self.steps_per_day == 0:
+        if self.day_steps % self.steps_per_day == 0:
             return 0
         else:
-            new_area = np.mean(self.observed_areas[-1])
-            old_area = np.mean(self.observed_areas[-2])
-            if self.reward_label == 'r1':
-                return self.normalize(new_area - old_area, 0, 50)
-            elif self.reward_label == 'r1_percent':
-                return self.normalize(new_area / old_area - 1, 0, 0.25)
-            else: 
-                raise ValueError(f"{self.reward_label} is an invalid argument for env.reward_label.")
-
-
-
+            return super().reward_function()
         
+class Daily_ContextBandit(Daily_Sim):
+    '''
+    State = TOD
+    '''    
+    def __init__(self, reward_label, **kwargs):
+        super().__init__(reward_label, **kwargs)     
+        self.state_dim = (1,)
+        self.current_state = np.empty(1)
+        self.gamma = 0.0
+        
+    def get_observation(self, new_ob=True):      
+        super().get_observation(new_ob)
+        if self.day_steps % self.steps_per_day == 0:
+            return np.array([12])
+        else: 
+            return np.array([floor(self.day_steps % self.steps_per_day / 6)])    
+
+class Daily_ESARSA_TOD(Daily_ContextBandit):
+    def __init__(self, reward_label, **kwargs):
+        super().__init__(reward_label, **kwargs)     
+        self.gamma = 1.0
