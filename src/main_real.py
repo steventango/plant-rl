@@ -40,6 +40,8 @@ parser.add_argument('--save_path', type=str, default='./')
 parser.add_argument('--checkpoint_path', type=str, default='./checkpoints/')
 parser.add_argument('--silent', action='store_true', default=False)
 parser.add_argument('--gpu', action='store_true', default=False)
+parser.add_argument('-d', '--deploy', action='store_true', default=False, 
+                    help='Allows for easily restarting logging for crashed runs in deployment. If the run already exists, then wandb will resume logging to the same run.')
 
 args = parser.parse_args()
 
@@ -148,9 +150,18 @@ async def main():
             "context": str(agent_path)
         }
 
+        if args.deploy:
+            run_id = args.exp.replace("/", "-").removesuffix(".json")
+            resume= "allow"
+        else:
+            run_id = args.exp.replace("/", "-").removesuffix(".json") + '-' + datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+            resume = "never"
+            
         wandb_run = wandb.init(
             entity="plant-rl",
             project="main",
+            id = run_id,
+            resume=resume,
             notes=str(agent_path),
             config=config,
             settings=wandb.Settings(
