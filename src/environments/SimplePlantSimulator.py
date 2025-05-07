@@ -31,7 +31,7 @@ class SimplePlantSimulator(BaseEnvironment):
         self.all_steps = 0              # step counter that counts both day and night, even though agent is sleeping at night
         self.day_steps = 0
         self.frozen_time_today = 0      # how long the plant has be frozen during daytime today
-        self.num_plants = None          # num_plants will be the total number of plants in the data
+        self.num_plants = 0             # num_plants will be set as the total number of plants in the data
 
         self.data, self.steps_per_day, self.steps_per_night, self.interval, self.first_second = self.load_area_data()
         self.original_actual_areas, self.projection_factors = self.analyze_area_data()
@@ -111,7 +111,7 @@ class SimplePlantSimulator(BaseEnvironment):
         elif self.reward_label == 'r1_percent':
             return self.normalize(new_area / old_area - 1, 0, 0.25)
         else: 
-            raise ValueError(f"{self.reward_label} is an invalid argument for env.reward_label.")
+            raise ValueError(f"{self.reward_label} is an invalid reward_label for the SimplePlantSimulator class.")
         
     def get_info(self):
         return {"gamma": self.gamma}
@@ -213,7 +213,7 @@ class Daily_Sim(SimplePlantSimulator):
             self.day_steps = 0
             self.observed_areas = []
 
-        if self.day_steps % self.steps_per_day == 0 and self.day_steps > 0: 
+        if self.day_steps % self.steps_per_day == 0 and self.day_steps > 0:
             self.current_state = self.get_observation(new_ob=False)   # reuse last step of previous episode (morning) as the first step of current episode
         else: 
             self.current_state = self.get_observation(new_ob=True)
@@ -226,7 +226,20 @@ class Daily_Sim(SimplePlantSimulator):
             return self.reward, self.current_state, True, self.get_info()
         else:
             return self.reward, self.current_state, False, self.get_info()
-            
+    
+    def reward_function(self):
+        new_area = np.mean(self.observed_areas[-1])
+        old_area = np.mean(self.observed_areas[-2])
+        if self.reward_label == 'r1':
+            return self.normalize(new_area - old_area, 0, 50)
+        elif self.reward_label == 'r1_percent':
+            return self.normalize((new_area - old_area) / old_area, 0, 0.25)
+        elif self.reward_label == 'r1_norm': 
+            first_stamp_of_day = floor(self.day_steps / self.steps_per_day) * self.steps_per_day
+            first_area_of_day = np.mean(self.observed_areas[first_stamp_of_day])
+            return self.normalize((new_area - old_area) / first_area_of_day, 0, 0.2)
+        else: 
+            raise ValueError(f"{self.reward_label} is an invalid reward_label for the Daily_Sim class.")
 
 class Daily_Bandit(Daily_Sim):
     '''
@@ -261,10 +274,15 @@ class Daily_ContextBandit(Daily_Sim):
         
     def get_observation(self, new_ob=True):      
         super().get_observation(new_ob)
+        return np.array([floor(self.day_steps % self.steps_per_day / 6)])    
+    
+    def step(self, action):
+        super().step(action)      
         if self.day_steps % self.steps_per_day == 0:
-            return np.array([12])
-        else: 
-            return np.array([floor(self.day_steps % self.steps_per_day / 6)])    
+            self.current_state = np.array([12])
+            return self.reward, self.current_state, True, self.get_info()
+        else:
+            return self.reward, self.current_state, False, self.get_info()
 
 class Daily_ESARSA_TOD(Daily_ContextBandit):
     def __init__(self, reward_label, **kwargs):

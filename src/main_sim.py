@@ -130,21 +130,14 @@ for idx in indices:
     # if we haven't started yet, then make the first interaction
     if glue.total_steps == 0:
         s, a, info = glue.start()
-        w = info["w"]
-        log(env, glue, wandb_run, s, a, {"w0": w[0,:], "w1":w[1,:]})
+        log(env, glue, wandb_run, s, a, info)
 
     for step in range(glue.total_steps, exp.total_steps):
         collector.next_frame()
         chk.maybe_save()
         interaction = glue.step()
-        
-        if not interaction.t: 
-            w = interaction.extra['w']
-            log(env, glue, wandb_run, interaction.o, interaction.a, {"w0": w[0,:], "w1":w[1,:]}, interaction.r)
-        else: 
-            log(env, glue, wandb_run, interaction.o, interaction.a, {}, interaction.r)
-
-        
+        log(env, glue, wandb_run, interaction.o, interaction.a, interaction.extra, interaction.r)
+                
         collector.collect('reward', interaction.r)
         collector.collect('episode', chk['episode'])
         collector.collect('steps', glue.num_steps)

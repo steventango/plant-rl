@@ -123,12 +123,12 @@ Sim:
 - gamma = 0 for bandits and gamma = 1 for ESARSA
 - overnight reward is manually set to zero for bandit
 - state for contextual bandit and ESARSA is time steps binned to 12 hours, one-hot encoded by trivial tile coding
+- added reward_label = 'r1_norm' which normalizes rewards by the first area of the day
 Agent: 
 - All three agents use ESARSA algo. 
+Logging:
+- Implemented wandb 
 ### Observations: 
-- All cases converge to optimal action 1 except when optimistic initial value w0=0.1. We decided to drop OIV.
-- As previously observed, Bandit's value of action 1 decreases towards the end of day.
-- Contextual bandit: the value of action 1 mysteriously decreases after reaching its peak value on day 8. 
-- ESARSA(0) smoothly converges to action 1. alpha=0.1 seems more certain than alpha=0.25.
+-
 ### Conclusions & Outlooks: 
-- Our agents are functioning well in sim. 
+-
