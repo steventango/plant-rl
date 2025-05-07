@@ -154,7 +154,7 @@ async def main():
             notes=str(agent_path),
             config=config,
             settings=wandb.Settings(
-                x_stats_disk_paths=("/", "/data"),
+                x_stats_disk_paths=("/", "/data"), # So wandb alerts when data dir is near full
             ),
         )
 
@@ -168,7 +168,6 @@ async def main():
             s, a, info = await glue.start()
             episode = chk['episode']
             log(env, glue, wandb_run, s, a, info, episode=episode)
-            img_name = save_images(env, dataset_path, images_save_keys)
             interaction = Interaction(
                 o=s,
                 a=a,
@@ -176,7 +175,9 @@ async def main():
                 r=None,
                 extra=info,
             )
-            append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
+            if not exp.problem.startswith("Mock"):
+                img_name = save_images(env, dataset_path, images_save_keys)
+                append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
 
         for step in range(glue.total_steps, exp.total_steps):
             collector.next_frame()
@@ -210,8 +211,9 @@ async def main():
             episode = chk['episode']
             log(env, glue, wandb_run, interaction.o, interaction.a, interaction.extra, interaction.r, interaction.t, episodic_return, episode)
 
-            img_name = save_images(env, dataset_path, images_save_keys)
-            append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
+            if not exp.problem.startswith("Mock"):
+                img_name = save_images(env, dataset_path, images_save_keys)
+                append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
 
             if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
                 # collect some data
@@ -231,7 +233,6 @@ async def main():
 
                 s, a, info = await glue.start()
                 log(env, glue, wandb_run, s, a, info)
-                img_name = save_images(env, dataset_path, images_save_keys)
                 interaction = Interaction(
                     o=s,
                     a=a,
@@ -239,7 +240,9 @@ async def main():
                     r=None,
                     extra=info,
                 )
-                append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
+                if not exp.problem.startswith("Mock"):
+                    img_name = save_images(env, dataset_path, images_save_keys)
+                    append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
 
             backup_and_save(exp, collector, idx, args.save_path)
 
