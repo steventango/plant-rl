@@ -5,19 +5,19 @@ import numpy as np
 
 from environments.PlantGrowthChamber.utils import get_one_hot_time_observation
 
-ZERO = np.array([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], dtype=np.float32)
-ONE = np.array([0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], dtype=np.float32)
-TWO = np.array([0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], dtype=np.float32)
-THREE = np.array([0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], dtype=np.float32)
-FOUR = np.array([0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0], dtype=np.float32)
-FIVE = np.array([0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0], dtype=np.float32)
-SIX = np.array([0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], dtype=np.float32)
-SEVEN = np.array([0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0], dtype=np.float32)
-EIGHT = np.array([0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0], dtype=np.float32)
-NINE = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], dtype=np.float32)
-TEN = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0], dtype=np.float32)
-ELEVEN = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0], dtype=np.float32)
-TWELVE = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], dtype=np.float32)
+ZERO = np.array([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], dtype=np.float64)
+ONE = np.array([0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], dtype=np.float64)
+TWO = np.array([0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], dtype=np.float64)
+THREE = np.array([0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], dtype=np.float64)
+FOUR = np.array([0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0], dtype=np.float64)
+FIVE = np.array([0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0], dtype=np.float64)
+SIX = np.array([0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], dtype=np.float64)
+SEVEN = np.array([0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0], dtype=np.float64)
+EIGHT = np.array([0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0], dtype=np.float64)
+NINE = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], dtype=np.float64)
+TEN = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0], dtype=np.float64)
+ELEVEN = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0], dtype=np.float64)
+TWELVE = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], dtype=np.float64)
 
 tz = ZoneInfo("America/Edmonton")
 
