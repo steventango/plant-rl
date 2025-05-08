@@ -96,7 +96,7 @@ services:
       - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
-    command: python src/main_real.py -e experiments/online/E7/P3/ContextualBandit6.json -i 0
+    command: python src/main_real.py -e experiments/online/E7/P4/ContextualBandit6.json -i 0
     deploy:
       resources:
         reservations:
@@ -123,7 +123,7 @@ services:
       - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
-    command: python src/main_real.py -e experiments/online/E7/P2/ESARSA8.json -i 0
+    command: python src/main_real.py -e experiments/online/E7/P4/ESARSA8.json -i 0
     deploy:
       resources:
         reservations:
@@ -150,7 +150,7 @@ services:
       - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
-    command: python src/main_real.py -e experiments/online/E7/P2/ESARSA9.json -i 0
+    command: python src/main_real.py -e experiments/online/E7/P4/ESARSA9.json -i 0
     deploy:
       resources:
         reservations:
