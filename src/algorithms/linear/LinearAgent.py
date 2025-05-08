@@ -11,7 +11,7 @@ from algorithms.BaseAgent import BaseAgent
 from representations.TileCoder import DenseTileCoder, TileCoderConfig
 from utils.checkpoint import checkpointable
 
-@checkpointable(('lag'))
+@checkpointable(('lag',))
 class LinearAgent(BaseAgent):
     def __init__(self, observations: Tuple[int, ...], actions: int, params: Dict, collector: Collector, seed: int):
         super().__init__(observations, actions, params, collector, seed)
