@@ -16,6 +16,7 @@ class LinearAgent(BaseAgent):
     def __init__(self, observations: Tuple[int, ...], actions: int, params: Dict, collector: Collector, seed: int):
         super().__init__(observations, actions, params, collector, seed)
         self.lag = LagBuffer(self.n_step)
+        self.info = {}
 
     @abstractmethod
     def policy(self, obs: np.ndarray) -> np.ndarray:
@@ -41,7 +42,7 @@ class LinearAgent(BaseAgent):
             gamma=0,
             terminal=False,
         ))
-        return a
+        return a, self.info
 
     def step(self, r: float, sp: np.ndarray | None, extra: Dict[str, Any]):
         a = -1
@@ -73,7 +74,7 @@ class LinearAgent(BaseAgent):
                 gamma=exp.gamma,
             )
 
-        return a
+        return a, self.info
 
     def end(self, r: float, extra: Dict[str, Any]):
         interaction = Timestep(
@@ -93,3 +94,4 @@ class LinearAgent(BaseAgent):
             )
 
         self.lag.flush()
+        return self.info
