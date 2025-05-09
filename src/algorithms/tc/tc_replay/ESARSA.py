@@ -8,14 +8,19 @@ from algorithms.tc.tc_replay.TCAgentReplay import TCAgentReplay
 from utils.checkpoint import checkpointable
 from utils.policies import egreedy_probabilities
 
+import logging
+logger = logging.getLogger('rlglue')
+logger.setLevel(logging.DEBUG)
+
 @njit(cache=True)
-def _update(w, x, a, xp, pi, r, gamma, alpha):
+def _update(w, x, a, xp, pi, r, gamma, alpha, num_active_features):
+    logger.info(a)
     qsa = (x * w[a]).sum(axis=1)
     qsp = np.matmul(xp, w.T)
     delta = r + gamma * (qsp * pi).sum(axis=1) - qsa
 
     grad = x * delta[:, None]
-    np.add.at(w, a, alpha / np.count_nonzero(x) * grad)
+    np.add.at(w, a, alpha / num_active_features * grad)  # TODO: Check if it makes sense to divide by num_active_features
     
     return delta
 
@@ -66,7 +71,7 @@ class ESARSA(TCAgentReplay):
 
         batch = self.buffer.sample(self.batch_size)
         pi = self.policy(batch.xp)
-        delta = _update(self.w, batch.x, batch.a, batch.xp, pi, batch.r, batch.gamma, self.alpha)
+        delta = _update(self.w, batch.x, batch.a, batch.xp, pi, batch.r, batch.gamma, self.alpha, self.nonzero_features)
         
         self.info.update({
             'delta': delta,
@@ -75,6 +80,15 @@ class ESARSA(TCAgentReplay):
 
         self.buffer.update_batch(batch)
 
+        # (Optional) at the end of each episode, decay step size linearly
+        if self.alpha_decay: 
+            self.alpha = self.get_step_size()
+
     def get_info(self):
         return self.info
+    
+    def get_step_size(self):  # linear decay with minimum 
+        min_alpha = 0.01
+        horizon = 5e4
+        return max(min_alpha, self.alpha0 * (1 - self.steps / horizon))
 
