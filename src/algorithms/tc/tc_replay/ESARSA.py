@@ -14,9 +14,10 @@ def _update(w, x, a, xp, pi, r, gamma, alpha):
     qsp = np.matmul(xp, w.T)
     delta = r + gamma * (qsp * pi).sum(axis=1) - qsa
 
-    # TODO rescale learning rate by num active features
     grad = x * delta[:, None]
-    np.add.at(w, a, alpha*grad)
+    np.add.at(w, a, alpha / np.count_nonzero(x) * grad)
+    
+    return delta
 
 @njit(cache=True)
 def value(w, x):
@@ -29,21 +30,28 @@ class ESARSA(TCAgentReplay):
         super().__init__(observations, actions, params, collector, seed)
 
         # define parameter contract
-        self.alpha = params['alpha']
         self.epsilon = params['epsilon']
+        self.w0 = params.get('w0', 0.0) / self.nonzero_features
 
         # create initial weights
         self.w = np.zeros((actions, self.n_features), dtype=np.float64)
 
+        self.info = {
+            'w': self.w
+        }
+
     def policy(self, obs: np.ndarray) -> np.ndarray:
         qs = self.values(obs)
-        return egreedy_probabilities(qs, self.actions, self.epsilon)
-
+        self.info['qs'] = qs
+        pi = egreedy_probabilities(qs, self.actions, self.epsilon)
+        self.info['pi'] = pi
+        return pi
+    
     def values(self, x: np.ndarray):
         x = np.asarray(x)
         return value(self.w, x)
 
-    def update(self):
+    def batch_update(self):
         self.steps += 1
 
         # only update every `update_freq` steps
@@ -58,7 +66,15 @@ class ESARSA(TCAgentReplay):
 
         batch = self.buffer.sample(self.batch_size)
         pi = self.policy(batch.xp)
-        _update(self.w, batch.x, batch.a, batch.xp, pi, batch.r, batch.gamma, self.alpha)
+        delta = _update(self.w, batch.x, batch.a, batch.xp, pi, batch.r, batch.gamma, self.alpha)
         
+        self.info.update({
+            'delta': delta,
+            'w': self.w,
+        })
+
         self.buffer.update_batch(batch)
+
+    def get_info(self):
+        return self.info
 

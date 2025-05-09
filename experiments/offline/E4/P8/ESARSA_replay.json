@@ -1,5 +1,5 @@
 {
-    "agent": "ESARSA",
+    "agent": "ESARSAReplay",
     "problem": "SimplePlantSimulator",
     "total_steps": 50000,
     "episode_cutoff": -1,
@@ -11,9 +11,10 @@
         "alpha": 0.1, 
         "alpha_decay": true,
         "epsilon": 0.1,
-        "lambda": 0.0,
         "w0": 0.0,
-        
+        "buffer_size": 100000, 
+        "batch": 64, 
+                
         "representation": {
             "which_tc": "RichTileCoder",
             "strategy": -1,

@@ -38,7 +38,6 @@ class ESARSA(TCAgent):
         super().__init__(observations, actions, params, collector, seed)
 
         # define parameter contract
-        self.alpha = params['alpha']
         self.epsilon = params['epsilon']
         self.lambda_ = params.get('lambda', 0.0)
         self.w0 = params.get('w0', 0.0) / self.nonzero_features
@@ -80,8 +79,6 @@ class ESARSA(TCAgent):
             pi = np.zeros(self.actions)
         else:
             pi = self.policy(xp)
-
-        #logger.debug(x)
 
         delta = _update(self.w, x, a, xp, pi, r, gamma, self.alpha, self.z, self.lambda_)
         if xp is None:

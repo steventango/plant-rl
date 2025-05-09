@@ -38,6 +38,10 @@ class TCAgent(BaseAgent):
 
         self.n_features = self.tile_coder.features()
         self.nonzero_features = self.tile_coder.nonzero_features()
+        
+        self.alpha = params['alpha']
+        self.alpha0 = params['alpha']
+        self.alpha_decay = params.get('alpha_decay', False)
 
     def get_rep(self, s):
         return self.tile_coder.encode(s)
@@ -121,4 +125,15 @@ class TCAgent(BaseAgent):
             )
 
         self.lag.flush()
+
+        # (Optional) at the end of each episode, decay step size linearly
+        if self.alpha_decay: 
+            num_episodes =  extra.get('num_episodes', 0.0)
+            self.alpha = self.get_step_size(num_episodes)
+
         return {}
+
+    def get_step_size(self, num_episodes):  # linear decay with minimum 
+        min_alpha = 0.01
+        episode_horizon = 800
+        return max(min_alpha, self.alpha0 * (1 - num_episodes/episode_horizon))

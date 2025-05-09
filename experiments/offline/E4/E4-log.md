@@ -129,6 +129,11 @@ Agent:
 Logging:
 - Implemented wandb 
 ### Observations: 
--
+- All agents roughly plateau at choosing action 1 80% of the time.
+- Things I tried that made no difference (or made it worse): action_repeat_prob=0.9, action_repeat=True such that action is repeated for the same consecutive states, r2 with n=3hrs and 1day, OIV for ESARSA, increase lambda to 0.5 or 0.9 (0.9 made the two q values of the last few TOD states nearly inseparable)
+- Maybe without annealing the learning rate, the agent can only achieve 80% correct because the reward is sooo noisy.
+-> reducings learning rates to 0.03 or 0.01 allows ESARSA(0) to achieve nearly 90%
+-> use linear step size decay works even better than fixed alpha=0.03 (weights appear converging)
 ### Conclusions & Outlooks: 
--
+- Try tile coder with tilings = 4 and tiles = 2 to generalize across TOD and maybe stabilize learning.
+- Try replay (usually not used with TC -- Adam)
