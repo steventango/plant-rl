@@ -134,6 +134,9 @@ Logging:
 - Maybe without annealing the learning rate, the agent can only achieve 80% correct because the reward is sooo noisy.
 -> reducings learning rates to 0.03 or 0.01 allows ESARSA(0) to achieve nearly 90%
 -> use linear step size decay works even better than fixed alpha=0.03 (weights appear converging)
+Bonus:
+- updated Oliver's tc_replay ESARSA algo. Together with step size decaying from 0.1 to 0.01 in 5e4 steps, the agent's weights converge at 20k steps. Beyond 20k, the % of correct action continues to increase as alpha decreases, because the fluctuations in weights are smaller with smaller alpha.
 ### Conclusions & Outlooks: 
-- Try tile coder with tilings = 4 and tiles = 2 to generalize across TOD and maybe stabilize learning.
-- Try replay (usually not used with TC -- Adam)
+- It is indeed possible to learn the optimal action from very subtle simulated changes in the growth rate, which are buried in noises and fluctuations.
+- Could the real-world env be easier and faster to learn? Possibly. The simulator doesn't not simulate any changes in plant's habitual motion in response to lighting changes. Real plants might open up more (appearing larger) under favorable lighting. 
+- Even within 2 weeks, all agents (except for bandit) learned to choose the optimal action more than 60% of the time. It's not terrible. Assuming constant policy, it's enough to tell which of the two actions is better.

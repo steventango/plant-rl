@@ -12,19 +12,16 @@ import logging
 logger = logging.getLogger('rlglue')
 logger.setLevel(logging.DEBUG)
 
-@njit(cache=True)
-def _update(w, x, a, xp, pi, r, gamma, alpha, num_active_features):
-    logger.info(a)
+def _update(w, x, a, xp, pi, r, gamma, alpha, n_features):
     qsa = (x * w[a]).sum(axis=1)
     qsp = np.matmul(xp, w.T)
     delta = r + gamma * (qsp * pi).sum(axis=1) - qsa
 
     grad = x * delta[:, None]
-    np.add.at(w, a, alpha / num_active_features * grad)  # TODO: Check if it makes sense to divide by num_active_features
+    np.add.at(w, a, alpha / n_features * grad)  # TODO: Check if it makes sense to divide by n_features
     
     return delta
 
-@njit(cache=True)
 def value(w, x):
     qs = np.matmul(x, w.T)
     return qs
@@ -46,11 +43,17 @@ class ESARSA(TCAgentReplay):
         }
 
     def policy(self, obs: np.ndarray) -> np.ndarray:
-        qs = self.values(obs)
+        qs = value(self.w, obs)
         self.info['qs'] = qs
         pi = egreedy_probabilities(qs, self.actions, self.epsilon)
         self.info['pi'] = pi
         return pi
+    
+    def policies(self, obs: np.ndarray) -> np.ndarray:
+        pis = []
+        for x in obs: 
+            pis.append(self.policy(x))
+        return np.vstack(pis)
     
     def values(self, x: np.ndarray):
         x = np.asarray(x)
@@ -70,8 +73,8 @@ class ESARSA(TCAgentReplay):
         self.updates += 1
 
         batch = self.buffer.sample(self.batch_size)
-        pi = self.policy(batch.xp)
-        delta = _update(self.w, batch.x, batch.a, batch.xp, pi, batch.r, batch.gamma, self.alpha, self.nonzero_features)
+        pi = self.policies(batch.xp)
+        delta = _update(self.w, batch.x, batch.a, batch.xp, pi, batch.r, batch.gamma, self.alpha, self.n_features)
         
         self.info.update({
             'delta': delta,
