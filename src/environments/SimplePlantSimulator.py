@@ -238,8 +238,27 @@ class Daily_Sim(SimplePlantSimulator):
             first_stamp_of_day = floor(self.day_steps / self.steps_per_day) * self.steps_per_day
             first_area_of_day = np.mean(self.observed_areas[first_stamp_of_day])
             return self.normalize((new_area - old_area) / first_area_of_day, 0, 0.2)
+        elif self.reward_label == 'r2_1day':
+            n = self.steps_per_day
+            if self.day_steps % n == 0 and self.day_steps >= 2*n:
+                new = np.mean(self.observed_areas[-n:]) 
+                old = np.mean(self.observed_areas[-2*n:-n]) 
+                return self.normalize(new / old - 1, 0, 0.25)
+            else:
+                return 0
+        elif self.reward_label == 'r2_3hr':
+            n = 17   # neater than 18 because steps_per_day is 68
+            if self.day_steps % n == 0 and self.day_steps >= 2*n:
+                new = np.mean(self.observed_areas[-n:]) 
+                old = np.mean(self.observed_areas[-2*n:-n]) 
+                return self.normalize(new / old - 1, 0, 0.25)
+            else:
+                return 0
         else: 
             raise ValueError(f"{self.reward_label} is an invalid reward_label for the Daily_Sim class.")
+        
+    def get_info(self):
+        return {"gamma": self.gamma, "day_steps": self.day_steps, "steps_per_day": self.steps_per_day}
 
 class Daily_Bandit(Daily_Sim):
     '''

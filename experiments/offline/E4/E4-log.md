@@ -129,6 +129,14 @@ Agent:
 Logging:
 - Implemented wandb 
 ### Observations: 
--
+- All agents roughly plateau at choosing action 1 80% of the time.
+- Things I tried that made no difference (or made it worse): action_repeat_prob=0.9, action_repeat=True such that action is repeated for the same consecutive states, r2 with n=3hrs and 1day, OIV for ESARSA, increase lambda to 0.5 or 0.9 (0.9 made the two q values of the last few TOD states nearly inseparable)
+- Maybe without annealing the learning rate, the agent can only achieve 80% correct because the reward is sooo noisy.
+-> reducings learning rates to 0.03 or 0.01 allows ESARSA(0) to achieve nearly 90%
+-> use linear step size decay works even better than fixed alpha=0.03 (weights appear converging)
+Bonus:
+- updated Oliver's tc_replay ESARSA algo. Together with step size decaying from 0.1 to 0.01 in 5e4 steps, the agent's weights converge at 20k steps. Beyond 20k, the % of correct action continues to increase as alpha decreases, because the fluctuations in weights are smaller with smaller alpha.
 ### Conclusions & Outlooks: 
--
+- It is indeed possible to learn the optimal action from very subtle simulated changes in the growth rate, which are buried in noises and fluctuations.
+- Could the real-world env be easier and faster to learn? Possibly. The simulator doesn't not simulate any changes in plant's habitual motion in response to lighting changes. Real plants might open up more (appearing larger) under favorable lighting. 
+- Even within 2 weeks, all agents (except for bandit) learned to choose the optimal action more than 60% of the time. It's not terrible. Assuming constant policy, it's enough to tell which of the two actions is better.

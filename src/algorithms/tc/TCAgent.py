@@ -38,6 +38,10 @@ class TCAgent(BaseAgent):
 
         self.n_features = self.tile_coder.features()
         self.nonzero_features = self.tile_coder.nonzero_features()
+        
+        self.alpha = params['alpha']
+        self.alpha0 = params['alpha']
+        self.alpha_decay = params.get('alpha_decay', False)
 
     def get_rep(self, s):
         return self.tile_coder.encode(s)
@@ -121,4 +125,5 @@ class TCAgent(BaseAgent):
             )
 
         self.lag.flush()
+
         return {}
