@@ -1,5 +1,5 @@
 {
-    "agent": "ESARSA",
+    "agent": "ReplayESARSA",
     "problem": "SimplePlantSimulator",
     "total_steps": 50000,
     "episode_cutoff": -1,
@@ -8,12 +8,14 @@
             "type": "Daily_ESARSA_TOD",
             "reward_label": "r1_norm"
         },
-        "alpha": 0.1, 
-        "alpha_decay": true,
+        "alpha": 0.03, 
+        "alpha_decay": false,
         "epsilon": 0.1,
-        "lambda": 0.0,
         "w0": 0.0,
-        
+        "buffer_type": "uniform",
+        "buffer_size": 100000, 
+        "batch": 32, 
+                
         "representation": {
             "which_tc": "RichTileCoder",
             "strategy": -1,

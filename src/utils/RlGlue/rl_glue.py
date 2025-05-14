@@ -128,7 +128,7 @@ class LoggingRlGlue(RlGlue):
         self.total_steps += 1
         if term:
             self.num_episodes += 1
-            self.agent.end(reward, env_info)
+            self.agent.end(reward, {**env_info, "num_episodes": self.num_episodes})
             return Interaction(
                 o=s, a=None, t=term, r=reward, extra=env_info,
             )

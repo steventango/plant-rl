@@ -12,7 +12,7 @@ from algorithms.SequenceAgent import SequenceAgent
 from algorithms.SpreadsheetAgent import SpreadsheetAgent
 from algorithms.tc.ESARSA import ESARSA
 from algorithms.tc.QL import QL
-from algorithms.tc.tc_replay.ESARSA import ESARSA as ESARSAReplay
+from algorithms.tc.tc_replay.ESARSA import ESARSA as ReplayESARSA
 from algorithms.tc.tc_replay.QL import QL as QLReplay
 from algorithms.tc.SoftmaxAC import SoftmaxAC
 from algorithms.linear.ESARSA import ESARSA as LinearESARSA
@@ -38,13 +38,13 @@ def getAgent(name) -> Type[BaseAgent]:
     if name == 'QL':
         return QL
 
-    if name == 'ESARSAReplay':
-        return ESARSAReplay
+    if name == 'ReplayESARSA':
+        return ReplayESARSA
 
     if name == 'QLReplay':
         return QLReplay
 
-    if name == 'LinearESARSA':
+    if name.startswith("LinearESARSA"):
         return LinearESARSA
 
     if name == 'LinearQL':

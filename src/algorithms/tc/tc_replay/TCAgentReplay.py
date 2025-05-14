@@ -34,7 +34,7 @@ class TCAgentReplay(TCAgent):
         self.updates = 0
 
     @abstractmethod
-    def update(self):
+    def batch_update(self):
         ...
 
     # ----------------------
@@ -42,6 +42,7 @@ class TCAgentReplay(TCAgent):
     # ----------------------
     def start(self, s: np.ndarray):
         self.buffer.flush()
+
         x = self.get_rep(s)
         pi = self.policy(x)
         a = sample(pi, rng=self.rng)
@@ -52,7 +53,7 @@ class TCAgentReplay(TCAgent):
             gamma=self.gamma,
             terminal=False,
         ))
-        return a
+        return a, self.get_info()
 
     def step(self, r: float, sp: np.ndarray | None, extra: Dict[str, Any]):
         a = -1
@@ -75,8 +76,8 @@ class TCAgentReplay(TCAgent):
             terminal=False,
         ))
 
-        self.update()
-        return a
+        self.batch_update()
+        return a, self.get_info()
 
     def end(self, r: float, extra: Dict[str, Any]):
         self.buffer.add_step(Timestep(
@@ -87,4 +88,6 @@ class TCAgentReplay(TCAgent):
             terminal=True,
         ))
 
-        self.update()
+        self.batch_update()
+                
+        return {}

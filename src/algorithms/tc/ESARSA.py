@@ -38,7 +38,6 @@ class ESARSA(TCAgent):
         super().__init__(observations, actions, params, collector, seed)
 
         # define parameter contract
-        self.alpha = params['alpha']
         self.epsilon = params['epsilon']
         self.lambda_ = params.get('lambda', 0.0)
         self.w0 = params.get('w0', 0.0) / self.nonzero_features
@@ -55,6 +54,8 @@ class ESARSA(TCAgent):
             self.all_obs = np.eye(self.tile_coder.features())
         else:
             self.all_obs = None
+
+        self.steps = 0
 
 
     def policy(self, obs: np.ndarray) -> np.ndarray:
@@ -75,13 +76,13 @@ class ESARSA(TCAgent):
         return value(self.w, x)
 
     def update(self, x, a, xp, r, gamma):
+        self.steps += 1
+        
         if xp is None:
             xp = np.zeros_like(x)
             pi = np.zeros(self.actions)
         else:
             pi = self.policy(xp)
-
-        #logger.debug(x)
 
         delta = _update(self.w, x, a, xp, pi, r, gamma, self.alpha, self.z, self.lambda_)
         if xp is None:
@@ -95,5 +96,14 @@ class ESARSA(TCAgent):
             'xp': xp,
         })
 
+        # (Optional) at the end of each episode, decay step size linearly
+        if self.alpha_decay: 
+            self.alpha = self.get_step_size()
+
     def get_info(self):
         return self.info
+    
+    def get_step_size(self):  # linear decay with minimum 
+        min_alpha = 0.01
+        horizon = 5e4
+        return max(min_alpha, self.alpha0 * (1 - self.steps / horizon))

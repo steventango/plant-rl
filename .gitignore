@@ -1,6 +1,9 @@
 # ignore data folder
 data
 
+# Ignore workspaces 
+*.code-workspace
+
 # ignore all results
 results
 results/
