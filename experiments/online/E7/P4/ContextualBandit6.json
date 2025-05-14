@@ -1,0 +1,16 @@
+{
+    "agent": "LinearESARSA6",
+    "problem": "CVPlantGrowthChamberDiscrete",
+    "total_steps": 2016,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": 6,
+            "timezone": "America/Edmonton"
+        },
+        "alpha": 0.1,
+        "epsilon": 0.1,
+        "w0": 0.0,
+        "gamma": 0.0
+    }
+}

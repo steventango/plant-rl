@@ -18,7 +18,8 @@ def _update(w, x, a, xp, pi, r, gamma, alpha):
     delta = r + gamma * np.dot(qsp,pi) - qsa
 
     w[a] = w[a] + alpha * delta * x
-    
+    return delta
+
 @njit(cache=True)
 def value(w, x):
     return np.dot(w,x)
@@ -35,9 +36,17 @@ class ESARSA(LinearAgent):
         # create initial weights, set to 0
         self.w = np.zeros((actions, self.observations[0]), dtype=np.float64)
 
+        self.info = {
+            'w': self.w,
+        }
+
     def policy(self, obs: np.ndarray) -> np.ndarray:
         qs = self.values(obs)
-        return egreedy_probabilities(qs, self.actions, self.epsilon)
+        self.info['qs'] = qs
+        pi = egreedy_probabilities(qs, self.actions, self.epsilon)
+        advantage = qs - pi @ qs
+        self.info['advantage'] = advantage
+        return pi
 
     def values(self, x: np.ndarray):
         x = np.asarray(x)
@@ -49,6 +58,12 @@ class ESARSA(LinearAgent):
             pi = np.zeros(self.actions)
         else:
             pi = self.policy(xp)
-        
-        _update(self.w, x, a, xp, pi, r, gamma, self.alpha)
 
+        delta = _update(self.w, x, a, xp, pi, r, gamma, self.alpha)
+        self.info.update({
+            'delta': delta,
+            'w': self.w,
+            'x': x,
+            'xp': xp,
+            'pi': pi,
+        })

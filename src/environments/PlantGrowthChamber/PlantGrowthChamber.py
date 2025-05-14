@@ -179,7 +179,10 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     def get_morning_time(self):
         local_time = self.get_local_time()
-        morning_time = local_time.replace(hour=9, minute=0, second=0, microsecond=0) + timedelta(days=1)
+        local_time_greater_than_9 = local_time.hour >= 9
+        morning_time = local_time.replace(hour=9, minute=0, second=0, microsecond=0)
+        if local_time_greater_than_9:
+            morning_time += timedelta(days=1)
         return morning_time
 
     async def sleep_until(self, wake_time: datetime):
