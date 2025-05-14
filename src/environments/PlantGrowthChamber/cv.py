@@ -266,7 +266,7 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
 
     valid_detections = detections[detections.class_id < 901]
     if not len(valid_detections):
-        return pd.DataFrame([{**{col: 0 for col in plant_df_columns}, "plant_id": i + 1} for i in range(num_plants)]), sv.Detections(np.zeros((0, 4)))
+        return pd.DataFrame([{**{col: 0 for col in plant_df_columns}, "plant_id": i} for i in range(num_plants)]), sv.Detections(np.zeros((0, 4)))
     new_masks, *_ = call_segment_anything_api(
         image=pil_image,
         boxes=valid_detections.xyxy,
@@ -335,7 +335,6 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
 
     # convert all_plant_stats to pandas dataframe
     df = pd.DataFrame(stats)
-    df = df[plant_df_columns]
 
     # annotate with area
     labels = [f"{plant_id}: {area_map.get(plant_id, 0):.2f} mm²" for plant_id in annotate_detections.class_id]
