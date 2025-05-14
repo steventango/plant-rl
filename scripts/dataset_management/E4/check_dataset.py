@@ -38,7 +38,7 @@ for dataset_path in dataset_paths:
         # Create side-by-side image comparisons for each change
         for idx in action_changes:
             prev_img_name = df['image_name'].iloc[idx-1]
-            curr_img_name = df['image_name'].iloc[idx-1+1]  # Current image
+            curr_img_name = df['image_name'].iloc[idx]  # Current image
 
             prev_img_path = os.path.join(dataset_path, "images", prev_img_name)
             curr_img_path = os.path.join(dataset_path, "images", curr_img_name)
