@@ -23,7 +23,7 @@ def delete_png_file(png_file: Path) -> None:
 def main() -> None:
     """Convert all png files recursively in the current directory to jpg."""
     # Get all png files in the current directory and subdirectories
-    png_files = sorted(Path("/data/maria_exp_png/maria_exp").rglob("**/*.png"))
+    png_files = sorted(Path("/data/maria_exp").rglob("**/*.png"))
     thread_map(
         convert_png_to_jpg,
         png_files,
