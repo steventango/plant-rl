@@ -312,7 +312,11 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
 
     params.line_thickness = 1
 
-    shape_image = pcv.analyze.size(img=warped_image, labeled_mask=labeled_mask, n_labels=num_plants)
+    try:
+        shape_image = pcv.analyze.size(img=warped_image, labeled_mask=labeled_mask, n_labels=num_plants)
+    except Exception as e:
+        print(f"Error in analyze.size: {e}")
+        return pd.DataFrame([{**{col: 0 for col in plant_df_columns}, "plant_id": i} for i in range(num_plants)]), annotate_detections
     debug_images["shape_image"] = Image.fromarray(shape_image)
 
     stats = []
