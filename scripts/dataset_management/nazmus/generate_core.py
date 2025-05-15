@@ -64,12 +64,12 @@ for subdir in base_dir.glob("z*c*"):
 
         recipe_day = pd.DataFrame({
             "time_recipe": full_timestamps,
-            "action.0": recipe_df["action.0"].values,
-            "action.1": recipe_df["action.1"].values,
-            "action.2": recipe_df["action.2"].values,
-            "action.3": recipe_df["action.3"].values,
-            "action.4": recipe_df["action.4"].values,
-            "action.5": recipe_df["action.5"].values,})
+            "action.0": recipe_df["action.0"].values*2,
+            "action.1": recipe_df["action.1"].values*2,
+            "action.2": recipe_df["action.2"].values*2,
+            "action.3": recipe_df["action.3"].values*2,
+            "action.4": recipe_df["action.4"].values*2,
+            "action.5": recipe_df["action.5"].values*2,})
         recipe_records.append(recipe_day)
 
     # Combine all dated recipe records
