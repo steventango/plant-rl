@@ -39,7 +39,7 @@ def main():
         results = process_map(
             process_one_image,
             process_args,
-            max_workers=1,
+            max_workers=4,
             chunksize=1,
         )
 
