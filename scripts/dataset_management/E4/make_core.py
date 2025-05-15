@@ -24,7 +24,7 @@ df = df[df["time"] >= threshold_datetime]
 
 light_on_action_map = {
     False: [0, 0, 0, 0, 0, 0],
-    True: [0.199 / 2, 0.381 / 2, 0.162 / 2, 0, 0.166 / 2, 0.303 / 2],
+    True: [0.199, 0.381, 0.162, 0, 0.166, 0.303],
 }
 df["actions"] = df["light_on"].map(light_on_action_map)
 for i in range(6):
