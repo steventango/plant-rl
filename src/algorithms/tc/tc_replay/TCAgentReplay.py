@@ -81,7 +81,7 @@ class TCAgentReplay(TCAgent):
 
     def end(self, r: float, extra: Dict[str, Any]):
         self.buffer.add_step(Timestep(
-            x=np.zeros(self.observations),
+            x=np.zeros(self.n_features),
             a=-1,
             r=r,
             gamma=0,

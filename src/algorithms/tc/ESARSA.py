@@ -9,7 +9,7 @@ from utils.checkpoint import checkpointable
 from utils.policies import egreedy_probabilities
 
 import logging
-logger = logging.getLogger('rlglue')
+logger = logging.getLogger('esarsa')
 logger.setLevel(logging.DEBUG)
 
 @njit(cache=True)
@@ -32,7 +32,7 @@ def _update(w, x, a, xp, pi, r, gamma, alpha, z, lambda_):
 def value(w, x):
     return np.dot(w,x)
 
-@checkpointable(('w', 'z'))
+@checkpointable(('w', 'z', 'steps'))
 class ESARSA(TCAgent):
     def __init__(self, observations: Tuple, actions: int, params: Dict, collector: Collector, seed: int):
         super().__init__(observations, actions, params, collector, seed)

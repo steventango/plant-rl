@@ -1,8 +1,7 @@
 from PyExpUtils.collection.Collector import Collector
 from environments.SimplePlantSimulator import SimplePlantSimulator as DefaultEnv
-from environments.SimplePlantSimulator import Daily_ContextBandit
-from environments.SimplePlantSimulator import Daily_Bandit
-from environments.SimplePlantSimulator import Daily_ESARSA_TOD
+from environments.SimplePlantSimulator import Daily_ContextBandit, Daily_Bandit, Daily_ESARSA_TOD
+from environments.SimplePlantSimulator import TOD_action
 from experiment.ExperimentModel import ExperimentModel
 from problems.BaseProblem import BaseProblem
 
@@ -13,6 +12,11 @@ class SimplePlantSimulator(BaseProblem):
             self.env = DefaultEnv(**self.env_params)
             self.actions = 2
             self.observations = (3,)
+            self.gamma = 1.0
+        elif self.env_params['type'] == 'TOD_action':
+            self.env = TOD_action(**self.env_params)
+            self.actions = 2
+            self.observations = (2,)
             self.gamma = 1.0
         elif self.env_params['type'] == 'Daily_ContextBandit':
             self.env = Daily_ContextBandit(**self.env_params)

@@ -34,12 +34,18 @@ class RichTileCoder():
         self.iht = IHT(self.maxSize)
 
     def get_indices(self, s: np.ndarray):   
-        # tc = tile(time) + tile(time, plant motion) + tile(plant area)
+        # tc = tile(TOD) + tile(TOD, plant motion) + tile(plant area)
         if self._c.strategy == 'tc1':    
             tile1 = tiles(self.iht, self._c.tilings, [s[0]*self.scale[0]], [0]) 
             tile2 = tiles(self.iht, self._c.tilings, [s[0]*self.scale[0], s[2]*self.scale[2]], [1])
             tile3 = tiles(self.iht, self._c.tilings, [s[1]*self.scale[1]], [2]) 
             return tile1 + tile2 + tile3
+
+        # tc = tile(TOD) + tile(action trace)
+        if self._c.strategy == 'tc2':    
+            tile1 = tiles(self.iht, self._c.tilings, [s[0]*self.scale[0]], [0]) 
+            tile2 = tiles(self.iht, self._c.tilings, [s[1]*self.scale[1]], [1]) 
+            return tile1 + tile2 
         
         # general
         else:     
@@ -51,6 +57,8 @@ class RichTileCoder():
     def nonzero_features(self):
         if self._c.strategy == 'tc1':  
             return 3*self._c.tilings
+        elif self._c.strategy == 'tc2':  
+            return 2*self._c.tilings
         else: 
             return self._c.tilings
     
@@ -60,6 +68,8 @@ class RichTileCoder():
     def compute_maxSize(self, x):
         if self._c.strategy == 'tc1': 
             return self._c.tilings * ((x[0]+1) + (x[0]+1)*(x[2]+1) + (x[1]+1))
+        if self._c.strategy == 'tc2': 
+            return self._c.tilings * ((x[0]+1) + (x[1]+1))
         else: 
             a = self._c.tilings
             for num_tiles in x: 

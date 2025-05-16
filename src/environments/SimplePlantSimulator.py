@@ -5,6 +5,8 @@ from RlGlue.environment import BaseEnvironment
 from utils.functions import PiecewiseLinear
 from math import floor
 import datetime
+from utils.metrics import UnbiasedExponentialMovingAverage as uema
+
 
 import logging
 logger = logging.getLogger('rlglue')
@@ -28,7 +30,7 @@ class SimplePlantSimulator(BaseEnvironment):
 
         self.observed_areas = []        # stores a list of lists of daytime observed areas in pixels. i.e. self.observed_areas[-1] contains the latest areas of individual plants
 
-        self.all_steps = 0              # step counter that counts both day and night, even though agent is sleeping at night
+        self.all_steps = 0              # step counter that counts both day and night, even though agent sleeps at night
         self.day_steps = 0
         self.frozen_time_today = 0      # how long the plant has be frozen during daytime today
         self.num_plants = 0             # num_plants will be set as the total number of plants in the data
@@ -110,6 +112,13 @@ class SimplePlantSimulator(BaseEnvironment):
             return self.normalize(new_area - old_area, 0, 50)
         elif self.reward_label == 'r1_percent':
             return self.normalize(new_area / old_area - 1, 0, 0.25)
+        elif self.reward_label == 'daily_percent':
+            if self.day_steps % self.steps_per_day == 0 and floor(self.day_steps / self.steps_per_day) >= 1: 
+                new_area = np.mean(self.observed_areas[-1])
+                old_area = np.mean(self.observed_areas[-1-self.steps_per_day])
+                return self.normalize(new_area / old_area - 1, 0, 0.35)
+            else: 
+                return 0.0            
         else: 
             raise ValueError(f"{self.reward_label} is an invalid reward_label for the SimplePlantSimulator class.")
         
@@ -201,6 +210,28 @@ class SimplePlantSimulator(BaseEnvironment):
 
         return plant_area_data, steps_per_day, steps_per_night, time_increment*60, first_second
     
+class TOD_action(SimplePlantSimulator):
+    '''
+    State = (TOD, action history)
+    '''    
+    def __init__(self, reward_label, **kwargs):
+        super().__init__(reward_label, **kwargs)     
+        self.state_dim = (2,)
+        self.current_state = np.empty(2)
+        self.action_history = uema(alpha=0.01) # trace of actions
+    
+    def start(self):
+        self.action_history.reset()
+        return super().start()
+
+    def get_observation(self, new_ob=True):      
+        super().get_observation(new_ob)
+        return np.array([self.time_of_day(), self.action_history.compute().item()])    
+    
+    def step(self, action):    
+        self.action_history.update(action)
+        return super().step(action)  
+        
 class Daily_Sim(SimplePlantSimulator):
     '''
     Start a new episode every day.
