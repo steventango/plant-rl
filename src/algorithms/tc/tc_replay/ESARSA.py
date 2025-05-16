@@ -22,8 +22,9 @@ def _update(w, x, a, xp, pi, r, gamma, alpha, n_features):
     
     return delta
 
+@njit(cache=True)
 def value(w, x):
-    qs = np.matmul(x, w.T)
+    qs = x @ w.T
     return qs
 
 @checkpointable(('w', ))
@@ -34,6 +35,7 @@ class ESARSA(TCAgentReplay):
         # define parameter contract
         self.epsilon = params['epsilon']
         self.w0 = params.get('w0', 0.0) / self.nonzero_features
+        self.replay_ratio = params.get('replay_ratio', 1)
 
         # create initial weights
         self.w = np.zeros((actions, self.n_features), dtype=np.float64)
@@ -69,19 +71,19 @@ class ESARSA(TCAgentReplay):
         # wait till batch size samples have been collected
         if self.buffer.size() <= self.batch_size:
             return
-        
-        self.updates += 1
 
-        batch = self.buffer.sample(self.batch_size)
-        pi = self.policies(batch.xp)
-        delta = _update(self.w, batch.x, batch.a, batch.xp, pi, batch.r, batch.gamma, self.alpha, self.n_features)
-        
-        self.info.update({
-            'delta': delta,
-            'w': self.w,
-        })
+        for _ in range(self.replay_ratio):
+            self.updates += 1
+            batch = self.buffer.sample(self.batch_size)
+            pi = self.policies(batch.xp)
+            delta = _update(self.w, batch.x, batch.a, batch.xp, pi, batch.r, batch.gamma, self.alpha, self.n_features)
 
-        self.buffer.update_batch(batch)
+            self.info.update({
+                'delta': delta,
+                'w': self.w,
+            })
+
+            self.buffer.update_batch(batch)
 
         # (Optional) at the end of each episode, decay step size linearly
         if self.alpha_decay: 
