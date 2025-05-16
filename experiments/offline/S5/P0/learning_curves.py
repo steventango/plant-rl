@@ -92,9 +92,10 @@ def main():
 
 
 def calculate_ema(xs, ys):
-    emas = [UEMA() for _ in range(5)]
-    ema_action = [[] for _ in range(5)]
-    for i in range(5):
+    num_trajectories = xs.shape[0]
+    emas = [UEMA() for _ in range(num_trajectories)]
+    ema_action = [[] for _ in range(num_trajectories)]
+    for i in range(num_trajectories):
         for j in range(len(xs[0])):
             emas[i].update(ys[i][j])
             ema_action[i].append(emas[i].compute().item())
