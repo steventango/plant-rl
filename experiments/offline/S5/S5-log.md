@@ -2,6 +2,8 @@
 ##  Phase P0
 
 ### Objectives:
+See if replay ratio can improve sample efficiency.
+
 ### Methods:
 Environment:
 - Reward: change in plant area normalized by the first area of the day
@@ -36,3 +38,26 @@ Agents:
 ### Conclusions & Outlooks:
 - Step size decay is not necessary
 - Replay ratio is promising
+
+
+##  Phase P1
+
+### Objectives:
+Sweep over step size, batch size, and replay ratio to see what leads to the most
+sample efficient agent.
+
+### Methods:
+Environment:
+- Reward: change in plant area normalized by the first area of the day
+Agents:
+- ESARSA_replay / ESARSA_replay_ratio
+  - ESARSA(0)
+  - Replay
+  - Step size: [0.03, 0.01, 0.003, 0.001, 0.0003]
+  - Batch size: [16, 32, 64, 128, 256]
+  - Replay ratio: [1, 4, 8, 16, 32, 64, 128]
+
+### Observations:
+- ?
+### Conclusions & Outlooks:
+- ?
