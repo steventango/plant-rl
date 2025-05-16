@@ -25,14 +25,6 @@ setDefaultConference("neurips")
 total_days = 12
 
 
-def last_n_percent_sum(x, n=0.2):
-    return np.nansum(x[:, int((1 - n) * x.shape[1]) :], axis=1)
-
-
-class TimeSummary(enum.Enum):
-    last_n_percent_sum = enum.member(last_n_percent_sum)
-
-
 def main():
     path, should_save, save_type = parseCmdLineArgs()
 
@@ -58,17 +50,17 @@ def main():
 
     for env, env_df in split_over_column(df, col="environment"):
         f, ax = plt.subplots(1)
-        for alg, sub_df in split_over_column(env_df, col="algorithm"):
+        for replay_ratio, sub_df in sorted(split_over_column(env_df, col="replay_ratio"), key=lambda x: x[0]):
             report = Hypers.select_best_hypers(
                 sub_df,
                 metric="reward",
                 prefer=Hypers.Preference.high,
-                time_summary=TimeSummary.last_n_percent_sum,
+                time_summary=TimeSummary.mean,
                 statistic=Statistic.mean,
             )
 
             print("-" * 25)
-            print(env, alg)
+            print(env, replay_ratio)
             Hypers.pretty_print(report)
 
             xs, ys = extract_learning_curves(sub_df, report.best_configuration, metric="action", interpolation=None)
@@ -77,25 +69,26 @@ def main():
 
             ema_action = calculate_ema(xs, ys)
             mean_ema_action = np.mean(ema_action, axis=0)
-            line = ax.plot(xs[0], mean_ema_action, linewidth=1, label=alg)
+            line = ax.plot(xs[0], mean_ema_action, linewidth=1, label=f"k={replay_ratio}", alpha=0.8)
             color = line[0].get_color()
-            for i in range(5):
+            for i in range(xs.shape[0]):
                 ax.plot(xs[0], ema_action[i], linewidth=0.5, alpha=0.5, color=color)
 
         ax.axhline(y=0.95, color="k", linestyle="--", label="0.95")
         ax.set_title(f"Action")
         ax.set_xlabel("Day Time Steps")
         ax.set_ylabel("Action EMA")
+        ax.set_ylim(0.5, 1)
         ax.legend()
 
-        save(save_path=f"{path}/plots", plot_name=f"action", save_type="jpg")
+        save(save_path=f"{path}/plots", plot_name=f"action", save_type="jpg", width=3, height_ratio=1/3)
 
 
 def calculate_ema(xs, ys):
-    emas = [UEMA() for _ in range(5)]
-    ema_action = [[] for _ in range(5)]
-    for i in range(5):
-        for j in range(len(xs[0])):
+    emas = [UEMA() for _ in range(xs.shape[0])]
+    ema_action = [[] for _ in range(xs.shape[0])]
+    for i in range(xs.shape[0]):
+        for j in range(xs.shape[1]):
             emas[i].update(ys[i][j])
             ema_action[i].append(emas[i].compute().item())
 

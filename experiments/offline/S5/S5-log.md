@@ -58,6 +58,6 @@ Agents:
   - Replay ratio: [1, 4, 8, 16, 32, 64, 128]
 
 ### Observations:
-- ?
+- Generally, having some replay ratio is better than none
 ### Conclusions & Outlooks:
-- ?
+- Generally, having some replay ratio is better than none
