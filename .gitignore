@@ -40,3 +40,4 @@ build/
 
 *.mp4
 wandb
+uv.lock

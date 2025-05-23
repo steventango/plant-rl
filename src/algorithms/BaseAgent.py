@@ -1,12 +1,12 @@
 from typing import Dict, Tuple
 
 import numpy as np
-from PyExpUtils.collection.Collector import Collector
+from ml_instrumentation.Collector import Collector
 
-import utils.RlGlue.agent
+from rlglue.agent import BaseAgent as Base
 
 
-class BaseAgent(utils.RlGlue.agent.BaseAgent):
+class BaseAgent(Base):
     def __init__(self, observations: Tuple[int, ...], actions: int, params: Dict, collector: Collector, seed: int):
         self.observations = observations
         self.actions = actions
