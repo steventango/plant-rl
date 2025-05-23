@@ -22,7 +22,16 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: 3.11
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      id: cache-pip
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('api/camera/requirements-test.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
     - name: Install dependencies
+      if: steps.cache-pip.outputs.cache-hit != 'true'
       run: |
         python -m pip install --upgrade pip
         python -m pip install flake8 pytest
