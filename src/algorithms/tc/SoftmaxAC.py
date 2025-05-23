@@ -3,7 +3,7 @@ import numpy as np
 from numba import njit
 from typing import Dict, Tuple
 from utils.checkpoint import checkpointable
-from PyExpUtils.collection.Collector import Collector
+from ml_instrumentation.Collector import Collector
 
 from algorithms.tc.TCAgent import TCAgent
 
@@ -48,8 +48,8 @@ class SoftmaxAC(TCAgent):
         self.w = np.zeros((self.rep.features()), dtype=np.float32)
         self.theta = np.zeros((actions, self.rep.features()), dtype=np.float32)
 
-    def policy(self, x: np.ndarray):
-        l = compute_logits(self.theta, x)
+    def policy(self, obs: np.ndarray):
+        l = compute_logits(self.theta, obs)
         return softmax(l, self.tau)
 
     def update(self, x, a, xp, r, gamma):

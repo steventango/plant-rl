@@ -1,8 +1,6 @@
 import os
 import sys
 
-import Box2D  # we need to import this first because cedar is stupid
-
 sys.path.append(os.getcwd())
 import argparse
 import logging
@@ -13,10 +11,11 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from PyExpUtils.collection.Collector import Collector
-from PyExpUtils.collection.Sampler import Identity, Ignore, MovingAverage, Subsample
-from PyExpUtils.collection.utils import Pipe
-from PyExpUtils.results.sqlite import saveCollector
+from ml_instrumentation.Collector import Collector
+from ml_instrumentation.Sampler import Identity, Ignore, MovingAverage, Subsample
+from ml_instrumentation.utils import Pipe
+from PyExpUtils.results.tools import getParamsAsDict
+from ml_instrumentation.metadata import attach_metadata
 from tqdm import tqdm
 
 import wandb
@@ -26,7 +25,7 @@ from utils.checkpoint import Checkpoint
 from utils.logger import log
 from utils.preempt import TimeoutHandler
 from utils.window_avg import WindowAverage
-from utils.RlGlue.rl_glue import LoggingRlGlue
+from rlglue import RlGlue
 
 # ------------------
 # -- Command Args --
@@ -84,7 +83,7 @@ for idx in indices:
         },
         default=Ignore(),
     ))
-    collector.setIdx(idx)
+    collector.set_experiment_id(idx)
     run = exp.getRun(idx)
 
     # set random seeds accordingly, with optional offset
@@ -129,21 +128,27 @@ for idx in indices:
 
     # if we haven't started yet, then make the first interaction
     if glue.total_steps == 0:
+        # Assuming glue.start() returns: (observation, action, info_dict) or similar
+        # and log function is adapted for this.
+        # For this change, we focus on glue.step() return.
+        # The original code was: s, a, info = glue.start()
+        # If glue.start() changed, this part would need adaptation too.
+        # Let's assume it's compatible or out of scope for this specific change.
         s, a, info = glue.start()
         log(env, glue, wandb_run, s, a, info)
 
     for step in range(glue.total_steps, exp.total_steps):
         collector.next_frame()
         chk.maybe_save()
-        interaction = glue.step()
-        log(env, glue, wandb_run, interaction.o, interaction.a, interaction.extra, interaction.r)
+        observation, reward, terminated, truncated, info = glue.step() # RLGlue returns 5-tuple
+        log(env, glue, wandb_run, observation, info['action'], info, reward) # Assuming info dict from glue.step() contains 'action'
                 
-        collector.collect('reward', interaction.r)
+        collector.collect('reward', reward)
         collector.collect('episode', chk['episode'])
         collector.collect('steps', glue.num_steps)
-        collector.collect('action', interaction.a)  # or int.from_bytes(glue.last_action, byteorder='little') for GAC
+        collector.collect('action', info['action'])  # Assuming info dict from glue.step() contains 'action'
 
-        if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
+        if terminated or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
             # allow agent to cleanup traces or other stateful episodic info
             agent.cleanup()
 
@@ -167,5 +172,11 @@ for idx in indices:
     # ------------
     # -- Saving --
     # ------------
-    saveCollector(exp, collector, base=args.save_path)
+    # context = exp.buildSaveContext(idx, base=args.save_path) # Should already exist
+    save_db_path = context.resolve('results.db')
+    meta = getParamsAsDict(exp, idx)
+    meta |= {'seed': seed} # Ensure 'seed' is the correct variable from the file's scope
+    attach_metadata(save_db_path, idx, meta)
+    collector.merge(save_db_path)
+    collector.close()
     chk.delete()

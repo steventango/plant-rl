@@ -5,7 +5,7 @@ import utils.chex as cxu
 
 from abc import abstractmethod
 from typing import Any, Dict, Tuple
-from PyExpUtils.collection.Collector import Collector
+from ml_instrumentation.Collector import Collector
 from ReplayTables.interface import Timestep
 from ReplayTables.registry import build_buffer
 
@@ -127,27 +127,27 @@ class NNAgent(BaseAgent):
     # ----------------------
     # -- RLGlue interface --
     # ----------------------
-    def start(self, x: np.ndarray):
+    def start(self, obs: np.ndarray):
         self.buffer.flush()
-        x = np.asarray(x)
-        pi = self.policy(x)
+        obs = np.asarray(obs)
+        pi = self.policy(obs)
         a = sample(pi, rng=self.rng)
         self.buffer.add_step(Timestep(
-            x=x,
+            x=obs,
             a=a,
             r=None,
             gamma=self.gamma,
             terminal=False,
         ))
-        return a, {}
+        return a
 
-    def step(self, r: float, xp: np.ndarray | None, extra: Dict[str, Any]):
+    def step(self, reward: float, obs: np.ndarray | None, extra: Dict[str, Any]):
         a = -1
 
         # sample next action
-        if xp is not None:
-            xp = np.asarray(xp)
-            pi = self.policy(xp)
+        if obs is not None:
+            obs = np.asarray(obs)
+            pi = self.policy(obs)
             a = sample(pi, rng=self.rng)
 
         # see if the problem specified a discount term
@@ -155,31 +155,31 @@ class NNAgent(BaseAgent):
 
         # possibly process the reward
         if self.reward_clip > 0:
-            r = np.clip(r, -self.reward_clip, self.reward_clip)
+            reward = np.clip(reward, -self.reward_clip, self.reward_clip)
 
         self.buffer.add_step(Timestep(
-            x=xp,
+            x=obs,
             a=a,
-            r=r,
+            r=reward,
             gamma=self.gamma * gamma,
             terminal=False,
         ))
 
         self.update()
-        return a, {}
+        return a
 
-    def end(self, r: float, extra: Dict[str, Any]):
+    def end(self, reward: float, extra: Dict[str, Any]):
         # possibly process the reward
         if self.reward_clip > 0:
-            r = np.clip(r, -self.reward_clip, self.reward_clip)
+            reward = np.clip(reward, -self.reward_clip, self.reward_clip)
 
         self.buffer.add_step(Timestep(
             x=np.zeros(self.observations),
             a=-1,
-            r=r,
+            r=reward,
             gamma=0,
             terminal=True,
         ))
 
         self.update()
-        return {}
+        return None

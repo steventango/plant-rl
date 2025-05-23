@@ -8,7 +8,7 @@ import numpy as np
 from PIL import Image
 
 from environments.PlantGrowthChamber.utils import get_session
-from utils.RlGlue.environment import BaseAsyncEnvironment
+from rlglue.environment import BaseAsyncEnvironment
 from utils.metrics import UnbiasedExponentialMovingAverage as UEMA
 from .cv import process_image
 from .zones import get_zone
@@ -163,8 +163,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.reward = self.reward_function()
         logger.info(f"Step {self.n_step} completed. Reward: {self.reward}, Terminal: {terminal}")
         self.n_step += 1
+        truncated = False # Typically, if an env has a terminal flag, truncated is False unless a time limit is also hit.
 
-        return self.reward, observation, terminal, self.get_info()
+        return observation, float(self.reward), terminal, truncated, self.get_info()
 
     def is_night(self):
         local_time = self.get_local_time()

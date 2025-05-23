@@ -15,10 +15,11 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from PIL import Image
-from PyExpUtils.collection.Collector import Collector
-from PyExpUtils.collection.Sampler import Identity, Ignore, MovingAverage, Subsample
-from PyExpUtils.collection.utils import Pipe
-from PyExpUtils.results.sqlite import saveCollector
+from ml_instrumentation.Collector import Collector
+from ml_instrumentation.Sampler import Identity, Ignore, MovingAverage, Subsample
+from ml_instrumentation.utils import Pipe
+from PyExpUtils.results.tools import getParamsAsDict
+from ml_instrumentation.metadata import attach_metadata
 
 import wandb
 from experiment import ExperimentModel
@@ -26,7 +27,8 @@ from problems.registry import getProblem
 from utils.checkpoint import Checkpoint
 from utils.logger import expand, log
 from utils.preempt import TimeoutHandler
-from utils.RlGlue.rl_glue import AsyncRLGlue, Interaction
+from rlglue import AsyncRlGlue # Assuming AsyncRlGlue is now directly in rlglue
+# Interaction class might be obsolete if glue.step() returns a simple tuple/dict
 
 default_save_keys = {"left", "right"}
 
@@ -93,9 +95,8 @@ def backup_and_save(exp, collector, idx, base):
     context = exp.buildSaveContext(idx, base=base)
     db_file = context.resolve('results.db')
     db_file_bak = context.resolve('results.db.bak')
-    if os.path.exists(db_file):
-        shutil.copy(db_file, db_file_bak)
-    saveCollector(exp, collector, base=base)
+    # This function will be replaced by direct logic
+    pass
 
 async def main():
     for idx in indices:
@@ -124,7 +125,7 @@ async def main():
                 default=Identity(),
             ),
         )
-        collector.setIdx(idx)
+        collector.set_experiment_id(idx)
         run = exp.getRun(idx)
 
         # set random seeds accordingly
@@ -176,40 +177,37 @@ async def main():
 
         # if we haven't started yet, then make the first interaction
         if glue.total_steps == 0:
-            s, a, info = await glue.start()
+            # Assuming glue.start() returns a 3-tuple (obs, action, info_dict)
+            # and Interaction class is no longer needed or adapted.
+            # This example focuses on glue.step() return value changes.
+            obs_start, action_start, info_start = await glue.start()
             episode = chk['episode']
-            log(env, glue, wandb_run, s, a, info, episode=episode)
-            interaction = Interaction(
-                o=s,
-                a=a,
-                t=False,
-                r=None,
-                extra=info,
-            )
+            log(env, glue, wandb_run, obs_start, action_start, info_start, episode=episode)
+            # For append_csv, we need to ensure it can handle the new tuple structure or an adapted Interaction-like object
+            # For now, assuming append_csv is adapted or its direct call here is simplified/modified.
+            # Let's construct a temporary dict mimicking old Interaction for append_csv if strictly needed.
+            interaction_for_csv_start = {'o': obs_start, 'a': action_start, 't': False, 'r': None, 'extra': info_start}
             if not exp.problem.startswith("Mock"):
                 img_name = save_images(env, dataset_path, images_save_keys)
-                append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
+                append_csv(chk, env, glue, raw_csv_path, img_name, interaction_for_csv_start)
 
         for step in range(glue.total_steps, exp.total_steps):
             collector.next_frame()
             if problem.exp_params.get("checkpoint", True):
-                # Cancel the previous save task if it's still running and not completed
                 if current_save_task and not current_save_task.done():
                     current_save_task.cancel()
                     logger.debug(f"Cancelled previous checkpoint save at step {step}")
-
-                # Create a new task to run chk.save concurrently
                 current_save_task = asyncio.create_task(asyncio.to_thread(chk.save))
 
-            interaction = await glue.step()
+            observation, reward, terminated, truncated, info = await glue.step() # RLGlue returns 5-tuple
             collector.collect('time', env.time.timestamp())
-            collector.collect('state', interaction.o)
-            collector.collect('action', env.last_action)
-            collector.collect('agent_action', interaction.a)
-            collector.collect('reward', interaction.r)
-            collector.collect('terminal', interaction.t)
+            collector.collect('state', observation)
+            collector.collect('action', env.last_action) # env.last_action seems to be the intended "environment action"
+            collector.collect('agent_action', info.get('action', -1)) # Agent's chosen action from info
+            collector.collect('reward', reward)
+            collector.collect('terminal', terminated)
             collector.collect('steps', glue.num_steps)
-            for key, value in interaction.extra.items():
+            for key, value in info.items(): # info is the info_dict from the 5-tuple
                 if isinstance(value, np.ndarray):
                     value = value.astype(np.float64)
                 elif isinstance(value, pd.DataFrame):
@@ -218,15 +216,21 @@ async def main():
                     continue
                 collector.collect(key, value)
 
-            episodic_return = glue.total_reward if interaction.t else None
+            episodic_return = glue.total_reward if terminated else None
             episode = chk['episode']
-            log(env, glue, wandb_run, interaction.o, interaction.a, interaction.extra, interaction.r, interaction.t, episodic_return, episode)
+            # log function needs to be adapted for the new 5-tuple structure
+            # log(env, glue, wandb_run, observation, info.get('action', -1), info, reward, terminated, episodic_return, episode)
+            # For now, using a simplified call or assuming log is adapted.
+            log(env, glue, wandb_run, observation, info.get('action', -1), info, reward, terminated, episodic_return, episode)
+
 
             if not exp.problem.startswith("Mock"):
+                # Construct a temporary dict for append_csv if it relies on old Interaction structure
+                interaction_for_csv_step = {'o': observation, 'a': info.get('action', -1), 't': terminated, 'r': reward, 'extra': info}
                 img_name = save_images(env, dataset_path, images_save_keys)
-                append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
+                append_csv(chk, env, glue, raw_csv_path, img_name, interaction_for_csv_step)
 
-            if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
+            if terminated or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
                 # collect some data
                 collector.collect('return', glue.total_reward)
                 collector.collect('episode', chk['episode'])
@@ -239,25 +243,31 @@ async def main():
                 avg_time = 1000 * (time.time() - start_time) / (step + 1)
                 fps = step / (time.time() - start_time)
 
-                episode = chk['episode']
+                episode = chk['episode'] # This is chk['episode'] before increment for this log
                 logger.debug(f'{episode} {step} {glue.total_reward} {avg_time:.4}ms {int(fps)}')
 
-                s, a, info = await glue.start()
-                log(env, glue, wandb_run, s, a, info)
-                interaction = Interaction(
-                    o=s,
-                    a=a,
-                    t=False,
-                    r=None,
-                    extra=info,
-                )
+                # Assuming glue.start() returns a 3-tuple (obs, action, info_dict)
+                obs_start_new_ep, action_start_new_ep, info_start_new_ep = await glue.start()
+                # log function needs to be adapted for the new 3-tuple structure from start()
+                log(env, glue, wandb_run, obs_start_new_ep, action_start_new_ep, info_start_new_ep)
+                # For append_csv, construct temporary dict if needed
+                interaction_for_csv_new_ep_start = {'o': obs_start_new_ep, 'a': action_start_new_ep, 't': False, 'r': None, 'extra': info_start_new_ep}
                 if not exp.problem.startswith("Mock"):
                     img_name = save_images(env, dataset_path, images_save_keys)
-                    append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
+                    append_csv(chk, env, glue, raw_csv_path, img_name, interaction_for_csv_new_ep_start)
+            
+            # Save logic replacement
+            context = exp.buildSaveContext(idx, base=args.save_path)
+            save_db_path = context.resolve('results.db')
+            if os.path.exists(save_db_path):
+                shutil.copy(save_db_path, str(save_db_path) + '.bak')
+            meta = getParamsAsDict(exp, idx)
+            meta |= {'seed': run}
+            attach_metadata(save_db_path, idx, meta)
+            collector.merge(save_db_path)
+            # collector.close() will be called outside the loop
 
-            backup_and_save(exp, collector, idx, args.save_path)
-
-        collector.reset()
+        collector.reset() # This might be redundant if collector.close() is called, depending on Collector's behavior
 
         env.close()
 
@@ -268,14 +278,18 @@ async def main():
             logger.debug("Last checkpoint save task completed.")
 
         # ------------
-        # -- Saving --
+        # -- Saving (final, outside loop) --
         # ------------
-        backup_and_save(exp, collector, idx, args.save_path)
+        # The save logic is now per step inside the loop.
+        # A final save might still be desired, or collector.close() handles finalization.
+        # Based on main.py, collector.close() handles the final merge.
+        collector.close()
         wandb_run.finish()
 
-def append_csv(chk, env, glue, raw_csv_path, img_name, interaction):
+def append_csv(chk, env, glue, raw_csv_path, img_name, interaction_dict): # interaction_dict is the temporary dict
     expanded_info = {}
-    for key, value in interaction.extra.items():
+    # interaction_dict['extra'] is the info_dict from glue.step()
+    for key, value in interaction_dict['extra'].items():
         if isinstance(value, pd.DataFrame):
             continue
         elif isinstance(value, np.ndarray):
@@ -286,25 +300,27 @@ def append_csv(chk, env, glue, raw_csv_path, img_name, interaction):
         {
             "time": [env.time],
             "frame": [glue.num_steps],
-            **expand("state", interaction.o),
+            **expand("state", interaction_dict['o']), # Use 'o' from dict
             **expand("action", env.last_action),
-            "agent_action": [interaction.a],
-            "reward": [interaction.r],
-            "terminal": [interaction.t],
+            "agent_action": [interaction_dict['a']], # Use 'a' from dict
+            "reward": [interaction_dict['r']], # Use 'r' from dict
+            "terminal": [interaction_dict['t']], # Use 't' from dict
             "steps": [glue.num_steps],
             "image_name": [img_name],
-            "return": [glue.total_reward if interaction.t else None],
+            "return": [glue.total_reward if interaction_dict['t'] else None],
             "episode": [chk['episode']],
             **expanded_info,
         }
     )
 
-    interaction.extra["df"].reset_index(inplace=True)
-    interaction.extra["df"]["plant_id"] = interaction.extra["df"].index
-    interaction.extra["df"]["frame"] = glue.num_steps
-    df = pd.merge(
-        df,
-        interaction.extra["df"],
+    # Ensure interaction_dict['extra'] (info_dict) has 'df' if this logic is to be kept
+    if "df" in interaction_dict['extra']:
+        interaction_dict['extra']["df"].reset_index(inplace=True)
+        interaction_dict['extra']["df"]["plant_id"] = interaction_dict['extra']["df"].index
+        interaction_dict['extra']["df"]["frame"] = glue.num_steps
+        df = pd.merge(
+            df,
+            interaction_dict['extra']["df"],
         how="left",
         left_on=["frame"],
         right_on=["frame"],

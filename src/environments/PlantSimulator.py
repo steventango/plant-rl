@@ -2,7 +2,7 @@ import os
 from math import sin, cos, pi
 import numpy as np
 import pandas as pd
-from RlGlue.environment import BaseEnvironment
+from rlglue.environment import BaseEnvironment
 from utils.functions import PiecewiseLinear
 from utils.metrics import UnbiasedExponentialMovingAverage as uema
 from utils.metrics import iqm
@@ -95,11 +95,10 @@ class PlantSimulator(BaseEnvironment):
         self.current_state = self.get_observation()
 
         self.reward = self.reward_function()
+        terminated = self.num_steps == self.terminal_step
+        truncated = False
 
-        if self.num_steps == self.terminal_step:
-            return self.reward, self.current_state, True, self.get_info()
-        else:
-            return self.reward, self.current_state, False, self.get_info()
+        return self.current_state, float(self.reward), terminated, truncated, self.get_info()
 
     def overnight_trace(self):
         last_night_obs = self.observed_areas[-1]

@@ -2,7 +2,7 @@ import numpy as np
 
 from abc import abstractmethod
 from typing import Any, Dict, Tuple
-from PyExpUtils.collection.Collector import Collector
+from ml_instrumentation.Collector import Collector
 from PyExpUtils.utils.random import sample
 from ReplayTables.interface import Timestep
 from ReplayTables.ingress.LagBuffer import LagBuffer
@@ -60,38 +60,38 @@ class TCAgent(BaseAgent):
     # ----------------------
     # -- RLGlue interface --
     # ----------------------
-    def start(self, s: np.ndarray):
+    def start(self, obs: np.ndarray):
         self.lag.flush()
 
-        x = self.get_rep(s)
-        pi = self.policy(x)
+        x_encoded = self.get_rep(obs)
+        pi = self.policy(x_encoded)
         a = sample(pi, rng=self.rng)
         self.lag.add(Timestep(
-            x=x,
+            x=x_encoded,
             a=a,
             r=None,
             gamma=0,
             terminal=False,
         ))
-        return a, self.get_info()
+        return a
 
-    def step(self, r: float, sp: np.ndarray | None, extra: Dict[str, Any]):
+    def step(self, reward: float, obs: np.ndarray | None, extra: Dict[str, Any]):
         a = -1
 
         # sample next action
-        xp = None
-        if sp is not None:
-            xp = self.get_rep(sp)
-            pi = self.policy(xp)
+        xp_encoded = None
+        if obs is not None:
+            xp_encoded = self.get_rep(obs)
+            pi = self.policy(xp_encoded)
             a = sample(pi, rng=self.rng)
 
         # see if the problem specified a discount term
         gamma = extra.get('gamma', 1.0)
 
         interaction = Timestep(
-            x=xp,
+            x=xp_encoded,
             a=a,
-            r=r,
+            r=reward,
             gamma=self.gamma * gamma,
             terminal=False,
         )
@@ -105,13 +105,13 @@ class TCAgent(BaseAgent):
                 gamma=exp.gamma,
             )
 
-        return a, self.get_info()
+        return a
 
-    def end(self, r: float, extra: Dict[str, Any]):
+    def end(self, reward: float, extra: Dict[str, Any]):
         interaction = Timestep(
             x=None,
             a=-1,
-            r=r,
+            r=reward,
             gamma=0,
             terminal=True,
         )

@@ -1,7 +1,7 @@
 from typing import Optional
 import gymnasium
 from gymnasium.spaces import Box
-from RlGlue.environment import BaseEnvironment
+from rlglue.environment import BaseEnvironment
 import numpy as np
 
 class CliffWalking(BaseEnvironment):
@@ -12,10 +12,14 @@ class CliffWalking(BaseEnvironment):
         s, info = self.env.reset()
         return self.one_hot_state(s)
 
-    def step(self, a):
-        sp, r, t, _, info = self.env.step(a)
+    def step(self, action):
+        sp, r, terminated_gym, truncated_gym, info = self.env.step(action) # gymnasium returns terminated and truncated
+        
+        # If the underlying gym env only returned a single 'done' flag (as 't' in the old code):
+        # terminated = t
+        # truncated = False
 
-        return (r, self.one_hot_state(sp), t, {})
+        return self.one_hot_state(sp), float(r), terminated_gym, truncated_gym, {}
     
     def one_hot_state(self, state):
         one_hot = np.zeros(self.env.observation_space.n, dtype=np.float64)

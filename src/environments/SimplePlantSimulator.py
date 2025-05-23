@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
-from RlGlue.environment import BaseEnvironment
+from rlglue.environment import BaseEnvironment
 from utils.functions import PiecewiseLinear
 from math import floor
 import datetime
@@ -99,11 +99,10 @@ class SimplePlantSimulator(BaseEnvironment):
         self.current_state = self.get_observation()
 
         self.reward = self.reward_function()
+        terminated = self.day_steps == self.total_data_steps
+        truncated = False
 
-        if self.day_steps == self.total_data_steps:
-            return self.reward, self.current_state, True, self.get_info()
-        else:
-            return self.reward, self.current_state, False, self.get_info()
+        return self.current_state, float(self.reward), terminated, truncated, self.get_info()
 
     def reward_function(self):
         new_area = np.mean(self.observed_areas[-1])
@@ -252,11 +251,14 @@ class Daily_Sim(SimplePlantSimulator):
         return self.current_state, self.get_info()
     
     def step(self, action):
-        super().step(action)      
-        if self.day_steps % self.steps_per_day == 0:
-            return self.reward, self.current_state, True, self.get_info()
-        else:
-            return self.reward, self.current_state, False, self.get_info()
+        # The super().step(action) call will return the 5-tuple.
+        # We only need to override the terminated logic here.
+        obs, reward, terminated, truncated, info = super().step(action)
+        
+        terminated = self.day_steps % self.steps_per_day == 0
+        # truncated remains False as per super class or can be set explicitly if needed
+        
+        return obs, reward, terminated, truncated, info
     
     def reward_function(self):
         new_area = np.mean(self.observed_areas[-1])
@@ -327,12 +329,14 @@ class Daily_ContextBandit(Daily_Sim):
         return np.array([floor(self.day_steps % self.steps_per_day / 6)])    
     
     def step(self, action):
-        super().step(action)      
+        obs, reward, terminated, truncated, info = super().step(action)
+        
         if self.day_steps % self.steps_per_day == 0:
-            self.current_state = np.array([12])
-            return self.reward, self.current_state, True, self.get_info()
-        else:
-            return self.reward, self.current_state, False, self.get_info()
+            self.current_state = np.array([12]) # This seems to be specific logic for this class for obs
+            obs = self.current_state # Update obs based on current_state
+            terminated = True
+        
+        return obs, reward, terminated, truncated, info
 
 class Daily_ESARSA_TOD(Daily_ContextBandit):
     def __init__(self, reward_label, **kwargs):

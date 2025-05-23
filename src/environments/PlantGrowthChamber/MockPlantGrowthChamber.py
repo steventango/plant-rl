@@ -82,10 +82,10 @@ class MockPlantGrowthChamber(PlantGrowthChamber):
             super().get_plant_stats()
 
     async def step(self, action: np.ndarray):
-        reward, observation, terminal, info = await super().step(action)
+        observation, reward, terminated, truncated, info = await super().step(action)
         if self.simulate and action == 0:
-            reward -= 0.5 * abs(reward)
-        return reward, observation, terminal, info
+            reward -= 0.5 * abs(reward) # type: ignore
+        return observation, reward, terminated, truncated, info
 
     async def put_action(self, action: int):
         self.last_action = action

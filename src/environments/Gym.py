@@ -1,7 +1,7 @@
 from typing import Optional
 import gymnasium
 from gymnasium.spaces import Box
-from RlGlue.environment import BaseEnvironment
+from rlglue.environment import BaseEnvironment
 import numpy as np
 
 class Gym(BaseEnvironment):
@@ -16,7 +16,7 @@ class Gym(BaseEnvironment):
         s, info = self.env.reset(seed=self.seed)
         return np.asarray(s, dtype=np.float64).reshape(-1,), info
 
-    def step(self, a):
-        sp, r, t, _, info = self.env.step(a)
+    def step(self, action):
+        sp, r, terminated, truncated, info = self.env.step(action)
 
-        return (r, np.asarray(sp, dtype=np.float64).reshape(-1,), t, {})
+        return (np.asarray(sp, dtype=np.float64).reshape(-1,), float(r), terminated, truncated, info)

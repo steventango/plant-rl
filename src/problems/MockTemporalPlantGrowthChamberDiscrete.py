@@ -1,4 +1,4 @@
-from PyExpUtils.collection.Collector import Collector
+from ml_instrumentation.Collector import Collector
 
 from environments.PlantGrowthChamber.MockTemporalPlantGrowthChamberDiscrete import (
     MockTemporalPlantGrowthChamberDiscrete as Env,
