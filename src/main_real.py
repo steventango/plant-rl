@@ -44,15 +44,12 @@ parser.add_argument('--gpu', action='store_true', default=False)
 parser.add_argument('-d', '--deploy', action='store_true', default=False, 
                     help='Allows for easily restarting logging for crashed runs in deployment. If the run already exists, then wandb will resume logging to the same run.')
 
-args = parser.parse_args()
-
 # ---------------------------
 # -- Library Configuration --
 # ---------------------------
 import jax
 
-device = 'gpu' if args.gpu else 'cpu'
-jax.config.update('jax_platform_name', device)
+# Moved args parsing and jax config to if __name__ == "__main__"
 
 logging.basicConfig(
     level=logging.ERROR,
@@ -70,11 +67,7 @@ if not prod:
 # ----------------------
 timeout_handler = TimeoutHandler()
 
-exp = ExperimentModel.load(args.exp)
-indices = args.idxs
-
-Problem = getProblem(exp.problem)
-
+# Moved exp, indices, Problem to main function
 
 def save_images(env, dataset_path: Path, save_keys):
     isoformat = env.time.isoformat(timespec='seconds').replace(':', '')
@@ -96,11 +89,15 @@ def backup_and_save(exp, collector, idx, base):
     db_file_bak = context.resolve('results.db.bak')
     if os.path.exists(db_file):
         shutil.copy(db_file, db_file_bak)
-    saveCollector(exp, collector, base=base)
+    saveCollector(exp, collector, base=base) # exp will be passed or available to backup_and_save
 
-async def main():
+async def main(args_namespace):
+    exp = ExperimentModel.load(args_namespace.exp)
+    indices = args_namespace.idxs
+    Problem = getProblem(exp.problem)
+
     for idx in indices:
-        chk = Checkpoint(exp, idx, base_path=args.checkpoint_path)
+        chk = Checkpoint(exp, idx, base_path=args_namespace.checkpoint_path)
         chk.load_if_exists()
         timeout_handler.before_cancel(chk.save)
 
@@ -139,7 +136,7 @@ async def main():
         glue = chk.build("glue", lambda: AsyncRLGlue(agent, env))
         chk.initial_value('episode', 0)
 
-        context = exp.buildSaveContext(idx, base=args.save_path)
+        context = exp.buildSaveContext(idx, base=args_namespace.save_path)
         agent_path = Path(context.resolve()).relative_to('results')
         dataset_path = Path('/data') / agent_path  / f"z{env.zone.identifier}"
         images_save_keys = problem.exp_params.get("image_save_keys", default_save_keys)
@@ -151,11 +148,11 @@ async def main():
             "context": str(agent_path)
         }
 
-        if args.deploy:
-            run_id = args.exp.replace("/", "-").removesuffix(".json")
+        if args_namespace.deploy:
+            run_id = args_namespace.exp.replace("/", "-").removesuffix(".json")
             resume= "allow"
         else:
-            run_id = args.exp.replace("/", "-").removesuffix(".json") + '-' + datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+            run_id = args_namespace.exp.replace("/", "-").removesuffix(".json") + '-' + datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
             resume = "never"
             
         wandb_run = wandb.init(
@@ -256,7 +253,11 @@ async def main():
                     img_name = save_images(env, dataset_path, images_save_keys)
                     await append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
 
-            backup_and_save(exp, collector, idx, args.save_path)
+            # Pass exp to backup_and_save if it's not accessible otherwise.
+            # Or make backup_and_save a method of a class that holds exp.
+            # For now, assuming backup_and_save can access exp if it's defined in main's scope
+            # or passed appropriately. If backup_and_save is called from here, it has access to `exp`.
+            backup_and_save(exp, collector, idx, args_namespace.save_path)
 
         collector.reset()
 
@@ -271,7 +272,7 @@ async def main():
         # ------------
         # -- Saving --
         # ------------
-        backup_and_save(exp, collector, idx, args.save_path)
+        backup_and_save(exp, collector, idx, args_namespace.save_path)
         wandb_run.finish()
 
 async def append_csv(chk, env, glue, raw_csv_path, img_name, interaction):
@@ -341,4 +342,17 @@ async def append_csv(chk, env, glue, raw_csv_path, img_name, interaction):
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    args = parser.parse_args()
+
+    device = 'gpu' if args.gpu else 'cpu'
+    jax.config.update('jax_platform_name', device)
+    
+    # Update logging setup based on args if needed, e.g. args.silent
+    # This part of logging was already conditional on args.silent (via `prod`)
+    # so it might be okay, but good to ensure `prod` is updated if it moves.
+    # `prod` calculation:
+    prod = 'cdr' in socket.gethostname() or args.silent
+    if not prod:
+        logger.setLevel(logging.DEBUG)
+
+    asyncio.run(main(args))
