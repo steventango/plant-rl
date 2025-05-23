@@ -17,28 +17,15 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python 3.11
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v5
       with:
         python-version: 3.11
-    - name: Cache pip dependencies
-      uses: actions/cache@v3
-      id: cache-pip
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
+        cache: 'pip'
     - name: Install dependencies
       run: |
-        if ! command -v flake8 &> /dev/null || ! command -v pytest &> /dev/null; then
-          echo "flake8 or pytest not found, installing all dependencies."
-          python -m pip install --upgrade pip
-          python -m pip install flake8 pytest
-          python -m pip install -e .
-        else
-          echo "flake8 and pytest found, only installing local package."
-          python -m pip install -e .
-        fi
+        python -m pip install --upgrade pip
+        python -m pip install flake8 pytest
+        python -m pip install -e .
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
