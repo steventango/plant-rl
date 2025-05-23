@@ -3,6 +3,7 @@ import os
 import shutil
 import sys
 import warnings
+import aiofiles
 
 sys.path.append(os.getcwd())
 import argparse
@@ -188,7 +189,7 @@ async def main():
             )
             if not exp.problem.startswith("Mock"):
                 img_name = save_images(env, dataset_path, images_save_keys)
-                append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
+                await append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
 
         for step in range(glue.total_steps, exp.total_steps):
             collector.next_frame()
@@ -224,7 +225,7 @@ async def main():
 
             if not exp.problem.startswith("Mock"):
                 img_name = save_images(env, dataset_path, images_save_keys)
-                append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
+                await append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
 
             if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
                 # collect some data
@@ -253,7 +254,7 @@ async def main():
                 )
                 if not exp.problem.startswith("Mock"):
                     img_name = save_images(env, dataset_path, images_save_keys)
-                    append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
+                    await append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
 
             backup_and_save(exp, collector, idx, args.save_path)
 
@@ -273,7 +274,7 @@ async def main():
         backup_and_save(exp, collector, idx, args.save_path)
         wandb_run.finish()
 
-def append_csv(chk, env, glue, raw_csv_path, img_name, interaction):
+async def append_csv(chk, env, glue, raw_csv_path, img_name, interaction):
     expanded_info = {}
     for key, value in interaction.extra.items():
         if isinstance(value, pd.DataFrame):
@@ -309,17 +310,34 @@ def append_csv(chk, env, glue, raw_csv_path, img_name, interaction):
         left_on=["frame"],
         right_on=["frame"],
     )
-    if raw_csv_path.exists():
-        df_old = pd.read_csv(raw_csv_path)
-        shutil.copy(raw_csv_path, raw_csv_path.with_suffix('.bak'))
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore",
-                message="The behavior of DataFrame concatenation with empty or all-NA entries is deprecated.",
-                category=FutureWarning
-            )
-            df = pd.concat([df_old, df], ignore_index=True)
-    df.to_csv(raw_csv_path, index=False)
+    if await asyncio.to_thread(raw_csv_path.exists):
+        # Read only the header of the existing CSV
+        async with aiofiles.open(raw_csv_path, mode='r') as f:
+            existing_header = (await f.readline()).strip()
+        existing_columns = existing_header.split(',')
+        new_columns = df.columns.tolist()
+
+        if existing_columns == new_columns:
+            # Columns are the same, append without header
+            async with aiofiles.open(raw_csv_path, mode='a', newline='') as f:
+                await asyncio.to_thread(df.to_csv, f, header=False, index=False)
+        else:
+            # Columns are different, read old data, backup, concatenate, and write with header
+            df_old = await asyncio.to_thread(pd.read_csv, raw_csv_path)
+            await asyncio.to_thread(shutil.copy, raw_csv_path, raw_csv_path.with_suffix('.bak'))
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore",
+                    message="The behavior of DataFrame concatenation with empty or all-NA entries is deprecated.",
+                    category=FutureWarning,
+                )
+                # pd.concat is generally CPU bound and fast, might not need to_thread
+                # but being consistent for now.
+                df = await asyncio.to_thread(pd.concat, [df_old, df], ignore_index=True)
+            await asyncio.to_thread(df.to_csv, raw_csv_path, index=False)
+    else:
+        # File does not exist, write with header
+        await asyncio.to_thread(df.to_csv, raw_csv_path, index=False)
 
 
 if __name__ == "__main__":
