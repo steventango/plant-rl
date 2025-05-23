@@ -178,7 +178,8 @@ async def main():
         if glue.total_steps == 0:
             s, a, info = await glue.start()
             episode = chk['episode']
-            log(env, glue, wandb_run, s, a, info, is_mock_env=exp.problem.startswith("Mock"), episode=episode)
+            is_mock_env = exp.problem.startswith("Mock")
+            log(env, glue, wandb_run, s, a, info, is_mock_env=is_mock_env, episode=episode)
             interaction = Interaction(
                 o=s,
                 a=a,
