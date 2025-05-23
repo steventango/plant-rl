@@ -100,7 +100,7 @@ def create_annotated_image(image_data, box_data, class_id_to_label, masks_dict):
     return wandb.Image(image_data, file_type="jpg")
 
 
-def log(env, glue, wandb_run, s, a, info, is_mock_env: bool, r=None, t=None, episodic_return=None, episode=None):
+def log(env, glue, wandb_run, s, a, info, is_mock_env: bool = False, r=None, t=None, episodic_return=None, episode=None):
     expanded_info = {}
     for key, value in info.items():
         if isinstance(value, pd.DataFrame):
