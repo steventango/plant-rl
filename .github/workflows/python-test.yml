@@ -21,7 +21,6 @@ jobs:
       with:
         python-version: 3.11
         cache: 'pip'
-        cache-dependency-path: 'api/status/requirements.txt'
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
