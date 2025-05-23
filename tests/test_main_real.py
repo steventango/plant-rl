@@ -351,7 +351,7 @@ async def test_append_csv_empty_dataframe_new_file(tmp_path):
     # Align columns for comparison
     df_read = df_read.reindex(columns=expected_df.columns)
 
-    pd.testing.assert_frame_equal(df_read, expected_df, check_dtype=False, check_ Scienze=False) # check_ Scienze for NaNs
+    pd.testing.assert_frame_equal(df_read, expected_df, check_dtype=False, check_like=True) # check_like=True for NaNs and shape
 
 # Note: The "empty dataframe" tests need careful consideration of how an empty DataFrame
 # (specifically interaction.extra["df"]) interacts with the merge logic in append_csv.
