@@ -19,19 +19,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python 3.11
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v5
       with:
         python-version: 3.11
-    - name: Cache pip dependencies
-      uses: actions/cache@v3
-      id: cache-pip
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('api/status/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
+        cache: 'pip'
+        cache-dependency-path: 'api/status/requirements.txt'
     - name: Install dependencies
-      if: steps.cache-pip.outputs.cache-hit != 'true'
       run: |
         python -m pip install --upgrade pip
         python -m pip install flake8 pytest
