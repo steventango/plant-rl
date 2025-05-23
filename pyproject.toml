@@ -21,7 +21,6 @@ dependencies = [
     # custom minatar with jit compiled environments
     'MinAtar @ git+https://github.com/andnp/MinAtar',
     'foragerenv @ git+https://github.com/andnp/forager',
-
     'gymnasium[atari, box2d]>=1.0.0',
     'optuna',
     'ale_py',
@@ -31,14 +30,15 @@ dependencies = [
     'jax>=0.2.14',
     'dm-haiku>=0.0.4',
     'optax>=0.0.8',
-    'numpy>=1.22.0',
+    'numpy>=2.0.0',
     'PyFixedReps-andnp~=4.0',
-    'PyExpUtils-andnp~=7.0',
+    'PyExpUtils-andnp~=8.0',
     'pyrlenvs-andnp~=2.0',
-    'ReplayTables-andnp~=6.0',
-    'RlGlue-andnp~=1.0',
-    'RlEvaluation @ git+https://github.com/rlai-lab/rl-evaluation@ef3a117f7515ba74e7d6ef455e0a2b6a481531b8',
+    'ReplayTables-andnp~=8.0',
+    'RlGlue-andnp~=2.0',
+    'RlEvaluation~=1.0',
     'PyExpPlotting-andnp',
+    'ml-instrument>=0.3.1',
     'matplotlib',
     'requests>=2.32.3',
     'plantcv~=4.2.1',
@@ -51,7 +51,7 @@ dependencies = [
     'aiohttp-retry',
 ]
 
-[project.optional-dependencies]
+[dependency-groups] # Renamed section
 dev = [
     'pip',
     'ruff',

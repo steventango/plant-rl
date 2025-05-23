@@ -1,8 +1,6 @@
 import os
 import sys
 
-import Box2D  # we need to import this first because cedar is stupid
-
 sys.path.append(os.getcwd())
 import argparse
 import logging
@@ -13,10 +11,11 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from PyExpUtils.collection.Collector import Collector
-from PyExpUtils.collection.Sampler import Identity, Ignore, MovingAverage, Subsample
-from PyExpUtils.collection.utils import Pipe
-from PyExpUtils.results.sqlite import saveCollector
+from ml_instrumentation.Collector import Collector
+from ml_instrumentation.Sampler import Identity, Ignore, MovingAverage, Subsample
+from ml_instrumentation.utils import Pipe
+from PyExpUtils.results.tools import getParamsAsDict
+from ml_instrumentation.metadata import attach_metadata
 from tqdm import tqdm
 
 import wandb
@@ -26,7 +25,7 @@ from utils.checkpoint import Checkpoint
 from utils.logger import log
 from utils.preempt import TimeoutHandler
 from utils.window_avg import WindowAverage
-from utils.RlGlue.rl_glue import LoggingRlGlue
+from rlglue import RlGlue
 
 # ------------------
 # -- Command Args --
@@ -84,7 +83,7 @@ for idx in indices:
         },
         default=Ignore(),
     ))
-    collector.setIdx(idx)
+    collector.set_experiment_id(idx)
     run = exp.getRun(idx)
 
     # set random seeds accordingly, with optional offset
@@ -143,7 +142,7 @@ for idx in indices:
         collector.collect('steps', glue.num_steps)
         collector.collect('action', interaction.a)  # or int.from_bytes(glue.last_action, byteorder='little') for GAC
 
-        if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
+        if interaction.term or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
             # allow agent to cleanup traces or other stateful episodic info
             agent.cleanup()
 
@@ -167,5 +166,13 @@ for idx in indices:
     # ------------
     # -- Saving --
     # ------------
-    saveCollector(exp, collector, base=args.save_path)
+    save_db_path = context.resolve('results.db') # context is already defined in main.py
+    meta = getParamsAsDict(exp, idx)
+    # 'seed' variable in main.py is 'seed = run + params.get("experiment", {}).get("seed_offset", 0)'
+    # Ensure this 'seed' variable is in scope or use the correct one.
+    # For the purpose of this transformation, we assume 'seed' is the correct variable as defined in main.py's scope.
+    meta |= {'seed': seed}
+    attach_metadata(save_db_path, idx, meta)
+    collector.merge(save_db_path) # Use the same path variable
+    collector.close()
     chk.delete()
