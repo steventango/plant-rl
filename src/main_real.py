@@ -221,9 +221,9 @@ async def main():
 
             episodic_return = glue.total_reward if interaction.t else None
             episode = chk['episode']
-            log(env, glue, wandb_run, interaction.o, interaction.a, interaction.extra, is_mock_env=exp.problem.startswith("Mock"), r=interaction.r, t=interaction.t, episodic_return=episodic_return, episode=episode)
+            log(env, glue, wandb_run, interaction.o, interaction.a, interaction.extra, is_mock_env=is_mock_env, r=interaction.r, t=interaction.t, episodic_return=episodic_return, episode=episode)
 
-            if not exp.problem.startswith("Mock"):
+            if not is_mock_env:
                 img_name = save_images(env, dataset_path, images_save_keys)
                 append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
 
@@ -244,7 +244,7 @@ async def main():
                 logger.debug(f'{episode} {step} {glue.total_reward} {avg_time:.4}ms {int(fps)}')
 
                 s, a, info = await glue.start()
-                log(env, glue, wandb_run, s, a, info, is_mock_env=exp.problem.startswith("Mock"))
+                log(env, glue, wandb_run, s, a, info, is_mock_env=is_mock_env)
                 interaction = Interaction(
                     o=s,
                     a=a,
