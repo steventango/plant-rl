@@ -57,9 +57,7 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 logger = logging.getLogger('exp')
-prod = 'cdr' in socket.gethostname() or args.silent
-if not prod:
-    logger.setLevel(logging.DEBUG)
+# Moved prod definition and logger.setLevel to if __name__ == "__main__"
 
 
 # ----------------------
@@ -176,8 +174,7 @@ async def main(args_namespace):
         if glue.total_steps == 0:
             s, a, info = await glue.start()
             episode = chk['episode']
-            is_mock_env = exp.problem.startswith("Mock")
-            log(env, glue, wandb_run, s, a, info, is_mock_env=is_mock_env, episode=episode)
+            log(env, glue, wandb_run, s, a, info, episode=episode)
             interaction = Interaction(
                 o=s,
                 a=a,
@@ -219,9 +216,9 @@ async def main(args_namespace):
 
             episodic_return = glue.total_reward if interaction.t else None
             episode = chk['episode']
-            log(env, glue, wandb_run, interaction.o, interaction.a, interaction.extra, is_mock_env=is_mock_env, r=interaction.r, t=interaction.t, episodic_return=episodic_return, episode=episode)
+            log(env, glue, wandb_run, interaction.o, interaction.a, interaction.extra, interaction.r, interaction.t, episodic_return, episode)
 
-            if not is_mock_env:
+            if not exp.problem.startswith("Mock"):
                 img_name = save_images(env, dataset_path, images_save_keys)
                 await append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
 
@@ -242,7 +239,7 @@ async def main(args_namespace):
                 logger.debug(f'{episode} {step} {glue.total_reward} {avg_time:.4}ms {int(fps)}')
 
                 s, a, info = await glue.start()
-                log(env, glue, wandb_run, s, a, info, is_mock_env=is_mock_env)
+                log(env, glue, wandb_run, s, a, info)
                 interaction = Interaction(
                     o=s,
                     a=a,
@@ -352,6 +349,7 @@ if __name__ == "__main__":
     # This part of logging was already conditional on args.silent (via `prod`)
     # so it might be okay, but good to ensure `prod` is updated if it moves.
     # `prod` calculation:
+    # Configure logger level based on parsed args
     prod = 'cdr' in socket.gethostname() or args.silent
     if not prod:
         logger.setLevel(logging.DEBUG)

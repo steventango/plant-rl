@@ -100,7 +100,7 @@ def create_annotated_image(image_data, box_data, class_id_to_label, masks_dict):
     return wandb.Image(image_data, file_type="jpg")
 
 
-def log(env, glue, wandb_run, s, a, info, is_mock_env: bool = False, r=None, t=None, episodic_return=None, episode=None):
+def log(env, glue, wandb_run, s, a, info, r=None, t=None, episodic_return=None, episode=None):
     expanded_info = {}
     for key, value in info.items():
         if isinstance(value, pd.DataFrame):
@@ -120,24 +120,22 @@ def log(env, glue, wandb_run, s, a, info, is_mock_env: bool = False, r=None, t=N
         data.update(expand("action", env.last_action))
     if hasattr(env, "time"):
         data["time"] = env.time.timestamp()
+    if hasattr(env, "image"):
+        data["raw_image"] = wandb.Image(env.image, file_type="jpg")
 
-    if not is_mock_env:
-        if hasattr(env, "image"):
-            data["raw_image"] = wandb.Image(env.image, file_type="jpg")
+        if hasattr(env, "detections"):
+            detections = env.detections
 
-            if hasattr(env, "detections"):
-                detections = env.detections
+            # Extract box and mask data
+            box_data, class_id_to_label = format_bounding_boxes(detections)
+            masks_dict = format_masks(detections, class_id_to_label)
 
-                # Extract box and mask data
-                box_data, class_id_to_label = format_bounding_boxes(detections)
-                masks_dict = format_masks(detections, class_id_to_label)
+            # Get the image data to be annotated
+            image_data = env.images.get("warped", env.image) if hasattr(env, "images") else env.image
 
-                # Get the image data to be annotated
-                image_data = env.images.get("warped", env.image) if hasattr(env, "images") else env.image
-
-                # Create annotated image
-                if box_data or masks_dict:
-                    data["image"] = create_annotated_image(image_data, box_data, class_id_to_label, masks_dict)
+            # Create annotated image
+            if box_data or masks_dict:
+                data["image"] = create_annotated_image(image_data, box_data, class_id_to_label, masks_dict)
 
     if r is not None:
         data["reward"] = r
