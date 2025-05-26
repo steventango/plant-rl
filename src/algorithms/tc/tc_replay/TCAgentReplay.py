@@ -1,12 +1,11 @@
-import numpy as np
-
 from abc import abstractmethod
 from typing import Any, Dict, Tuple
+
+import numpy as np
 from PyExpUtils.collection.Collector import Collector
 from PyExpUtils.utils.random import sample
 from ReplayTables.interface import Timestep
 from ReplayTables.registry import build_buffer
-
 
 from algorithms.tc.TCAgent import TCAgent
 from utils.checkpoint import checkpointable
