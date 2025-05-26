@@ -58,24 +58,28 @@ class OfflinePlantGrowthChamber:
         return self.dataset.iloc[self.index]["agent_action"]
 
     def get_reward(self):
+        if self.index == 0:
+            return 0.0
+        if self.dataset.iloc[self.index]["time"].date() == self.dataset.iloc[self.index - 1]["time"].date():
+            return 0.0
+
         current_local_date = self.dataset.iloc[self.index]["time"].date()
         yesterday_local_date = current_local_date - timedelta(days=1)
 
-        current_95p_mean_area = self.calculate_95p_mean_area(current_local_date)
-        prior_95p_mean_area = self.calculate_95p_mean_area(yesterday_local_date)
+        if yesterday_local_date not in self.daily_mean_clean_areas:
+            return 0.0
+
+        current_morning_area = self.daily_mean_clean_areas.get(current_local_date, [0])[0]
+        yesterday_morning_area = self.daily_mean_clean_areas.get(yesterday_local_date, [0])[0]
 
         if self.normalize_reward:
-            if prior_95p_mean_area == 0:  # Avoid division by zero
+            if yesterday_morning_area == 0:  # Avoid division by zero
                 return 0.0
-            reward = normalize(current_95p_mean_area / prior_95p_mean_area - 1, 0, 0.35)
+            reward = normalize(current_morning_area / yesterday_morning_area - 1, 0, 0.35)
         else:
-            reward = normalize(current_95p_mean_area - prior_95p_mean_area, 0, 50)
+            reward = normalize(current_morning_area - yesterday_morning_area, 0, 50)
 
         return reward
-
-    def calculate_95p_mean_area(self, date):
-        mean_areas = self.daily_mean_clean_areas.get(date, [])
-        return np.percentile(np.array(mean_areas), 95) if mean_areas else 0.0
 
     def start(self):
         self.dataset = self.load_dataset(self.dataset_paths[self.dataset_index])
