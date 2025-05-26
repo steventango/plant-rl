@@ -13,7 +13,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
-from representations.RichTileCoder import RichTileCoder, RichTileCoderConfig
 
 experiment_paths = Path(__file__).parent.glob("*.json")
 for experiment_path in experiment_paths:
