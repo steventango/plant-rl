@@ -26,7 +26,7 @@ for experiment_path in experiment_paths:
     weights = checkpoint["a"].w
 
     tc_config = RichTileCoderConfig(
-        tiles=representation_config["tiles"], tilings=representation_config["tilings"], dims=2, strategy=representation_config["strategy"]
+        tiles=representation_config["tiles"][0], tilings=representation_config["tilings"], dims=2, strategy=representation_config["strategy"]
     )
 
     tile_coder = RichTileCoder(tc_config)
