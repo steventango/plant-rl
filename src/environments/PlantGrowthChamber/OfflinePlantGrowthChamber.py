@@ -52,7 +52,9 @@ class OfflinePlantGrowthChamber:
         clipped_seconds_since_morning = np.clip(normalized_seconds_since_morning, 0, 1)
         mean_clean_area = self.dataset.iloc[self.index]["mean_clean_area"]
         if self.daily_area:
-            raise NotImplementedError("Daily area normalization is not implemented yet.")
+            current_local_date = self.dataset.iloc[self.index]["time"].date()
+            current_morning_area = self.daily_mean_clean_areas.get(current_local_date, [0])[0]
+            normalized_mean_clean_area = (mean_clean_area - current_morning_area) / current_morning_area
         else:
             normalized_mean_clean_area = normalize(mean_clean_area, 0, 100)
         clipped_mean_clean_area = np.clip(normalized_mean_clean_area, 0, 1)
