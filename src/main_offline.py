@@ -1,24 +1,32 @@
 import os
 import sys
 
+import Box2D  # we need to import this first because cedar is stupid
+
 sys.path.append(os.getcwd())
 import argparse
 import logging
 import random
 import socket
+import time
 from pathlib import Path
 
 import numpy as np
 import torch
-import wandb
 from PyExpUtils.collection.Collector import Collector
-from PyExpUtils.collection.Sampler import Identity, Ignore
+from PyExpUtils.collection.Sampler import Identity, Ignore, MovingAverage, Subsample
+from PyExpUtils.collection.utils import Pipe
+from PyExpUtils.results.sqlite import saveCollector
 from tqdm import tqdm
 
+import wandb
 from experiment import ExperimentModel
 from problems.registry import getProblem
 from utils.checkpoint import Checkpoint
+from utils.logger import log
 from utils.preempt import TimeoutHandler
+from utils.window_avg import WindowAverage
+from utils.RlGlue.rl_glue import LoggingRlGlue
 
 # ------------------
 # -- Command Args --
@@ -93,7 +101,10 @@ for idx in indices:
     # build stateful things and attach to checkpoint
     problem = chk.build('p', lambda: Problem(exp, idx, collector))
     agent = chk.build('a', problem.getAgent)
-    dataset = chk.build('d', problem.getDataset)
+    env = chk.build('e', problem.getEnvironment)
+
+    glue = chk.build('glue', lambda: LoggingRlGlue(agent, env))
+    chk.initial_value('episode', 0)
 
     context = exp.buildSaveContext(idx, base=args.save_path)
     agent_path = Path(context.resolve()).relative_to('results')
@@ -105,7 +116,7 @@ for idx in indices:
 
     wandb_run = wandb.init(
         entity="plant-rl",
-        project="offline",
+        project="sim",
         notes=str(agent_path),
         config=config,
         settings=wandb.Settings(
@@ -113,22 +124,48 @@ for idx in indices:
         ),
     )
 
-    for episode in tqdm(range(dataset)):
-        agent.load_start(next(episode.observations), next(episode.actions))
-        for state, action, reward, next_state, done in episode:
-            if done:
-                agent.load_end(reward, extra={'gamma': dataset.gamma})
-                break
-            agent.load_step(
-                reward=reward,
-                sp=next_state,
-                a=action,
-                extra={'gamma': dataset.gamma}
-            )
+    # Run the experiment
+    start_time = time.time()
 
-    # agent planning T steps
-    for step in tqdm(range(exp.total_steps)):
-        info = agent.plan()
-        wandb_run.log(info)
+    # if we haven't started yet, then make the first interaction
+    if glue.total_steps == 0:
+        s, a, info = glue.start()
+        log(env, glue, wandb_run, s, a, info)
 
-    chk.save()
+    for step in range(glue.total_steps, exp.total_steps):
+        collector.next_frame()
+        chk.maybe_save()
+        interaction = glue.step()
+        log(env, glue, wandb_run, interaction.o, interaction.a, interaction.extra, interaction.r)
+                
+        collector.collect('reward', interaction.r)
+        collector.collect('episode', chk['episode'])
+        collector.collect('steps', glue.num_steps)
+        collector.collect('action', interaction.a)  # or int.from_bytes(glue.last_action, byteorder='little') for GAC
+
+        if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
+            # allow agent to cleanup traces or other stateful episodic info
+            agent.cleanup()
+
+            # Collect total reward
+            collector.collect('return', glue.total_reward)
+
+            # track how many episodes are completed (cutoff is counted as termination for this count)
+            chk['episode'] += 1
+
+            # compute the average time-per-step in ms
+            avg_time = 1000 * (time.time() - start_time) / (step + 1)
+            fps = step / (time.time() - start_time)
+
+            episode = chk['episode']
+            logger.debug(f'{episode} {step} {glue.total_reward} {avg_time:.4}ms {int(fps)}')
+
+            glue.start()
+
+    collector.reset()
+
+    # ------------
+    # -- Saving --
+    # ------------
+    saveCollector(exp, collector, base=args.save_path)
+    chk.delete()
