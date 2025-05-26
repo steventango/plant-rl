@@ -1,7 +1,7 @@
 {
     "agent": "OfflineESARSA",
     "problem": "OfflinePlantGrowthChamber",
-    "total_steps": 100000,
+    "total_steps": 500000,
     "episode_cutoff": -1,
     "metaParameters": {
         "environment":{
@@ -13,7 +13,7 @@
                 ]
         ]
         },
-        "alpha": 0.001,
+        "alpha": 0.01,
         "alpha_decay": false,
         "epsilon": 0.0,
         "w0": 0.0,
@@ -25,8 +25,8 @@
         "representation": {
             "which_tc": "RichTileCoder",
             "strategy": -1,
-            "tiles": 12,
-            "tilings": 1
+            "tiles": [[12, 0]],
+            "tilings": 6
         }
     }
 }
