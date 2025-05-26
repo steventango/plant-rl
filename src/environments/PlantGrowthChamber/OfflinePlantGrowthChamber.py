@@ -115,8 +115,8 @@ class OfflinePlantGrowthChamberTOD(OfflinePlantGrowthChamber):
         seconds_since_morning = (local_time - morning_time).total_seconds()
         normalized_seconds_since_morning = seconds_since_morning / (12 * 3600)
         clipped_seconds_since_morning = np.clip(normalized_seconds_since_morning, 0, 1)
-        return clipped_seconds_since_morning
-    
+        return clipped_seconds_since_morning,
+
 class OfflinePlantGrowthChamberSumLight(OfflinePlantGrowthChamber):
     def get_observation(self):
         utc_time = self.dataset.iloc[self.index]["time"]
