@@ -43,12 +43,14 @@ class OfflinePlantGrowthChamber:
         return df
 
     def get_observation(self):
-        local_time = self.dataset.iloc[self.index]["time"]
+        utc_time = self.dataset.iloc[self.index]["time"]
+        local_time = utc_time.tz_convert("America/Edmonton")
         morning_time = local_time.replace(hour=9, minute=0, second=0, microsecond=0)
         seconds_since_morning = (local_time - morning_time).total_seconds()
         normalized_seconds_since_morning = seconds_since_morning / (12 * 3600)
         clipped_seconds_since_morning = np.clip(normalized_seconds_since_morning, 0, 1)
-        normalized_mean_clean_area = normalize(self.dataset.iloc[self.index]["mean_clean_area"], 0, 50)
+        mean_clean_area = self.dataset.iloc[self.index]["mean_clean_area"]
+        normalized_mean_clean_area = normalize(mean_clean_area, 0, 50)
         clipped_mean_clean_area = np.clip(normalized_mean_clean_area, 0, 1)
         return clipped_seconds_since_morning, clipped_mean_clean_area
 
