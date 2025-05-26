@@ -104,3 +104,14 @@ class OfflinePlantGrowthChamber:
             if self.dataset_index >= len(self.dataset_paths):
                 info.update({"exhausted": True})
         return self.get_reward(), self.get_observation(), terminal, info
+
+
+class OfflinePlantGrowthChamberTOD(OfflinePlantGrowthChamber):
+    def get_observation(self):
+        utc_time = self.dataset.iloc[self.index]["time"]
+        local_time = utc_time.tz_convert("America/Edmonton")
+        morning_time = local_time.replace(hour=9, minute=0, second=0, microsecond=0)
+        seconds_since_morning = (local_time - morning_time).total_seconds()
+        normalized_seconds_since_morning = seconds_since_morning / (12 * 3600)
+        clipped_seconds_since_morning = np.clip(normalized_seconds_since_morning, 0, 1)
+        return clipped_seconds_since_morning
