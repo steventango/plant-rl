@@ -8,10 +8,10 @@ import lzma
 import pickle
 from pathlib import Path
 
+import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-from matplotlib.colors import ListedColormap
 
 from representations.RichTileCoder import RichTileCoder, RichTileCoderConfig
 
@@ -31,7 +31,7 @@ for experiment_path in experiment_paths:
 
     tile_coder = RichTileCoder(tc_config)
 
-    daytime_observation_space = np.linspace(0, 1, 24 * 12, endpoint=False)
+    daytime_observation_space = np.linspace(0, 1, 12 * 6, endpoint=False)
     area_observation_space = np.linspace(0, 1, 100)
 
     num_actions = weights.shape[0]
@@ -43,48 +43,45 @@ for experiment_path in experiment_paths:
                 indices = tile_coder.get_indices(np.array([time, area]))
                 Q[j, i, action] = weights[action, indices].sum()
 
-    # %%
-    # plot Q values
+    # Calculate the difference between Q[s, 1] and Q[s, 0]
+    if num_actions >= 2:
+        Q_diff = Q[:, :, 1] - Q[:, :, 0]
+    else:
+        print("Not enough actions to compute difference. Plotting Q[s,0] instead.")
+        Q_diff = Q[:, :, 0]
 
-    fig, axs = plt.subplots(num_actions, 1, figsize=(6, 2 * num_actions), sharey=True)
-    action_labels = ["moonlight", "dim", "normal", "extrabright"]
+    # plot Q value differences
 
-    # Find the min and max values for the color scale
-    vmin = Q.min()
-    vmax = Q.max()
+    fig, ax = plt.subplots(1, 1, figsize=(6, 4)) # Single plot
 
-    # Calculate tick interval for every hour
-    hour_interval = 12
+    # Find the min and max values for the color scale from Q_diff
+    vmin = Q_diff.min()
+    vmax = Q_diff.max()
 
-    # Create a modified viridis colormap with gray for zero
-    viridis = plt.cm.get_cmap("viridis")(np.linspace(0, 1, 256))
-    # from vmax and vmin find the position of zero in the colormap
-    zero_position = int((0 - vmin) / (vmax - vmin) * 255)
+    norm = mcolors.TwoSlopeNorm(vmin=vmin, vcenter=0., vmax=vmax)
 
-    viridis[zero_position, :3] = [0.5, 0.5, 0.5]  # Set RGB values for gray
-    custom_cmap = ListedColormap(viridis)
+    # Create the heatmap for the difference
+    sns.heatmap(
+        Q_diff.T,  # Transpose Q_diff to swap axes
+        ax=ax,
+        cmap="bwr",
+        cbar=True,
+        norm=norm,
+        cbar_ax=fig.add_axes([0.92, 0.15, 0.02, 0.7]),
+    )
+    ax.set_title(f"Q(s, action=1) - Q(s, action=0)")
 
-    # Create the heatmaps
-    for action, ax in zip(range(num_actions), axs):
-        sns.heatmap(
-            Q[:, :, action].T,  # Transpose Q to swap axes
-            ax=ax,
-            cmap=custom_cmap,  # Use the modified viridis colormap
-            cbar=(action == num_actions - 1),  # Add colorbar only to the last subplot
-            vmin=vmin,
-            vmax=vmax,
-            cbar_ax=None if action < num_actions - 1 else fig.add_axes([0.92, 0.15, 0.02, 0.7]),
-        )
-        ax.set_title(f"Action {action} ({action_labels[action]})")
-        ax.set_xlabel("Time (h)" if action == num_actions - 1 else "")
-        ax.set_ylabel("Area")  # Area is now on the y-axis
-        ax.set_xticks(np.arange(0, len(daytime_observation_space), hour_interval))  # Set ticks every hour
-        ax.set_xticklabels([f"{int(t * 24)}" for t in daytime_observation_space[::hour_interval]])  # Format as hours
-        ax.set_yticks(np.arange(0, len(area_observation_space), 10))  # Set y ticks every 10 areas
-        ax.set_yticklabels([f"{area:.1f}" for area in area_observation_space[::10]])  # Format as float
-        ax.set_yticklabels(ax.get_yticklabels(), rotation=0)  # Rotate y ticks
-        ax.invert_yaxis()  # Invert the y-axis
+    ax.set_xlabel("Time")
+    hour_interval = 6
+    ax.set_xticks(np.arange(0, len(daytime_observation_space) + 1, hour_interval))  # Set ticks every hour
+    ax.set_xticklabels([f"{int(t * 12) + 9}" for t in daytime_observation_space[::hour_interval]] + [21])  # Format as hours
 
-    fig.suptitle("ESARSA(λ) Q-values", fontsize=16)
+    ax.set_ylabel("Area")  # Area is now on the y-axis
+    ax.set_yticks(np.arange(0, len(area_observation_space), 10))  # Set y ticks every 10 areas
+    ax.set_yticklabels([f"{area:.1f}" for area in area_observation_space[::10]])  # Format as float
+    ax.set_yticklabels(ax.get_yticklabels(), rotation=0)  # Rotate y ticks
+    ax.invert_yaxis()  # Invert the y-axis
+
+    fig.suptitle("ESARSA(λ) Q-value Difference", fontsize=16)
     plt.tight_layout(rect=[0, 0, 0.9, 1])  # Adjust layout to fit colorbar
     plt.show()
