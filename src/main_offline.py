@@ -152,7 +152,8 @@ for idx in indices:
 
     for step in range(exp.total_steps):
         info = agent.plan()
-        wandb_run.log(info)
+        if step % 1000 == 0:
+            wandb_run.log(info, step=step)
 
     chk.save()
 
