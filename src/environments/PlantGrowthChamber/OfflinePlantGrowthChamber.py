@@ -38,6 +38,7 @@ class OfflinePlantGrowthChamber:
 
         # Populate daily_mean_clean_areas
         local_dates = df['time'].dt.date
+        df['daily_action_sum'] = df.groupby(local_dates)['agent_action'].cumsum()
         for date_val, group in df.groupby(local_dates):
             self.daily_mean_clean_areas[date_val] = group['mean_clean_area'].tolist()
 
@@ -115,3 +116,14 @@ class OfflinePlantGrowthChamberTOD(OfflinePlantGrowthChamber):
         normalized_seconds_since_morning = seconds_since_morning / (12 * 3600)
         clipped_seconds_since_morning = np.clip(normalized_seconds_since_morning, 0, 1)
         return clipped_seconds_since_morning
+    
+class OfflinePlantGrowthChamberSumLight(OfflinePlantGrowthChamber):
+    def get_observation(self):
+        utc_time = self.dataset.iloc[self.index]["time"]
+        local_time = utc_time.tz_convert("America/Edmonton")
+        morning_time = local_time.replace(hour=9, minute=0, second=0, microsecond=0)
+        seconds_since_morning = (local_time - morning_time).total_seconds()
+        normalized_seconds_since_morning = seconds_since_morning / (12 * 3600)
+        clipped_seconds_since_morning = np.clip(normalized_seconds_since_morning, 0, 1)
+        sum_prev_actions = self.dataset.iloc[self.index]["daily_action_sum"]
+        return clipped_seconds_since_morning, sum_prev_actions
