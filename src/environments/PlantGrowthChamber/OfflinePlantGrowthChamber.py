@@ -16,7 +16,8 @@ class OfflinePlantGrowthChamber:
         self.dataset_paths = sorted(Path(path) for path in kwargs["dataset_paths"])
         self.dataset_index = 0
         self.index = 0
-        self.normalize_reward = kwargs.get("normalize_reward", True)
+        self.daily_area = kwargs.get("daily_area", False)
+        self.daily_reward = kwargs.get("daily_reward", True)
         self.daily_mean_clean_areas = {}
 
     def load_dataset(self, dataset_path: Path) -> pd.DataFrame:
@@ -50,7 +51,10 @@ class OfflinePlantGrowthChamber:
         normalized_seconds_since_morning = seconds_since_morning / (12 * 3600)
         clipped_seconds_since_morning = np.clip(normalized_seconds_since_morning, 0, 1)
         mean_clean_area = self.dataset.iloc[self.index]["mean_clean_area"]
-        normalized_mean_clean_area = normalize(mean_clean_area, 0, 50)
+        if self.daily_area:
+            raise NotImplementedError("Daily area normalization is not implemented yet.")
+        else:
+            normalized_mean_clean_area = normalize(mean_clean_area, 0, 100)
         clipped_mean_clean_area = np.clip(normalized_mean_clean_area, 0, 1)
         return clipped_seconds_since_morning, clipped_mean_clean_area
 
@@ -72,7 +76,7 @@ class OfflinePlantGrowthChamber:
         current_morning_area = self.daily_mean_clean_areas.get(current_local_date, [0])[0]
         yesterday_morning_area = self.daily_mean_clean_areas.get(yesterday_local_date, [0])[0]
 
-        if self.normalize_reward:
+        if self.daily_reward:
             if yesterday_morning_area == 0:  # Avoid division by zero
                 return 0.0
             reward = normalize(current_morning_area / yesterday_morning_area - 1, 0, 0.35)
