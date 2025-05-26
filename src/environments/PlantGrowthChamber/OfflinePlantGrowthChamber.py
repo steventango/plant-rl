@@ -41,12 +41,14 @@ class OfflinePlantGrowthChamber:
             .reset_index()
         )
 
-        # Compute an area indicator every day, if the day is complete
+        # Remove incomplete days
+        df = self.remove_incomplete_days(df)
+
+        # Compute an area indicator every day
         local_dates = df['time'].dt.date
         for date_val, group in df.groupby(local_dates):            
-            if len(group) >= 72:    # Exp 3 has 73 time stamps per day, but older datasets may have only 72.
-                self.daily_area_indicator[date_val] = np.mean(np.sort(group['mean_clean_area'])[-5:])  # max area  
-                #self.daily_area_indicator[date_val] = np.mean(group['mean_clean_area'][:5])  # morning area  
+            self.daily_area_indicator[date_val] = np.mean(np.sort(group['mean_clean_area'])[-5:])  # max area  
+            #self.daily_area_indicator[date_val] = np.mean(group['mean_clean_area'][:5])  # morning area  
 
         return df
 
@@ -109,3 +111,12 @@ class OfflinePlantGrowthChamber:
             if self.dataset_index >= len(self.dataset_paths):
                 info.update({"exhausted": True})
         return self.get_reward(), self.get_observation(), terminal, info
+    
+    def remove_incomplete_days(self, df, min_timestamps = 72):  # Note on min_timestamps: Exp 3 has 73 time stamps per day, but older datasets may have only 72.
+        local_dates = df['time'].dt.date
+        complete_dates = []
+        for date_val, group in df.groupby(local_dates):            
+            if len(group) >= min_timestamps:   
+                complete_dates.append(date_val)
+
+        return df[df['time'].dt.date.isin(complete_dates)]
