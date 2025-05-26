@@ -17,10 +17,11 @@ class OfflinePlantGrowthChamber:
         self.dataset_paths = sorted(Path(path) for path in kwargs["dataset_paths"])
         self.dataset_index = 0
         self.index = 0
+        self.daily_photon = kwargs.get("daily_photon", True)  # if true, "area" is replaced by "photon count" in the state
         self.daily_area = kwargs.get("daily_area", True)
         self.daily_reward = kwargs.get("daily_reward", True)  
         self.daily_area_indicator = {}
-
+        self.photon_counter = 0
 
     def load_dataset(self, dataset_path: Path) -> pd.DataFrame:
         processed_csv_paths = sorted(dataset_path.glob("raw.csv"))
@@ -65,12 +66,15 @@ class OfflinePlantGrowthChamber:
         else:
             normalized_mean_clean_area = normalize(mean_clean_area, 0, 100)   #TODO check if bounds appropriate
 
-        return normalized_seconds_since_morning, normalized_mean_clean_area
+        if not self.daily_photon: 
+            return normalized_seconds_since_morning, normalized_mean_clean_area
+        else: 
+            return normalized_seconds_since_morning, normalize(self.photon_counter, 0, 72)
 
     def get_action(self):
         agent_action = self.dataset.iloc[self.index]["agent_action"].astype(int)
-        if agent_action < 0 or agent_action > 3:
-            agent_action = -1
+        if agent_action < 0 or agent_action > 1:
+            raise ValueError('agent_action can only be 0 or 1. Please use data from Exp 3.')
         return agent_action
 
     def get_reward(self):
@@ -100,11 +104,18 @@ class OfflinePlantGrowthChamber:
     def start(self):
         self.dataset = self.load_dataset(self.dataset_paths[self.dataset_index])  # TODO: check if syntax correct here
         self.index = 0
+        self.photon_counter = 0
         return self.get_observation(), {"action": self.get_action()}
 
     def step(self, _):
         self.index += 1
         info = {"action": self.get_action()}
+
+        if self.dataset.iloc[self.index]["time"].date() != self.dataset.iloc[self.index - 1]["time"].date():
+            self.photon_counter = 0
+        else: 
+            self.photon_counter += self.get_action()
+
         terminal = self.index >= len(self.dataset) - 1
         if terminal:
             self.dataset_index += 1
