@@ -154,6 +154,8 @@ for idx in indices:
         info = agent.plan()
         wandb_run.log(info)
 
+    chk.save()
+
     collector.reset()
 
     # ------------
