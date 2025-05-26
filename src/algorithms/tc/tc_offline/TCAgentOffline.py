@@ -38,10 +38,11 @@ class TCAgentOffline(TCAgent):
     # ----------------------
     # -- RLGlue interface --
     # ----------------------
-    def load_start(self, s: np.ndarray, a: int):
+    def load_start(self, s: np.ndarray, extra: Dict[str, Any]):
         self.buffer.flush()
 
         x = self.get_rep(s)
+        a = extra["action"]
         self.buffer.add_step(
             Timestep(
                 x=x,
@@ -53,8 +54,8 @@ class TCAgentOffline(TCAgent):
         )
         return {}
 
-    def load_step(self, r: float, sp: np.ndarray | None, a: int, extra: Dict[str, Any]):
-        a = -1
+    def load_step(self, r: float, sp: np.ndarray | None, extra: Dict[str, Any]):
+        a = extra["action"]
 
         # sample next action
         xp = None
