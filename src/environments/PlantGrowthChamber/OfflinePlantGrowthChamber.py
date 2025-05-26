@@ -70,10 +70,10 @@ class OfflinePlantGrowthChamber:
     def get_reward(self):
         if self.index == 0:
             return 0.0
-        if self.dataset.iloc[self.index]["time"].date() == self.dataset.iloc[self.index - 1]["time"].date():
+        if self.dataset.iloc[self.index]["time"].tz_convert("America/Edmonton").date() == self.dataset.iloc[self.index - 1]["time"].tz_convert("America/Edmonton").date():
             return 0.0
 
-        current_local_date = self.dataset.iloc[self.index]["time"].date()
+        current_local_date = self.dataset.iloc[self.index]["time"].tz_convert("America/Edmonton").date()
         yesterday_local_date = current_local_date - timedelta(days=1)
 
         if yesterday_local_date not in self.daily_mean_clean_areas:

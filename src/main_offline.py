@@ -1,7 +1,8 @@
 import os
 import sys
 
-import Box2D  # we need to import this first because cedar is stupid
+import pandas as pd
+from collections import defaultdict
 
 sys.path.append(os.getcwd())
 import argparse
@@ -25,8 +26,8 @@ from problems.registry import getProblem
 from utils.checkpoint import Checkpoint
 from utils.logger import log
 from utils.preempt import TimeoutHandler
-from utils.window_avg import WindowAverage
 from utils.RlGlue.rl_glue import LoggingRlGlue
+from utils.window_avg import WindowAverage
 
 # ------------------
 # -- Command Args --
@@ -108,6 +109,7 @@ for idx in indices:
     chk.initial_value('episode', 0)
 
     context = exp.buildSaveContext(idx, base=args.save_path)
+    Path(context.resolve()).mkdir(parents=True, exist_ok=True)
     agent_path = Path(context.resolve()).relative_to('results')
 
     config = {
@@ -128,16 +130,26 @@ for idx in indices:
     # Run the experiment
     start_time = time.time()
 
+    data = defaultdict(list)
+
     # if we haven't started yet, then make the first interaction
     data_exhausted = False
     if glue.total_steps == 0:
         s, env_info = env.start()
         agent.load_start(s, env_info)
         data_exhausted = env_info.get("exhausted", False)
+        data['observation'].append(s)
+        data['action'].append(None)
+        data['reward'].append(None)
+        data['terminal'].append(None)
 
 
     while not data_exhausted:
         (reward, s, term, env_info) = env.step(None)
+        data['observation'].append(s)
+        data['action'].append(env_info.get("action", None))
+        data['reward'].append(reward)
+        data['terminal'].append(term)
         data_exhausted = env_info.get("exhausted", False)
         if term:
             agent.load_end(reward, env_info)
@@ -146,13 +158,21 @@ for idx in indices:
             if not data_exhausted:
                 s, env_info = env.start()
                 agent.load_start(s, env_info)
+                data['observation'].append(s)
+                data['action'].append(None)
+                data['reward'].append(None)
+                data['terminal'].append(None)
                 data_exhausted = env_info.get("exhausted", False)
         else:
             agent.load_step(reward, s, env_info)
 
+    df = pd.DataFrame(data)
+    df.to_csv(context.resolve('data.csv'), index=False)
+
     for step in range(exp.total_steps):
         info = agent.plan()
-        wandb_run.log(info)
+        if step % 1000 == 0:
+            wandb_run.log(info, step=step)
 
     chk.save()
 

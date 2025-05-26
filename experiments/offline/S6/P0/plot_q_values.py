@@ -18,6 +18,9 @@ from representations.RichTileCoder import RichTileCoder, RichTileCoderConfig
 experiment_paths = Path(__file__).parent.glob("*.json")
 for experiment_path in experiment_paths:
     checkpoint_path = Path("checkpoints/results") / experiment_path.relative_to(Path("experiments").absolute()).with_suffix("") / "0/chk.pkl.xz"
+    if not checkpoint_path.exists():
+        print(f"Checkpoint file {checkpoint_path} does not exist. Skipping {experiment_path}.")
+        continue
     with open(experiment_path, "r") as f:
         config = json.load(f)
         representation_config = config["metaParameters"]["representation"]
@@ -25,14 +28,10 @@ for experiment_path in experiment_paths:
         checkpoint = pickle.load(f)
     weights = checkpoint["a"].w
 
-    tc_config = RichTileCoderConfig(
-        tiles=representation_config["tiles"], tilings=representation_config["tilings"], dims=2, strategy=representation_config["strategy"]
-    )
+    tile_coder = checkpoint["a"].tile_coder
 
-    tile_coder = RichTileCoder(tc_config)
-
-    daytime_observation_space = np.linspace(0, 1, 12 * 6, endpoint=False)
-    area_observation_space = np.linspace(0, 1, 100)
+    daytime_observation_space = np.linspace(0, 1, 12 * 6, endpoint=True)
+    area_observation_space = np.linspace(0, 1, 100, endpoint=True)
 
     num_actions = weights.shape[0]
     Q = np.full((len(daytime_observation_space), len(area_observation_space), num_actions), -10000.0)
