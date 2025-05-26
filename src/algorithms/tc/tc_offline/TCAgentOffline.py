@@ -92,3 +92,4 @@ class TCAgentOffline(TCAgent):
 
     def plan(self):
         self.batch_update()
+        return self.get_info()

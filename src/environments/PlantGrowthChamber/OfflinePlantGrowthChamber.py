@@ -1,7 +1,11 @@
 import logging
+from datetime import timedelta
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
+
+from utils.functions import normalize
 
 logger = logging.getLogger("OfflinePlantGrowthChamber")
 logger.setLevel(logging.DEBUG)
@@ -9,11 +13,14 @@ logger.setLevel(logging.DEBUG)
 
 class OfflinePlantGrowthChamber:
     def __init__(self, *args, **kwargs):
-        self.dataset_paths = iter(Path(path) for path in kwargs["dataset_paths"])
+        self.dataset_paths = sorted(Path(path) for path in kwargs["dataset_paths"])
+        self.dataset_index = 0
         self.index = 0
+        self.normalize_reward = kwargs.get("normalize_reward", True)
+        self.daily_mean_clean_areas = {}
 
     def load_dataset(self, dataset_path: Path) -> pd.DataFrame:
-        processed_csv_paths = sorted(dataset_path.glob("processed/**/all.csv"))
+        processed_csv_paths = sorted(dataset_path.glob("raw.csv"))
         df = pd.read_csv(processed_csv_paths[-1])
         df["time"] = pd.to_datetime(df["time"])
         df = (
@@ -22,29 +29,63 @@ class OfflinePlantGrowthChamber:
                 {
                     "plant_id": "first",
                     "agent_action": "first",
-                    "time": "first",
-                    "clean_area": "mean",
+                    "mean_clean_area": "first",
                 }
             )
             .reset_index()
         )
+
+        # Populate daily_mean_clean_areas
+        local_dates = df['time'].dt.date
+        for date_val, group in df.groupby(local_dates):
+            self.daily_mean_clean_areas[date_val] = group['mean_clean_area'].tolist()
+
         return df
 
     def get_observation(self):
-        return (self.dataset.iloc[self.index]["time"], self.dataset.iloc[self.index]["clean_area"])
+        local_time = self.dataset.iloc[self.index]["time"]
+        morning_time = local_time.replace(hour=9, minute=0, second=0, microsecond=0)
+        seconds_since_morning = (local_time - morning_time).total_seconds()
+        normalized_seconds_since_morning = seconds_since_morning / (12 * 3600)
+        clipped_seconds_since_morning = np.clip(normalized_seconds_since_morning, 0, 1)
+        normalized_mean_clean_area = normalize(self.dataset.iloc[self.index]["mean_clean_area"], 0, 50)
+        clipped_mean_clean_area = np.clip(normalized_mean_clean_area, 0, 1)
+        return clipped_seconds_since_morning, clipped_mean_clean_area
 
     def get_action(self):
         return self.dataset.iloc[self.index]["agent_action"]
 
     def get_reward(self):
-        return self.dataset.iloc[self.index]["clean_area"] - self.dataset.iloc[self.index - 1]["clean_area"] if self.index > 0 else 0
+        current_local_date = self.dataset.iloc[self.index]["time"].date()
+        yesterday_local_date = current_local_date - timedelta(days=1)
+
+        current_95p_mean_area = self.calculate_95p_mean_area(current_local_date)
+        prior_95p_mean_area = self.calculate_95p_mean_area(yesterday_local_date)
+
+        if self.normalize_reward:
+            if prior_95p_mean_area == 0:  # Avoid division by zero
+                return 0.0
+            reward = normalize(current_95p_mean_area / prior_95p_mean_area - 1, 0, 0.35)
+        else:
+            reward = normalize(current_95p_mean_area - prior_95p_mean_area, 0, 50)
+
+        return reward
+
+    def calculate_95p_mean_area(self, date):
+        mean_areas = self.daily_mean_clean_areas.get(date, [])
+        return np.percentile(np.array(mean_areas), 95) if mean_areas else 0.0
 
     def start(self):
-        self.dataset = self.load_dataset(next(self.dataset_paths))
+        self.dataset = self.load_dataset(self.dataset_paths[self.dataset_index])
         self.index = 0
         return self.get_observation(), {"action": self.get_action()}
 
-    def step(self):
+    def step(self, _):
         self.index += 1
+        info = {"action": self.get_action()}
         terminal = self.index >= len(self.dataset) - 1
-        return self.get_reward(), self.get_observation(), terminal, {"action": self.get_action()}
+        if terminal:
+            self.dataset_index += 1
+            if self.dataset_index >= len(self.dataset_paths):
+                info.update({"exhausted": True})
+        return self.get_reward(), self.get_observation(), terminal, info

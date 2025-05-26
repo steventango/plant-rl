@@ -89,7 +89,8 @@ for idx in indices:
 
     # set random seeds accordingly, with optional offset
     params = exp.get_hypers(idx)
-    seed = run + params.get("experiment", {}).get("seed_offset", 0)
+    exp_params = params.get("experiment", {})
+    seed = run + exp_params.get("seed_offset", 0)
 
     # Seed various modules
     np.random.seed(seed)
@@ -132,35 +133,20 @@ for idx in indices:
         s, a, info = glue.start()
         log(env, glue, wandb_run, s, a, info)
 
-    for step in range(glue.total_steps, exp.total_steps):
-        collector.next_frame()
-        chk.maybe_save()
+    data_exhausted = False
+    while not data_exhausted:
         interaction = glue.step()
         log(env, glue, wandb_run, interaction.o, interaction.a, interaction.extra, interaction.r)
-
-        collector.collect('reward', interaction.r)
-        collector.collect('episode', chk['episode'])
-        collector.collect('steps', glue.num_steps)
-        collector.collect('action', interaction.a)  # or int.from_bytes(glue.last_action, byteorder='little') for GAC
-
+        data_exhausted = interaction.extra.get("exhausted", False)
         if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
             # allow agent to cleanup traces or other stateful episodic info
             agent.cleanup()
+            if not data_exhausted:
+                glue.start()
 
-            # Collect total reward
-            collector.collect('return', glue.total_reward)
-
-            # track how many episodes are completed (cutoff is counted as termination for this count)
-            chk['episode'] += 1
-
-            # compute the average time-per-step in ms
-            avg_time = 1000 * (time.time() - start_time) / (step + 1)
-            fps = step / (time.time() - start_time)
-
-            episode = chk['episode']
-            logger.debug(f'{episode} {step} {glue.total_reward} {avg_time:.4}ms {int(fps)}')
-
-            glue.start()
+    for step in range(exp.total_steps):
+        info = agent.plan()
+        wandb_run.log(info)
 
     collector.reset()
 
@@ -168,4 +154,3 @@ for idx in indices:
     # -- Saving --
     # ------------
     saveCollector(exp, collector, base=args.save_path)
-    chk.delete()
