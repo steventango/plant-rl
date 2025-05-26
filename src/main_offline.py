@@ -109,6 +109,7 @@ for idx in indices:
     chk.initial_value('episode', 0)
 
     context = exp.buildSaveContext(idx, base=args.save_path)
+    Path(context.resolve()).mkdir(parents=True, exist_ok=True)
     agent_path = Path(context.resolve()).relative_to('results')
 
     config = {
