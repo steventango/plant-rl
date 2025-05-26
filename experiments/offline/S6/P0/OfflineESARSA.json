@@ -1,7 +1,7 @@
 {
     "agent": "OfflineESARSA",
     "problem": "OfflinePlantGrowthChamber",
-    "total_steps": 50000,
+    "total_steps": 100000,
     "episode_cutoff": -1,
     "metaParameters": {
         "environment":{
