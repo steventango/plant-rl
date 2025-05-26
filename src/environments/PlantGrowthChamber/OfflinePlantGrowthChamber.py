@@ -4,6 +4,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytz
 
 from utils.functions import normalize
 
@@ -16,14 +17,18 @@ class OfflinePlantGrowthChamber:
         self.dataset_paths = sorted(Path(path) for path in kwargs["dataset_paths"])
         self.dataset_index = 0
         self.index = 0
-        self.daily_area = kwargs.get("daily_area", False)
-        self.daily_reward = kwargs.get("daily_reward", True)
-        self.daily_mean_clean_areas = {}
+        self.daily_area = kwargs.get("daily_area", True)
+        self.daily_reward = kwargs.get("daily_reward", True)  
+        self.daily_area_indicator = {}
+
 
     def load_dataset(self, dataset_path: Path) -> pd.DataFrame:
         processed_csv_paths = sorted(dataset_path.glob("raw.csv"))
-        df = pd.read_csv(processed_csv_paths[-1])
+        df = pd.read_csv(processed_csv_paths[-1])   # TODO: should it be -1 here or reflect self.dataset_index
         df["time"] = pd.to_datetime(df["time"])
+        edmonton_tz = pytz.timezone('America/Edmonton')
+        df['time'] = df['time'].dt.tz_convert(edmonton_tz)
+
         df = (
             df.groupby("time")
             .agg(
@@ -36,30 +41,35 @@ class OfflinePlantGrowthChamber:
             .reset_index()
         )
 
-        # Populate daily_mean_clean_areas
+        # Compute an area indicator every day, if the day is complete
         local_dates = df['time'].dt.date
-        for date_val, group in df.groupby(local_dates):
-            self.daily_mean_clean_areas[date_val] = group['mean_clean_area'].tolist()
+        for date_val, group in df.groupby(local_dates):            
+            if len(group) >= 72:    # Exp 3 has 73 time stamps per day, but older datasets may have only 72.
+                self.daily_area_indicator[date_val] = np.mean(np.sort(group['mean_clean_area'])[-5:])  # max area  
+                #self.daily_area_indicator[date_val] = np.mean(group['mean_clean_area'][:5])  # morning area  
 
         return df
 
     def get_observation(self):
-        utc_time = self.dataset.iloc[self.index]["time"]
-        local_time = utc_time.tz_convert("America/Edmonton")
+        local_time = self.dataset.iloc[self.index]["time"]
         morning_time = local_time.replace(hour=9, minute=0, second=0, microsecond=0)
         seconds_since_morning = (local_time - morning_time).total_seconds()
         normalized_seconds_since_morning = seconds_since_morning / (12 * 3600)
-        clipped_seconds_since_morning = np.clip(normalized_seconds_since_morning, 0, 1)
+
         mean_clean_area = self.dataset.iloc[self.index]["mean_clean_area"]
         if self.daily_area:
-            raise NotImplementedError("Daily area normalization is not implemented yet.")
+            area_indicator = self.daily_area_indicator[local_time.dt.date]  #TODO check if date syntax correct
+            normalized_mean_clean_area = normalize(mean_clean_area / area_indicator, 0.75, 1.05)   # bounds suitable when using max area as benchmark
         else:
-            normalized_mean_clean_area = normalize(mean_clean_area, 0, 100)
-        clipped_mean_clean_area = np.clip(normalized_mean_clean_area, 0, 1)
-        return clipped_seconds_since_morning, clipped_mean_clean_area
+            normalized_mean_clean_area = normalize(mean_clean_area, 0, 100)   #TODO check if bounds appropriate
+
+        return normalized_seconds_since_morning, normalized_mean_clean_area
 
     def get_action(self):
-        return self.dataset.iloc[self.index]["agent_action"]
+        agent_action = self.dataset.iloc[self.index]["agent_action"].astype(int)
+        if agent_action < 0 or agent_action > 3:
+            agent_action = -1
+        return agent_action
 
     def get_reward(self):
         if self.index == 0:
@@ -70,23 +80,23 @@ class OfflinePlantGrowthChamber:
         current_local_date = self.dataset.iloc[self.index]["time"].date()
         yesterday_local_date = current_local_date - timedelta(days=1)
 
-        if yesterday_local_date not in self.daily_mean_clean_areas:
+        if yesterday_local_date not in self.daily_area_indicator:   
             return 0.0
 
-        current_morning_area = self.daily_mean_clean_areas.get(current_local_date, [0])[0]
-        yesterday_morning_area = self.daily_mean_clean_areas.get(yesterday_local_date, [0])[0]
+        current_area_indicator = self.daily_area_indicator.get(current_local_date, 0)
+        yesterday_area_indicator = self.daily_area_indicator.get(yesterday_local_date, 0)
 
         if self.daily_reward:
-            if yesterday_morning_area == 0:  # Avoid division by zero
+            if yesterday_area_indicator == 0:  # Avoid division by zero
                 return 0.0
-            reward = normalize(current_morning_area / yesterday_morning_area - 1, 0, 0.35)
+            reward = normalize(current_area_indicator / yesterday_area_indicator - 1, 0, 0.35)
         else:
-            reward = normalize(current_morning_area - yesterday_morning_area, 0, 50)
+            reward = normalize(current_area_indicator - yesterday_area_indicator, 0, 50)   # TODO: check if bounds appropriate
 
         return reward
 
     def start(self):
-        self.dataset = self.load_dataset(self.dataset_paths[self.dataset_index])
+        self.dataset = self.load_dataset(self.dataset_paths[self.dataset_index])  # TODO: check if syntax correct here
         self.index = 0
         return self.get_observation(), {"action": self.get_action()}
 
