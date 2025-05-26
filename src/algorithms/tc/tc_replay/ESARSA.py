@@ -10,7 +10,7 @@ from utils.policies import egreedy_probabilities
 
 import logging
 
-logger = logging.getLogger("rlglue")
+logger = logging.getLogger("esarsa")
 logger.setLevel(logging.DEBUG)
 
 
