@@ -1,0 +1,22 @@
+{
+    "agent": "ReplayESARSA",
+    "problem": "CartPole",
+    "total_steps": 50000,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "alpha": 0.001,
+        "alpha_decay": false,
+        "epsilon": 0.1,
+        "w0": 0.0,
+        "buffer_type": "uniform",
+        "buffer_size": 100000,
+        "batch": 64,
+        "replay_ratio": 64,
+        "representation": {
+            "which_tc": "RichTileCoder",
+            "strategy": -1,
+            "tiles": [[4, 4, 4, 4]],
+            "tilings": 32
+        }
+    }
+}

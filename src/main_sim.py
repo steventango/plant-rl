@@ -114,15 +114,15 @@ for idx in indices:
         "context": str(agent_path)
     }
 
-    wandb_run = wandb.init(
-        entity="plant-rl",
-        project="sim",
-        notes=str(agent_path),
-        config=config,
-        settings=wandb.Settings(
-            x_stats_disk_paths=("/", "/data"),
-        ),
-    )
+    # wandb_run = wandb.init(
+    #     entity="plant-rl",
+    #     project="sim-steventango",
+    #     notes=str(agent_path),
+    #     config=config,
+    #     settings=wandb.Settings(
+    #         x_stats_disk_paths=("/", "/data"),
+    #     ),
+    # )
 
     # Run the experiment
     start_time = time.time()
@@ -130,14 +130,14 @@ for idx in indices:
     # if we haven't started yet, then make the first interaction
     if glue.total_steps == 0:
         s, a, info = glue.start()
-        log(env, glue, wandb_run, s, a, info)
+        # log(env, glue, wandb_run, s, a, info)
 
     for step in range(glue.total_steps, exp.total_steps):
         collector.next_frame()
         chk.maybe_save()
         interaction = glue.step()
-        log(env, glue, wandb_run, interaction.o, interaction.a, interaction.extra, interaction.r)
-                
+        # log(env, glue, wandb_run, interaction.o, interaction.a, interaction.extra, interaction.r)
+
         collector.collect('reward', interaction.r)
         collector.collect('episode', chk['episode'])
         collector.collect('steps', glue.num_steps)
@@ -158,7 +158,7 @@ for idx in indices:
             fps = step / (time.time() - start_time)
 
             episode = chk['episode']
-            logger.debug(f'{episode} {step} {glue.total_reward} {avg_time:.4}ms {int(fps)}')
+            logger.debug(f'{episode} {step} {glue.num_steps} {glue.total_reward} {avg_time:.4}ms {int(fps)}')
 
             glue.start()
 

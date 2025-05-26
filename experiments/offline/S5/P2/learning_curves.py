@@ -1,0 +1,97 @@
+import os
+import sys
+
+sys.path.append(os.getcwd() + '/src')
+
+
+import enum
+import numpy as np
+import matplotlib.pyplot as plt
+from PyExpPlotting.matplot import save, setDefaultConference, setFonts
+from PyExpUtils.results.Collection import ResultCollection
+from RlEvaluation.config import data_definition
+from RlEvaluation.interpolation import compute_step_return
+from RlEvaluation.temporal import TimeSummary, extract_learning_curves, curve_percentile_bootstrap_ci
+from RlEvaluation.statistics import Statistic
+from RlEvaluation.utils.pandas import split_over_column
+import RlEvaluation.hypers as Hypers
+import RlEvaluation.metrics as Metrics
+from experiment.ExperimentModel import ExperimentModel
+from experiment.tools import parseCmdLineArgs
+from utils.metrics import UnbiasedExponentialMovingAverage as UEMA
+
+setDefaultConference("neurips")
+
+total_days = 12
+
+
+def main():
+    path, should_save, save_type = parseCmdLineArgs()
+
+    results = ResultCollection.fromExperiments(Model=ExperimentModel)
+
+    data_definition(
+        hyper_cols=results.get_hyperparameter_columns(),
+        seed_col="seed",
+        time_col="frame",
+        environment_col="environment",
+        algorithm_col="algorithm",
+        make_global=True,
+    )
+
+    df = results.combine(
+        folder_columns=(None, None, None, "environment"),
+        file_col="algorithm",
+    )
+
+    assert df is not None
+
+    exp = results.get_any_exp()
+
+    for alg, sub_df in split_over_column(df, col="algorithm"):
+        f, ax = plt.subplots(1)
+        report = Hypers.select_best_hypers(
+            sub_df,
+            metric="steps",
+            prefer=Hypers.Preference.high,
+            time_summary=TimeSummary.mean,
+            statistic=Statistic.mean,
+        )
+
+        print("-" * 25)
+        print(alg)
+        Hypers.pretty_print(report)
+
+        xs, ys = extract_learning_curves(sub_df, report.best_configuration, metric="steps", interpolation=None)
+        xs = np.asarray(xs)
+        ys = np.asarray(ys)
+
+        # ema_steps = calculate_ema(xs, ys)
+        # mean_ema_steps = np.mean(ema_steps, axis=0)
+        line = ax.plot(xs[0], np.mean(ys, axis=0), linewidth=1, label=alg, alpha=0.8)
+        color = line[0].get_color()
+        for i in range(xs.shape[0]):
+            ax.plot(xs[0], ys[i], linewidth=0.5, alpha=0.5, color=color)
+
+        ax.set_title(f"Steps")
+        ax.set_xlabel(f"Time Steps")
+        ax.set_ylabel("Steps Until Failure")
+        ax.legend()
+
+        save(save_path=f"{path}/plots", plot_name=f"action", save_type="jpg", width=3, height_ratio=1/3)
+
+
+def calculate_ema(xs, ys):
+    emas = [UEMA() for _ in range(xs.shape[0])]
+    ema_action = [[] for _ in range(xs.shape[0])]
+    for i in range(xs.shape[0]):
+        for j in range(xs.shape[1]):
+            emas[i].update(ys[i][j])
+            ema_action[i].append(emas[i].compute().item())
+
+    ema_action = np.asarray(ema_action)
+    return ema_action
+
+
+if __name__ == "__main__":
+    main()

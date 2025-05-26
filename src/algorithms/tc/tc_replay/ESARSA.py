@@ -19,7 +19,7 @@ def _update(w, x, a, xp, pi, r, gamma, alpha, n_features):
 
     grad = x * delta[:, None]
     np.add.at(w, a, alpha / n_features * grad)  # TODO: Check if it makes sense to divide by n_features
-    
+
     return delta
 
 @njit(cache=True)
@@ -50,13 +50,13 @@ class ESARSA(TCAgentReplay):
         pi = egreedy_probabilities(qs, self.actions, self.epsilon)
         self.info['pi'] = pi
         return pi
-    
+
     def policies(self, obs: np.ndarray) -> np.ndarray:
         pis = []
-        for x in obs: 
+        for x in obs:
             pis.append(self.policy(x))
         return np.vstack(pis)
-    
+
     def values(self, x: np.ndarray):
         x = np.asarray(x)
         return value(self.w, x)
@@ -67,7 +67,7 @@ class ESARSA(TCAgentReplay):
         # only update every `update_freq` steps
         if self.steps % self.update_freq != 0:
             return
-        
+
         # wait till batch size samples have been collected
         if self.buffer.size() <= self.batch_size:
             return
@@ -81,19 +81,19 @@ class ESARSA(TCAgentReplay):
             self.info.update({
                 'delta': delta,
                 'w': self.w,
+                "updates": self.updates,
             })
 
             self.buffer.update_batch(batch)
 
         # (Optional) at the end of each episode, decay step size linearly
-        if self.alpha_decay: 
+        if self.alpha_decay:
             self.alpha = self.get_step_size()
 
     def get_info(self):
         return self.info
-    
-    def get_step_size(self):  # linear decay with minimum 
+
+    def get_step_size(self):  # linear decay with minimum
         min_alpha = 0.01
         horizon = 5e4
         return max(min_alpha, self.alpha0 * (1 - self.steps / horizon))
-

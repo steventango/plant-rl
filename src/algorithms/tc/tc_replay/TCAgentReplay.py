@@ -21,7 +21,7 @@ class TCAgentReplay(TCAgent):
         self.batch_size = params['batch']
         self.update_freq = params.get('update_freq', 1)
         self.updates_per_step = params.get('updates_per_step', 1)
-        
+
         self.buffer = build_buffer(
             buffer_type=params['buffer_type'],
             max_size=self.buffer_size,
@@ -81,7 +81,7 @@ class TCAgentReplay(TCAgent):
 
     def end(self, r: float, extra: Dict[str, Any]):
         self.buffer.add_step(Timestep(
-            x=np.zeros(self.observations),
+            x=self.get_rep(np.zeros(self.observations)),
             a=-1,
             r=r,
             gamma=0,
@@ -89,5 +89,5 @@ class TCAgentReplay(TCAgent):
         ))
 
         self.batch_update()
-                
+
         return {}
