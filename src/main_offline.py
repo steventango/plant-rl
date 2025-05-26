@@ -116,7 +116,7 @@ for idx in indices:
 
     wandb_run = wandb.init(
         entity="plant-rl",
-        project="sim",
+        project="offline",
         notes=str(agent_path),
         config=config,
         settings=wandb.Settings(
@@ -137,7 +137,7 @@ for idx in indices:
         chk.maybe_save()
         interaction = glue.step()
         log(env, glue, wandb_run, interaction.o, interaction.a, interaction.extra, interaction.r)
-                
+
         collector.collect('reward', interaction.r)
         collector.collect('episode', chk['episode'])
         collector.collect('steps', glue.num_steps)
