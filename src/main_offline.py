@@ -131,20 +131,24 @@ for idx in indices:
     # if we haven't started yet, then make the first interaction
     data_exhausted = False
     if glue.total_steps == 0:
-        s, a, info = glue.start()
-        data_exhausted = info.get("exhausted", False)
-        log(env, glue, wandb_run, s, a, info)
+        s, env_info = env.start()
+        agent.load_start(s, env_info)
+        data_exhausted = env_info.get("exhausted", False)
 
 
     while not data_exhausted:
-        interaction = glue.step()
-        log(env, glue, wandb_run, interaction.o, interaction.a, interaction.extra, interaction.r)
-        data_exhausted = interaction.extra.get("exhausted", False)
-        if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
+        (reward, s, term, env_info) = env.step(None)
+        data_exhausted = env_info.get("exhausted", False)
+        if term:
+            agent.load_end(reward, env_info)
             # allow agent to cleanup traces or other stateful episodic info
             agent.cleanup()
             if not data_exhausted:
-                glue.start()
+                s, env_info = env.start()
+                agent.load_start(s, env_info)
+                data_exhausted = env_info.get("exhausted", False)
+        else:
+            agent.load_step(reward, s, env_info)
 
     for step in range(exp.total_steps):
         info = agent.plan()
