@@ -30,8 +30,8 @@ for experiment_path in experiment_paths:
 
     tile_coder = checkpoint["a"].tile_coder
 
-    daytime_observation_space = np.linspace(0, 1, 12 * 6, endpoint=False)
-    area_observation_space = np.linspace(0, 1, 100)
+    daytime_observation_space = np.linspace(0, 1, 12 * 6, endpoint=True)
+    area_observation_space = np.linspace(0, 1, 100, endpoint=True)
 
     num_actions = weights.shape[0]
     Q = np.full((len(daytime_observation_space), len(area_observation_space), num_actions), -10000.0)
