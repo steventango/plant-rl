@@ -59,7 +59,10 @@ class OfflinePlantGrowthChamber:
         return clipped_seconds_since_morning, clipped_mean_clean_area
 
     def get_action(self):
-        return self.dataset.iloc[self.index]["agent_action"]
+        agent_action = self.dataset.iloc[self.index]["agent_action"].astype(int)
+        if agent_action < 0 or agent_action > 3:
+            agent_action = -1
+        return agent_action
 
     def get_reward(self):
         if self.index == 0:
