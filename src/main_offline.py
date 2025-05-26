@@ -129,11 +129,13 @@ for idx in indices:
     start_time = time.time()
 
     # if we haven't started yet, then make the first interaction
+    data_exhausted = False
     if glue.total_steps == 0:
         s, a, info = glue.start()
+        data_exhausted = info.get("exhausted", False)
         log(env, glue, wandb_run, s, a, info)
 
-    data_exhausted = False
+
     while not data_exhausted:
         interaction = glue.step()
         log(env, glue, wandb_run, interaction.o, interaction.a, interaction.extra, interaction.r)
