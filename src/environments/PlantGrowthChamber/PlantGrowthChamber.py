@@ -1,6 +1,7 @@
 import asyncio
 import io
 import logging
+from collections import defaultdict  # Added import
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
@@ -8,8 +9,10 @@ import numpy as np
 from PIL import Image
 
 from environments.PlantGrowthChamber.utils import get_session
-from utils.RlGlue.environment import BaseAsyncEnvironment
+from utils.functions import normalize
 from utils.metrics import UnbiasedExponentialMovingAverage as UEMA
+from utils.RlGlue.environment import BaseAsyncEnvironment
+
 from .cv import process_image
 from .zones import get_zone
 
@@ -17,13 +20,9 @@ logger = logging.getLogger("PlantGrowthChamber")
 logger.setLevel(logging.DEBUG)
 
 
-def normalize(x, lower, upper):
-    return (x - lower) / (upper - lower)
-
-
 class PlantGrowthChamber(BaseAsyncEnvironment):
 
-    def __init__(self, zone: int | None = None, timezone: str = "Etc/UTC", **kwargs):
+    def __init__(self, zone: int | None = None, timezone: str = "Etc/UTC", normalize_reward: bool = False, **kwargs):
         if zone is not None:
             self.zone = get_zone(zone) if isinstance(zone, int) else zone
         self.images = {}
@@ -35,6 +34,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.clean_areas = []
         # stores a list of arrays of observed areas in mm^2.
         # i.e. self.clean_areas[-1] contains the latest areas of individual plants
+        self.daily_mean_clean_areas = defaultdict(list)
         self.gamma = 0.99
         self.n_step = 0
         self.duration = timedelta(minutes=10)
@@ -45,6 +45,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.prev_plant_areas = np.zeros(self.zone.num_plants)
         self.enforce_night = True
         self.dim_action = 0.675 * np.array([0.398, 0.762, 0.324, 0.000, 0.332, 0.606])
+        self.normalize_reward = normalize_reward
 
         self.last_action = None
 
@@ -67,6 +68,12 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         self.clean_areas.append(clean_area)
 
+        # Update daily mean clean areas history
+        current_local_date = self.get_local_time().date()
+        mean_area_this_step = np.mean(clean_area) if clean_area.size > 0 else 0.0
+        # Removed check for key existence, defaultdict handles it
+        self.daily_mean_clean_areas[current_local_date].append(mean_area_this_step)
+
         return self.time, self.image, self.plant_stats
 
     def get_plant_stats(self):
@@ -76,9 +83,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
     def get_clean_area(self, plant_areas):
         clean_area = plant_areas.copy()
         mean = np.array([self.uema_areas[i].compute() for i in range(self.zone.num_plants)]).flatten()
-        cond = (self.area_count > self.minimum_area_count) & ((plant_areas < (1 - self.clean_area_lower) * mean) | (
-            plant_areas > (1 + self.clean_area_upper) * mean
-        ))
+        cond = (self.area_count > self.minimum_area_count) & (
+            (plant_areas < (1 - self.clean_area_lower) * mean) | (plant_areas > (1 + self.clean_area_upper) * mean)
+        )
         clean_area[cond] = self.prev_plant_areas[cond]
         self.prev_plant_areas[~cond] = plant_areas[~cond]
         for i, area in enumerate(plant_areas):
@@ -138,6 +145,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             await self.lights_off_and_sleep_until_morning()
         await self.put_action(self.dim_action)
         self.clean_areas = []
+        self.daily_mean_clean_areas = defaultdict(list)
         await self.sleep_until_next_step(self.duration)
         observation = await self.get_observation()
         self.n_step = 1
@@ -148,23 +156,27 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         terminal = self.get_terminal()
 
         duration = self.duration
-        if self.enforce_night and self.is_night() and not terminal:
-            terminal = True
+        woke = False
+        if self.enforce_night and self.is_night():
             await self.lights_off_and_sleep_until_morning()
             action = self.dim_action
             logger.info("Nighttime ended. Reference spectrum applied.")
             duration /= 2
+            woke = True
 
         await self.put_action(action)
 
         # calculate the time left until the next step
         await self.sleep_until_next_step(duration)
         observation = await self.get_observation()
-        self.reward = self.reward_function()
-        logger.info(f"Step {self.n_step} completed. Reward: {self.reward}, Terminal: {terminal}")
+        if woke:
+            reward = self.reward_function()
+        else:
+            reward = 0
+        logger.info(f"Step {self.n_step} completed. Reward: {reward}, Terminal: {terminal}")
         self.n_step += 1
 
-        return self.reward, observation, terminal, self.get_info()
+        return reward, observation, terminal, self.get_info()
 
     def is_night(self):
         local_time = self.get_local_time()
@@ -220,14 +232,25 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
     def get_terminal(self) -> bool:
         return False
 
+    def calculate_95p_mean_area(self, date):
+        mean_areas = self.daily_mean_clean_areas.get(date, [])
+        return np.percentile(np.array(mean_areas), 95) if mean_areas else 0.0
+
     def reward_function(self):
-        new = np.mean(self.clean_areas[-1])
-        old = np.mean(self.clean_areas[-2])
-        if old == 0:
-            return 0
-        reward = new - old
-        normalized_reward = normalize(reward, 0, 50)
-        return normalized_reward
+        current_local_date = self.get_local_time().date()
+        yesterday_local_date = current_local_date - timedelta(days=1)
+
+        current_95p_mean_area = self.calculate_95p_mean_area(current_local_date)
+        prior_95p_mean_area = self.calculate_95p_mean_area(yesterday_local_date)
+
+        if self.normalize_reward:
+            if prior_95p_mean_area == 0:
+                return 0
+            reward = normalize(current_95p_mean_area / prior_95p_mean_area - 1, 0, 0.35)
+        else:
+            reward = normalize(current_95p_mean_area - prior_95p_mean_area, 0, 50)
+
+        return reward
 
     async def close(self):
         """Close the environment and clean up resources."""

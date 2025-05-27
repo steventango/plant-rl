@@ -38,7 +38,7 @@ class TCAgent(BaseAgent):
 
         self.n_features = self.tile_coder.features()
         self.nonzero_features = self.tile_coder.nonzero_features()
-        
+
         self.alpha = params['alpha']
         self.alpha0 = params['alpha']
         self.alpha_decay = params.get('alpha_decay', False)
@@ -60,7 +60,7 @@ class TCAgent(BaseAgent):
     # ----------------------
     # -- RLGlue interface --
     # ----------------------
-    def start(self, s: np.ndarray):
+    def start(self, s: np.ndarray, extra: Dict[str, Any] = {}):
         self.lag.flush()
 
         x = self.get_rep(s)

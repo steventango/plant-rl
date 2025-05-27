@@ -218,7 +218,7 @@ class TOD_action(SimplePlantSimulator):
         super().__init__(reward_label, **kwargs)     
         self.state_dim = (2,)
         self.current_state = np.empty(2)
-        self.action_history = uema(alpha=0.01) # trace of actions
+        self.action_history = uema(alpha=0.1) # trace of actions
     
     def start(self):
         self.action_history.reset()

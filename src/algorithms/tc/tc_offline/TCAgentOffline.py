@@ -3,7 +3,6 @@ from typing import Any, Dict, Tuple
 
 import numpy as np
 from PyExpUtils.collection.Collector import Collector
-from PyExpUtils.utils.random import sample
 from ReplayTables.interface import Timestep
 from ReplayTables.registry import build_buffer
 
@@ -12,12 +11,13 @@ from utils.checkpoint import checkpointable
 
 
 @checkpointable(("buffer", "steps", "updates"))
-class TCAgentReplay(TCAgent):
+class TCAgentOffline(TCAgent):
     def __init__(self, observations: Tuple[int, ...], actions: int, params: Dict, collector: Collector, seed: int):
         super().__init__(observations, actions, params, collector, seed)
 
         # Params for replay
         self.buffer_size = params["buffer_size"]
+        self.batch = params["batch"]
         self.batch_size = params["batch"]
         self.update_freq = params.get("update_freq", 1)
         self.updates_per_step = params.get("updates_per_step", 1)
@@ -39,12 +39,11 @@ class TCAgentReplay(TCAgent):
     # ----------------------
     # -- RLGlue interface --
     # ----------------------
-    def start(self, s: np.ndarray):
+    def load_start(self, s: np.ndarray, extra: Dict[str, Any]):
         self.buffer.flush()
 
         x = self.get_rep(s)
-        pi = self.policy(x)
-        a = sample(pi, rng=self.rng)
+        a = extra["action"]
         self.buffer.add_step(
             Timestep(
                 x=x,
@@ -54,17 +53,15 @@ class TCAgentReplay(TCAgent):
                 terminal=False,
             )
         )
-        return a, self.get_info()
+        return {}
 
-    def step(self, r: float, sp: np.ndarray | None, extra: Dict[str, Any]):
-        a = -1
+    def load_step(self, r: float, sp: np.ndarray | None, extra: Dict[str, Any]):
+        a = extra["action"]
 
         # sample next action
         xp = None
         if sp is not None:
             xp = self.get_rep(sp)
-            pi = self.policy(xp)
-            a = sample(pi, rng=self.rng)
 
         # see if the problem specified a discount term
         gamma = extra.get("gamma", 1.0)
@@ -79,10 +76,9 @@ class TCAgentReplay(TCAgent):
             )
         )
 
-        self.batch_update()
-        return a, self.get_info()
+        return {}
 
-    def end(self, r: float, extra: Dict[str, Any]):
+    def load_end(self, r: float, extra: Dict[str, Any]):
         self.buffer.add_step(
             Timestep(
                 x=np.zeros(self.n_features),
@@ -93,6 +89,8 @@ class TCAgentReplay(TCAgent):
             )
         )
 
-        self.batch_update()
-
         return {}
+
+    def plan(self):
+        self.batch_update()
+        return self.get_info()

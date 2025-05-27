@@ -114,7 +114,7 @@ class LoggingRlGlue(RlGlue):
         self.total_reward = 0
 
         s, env_info = self.environment.start()
-        self.last_action, agent_info = self.agent.start(s)
+        self.last_action, agent_info = self.agent.start(s, env_info)
         info = {**env_info, **agent_info}
         return s, self.last_action, info
 
