@@ -1,8 +1,8 @@
 import os
 import sys
+from collections import defaultdict
 
 import pandas as pd
-from collections import defaultdict
 
 sys.path.append(os.getcwd())
 import argparse
@@ -12,6 +12,7 @@ import socket
 import time
 from pathlib import Path
 
+import matplotlib.pyplot as plt  # Added import
 import numpy as np
 import torch
 from PyExpUtils.collection.Collector import Collector
@@ -25,6 +26,7 @@ from experiment import ExperimentModel
 from problems.registry import getProblem
 from utils.checkpoint import Checkpoint
 from utils.logger import expand
+from utils.plotting import get_Q, plot_q, plot_q_diff  # Added import
 from utils.preempt import TimeoutHandler
 from utils.RlGlue.rl_glue import LoggingRlGlue
 from utils.window_avg import WindowAverage
@@ -112,6 +114,10 @@ for idx in indices:
     Path(context.resolve()).mkdir(parents=True, exist_ok=True)
     agent_path = Path(context.resolve()).relative_to('results')
 
+    # Create directory for Q-value plots
+    q_plots_dir = Path(context.resolve()) / "q_value_plots"
+    q_plots_dir.mkdir(parents=True, exist_ok=True)
+
     config = {
         **problem.params,
         "context": str(agent_path)
@@ -142,7 +148,6 @@ for idx in indices:
         data['action'].append(None)
         data['reward'].append(None)
         data['terminal'].append(None)
-
 
     while not data_exhausted:
         (reward, s, term, env_info) = env.step(None)
@@ -176,6 +181,53 @@ for idx in indices:
             for key, value in info.items():
                 expanded_info.update(expand(key, value))
             wandb_run.log(expanded_info, step=step)
+
+        if step == 0 or step % 10 ** int(np.log10(step)) == 0:
+            # Plot and save Q-values
+            if (
+                hasattr(agent, "w")
+                and hasattr(agent, "tile_coder")
+                and agent.w is not None
+                and agent.tile_coder is not None
+            ):
+                try:
+                    weights = agent.w
+                    tile_coder = agent.tile_coder
+
+                    # Define observation space for plotting (as in plot_q_values.py)
+                    daytime_observation_space = np.linspace(0, 1, 12 * 6, endpoint=True)
+                    area_observation_space = np.linspace(0, 1, 100, endpoint=True)
+
+                    num_actions = weights.shape[0]
+                    Q_vals = get_Q(weights, tile_coder, daytime_observation_space, area_observation_space, num_actions)
+
+                    # Plot and save Q-values
+                    q_plot_filename = q_plots_dir / f"q_values_step_{step:06d}.jpg"
+                    plot_q(daytime_observation_space, area_observation_space, Q_vals)  # Call the plot function
+                    plt.savefig(q_plot_filename)  # Save the figure
+                    plt.close()  # Close the figure
+
+                    # Plot and save Q-value differences
+                    if num_actions >= 2:
+                        Q_diff = Q_vals[:, :, 1] - Q_vals[:, :, 0]
+                    else:
+                        logger.info(
+                            f"Step {step}: Not enough actions ({num_actions}) to compute Q-difference. Plotting Q[s,0] instead."
+                        )
+                        Q_diff = Q_vals[:, :, 0]
+
+                    q_diff_plot_filename = q_plots_dir / f"q_diff_step_{step:06d}.jpg"
+                    plot_q_diff(daytime_observation_space, area_observation_space, Q_diff)  # Call the plot function
+                    plt.savefig(q_diff_plot_filename)  # Save the figure
+                    plt.close()  # Close the figure
+                    logger.info(f"Step {step}: Saved Q-value plots to {q_plots_dir}")
+                except Exception as e:
+                    logger.error(f"Step {step}: Error during Q-value plotting: {e}")
+
+            else:
+                logger.warning(
+                    f"Step {step}: Agent does not have 'w' or 'tile_coder' attributes, or they are None. Skipping Q-value plotting."
+                )
 
     chk.save()
 
