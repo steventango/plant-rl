@@ -69,8 +69,11 @@ class ESARSA(TCAgentOffline):
         if self.steps % self.update_freq != 0:
             return
 
+        if self.batch == "buffer":
+            self.batch_size = self.buffer.size()
+
         # wait till batch size samples have been collected
-        if self.buffer.size() <= self.batch_size:
+        if self.buffer.size() < self.batch_size:
             return
 
         for _ in range(self.replay_ratio):

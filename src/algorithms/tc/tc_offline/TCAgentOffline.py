@@ -17,6 +17,7 @@ class TCAgentOffline(TCAgent):
 
         # Params for replay
         self.buffer_size = params["buffer_size"]
+        self.batch = params["batch"]
         self.batch_size = params["batch"]
         self.update_freq = params.get("update_freq", 1)
         self.updates_per_step = params.get("updates_per_step", 1)
