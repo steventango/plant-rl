@@ -229,8 +229,6 @@ for idx in indices:
                     f"Step {step}: Agent does not have 'w' or 'tile_coder' attributes, or they are None. Skipping Q-value plotting."
                 )
 
-    chk.save()
-
     collector.reset()
 
     # ------------

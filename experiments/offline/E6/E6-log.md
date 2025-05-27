@@ -1,7 +1,7 @@
 #  Experiment E5 -- Sim with only overnight reward
 ##  Phase P0
 ### Objectives: 
-- using max value
+- using max value, daily photon
 ### Methods: 
 - 
 ### Observations: 
@@ -12,7 +12,7 @@
 
 ##  Phase P1
 ### Objectives: 
-- using morning value
+- using max value, daily area
 ### Methods: 
 - 
 ### Observations: 
