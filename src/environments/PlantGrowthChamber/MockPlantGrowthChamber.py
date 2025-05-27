@@ -17,18 +17,21 @@ class MockPlantGrowthChamber(PlantGrowthChamber):
 
     def __init__(self, *args, **kwargs):
         self.dataset_path = Path(kwargs["dataset_path"])
-        self.config_path = self.dataset_path / "config.json"
+
         self.procesed_csv_paths = sorted(self.dataset_path.glob("processed/**/all.csv"))
         if len(self.procesed_csv_paths) == 0:
             self.dataset_df = pd.read_csv(self.dataset_path / "raw.csv")
         else:
             self.dataset_df = pd.read_csv(self.procesed_csv_paths[-1])
         self.dataset_df["time"] = pd.to_datetime(self.dataset_df["time"])
-        with open(self.config_path) as f:
-            self.config = json.load(f)
-        kwargs["zone"] = deserialize_zone(self.config["zone"])
         self.index = 0
+        self._time = self.dataset_df["time"].iloc[self.index]
         self.mock_area = kwargs.get("mock_area", False)
+        if not self.mock_area:
+            self.config_path = self.dataset_path / "config.json"
+            with open(self.config_path) as f:
+                self.config = json.load(f)
+            kwargs["zone"] = deserialize_zone(self.config["zone"])
         self.plant_stat_columns = [
             "in_bounds",
             "area",
@@ -62,20 +65,21 @@ class MockPlantGrowthChamber(PlantGrowthChamber):
         return result
 
     async def get_image(self):
-        row = self.dataset_df[self.dataset_df["frame"] == self.index].iloc[0]
-        path = self.images_path / row["image_name"]
-        self.images["left"] = Image.open(path)
+        if not self.mock_area:
+            row = self.dataset_df[self.dataset_df["time"] == self._time].iloc[0]
+            path = self.images_path / row["image_name"]
+            self.images["left"] = Image.open(path)
 
     def get_time(self):
-        row = self.dataset_df[self.dataset_df["frame"] == self.index].iloc[0]
+        row = self.dataset_df[self.dataset_df["time"] == self._time].iloc[0]
         return row["time"]
 
     def get_terminal(self):
-        return self.index >= self.dataset_df["frame"].max()
+        return self._time >= self.dataset_df["time"].max()
 
     def get_plant_stats(self):
         if self.mock_area:
-            self.df = self.dataset_df[self.dataset_df["frame"] == self.index]
+            self.df = self.dataset_df[self.dataset_df["time"] == self._time]
             self.df = self.df[self.plant_stat_columns]
             self.plant_stats = np.array(self.df, dtype=np.float32)
         else:
@@ -93,10 +97,7 @@ class MockPlantGrowthChamber(PlantGrowthChamber):
     async def sleep_until(self, wake_time: datetime):
         while self.get_time() < wake_time and not self.get_terminal():
             self.index += 1
-            if self.index >= self.dataset_df["frame"].max():
-                self.index = 0
-                break
-
+            self._time = self.dataset_df["time"].iloc[self.index]
 
     async def close(self):
         pass
