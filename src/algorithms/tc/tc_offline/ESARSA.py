@@ -81,7 +81,7 @@ class ESARSA(TCAgentOffline):
 
             self.info.update(
                 {
-                    "delta": delta,
+                    "delta": (delta ** 2).mean(),
                     "w": self.w,
                 }
             )
