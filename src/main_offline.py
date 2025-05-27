@@ -24,7 +24,7 @@ import wandb
 from experiment import ExperimentModel
 from problems.registry import getProblem
 from utils.checkpoint import Checkpoint
-from utils.logger import log
+from utils.logger import expand
 from utils.preempt import TimeoutHandler
 from utils.RlGlue.rl_glue import LoggingRlGlue
 from utils.window_avg import WindowAverage
@@ -172,7 +172,10 @@ for idx in indices:
     for step in range(exp.total_steps):
         info = agent.plan()
         if step % 1000 == 0:
-            wandb_run.log(info, step=step)
+            expanded_info = {}
+            for key, value in info.items():
+                expanded_info.update(expand(key, value))
+            wandb_run.log(expanded_info, step=step)
 
     chk.save()
 
