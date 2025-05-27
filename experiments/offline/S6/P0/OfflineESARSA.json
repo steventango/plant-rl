@@ -1,29 +1,25 @@
 {
     "agent": "OfflineESARSA",
     "problem": "OfflinePlantGrowthChamber",
-    "total_steps": 1000000,
+    "total_steps": 100001,
     "episode_cutoff": -1,
     "metaParameters": {
         "environment":{
             "normalize_reward": true,
             "dataset_paths": [
                 [
-                    "/data/online/E7/P2/Constant1/z1",
-                    "/data/online/E7/P2/Constant2/z2",
-                    "/data/online/E7/P2/ESARSA3/z3",
-                    "/data/online/E7/P4/LinearESARSA6/z6",
-                    "/data/online/E7/P4/LinearESARSA8/z8",
-                    "/data/online/E7/P4/LinearESARSA9/z9"
+                    "/data/online/E7/P3/ESARSA3/z3test"
                 ]
         ]
         },
         "alpha": 0.1,
-        "alpha_decay": true,
+        "alpha_decay": false,
         "epsilon": 0.0,
         "w0": 0.0,
         "buffer_type": "uniform",
         "buffer_size": 100000,
-        "batch": 256,
+        "batch": "buffer",
+        "gamma": 0.999,
         "replay_ratio": 1,
 
         "representation": {
