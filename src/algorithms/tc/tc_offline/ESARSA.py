@@ -69,8 +69,11 @@ class ESARSA(TCAgentOffline):
         if self.steps % self.update_freq != 0:
             return
 
+        if self.batch == "buffer":
+            self.batch_size = self.buffer.size()
+
         # wait till batch size samples have been collected
-        if self.buffer.size() <= self.batch_size:
+        if self.buffer.size() < self.batch_size:
             return
 
         for _ in range(self.replay_ratio):
@@ -81,7 +84,7 @@ class ESARSA(TCAgentOffline):
 
             self.info.update(
                 {
-                    "delta": delta,
+                    "delta": (delta ** 2).mean(),
                     "w": self.w,
                 }
             )
@@ -96,6 +99,6 @@ class ESARSA(TCAgentOffline):
         return self.info
 
     def get_step_size(self):  # linear decay with minimum
-        min_alpha = 0.01
-        horizon = 5e4
+        min_alpha = 0.001
+        horizon = 1e6
         return max(min_alpha, self.alpha0 * (1 - self.steps / horizon))

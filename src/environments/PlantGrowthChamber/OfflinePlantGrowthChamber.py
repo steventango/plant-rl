@@ -25,7 +25,7 @@ class OfflinePlantGrowthChamber:
 
     def load_dataset(self, dataset_path: Path) -> pd.DataFrame:
         processed_csv_paths = sorted(dataset_path.glob("raw.csv"))
-        df = pd.read_csv(processed_csv_paths[-1])   # TODO: should it be -1 here or reflect self.dataset_index
+        df = pd.read_csv(processed_csv_paths[-1])
         df["time"] = pd.to_datetime(df["time"])
         edmonton_tz = pytz.timezone('America/Edmonton')
         df['time'] = df['time'].dt.tz_convert(edmonton_tz)
@@ -48,8 +48,8 @@ class OfflinePlantGrowthChamber:
         # Compute an area indicator every day
         local_dates = df['time'].dt.date
         for date_val, group in df.groupby(local_dates):            
-            self.daily_area_indicator[date_val] = np.mean(np.sort(group['mean_clean_area'])[-5:])  # max area  
-            #self.daily_area_indicator[date_val] = np.mean(group['mean_clean_area'][:5])  # morning area  
+            #self.daily_area_indicator[date_val] = np.mean(np.sort(group['mean_clean_area'])[-5:])  # max area  
+            self.daily_area_indicator[date_val] = np.mean(group['mean_clean_area'][:5])  # morning area  
 
         return df
 
@@ -61,7 +61,7 @@ class OfflinePlantGrowthChamber:
 
         mean_clean_area = self.dataset.iloc[self.index]["mean_clean_area"]
         if self.daily_area:
-            area_indicator = self.daily_area_indicator[local_time.dt.date]  #TODO check if date syntax correct
+            area_indicator = self.daily_area_indicator[pd.to_datetime(local_time).date()]  #TODO check if date syntax correct
             normalized_mean_clean_area = normalize(mean_clean_area / area_indicator, 0.75, 1.05)   # bounds suitable when using max area as benchmark
         else:
             normalized_mean_clean_area = normalize(mean_clean_area, 0, 100)   #TODO check if bounds appropriate
@@ -72,9 +72,11 @@ class OfflinePlantGrowthChamber:
             return normalized_seconds_since_morning, normalize(self.photon_counter, 0, 72)
 
     def get_action(self):
-        agent_action = self.dataset.iloc[self.index]["agent_action"].astype(int)
-        if agent_action < 0 or agent_action > 1:
-            raise ValueError('agent_action can only be 0 or 1. Please use data from Exp 3.')
+        agent_action = self.dataset.iloc[self.index]['agent_action']
+        if pd.isna(agent_action):
+            agent_action = 0
+        else:
+            agent_action = int(agent_action)
         return agent_action
 
     def get_reward(self):
@@ -102,7 +104,7 @@ class OfflinePlantGrowthChamber:
         return reward
 
     def start(self):
-        self.dataset = self.load_dataset(self.dataset_paths[self.dataset_index])  # TODO: check if syntax correct here
+        self.dataset = self.load_dataset(self.dataset_paths[self.dataset_index]) 
         self.index = 0
         self.photon_counter = 0
         return self.get_observation(), {"action": self.get_action()}

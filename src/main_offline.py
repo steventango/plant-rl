@@ -1,7 +1,8 @@
 import os
 import sys
+from collections import defaultdict
 
-import Box2D  # we need to import this first because cedar is stupid
+import pandas as pd
 
 sys.path.append(os.getcwd())
 import argparse
@@ -11,6 +12,7 @@ import socket
 import time
 from pathlib import Path
 
+import matplotlib.pyplot as plt  # Added import
 import numpy as np
 import torch
 from PyExpUtils.collection.Collector import Collector
@@ -23,10 +25,11 @@ import wandb
 from experiment import ExperimentModel
 from problems.registry import getProblem
 from utils.checkpoint import Checkpoint
-from utils.logger import log
+from utils.logger import expand
+from utils.plotting import get_Q, plot_q, plot_q_diff  # Added import
 from utils.preempt import TimeoutHandler
-from utils.window_avg import WindowAverage
 from utils.RlGlue.rl_glue import LoggingRlGlue
+from utils.window_avg import WindowAverage
 
 # ------------------
 # -- Command Args --
@@ -108,7 +111,12 @@ for idx in indices:
     chk.initial_value('episode', 0)
 
     context = exp.buildSaveContext(idx, base=args.save_path)
+    Path(context.resolve()).mkdir(parents=True, exist_ok=True)
     agent_path = Path(context.resolve()).relative_to('results')
+
+    # Create directory for Q-value plots
+    q_plots_dir = Path(context.resolve()) / "q_value_plots"
+    q_plots_dir.mkdir(parents=True, exist_ok=True)
 
     config = {
         **problem.params,
@@ -128,27 +136,100 @@ for idx in indices:
     # Run the experiment
     start_time = time.time()
 
+    data = defaultdict(list)
+
     # if we haven't started yet, then make the first interaction
     data_exhausted = False
     if glue.total_steps == 0:
-        s, a, info = glue.start()
-        data_exhausted = info.get("exhausted", False)
-        log(env, glue, wandb_run, s, a, info)
-
+        s, env_info = env.start()
+        agent.load_start(s, env_info)
+        data_exhausted = env_info.get("exhausted", False)
+        data['observation'].append(s)
+        data['action'].append(None)
+        data['reward'].append(None)
+        data['terminal'].append(None)
 
     while not data_exhausted:
-        interaction = glue.step()
-        log(env, glue, wandb_run, interaction.o, interaction.a, interaction.extra, interaction.r)
-        data_exhausted = interaction.extra.get("exhausted", False)
-        if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
+        (reward, s, term, env_info) = env.step(None)
+        data['observation'].append(s)
+        data['action'].append(env_info.get("action", None))
+        data['reward'].append(reward)
+        data['terminal'].append(term)
+        data_exhausted = env_info.get("exhausted", False)
+        if term:
+            agent.load_end(reward, env_info)
             # allow agent to cleanup traces or other stateful episodic info
             agent.cleanup()
             if not data_exhausted:
-                glue.start()
+                s, env_info = env.start()
+                agent.load_start(s, env_info)
+                data['observation'].append(s)
+                data['action'].append(None)
+                data['reward'].append(None)
+                data['terminal'].append(None)
+                data_exhausted = env_info.get("exhausted", False)
+        else:
+            agent.load_step(reward, s, env_info)
+
+    df = pd.DataFrame(data)
+    df.to_csv(context.resolve('data.csv'), index=False)
 
     for step in range(exp.total_steps):
         info = agent.plan()
-        wandb_run.log(info)
+        if step % 1000 == 0:
+            expanded_info = {}
+            for key, value in info.items():
+                expanded_info.update(expand(key, value))
+            wandb_run.log(expanded_info, step=step)
+
+        if step == 0 or step % 10 ** int(np.log10(step)) == 0:
+            # Plot and save Q-values
+            if (
+                hasattr(agent, "w")
+                and hasattr(agent, "tile_coder")
+                and agent.w is not None
+                and agent.tile_coder is not None
+            ):
+                try:
+                    weights = agent.w
+                    tile_coder = agent.tile_coder
+
+                    # Define observation space for plotting (as in plot_q_values.py)
+                    daytime_observation_space = np.linspace(0, 1, 12 * 6, endpoint=True)
+                    area_observation_space = np.linspace(0, 1, 100, endpoint=True)
+
+                    num_actions = weights.shape[0]
+                    Q_vals = get_Q(weights, tile_coder, daytime_observation_space, area_observation_space, num_actions)
+
+                    # Plot and save Q-values
+                    q_plot_filename = q_plots_dir / f"q_values_step_{step:06d}.jpg"
+                    plot_q(daytime_observation_space, area_observation_space, Q_vals)  # Call the plot function
+                    plt.savefig(q_plot_filename)  # Save the figure
+                    plt.close()  # Close the figure
+
+                    # Plot and save Q-value differences
+                    if num_actions >= 2:
+                        Q_diff = Q_vals[:, :, 1] - Q_vals[:, :, 0]
+                    else:
+                        logger.info(
+                            f"Step {step}: Not enough actions ({num_actions}) to compute Q-difference. Plotting Q[s,0] instead."
+                        )
+                        Q_diff = Q_vals[:, :, 0]
+
+                    q_diff_plot_filename = q_plots_dir / f"q_diff_step_{step:06d}.jpg"
+                    plot_q_diff(daytime_observation_space, area_observation_space, Q_diff)  # Call the plot function
+                    plt.savefig(q_diff_plot_filename)  # Save the figure
+                    plt.close()  # Close the figure
+                    logger.info(f"Step {step}: Saved Q-value plots to {q_plots_dir}")
+                except Exception as e:
+                    logger.error(f"Step {step}: Error during Q-value plotting: {e}")
+
+            else:
+                logger.warning(
+                    f"Step {step}: Agent does not have 'w' or 'tile_coder' attributes, or they are None. Skipping Q-value plotting."
+                )
+
+    chk.save()
 
     collector.reset()
 
