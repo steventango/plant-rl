@@ -29,12 +29,15 @@ class LinearAgent(BaseAgent):
     # ----------------------
     # -- RLGlue interface --
     # ----------------------
-    def start(self, s: np.ndarray):
+    def start(self, s: np.ndarray, extra: Dict[str, Any]) -> Tuple[int, Dict[str, Any]]:
         self.lag.flush()
 
         x = s # Uses unprocessed features from env
-        pi = self.policy(x)
-        a = sample(pi, rng=self.rng)
+        if "action" in extra:
+            a = extra["action"]
+        else:
+            pi = self.policy(x)
+            a = sample(pi, rng=self.rng)
         self.lag.add(Timestep(
             x=x,
             a=a,
@@ -45,14 +48,17 @@ class LinearAgent(BaseAgent):
         return a, self.info
 
     def step(self, r: float, sp: np.ndarray | None, extra: Dict[str, Any]):
-        a = -1
+        if "action" in extra:
+            a = extra["action"]
+        else:
+            a = -1
 
-        # sample next action
-        xp = None
-        if sp is not None:
-            xp = sp # Uses unprocessed features from env
-            pi = self.policy(xp)
-            a = sample(pi, rng=self.rng)
+            # sample next action
+            xp = None
+            if sp is not None:
+                xp = sp # Uses unprocessed features from env
+                pi = self.policy(xp)
+                a = sample(pi, rng=self.rng)
 
         # see if the problem specified a discount term
         gamma = extra.get('gamma', 1.0)
