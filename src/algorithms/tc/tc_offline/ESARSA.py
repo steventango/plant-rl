@@ -96,6 +96,6 @@ class ESARSA(TCAgentOffline):
         return self.info
 
     def get_step_size(self):  # linear decay with minimum
-        min_alpha = 0.01
-        horizon = 5e4
+        min_alpha = 0.001
+        horizon = 1e6
         return max(min_alpha, self.alpha0 * (1 - self.steps / horizon))
