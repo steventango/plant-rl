@@ -17,7 +17,7 @@ class OfflinePlantGrowthChamber:
         self.dataset_paths = sorted(Path(path) for path in kwargs["dataset_paths"])
         self.dataset_index = 0
         self.index = 0
-        self.daily_photon = kwargs.get("daily_photon", True)  # if true, "area" is replaced by "photon count" in the state
+        self.daily_photon = kwargs.get("daily_photon", False)  # if true, "area" is replaced by "photon count" in the state
         self.daily_area = kwargs.get("daily_area", True)
         self.daily_reward = kwargs.get("daily_reward", True)  
         self.daily_area_indicator = {}
@@ -48,8 +48,8 @@ class OfflinePlantGrowthChamber:
         # Compute an area indicator every day
         local_dates = df['time'].dt.date
         for date_val, group in df.groupby(local_dates):            
-            #self.daily_area_indicator[date_val] = np.mean(np.sort(group['mean_clean_area'])[-5:])  # max area  
-            self.daily_area_indicator[date_val] = np.mean(group['mean_clean_area'][:5])  # morning area  
+            self.daily_area_indicator[date_val] = np.mean(np.sort(group['mean_clean_area'])[-5:])  # max area  
+            #self.daily_area_indicator[date_val] = np.mean(group['mean_clean_area'][:5])  # morning area (you have to reset normalization bounds if using this)
 
         return df
 
