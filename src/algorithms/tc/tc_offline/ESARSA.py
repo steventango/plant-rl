@@ -91,7 +91,7 @@ class ESARSA(TCAgentOffline):
 
             self.buffer.update_batch(batch)
 
-        # (Optional) at the end of each episode, decay step size linearly
+        # (Optional) decay step size linearly
         if self.alpha_decay:
             self.alpha = self.get_step_size()
 
