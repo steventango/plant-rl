@@ -4,6 +4,7 @@ from functools import partial
 
 import jax
 import jax.numpy as jnp
+import numpy as np
 from jax._src.typing import Array, ArrayLike
 from jax.nn import relu
 
@@ -16,26 +17,26 @@ class PiecewiseLinear:
         """
         if len(x_values) != len(y_values):
             raise ValueError("x_values and y_values must have same length")
-            
+
         self.segments = []  # Will store (x_min, x_max, slope, intercept)
-        
+
         # Create segments from consecutive points
         for i in range(len(x_values)-1):
             x_min, x_max = x_values[i], x_values[i+1]
             y_min, y_max = y_values[i], y_values[i+1]
-            
+
             # Calculate slope and intercept for this segment
             slope = (y_max - y_min) / (x_max - x_min)
             intercept = y_min - slope * x_min
             self.segments.append((x_min, x_max, slope, intercept))
-    
+
     def __call__(self, x):
         # Find the appropriate segment and evaluate
         for x_min, x_max, slope, intercept in self.segments:
             if x_min <= x <= x_max:
                 return slope * x + intercept
         raise ValueError(f"x={x} is not within any defined segment")
-    
+
     def copy(self):
         """
         Create a deep copy of the piecewise linear function
@@ -45,7 +46,7 @@ class PiecewiseLinear:
         new_obj = PiecewiseLinear([0], [0])  # Create dummy object
         new_obj.segments = list(self.segments)  # Make a copy of segments list
         return new_obj
-    
+
     def insert_plateau(self, t0, t1):
         """
         Modifies the piecewise function by:
@@ -55,17 +56,17 @@ class PiecewiseLinear:
         """
         if t1 < t0:
             raise ValueError("t1 must be greater than or equal to t0")
-        
+
         if t1 == t0:
             return
-            
+
         shift = t1 - t0
         new_segments = []
-        
+
         shift = t1 - t0
         new_segments = []
         plateau_added = False
-        
+
         # Process each segment
         for x_min, x_max, slope, intercept in self.segments:
             if x_max < t0:
@@ -79,20 +80,20 @@ class PiecewiseLinear:
                 # Segment contains or touches t0
                 # Find value at t0
                 val_at_t0 = slope * t0 + intercept
-                
+
                 # Add segment up to t0 if needed
                 if x_min < t0:
                     new_segments.append((x_min, t0, slope, intercept))
-                
+
                 # Add plateau if we haven't yet
                 if not plateau_added:
                     new_segments.append((t0, t1, 0, val_at_t0))
                     plateau_added = True
-                
+
                 # Add shifted remainder if there is any
                 if x_max > t0:
                     new_segments.append((t1, x_max + shift, slope, val_at_t0 - slope * t1))
-        
+
         self.segments = new_segments
 
     def rescale_x(self, n):
@@ -117,10 +118,8 @@ class PiecewiseLinear:
             new_intercept = intercept
             new_segments.append((new_x_min, new_x_max, new_slope, new_intercept))
         new_obj.segments = new_segments
-        
-        return new_obj
-    
 
+        return new_obj
 
 
 @partial(jax.jit, static_argnums=(2))
@@ -158,3 +157,7 @@ def fta(x: ArrayLike, eta: float = 2, tiles: int = 20, lower_bound: float = -20,
 @jax.jit
 def fuzzy_indicator_function(x: ArrayLike, eta: float):
     return jnp.greater(eta, x).astype(x.dtype) * x + jnp.greater_equal(x, eta).astype(x.dtype)
+
+
+def normalize(x, lower, upper):
+    return (x - lower) / (upper - lower)

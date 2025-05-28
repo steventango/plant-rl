@@ -20,7 +20,11 @@ from algorithms.tc.QL import QL
 from algorithms.tc.SoftmaxAC import SoftmaxAC
 from algorithms.tc.tc_replay.ESARSA import ESARSA as ReplayESARSA
 from algorithms.tc.tc_replay.QL import QL as QLReplay
-
+from algorithms.tc.tc_offline.ESARSA import ESARSA as OfflineESARSA
+from algorithms.tc.SoftmaxAC import SoftmaxAC
+from algorithms.linear.ESARSA import ESARSA as LinearESARSA
+from algorithms.linear.LinearQL import LinearQL
+from algorithms.nn.GreedyAC.GreedyAC import GreedyAC
 
 def getAgent(name) -> Type[BaseAgent]:
     if name.startswith("DQN"):
@@ -43,7 +47,7 @@ def getAgent(name) -> Type[BaseAgent]:
 
     if name == 'ReplayESARSA':
         return ReplayESARSA
-    
+
     if name.startswith('Bernoulli'):
         return BernoulliAgent
 
@@ -52,6 +56,9 @@ def getAgent(name) -> Type[BaseAgent]:
 
     if name.startswith("LinearESARSA"):
         return LinearESARSA
+
+    if name.startswith("OfflineESARSA"):
+        return OfflineESARSA
 
     if name == 'LinearQL':
         return LinearQL
