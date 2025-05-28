@@ -17,7 +17,7 @@ class OfflinePlantGrowthChamber:
         self.dataset_paths = sorted(Path(path) for path in kwargs["dataset_paths"])
         self.dataset_index = 0
         self.index = 0
-        self.daily_photon = kwargs.get("daily_photon", False)  # if true, "area" is replaced by "photon count" in the state
+        self.daily_photon = kwargs.get("use_photon_count", False)   # if true, "area" is replaced by "photon count" in the state
         self.daily_area = kwargs.get("daily_area", True)
         self.daily_reward = kwargs.get("daily_reward", True)  
         self.daily_area_indicator = {}
@@ -61,7 +61,7 @@ class OfflinePlantGrowthChamber:
 
         mean_clean_area = self.dataset.iloc[self.index]["mean_clean_area"]
         if self.daily_area:
-            area_indicator = self.daily_area_indicator[pd.to_datetime(local_time).date()]  #TODO check if date syntax correct
+            area_indicator = self.daily_area_indicator[pd.to_datetime(local_time).date()] 
             normalized_mean_clean_area = normalize(mean_clean_area / area_indicator, 0.75, 1.05)   # bounds suitable when using max area as benchmark
         else:
             normalized_mean_clean_area = normalize(mean_clean_area, 0, 100)   #TODO check if bounds appropriate
