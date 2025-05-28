@@ -1,13 +1,26 @@
 import json
+import logging
 import os
 import tkinter as tk
 from datetime import datetime
+from itertools import chain
 from pathlib import Path
 from tkinter import messagebox, ttk
-from itertools import chain
+
 import cv2
 import numpy as np
 from PIL import Image, ImageTk
+
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(), logging.FileHandler("tray_config.log")],
+)
+logger = logging.getLogger("TrayConfigApp")
+
+# Flag to update existing config files instead of creating new ones
+UPDATE_CONFIG = True  # When True, updates configs in PlantGrowthChamber directory
 
 # Base directories containing the datasets
 BASE_DIRS = [
@@ -16,8 +29,7 @@ BASE_DIRS = [
 ]
 BASE_DIRS.extend(
     chain(
-        # Path("/data/online/E7/P0").rglob("*"),
-        Path("/data/online/E6/P5.1").rglob("*"),
+        Path("/data/online/E8/P0").rglob("*"),
     )
 )
 
@@ -302,12 +314,39 @@ class TrayConfigApp:
     def extract_zone_identifier(self, dataset_path):
         """Extract zone identifier from the dataset directory path"""
         zone_name = dataset_path.name
-        if zone_name.startswith("z") and "c" in zone_name:
+        logger.info(f"Extracting zone identifier from path: {dataset_path}")
+
+        if zone_name.startswith("z"):
             try:
-                identifier_str = zone_name[1 : zone_name.find("c")]
-                return int(identifier_str)
-            except ValueError:
-                print(f"Warning: Could not parse identifier from {zone_name}")
+                # First try to parse z followed by numbers until non-digit
+                import re
+
+                match = re.match(r"z(\d+)", zone_name)
+                if match:
+                    zone_id = int(match.group(1))
+                    logger.info(f"Successfully extracted zone identifier {zone_id} using regex")
+                    return zone_id
+
+                # Fallback to old method if regex doesn't match
+                if "c" in zone_name:
+                    identifier_str = zone_name[1 : zone_name.find("c")]
+                    zone_id = int(identifier_str)
+                    logger.info(f"Extracted zone identifier {zone_id} using 'c' delimiter method")
+                    return zone_id
+
+                # If no 'c' found, try to extract numeric part after 'z'
+                numeric_part = "".join(c for c in zone_name[1:] if c.isdigit())
+                if numeric_part:
+                    zone_id = int(numeric_part)
+                    logger.info(f"Extracted zone identifier {zone_id} using numeric extraction")
+                    return zone_id
+
+                logger.warning(f"Could not extract zone identifier from {zone_name} using any method")
+            except ValueError as e:
+                logger.error(f"ValueError while parsing identifier from {zone_name}: {e}")
+
+        # Print a warning about using default zone
+        logger.warning(f"Using default zone 1 for path {dataset_path}")
         return 1
 
     def load_existing_config(self):
@@ -348,8 +387,32 @@ class TrayConfigApp:
                             # User chose not to edit, go to next dataset
                             print("Skipping to next dataset...")
                             self.load_next_dataset()
+                        else:
+                            # User chose to edit - clear existing trays to allow fresh selection
+                            self.clear_all_trays()
+                            messagebox.showinfo(
+                                "Edit Mode", "Existing trays have been cleared. Please select new tray positions."
+                            )
             except Exception as e:
                 print(f"Error loading configuration: {e}")
+
+    def clear_all_trays(self):
+        """Clear all existing trays to allow fresh selection"""
+        # Clear canvas markers
+        for tag in self.tray_markers:
+            self.canvas.delete(tag)
+
+        # Reset data structures
+        self.tray_markers = []
+        self.tray_configs = []
+        self.points = []
+        self.canvas.delete("current_points")
+
+        # Reset UI elements
+        self.tray_count_label.config(text="Trays: 0")
+        self.update_status_bar()
+
+        logger.info("All existing trays cleared for fresh selection")
 
     def save_current_config(self):
         """Save the current configuration to a JSON file"""
@@ -359,16 +422,89 @@ class TrayConfigApp:
         if self.tray_configs:
             # Extract the zone identifier from the dataset directory path
             zone_identifier = self.extract_zone_identifier(self.dataset_dir)
+            logger.info(f"Saving configuration for zone {zone_identifier}")
 
             config = {"zone": {"identifier": zone_identifier, "trays": self.tray_configs}}
-            config_path = self.dataset_dir / "config.json"
-            with open(config_path, "w") as f:
-                json.dump(config, f, indent=4)
-            print(f"Configuration saved to {config_path} with zone identifier: {zone_identifier}")
-            return True
+
+            if UPDATE_CONFIG:
+                # Find and update existing config file in PlantGrowthChamber configs
+                return self.update_existing_config(zone_identifier, config)
+            else:
+                # Save to the original dataset directory
+                config_path = self.dataset_dir / "config.json"
+                with open(config_path, "w") as f:
+                    json.dump(config, f, indent=4)
+                logger.info(f"Configuration saved to {config_path} with zone identifier: {zone_identifier}")
+                return True
         else:
-            print("No trays to save.")
+            logger.warning("No trays to save.")
             return False
+
+    def find_config_file(self, zone_identifier):
+        """Find the corresponding config file in PlantGrowthChamber configs directory"""
+        config_dir = Path("/workspaces/plant-rl/src/environments/PlantGrowthChamber/configs")
+        logger.info(f"Looking for config files for zone {zone_identifier} in {config_dir}")
+
+        # Look for config files matching the zone identifier
+        pattern = f"z{zone_identifier}*.json"
+        matching_files = list(config_dir.glob(pattern))
+
+        if matching_files:
+            # Return the first matching file
+            logger.info(f"Found existing config file: {matching_files[0]}")
+            return matching_files[0]
+
+        # If no matching file, construct a default filename
+        default_file = config_dir / f"z{zone_identifier}.json"
+        logger.info(f"No existing config file found. Will create: {default_file}")
+        return default_file
+
+    def update_existing_config(self, zone_identifier, new_config):
+        """Update an existing config file with new tray configuration"""
+        config_file = self.find_config_file(zone_identifier)
+        logger.info(f"Updating/creating config for zone {zone_identifier} at {config_file}")
+
+        # Check if the config file exists
+        if config_file.exists():
+            try:
+                # Load existing config
+                with open(config_file, "r") as f:
+                    existing_config = json.load(f)
+                logger.info(f"Loaded existing config from {config_file}")
+
+                # Only update the trays section, preserve other settings
+                if "zone" not in existing_config:
+                    existing_config["zone"] = {}
+                    logger.info("Adding missing 'zone' section to config")
+
+                existing_config["zone"]["trays"] = new_config["zone"]["trays"]
+                logger.info(f"Updated trays section with {len(new_config['zone']['trays'])} trays")
+
+                # Make sure the identifier is preserved/set
+                existing_config["zone"]["identifier"] = zone_identifier
+                logger.info(f"Ensured zone identifier is set to {zone_identifier}")
+
+                # Save the updated config
+                with open(config_file, "w") as f:
+                    json.dump(existing_config, f, indent=4)
+
+                logger.info(f"Successfully updated configuration in {config_file}")
+                return True
+
+            except Exception as e:
+                logger.error(f"Error updating configuration file {config_file}: {e}")
+                # Fallback: create a new file
+                with open(config_file, "w") as f:
+                    json.dump(new_config, f, indent=4)
+                logger.info(f"Created new configuration file at {config_file} after error")
+                return True
+        else:
+            # File doesn't exist, create it
+            os.makedirs(config_file.parent, exist_ok=True)
+            with open(config_file, "w") as f:
+                json.dump(new_config, f, indent=4)
+            logger.info(f"Created new configuration file at {config_file}")
+            return True
 
     def load_next_dataset(self):
         """Load the next dataset in the sequence"""
