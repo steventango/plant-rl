@@ -412,7 +412,7 @@ class TrayConfigApp:
         self.tray_count_label.config(text="Trays: 0")
         self.update_status_bar()
 
-        print("All existing trays cleared for fresh selection")
+        logger.info("All existing trays cleared for fresh selection")
 
     def save_current_config(self):
         """Save the current configuration to a JSON file"""
