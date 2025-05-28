@@ -13,6 +13,7 @@ class BernoulliAgent(BaseAgent):
         self.steps = 0
         self.updates = 0
         self.p = params.get('p', 0.5)
+        assert 0.0 <= self.p <= 1.0, "Parameter 'p' must be in the range [0, 1]."
         assert actions == 2, "BernoulliAgent only supports two actions (0 and 1)."
     
     def sample_action(self):
