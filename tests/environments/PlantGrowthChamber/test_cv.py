@@ -19,7 +19,7 @@ OLD_TEST_DIR = TEST_DIR / "old"
 E4_TEST_DIR = TEST_DIR / "Spreadsheet-C"
 E5_TEST_DIR = TEST_DIR / "Spreadsheet-C-v2"
 E6_TEST_DIR = TEST_DIR / "Spreadsheet-C-v3"
-E8_TEST_DIR = TEST_DIR / "E7/P2"
+E7_TEST_DIR = TEST_DIR / "E7/P2"
 E8_TEST_DIR = TEST_DIR / "E8"
 
 skipif_github_actions = pytest.mark.skipif(
