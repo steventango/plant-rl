@@ -19,7 +19,8 @@ OLD_TEST_DIR = TEST_DIR / "old"
 E4_TEST_DIR = TEST_DIR / "Spreadsheet-C"
 E5_TEST_DIR = TEST_DIR / "Spreadsheet-C-v2"
 E6_TEST_DIR = TEST_DIR / "Spreadsheet-C-v3"
-E7_TEST_DIR = TEST_DIR / "E7/P2"
+E8_TEST_DIR = TEST_DIR / "E7/P2"
+E8_TEST_DIR = TEST_DIR / "E8"
 
 skipif_github_actions = pytest.mark.skipif(
     os.environ.get("GITHUB_ACTIONS") == "true", reason="Skip in GitHub Actions environment"
@@ -50,38 +51,39 @@ def get_plant_area(test_dir: Path, zone: Zone):
 
 
 @skipif_github_actions
-def test_process_E7_zone_1():
+def test_process_E8_zone_1():
     zone = get_zone(1)
-    get_plant_area(E7_TEST_DIR, zone)
+    get_plant_area(E8_TEST_DIR, zone)
 
 
 @skipif_github_actions
-def test_process_E7_zone_2():
+def test_process_E8_zone_2():
     zone = get_zone(2)
-    get_plant_area(E7_TEST_DIR, zone)
+    get_plant_area(E8_TEST_DIR, zone)
 
 
 @skipif_github_actions
-def test_process_E7_zone_3():
+def test_process_E8_zone_3():
     zone = get_zone(3)
-    get_plant_area(E7_TEST_DIR, zone)
+    get_plant_area(E8_TEST_DIR, zone)
 
 
 @skipif_github_actions
-def test_process_E7_zone_6():
+def test_process_E8_zone_6():
     zone = get_zone(6)
-    get_plant_area(E7_TEST_DIR, zone)
+    get_plant_area(E8_TEST_DIR, zone)
+
 
 @skipif_github_actions
-def test_process_E7_zone_8():
+def test_process_E8_zone_8():
     zone = get_zone(8)
-    get_plant_area(E7_TEST_DIR, zone)
+    get_plant_area(E8_TEST_DIR, zone)
 
 
 @skipif_github_actions
-def test_process_E7_zone_9():
+def test_process_E8_zone_9():
     zone = get_zone(9)
-    get_plant_area(E7_TEST_DIR, zone)
+    get_plant_area(E8_TEST_DIR, zone)
 
 
 @skipif_github_actions
