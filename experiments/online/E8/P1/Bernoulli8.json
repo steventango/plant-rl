@@ -1,0 +1,13 @@
+{
+    "agent": "Bernoulli8",
+    "problem": "CVPlantGrowthChamberDiscrete",
+    "total_steps": 2016,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": 8,
+            "timezone": "America/Edmonton"
+        },
+        "p": 0.7
+    }
+}
