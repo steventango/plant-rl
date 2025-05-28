@@ -2,12 +2,16 @@ import json
 import os
 import tkinter as tk
 from datetime import datetime
+from itertools import chain
 from pathlib import Path
 from tkinter import messagebox, ttk
-from itertools import chain
+
 import cv2
 import numpy as np
 from PIL import Image, ImageTk
+
+# Flag to update existing config files instead of creating new ones
+UPDATE_CONFIG = True  # When True, updates configs in PlantGrowthChamber directory
 
 # Base directories containing the datasets
 BASE_DIRS = [
@@ -16,8 +20,7 @@ BASE_DIRS = [
 ]
 BASE_DIRS.extend(
     chain(
-        # Path("/data/online/E7/P0").rglob("*"),
-        Path("/data/online/E6/P5.1").rglob("*"),
+        Path("/data/online/E8/P0").rglob("*"),
     )
 )
 
@@ -361,14 +364,77 @@ class TrayConfigApp:
             zone_identifier = self.extract_zone_identifier(self.dataset_dir)
 
             config = {"zone": {"identifier": zone_identifier, "trays": self.tray_configs}}
-            config_path = self.dataset_dir / "config.json"
-            with open(config_path, "w") as f:
-                json.dump(config, f, indent=4)
-            print(f"Configuration saved to {config_path} with zone identifier: {zone_identifier}")
-            return True
+
+            if UPDATE_CONFIG:
+                # Find and update existing config file in PlantGrowthChamber configs
+                return self.update_existing_config(zone_identifier, config)
+            else:
+                # Save to the original dataset directory
+                config_path = self.dataset_dir / "config.json"
+                with open(config_path, "w") as f:
+                    json.dump(config, f, indent=4)
+                print(f"Configuration saved to {config_path} with zone identifier: {zone_identifier}")
+                return True
         else:
             print("No trays to save.")
             return False
+
+    def find_config_file(self, zone_identifier):
+        """Find the corresponding config file in PlantGrowthChamber configs directory"""
+        config_dir = Path("/workspaces/plant-rl/src/environments/PlantGrowthChamber/configs")
+
+        # Look for config files matching the zone identifier
+        pattern = f"z{zone_identifier}*.json"
+        matching_files = list(config_dir.glob(pattern))
+
+        if matching_files:
+            # Return the first matching file
+            return matching_files[0]
+
+        # If no matching file, construct a default filename
+        return config_dir / f"z{zone_identifier}.json"
+
+    def update_existing_config(self, zone_identifier, new_config):
+        """Update an existing config file with new tray configuration"""
+        config_file = self.find_config_file(zone_identifier)
+
+        # Check if the config file exists
+        if config_file.exists():
+            try:
+                # Load existing config
+                with open(config_file, "r") as f:
+                    existing_config = json.load(f)
+
+                # Only update the trays section, preserve other settings
+                if "zone" not in existing_config:
+                    existing_config["zone"] = {}
+
+                existing_config["zone"]["trays"] = new_config["zone"]["trays"]
+
+                # Make sure the identifier is preserved/set
+                existing_config["zone"]["identifier"] = zone_identifier
+
+                # Save the updated config
+                with open(config_file, "w") as f:
+                    json.dump(existing_config, f, indent=4)
+
+                print(f"Updated trays configuration in {config_file}")
+                return True
+
+            except Exception as e:
+                print(f"Error updating configuration file {config_file}: {e}")
+                # Fallback: create a new file
+                with open(config_file, "w") as f:
+                    json.dump(new_config, f, indent=4)
+                print(f"Created new configuration file at {config_file}")
+                return True
+        else:
+            # File doesn't exist, create it
+            os.makedirs(config_file.parent, exist_ok=True)
+            with open(config_file, "w") as f:
+                json.dump(new_config, f, indent=4)
+            print(f"Created new configuration file at {config_file}")
+            return True
 
     def load_next_dataset(self):
         """Load the next dataset in the sequence"""
