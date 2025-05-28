@@ -17,7 +17,7 @@ class BernoulliAgent(BaseAgent):
         assert actions == 2, "BernoulliAgent only supports two actions (0 and 1)."
     
     def sample_action(self):
-        return np.random.binomial(1, self.p)
+        return self.rng.binomial(1, self.p)
     # ----------------------
     # -- RLGlue interface --
     # ----------------------
