@@ -41,11 +41,17 @@ class RichTileCoder():
             tile3 = tiles(self.iht, self._c.tilings, [s[1]*self.scale[1]], [2]) 
             return tile1 + tile2 + tile3
 
-        # tc = tile(TOD) + tile(action trace)
+        # tc = tile(s0) + tile(s1)
         if self._c.strategy == 'tc2':    
             tile1 = tiles(self.iht, self._c.tilings, [s[0]*self.scale[0]], [0]) 
             tile2 = tiles(self.iht, self._c.tilings, [s[1]*self.scale[1]], [1]) 
             return tile1 + tile2 
+        
+        if self._c.strategy == 'onehot':  
+            num_bins=12
+            value = np.clip(s[0], 0, 1)
+            bin_idx = min(int(value * num_bins), num_bins - 1)
+            return bin_idx
         
         # general
         else:     
@@ -59,6 +65,8 @@ class RichTileCoder():
             return 3*self._c.tilings
         elif self._c.strategy == 'tc2':  
             return 2*self._c.tilings
+        elif self._c.strategy == 'onehot':
+            return 1 
         else: 
             return self._c.tilings
     
@@ -70,6 +78,8 @@ class RichTileCoder():
             return self._c.tilings * ((x[0]+1) + (x[0]+1)*(x[2]+1) + (x[1]+1))
         if self._c.strategy == 'tc2': 
             return self._c.tilings * ((x[0]+1) + (x[1]+1))
+        if self._c.strategy == 'onehot': 
+            return 12
         else: 
             a = self._c.tilings
             for num_tiles in x: 
