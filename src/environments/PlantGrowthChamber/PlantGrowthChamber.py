@@ -181,7 +181,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         if local_time is None:
             local_time = self.get_local_time()
         is_night = local_time.hour >= 21 or local_time.hour < 9
-        logger.info(f"Time: {local_time}, is_night: {is_night}")
+        logger.info(f"{local_time} is_night: {is_night}")
         return is_night
 
     def get_next_step_time(self, duration: timedelta):
