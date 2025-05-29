@@ -153,21 +153,20 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     async def step(self, action: np.ndarray):
         logger.info(f"Step {self.n_step} with action {action}")
+        await self.put_action(action)
+
         terminal = self.get_terminal()
 
-        duration = self.duration
         woke = False
-        if self.enforce_night and self.is_night():
+        if self.enforce_night and self.is_night(self.get_local_time() + self.duration):
+            await self.sleep_until_next_step(self.duration)
             await self.lights_off_and_sleep_until_morning()
             action = self.dim_action
             logger.info("Nighttime ended. Reference spectrum applied.")
-            duration /= 2
             woke = True
 
-        await self.put_action(action)
-
         # calculate the time left until the next step
-        await self.sleep_until_next_step(duration)
+        await self.sleep_until_next_step(self.duration)
         observation = await self.get_observation()
         if woke:
             reward = self.reward_function()
@@ -178,8 +177,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         return reward, observation, terminal, self.get_info()
 
-    def is_night(self):
-        local_time = self.get_local_time()
+    def is_night(self, local_time: datetime | None = None) -> bool:
+        if local_time is None:
+            local_time = self.get_local_time()
         is_night = local_time.hour >= 21 or local_time.hour < 9
         logger.info(f"Local time: {local_time}, is_night: {is_night}")
         return is_night
