@@ -46,7 +46,7 @@ def get_light_status(api_base_url):
             print(f"Warning: Both 'action' and 'safe_action' are null from {status_url}.")
             return False
         action_array = np.array(current_action_to_check)
-        if np.sum(action_array) > 0.01:
+        if np.count_nonzero(action_array) > 0:
             print(f"Lights are ON for {api_base_url}")
             return True
         print(f"Lights are OFF for {api_base_url}")
