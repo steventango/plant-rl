@@ -5,6 +5,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import pytz
+from math import floor
 
 from utils.functions import normalize
 
@@ -37,13 +38,17 @@ class OfflinePlantGrowthChamber:
                     "plant_id": "first",
                     "agent_action": "first",
                     "mean_clean_area": "first",
+                    "episode": "first"
                 }
             )
             .reset_index()
         )
 
-        # Remove incomplete days
+        # Remove incomplete episodes
         df = self.remove_incomplete_days(df)
+
+        # Remove time stamps at 9:05, which was added for the daily episode scenario
+        df = df[df['time'].dt.strftime('%H:%M') != '09:05']
 
         # Compute an area indicator every day
         local_dates = df['time'].dt.date
@@ -73,11 +78,7 @@ class OfflinePlantGrowthChamber:
 
     def get_action(self):
         agent_action = self.dataset.iloc[self.index]['agent_action']
-        if pd.isna(agent_action):
-            agent_action = 0
-        else:
-            agent_action = int(agent_action)
-        return agent_action
+        return int(agent_action)
 
     def get_reward(self):
         if self.index == 0:
@@ -110,26 +111,98 @@ class OfflinePlantGrowthChamber:
         return self.get_observation(), {"action": self.get_action()}
 
     def step(self, _):
-        self.index += 1
-        info = {"action": self.get_action()}
+        # Update action history based on previous action
+        self.photon_counter += self.get_action()
 
+        # Compute next state
+        self.index += 1 
         if self.dataset.iloc[self.index]["time"].date() != self.dataset.iloc[self.index - 1]["time"].date():
             self.photon_counter = 0
-        else: 
-            self.photon_counter += self.get_action()
+        obs = self.get_observation()
 
+        # Compute reward
+        r = self.get_reward()
+          
+        # Check if terminal
         terminal = self.index >= len(self.dataset) - 1
+        info = {}
         if terminal:
             self.dataset_index += 1
             if self.dataset_index >= len(self.dataset_paths):
                 info.update({"exhausted": True})
-        return self.get_reward(), self.get_observation(), terminal, info
+        else: 
+            # Compute action taken at next state
+            info.update({"action": self.get_action()})
+        return r, obs, terminal, info
     
-    def remove_incomplete_days(self, df, min_timestamps = 72):  # Note on min_timestamps: Exp 3 has 73 time stamps per day, but older datasets may have only 72.
+    def remove_incomplete_days(self, df, timestamps_per_day = 73):  # Exp 3 has 73 time stamps per day.
         local_dates = df['time'].dt.date
         complete_dates = []
+        incomplete_dates = []
+        
+        # Identify complete and incomplete dates
         for date_val, group in df.groupby(local_dates):            
-            if len(group) >= min_timestamps:   
+            if len(group) == timestamps_per_day:   
                 complete_dates.append(date_val)
+            else:
+                incomplete_dates.append(date_val)
+        
+        # Start with all rows from complete dates
+        result_df = df[df['time'].dt.date.isin(complete_dates)]
+        
+        # For each incomplete date, check if previous day is complete
+        for incomplete_date in incomplete_dates:
+            prev_date = incomplete_date - pd.Timedelta(days=1)
+            
+            if prev_date in complete_dates:
+                # Keep only 9:10am entry from this incomplete date
+                incomplete_day_rows = df[df['time'].dt.date == incomplete_date]
+                am_910_rows = incomplete_day_rows[incomplete_day_rows['time'].dt.strftime('%H:%M') == '09:10']
+                result_df = pd.concat([result_df, am_910_rows])
+        
+        return result_df.sort_values('time').reset_index(drop=True)
+    
+class OfflinePlantGrowthChamber_1hrStep(OfflinePlantGrowthChamber):
+    def get_observation(self):
+        tod = floor((self.index % 72) / 6)
+        normalized_tod = normalize(tod, 0, 12)
 
-        return df[df['time'].dt.date.isin(complete_dates)]
+        if not self.daily_photon: 
+            raise ValueError('Daily area has not been implemented. Please set daily_photon=true.')
+        else: 
+            return normalized_tod, normalize(self.photon_counter, 0, 12)
+
+    def get_action(self):
+        agent_actions = self.dataset.iloc[self.index:self.index + 6]['agent_action']
+        average_action = agent_actions.sum()
+        if average_action >= 4: 
+            return int(1)
+        elif average_action <= 2:
+            return int(0)
+        elif average_action == 3: 
+            return int(np.random.choice([0, 1]))
+    
+    def step(self, _):
+        # Update action history based on previous action
+        self.photon_counter += self.get_action()
+
+        # Compute next state
+        self.index += 6
+        if self.dataset.iloc[self.index]["time"].date() != self.dataset.iloc[self.index - 1]["time"].date():
+            self.photon_counter = 0
+        obs = self.get_observation()
+
+        # Compute reward
+        r = self.get_reward()
+          
+        # Check if terminal
+        terminal = self.index >= len(self.dataset) - 1
+        info = {}
+        if terminal:
+            self.dataset_index += 1
+            if self.dataset_index >= len(self.dataset_paths):
+                info.update({"exhausted": True})
+        else: 
+            # Compute action taken at next state
+            info.update({"action": self.get_action()})
+        return r, obs, terminal, info
