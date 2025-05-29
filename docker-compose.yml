@@ -13,7 +13,7 @@ services:
       - ~/.config:/root/.config:cached
       - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
       - ~/.cache:/root/.cache:cached
-      - ~/.netrc:/root/.netrc:cached # This service already had .netrc, good to see
+      - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
     command: python src/main_real.py -e experiments/online/E8/P0/Spreadsheet1.json -i 0 --deploy
@@ -39,7 +39,7 @@ services:
       - ~/.config:/root/.config:cached
       - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
       - ~/.cache:/root/.cache:cached
-      - ~/.netrc:/root/.netrc:cached # This service already had .netrc
+      - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
     command: python src/main_real.py -e experiments/online/E8/P1/Bernoulli2.json -i 0 --deploy
@@ -66,7 +66,7 @@ services:
       - ~/.config:/root/.config:cached
       - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
       - ~/.cache:/root/.cache:cached
-      - ~/.netrc:/root/.netrc:cached # This service already had .netrc
+      - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
     command: python src/main_real.py -e experiments/online/E8/P1/Bernoulli3.json -i 0 --deploy
@@ -93,7 +93,7 @@ services:
       - ~/.config:/root/.config:cached
       - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
       - ~/.cache:/root/.cache:cached
-      - ~/.netrc:/root/.netrc:cached # This service already had .netrc
+      - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
     command: python src/main_real.py -e experiments/online/E8/P0/Spreadsheet6.json -i 0 --deploy
@@ -120,7 +120,7 @@ services:
       - ~/.config:/root/.config:cached
       - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
       - ~/.cache:/root/.cache:cached
-      - ~/.netrc:/root/.netrc:cached # This service already had .netrc
+      - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
     command: python src/main_real.py -e experiments/online/E8/P1/Bernoulli8.json -i 0 --deploy
@@ -147,7 +147,7 @@ services:
       - ~/.config:/root/.config:cached
       - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
       - ~/.cache:/root/.cache:cached
-      - ~/.netrc:/root/.netrc:cached # This service already had .netrc
+      - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
     command: python src/main_real.py -e experiments/online/E8/P1/Bernoulli9.json -i 0 --deploy
