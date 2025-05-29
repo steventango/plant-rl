@@ -13,7 +13,6 @@ def get_env_var(var_name, default_value=None):
     if value is None:
         if default_value is None:
             print(f"Error: Environment variable {var_name} not set and no default value provided.")
-            # For LIGHTBAR_API_BASE_URLS, we'll handle the error in main if it's empty after splitting
             if var_name != "LIGHTBAR_API_BASE_URLS": 
                 exit(1)
         return default_value
@@ -25,11 +24,9 @@ def is_blackout_period(timezone_str="America/Edmonton", blackout_start_hour=21, 
         tz = pytz.timezone(timezone_str)
     except pytz.exceptions.UnknownTimeZoneError:
         print(f"Error: Unknown timezone '{timezone_str}'. Exiting.")
-        # This is a critical error, so exit.
         exit(1) 
     now_local = datetime.datetime.now(tz)
     current_hour = now_local.hour
-    # Blackout is from start_hour (e.g., 21) up to (but not including) end_hour (e.g., 9 the next day)
     if blackout_start_hour <= current_hour or current_hour < blackout_end_hour:
         return True
     return False
@@ -79,17 +76,13 @@ def turn_off_lights(api_base_url, payload_str):
         print(f"Error turning off lights via {control_url}: {e}")
         return False
 
-def send_wandb_alert(project, title, text, api_key):
-    """Sends an alert using Weights & Biases."""
-    if not api_key:
-        print("Error: WANDB_API_KEY not set. Cannot send alert.")
-        return False
+def send_wandb_alert(project, title, text): # api_key parameter removed
+    """Sends an alert using Weights & Biases, relying on .netrc for login."""
     try:
-        # Attempt to login. If it fails, wandb.login() might raise an error or return False/None.
-        # The wandb library handles login state internally. Explicit login here ensures credentials are used.
-        if not wandb.login(key=api_key):
-             print("W&B login failed. Please check API key.")
-             return False
+        # wandb.login() without arguments will attempt to use .netrc
+        # It might return True on success, False or raise error on failure.
+        # We'll proceed assuming it configures W&B correctly if no error is raised.
+        wandb.login() 
 
         run = wandb.init(project=project, job_type="alert_sender", reinit=True)
         if run:
@@ -98,16 +91,17 @@ def send_wandb_alert(project, title, text, api_key):
             print(f"W&B alert sent: '{title}' for text: '{text}'")
             return True
         else:
-            print("Error: Failed to initialize W&B run for alert.")
+            print("Error: Failed to initialize W&B run for alert after login attempt.")
             return False
     except Exception as e:
-        print(f"Error sending W&B alert: {e}")
+        # This will catch errors from wandb.login() if it fails, or from init/alert.
+        print(f"Error sending W&B alert (check .netrc configuration and W&B status): {e}")
         return False
 
 def main():
     print("Starting Light Monitor Service...")
     
-    wandb_api_key = get_env_var("WANDB_API_KEY")
+    # WANDB_API_KEY is no longer fetched from environment
     lightbar_api_base_urls_str = get_env_var("LIGHTBAR_API_BASE_URLS") 
     
     default_light_off_payload = '{"array": [[0,0,0,0,0,0], [0,0,0,0,0,0]]}'
@@ -127,17 +121,15 @@ def main():
         exit(1)
 
     print(f"Monitoring lights for URLs: {base_urls}")
-    # Corrected print message to reflect that blackout_end_hour is exclusive
     print(f"Blackout period: 21:00 - <09:00 America/Edmonton") 
     print(f"W&B Project for alerts: {wandb_project}")
+    print("W&B authentication will use ~/.netrc file.") # Added info message
 
     while True:
         print(f"[{datetime.datetime.now()}] Checking conditions for all URLs...")
-        # Blackout period check is done once for all URLs
         if is_blackout_period():
             print("Current time is within the blackout period.")
             for base_url in base_urls:
-                # Basic URL validation
                 if not base_url.startswith("http://") and not base_url.startswith("https://"):
                     print(f"Warning: URL '{base_url}' does not start with http:// or https://. Skipping.")
                     continue
@@ -145,17 +137,13 @@ def main():
                 print(f"--- Processing URL: {base_url} ---")
                 lights_are_on = get_light_status(base_url)
                 if lights_are_on:
-                    # This print is already inside get_light_status
-                    # print(f"Lights are ON for {base_url}. Attempting to turn them off.") 
                     if turn_off_lights(base_url, light_off_payload_str):
                         alert_title_template = get_env_var("WANDB_ALERT_TITLE", default_wandb_alert_title)
-                        # Make title specific to the URL
                         alert_title_specific = f"{alert_title_template}: {base_url}" 
                         alert_text = (f"Lights were detected ON and turned OFF "
                                       f"during the blackout period for {base_url}.")
-                        send_wandb_alert(wandb_project, alert_title_specific, alert_text, wandb_api_key)
-                # else: # No need for this else, get_light_status prints if lights are off
-                    # print(f"Lights are OFF for {base_url} or status could not be determined.")
+                        # wandb_api_key no longer passed
+                        send_wandb_alert(wandb_project, alert_title_specific, alert_text) 
                 print(f"--- Finished processing URL: {base_url} ---")
         else:
             print("Current time is outside the blackout period. No action needed for any URL.")
