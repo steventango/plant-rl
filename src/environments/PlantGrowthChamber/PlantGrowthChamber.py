@@ -178,6 +178,16 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         return reward, observation, terminal, self.get_info()
 
     def is_night(self, local_time: datetime | None = None) -> bool:
+        """
+        Determine whether the given time falls within nighttime hours.
+        
+        Args:
+            local_time (datetime | None): The local time to check. If None, the current local time
+                is retrieved using self.get_local_time().
+        
+        Returns:
+            bool: True if the time is between 9 PM and 9 AM, False otherwise.
+        """
         if local_time is None:
             local_time = self.get_local_time()
         is_night = local_time.hour >= 21 or local_time.hour < 9
