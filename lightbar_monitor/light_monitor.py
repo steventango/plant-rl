@@ -13,7 +13,7 @@ def get_env_var(var_name, default_value=None):
     if value is None:
         if default_value is None:
             print(f"Error: Environment variable {var_name} not set and no default value provided.")
-            if var_name != "LIGHTBAR_API_BASE_URLS": 
+            if var_name != "LIGHTBAR_API_BASE_URLS":
                 exit(1)
         return default_value
     return value
@@ -24,7 +24,7 @@ def is_blackout_period(timezone_str="America/Edmonton", blackout_start_hour=21, 
         tz = pytz.timezone(timezone_str)
     except pytz.exceptions.UnknownTimeZoneError:
         print(f"Error: Unknown timezone '{timezone_str}'. Exiting.")
-        exit(1) 
+        exit(1)
     now_local = datetime.datetime.now(tz)
     current_hour = now_local.hour
     if blackout_start_hour <= current_hour or current_hour < blackout_end_hour:
@@ -82,7 +82,7 @@ def send_wandb_alert(project, title, text): # api_key parameter removed
         # wandb.login() without arguments will attempt to use .netrc
         # It might return True on success, False or raise error on failure.
         # We'll proceed assuming it configures W&B correctly if no error is raised.
-        wandb.login() 
+        wandb.login()
 
         run = wandb.init(project=project, job_type="alert_sender", reinit=True)
         if run:
@@ -100,16 +100,16 @@ def send_wandb_alert(project, title, text): # api_key parameter removed
 
 def main():
     print("Starting Light Monitor Service...")
-    
+
     # WANDB_API_KEY is no longer fetched from environment
-    lightbar_api_base_urls_str = get_env_var("LIGHTBAR_API_BASE_URLS") 
-    
+    lightbar_api_base_urls_str = get_env_var("LIGHTBAR_API_BASE_URLS")
+
     default_light_off_payload = '{"array": [[0,0,0,0,0,0], [0,0,0,0,0,0]]}'
     light_off_payload_str = get_env_var("LIGHT_OFF_PAYLOAD", default_light_off_payload)
-    
+
     wandb_project = get_env_var("WANDB_PROJECT", "lightbar_monitor_alerts")
     default_wandb_alert_title = "Lights Turned Off During Blackout"
-    
+
     if not lightbar_api_base_urls_str:
         print("Error: LIGHTBAR_API_BASE_URLS environment variable not set or empty.")
         exit(1)
@@ -121,7 +121,7 @@ def main():
         exit(1)
 
     print(f"Monitoring lights for URLs: {base_urls}")
-    print(f"Blackout period: 21:00 - <09:00 America/Edmonton") 
+    print(f"Blackout period: 21:00 - <09:00 America/Edmonton")
     print(f"W&B Project for alerts: {wandb_project}")
     print("W&B authentication will use ~/.netrc file.") # Added info message
 
@@ -139,15 +139,15 @@ def main():
                 if lights_are_on:
                     if turn_off_lights(base_url, light_off_payload_str):
                         alert_title_template = get_env_var("WANDB_ALERT_TITLE", default_wandb_alert_title)
-                        alert_title_specific = f"{alert_title_template}: {base_url}" 
+                        alert_title_specific = f"{alert_title_template}: {base_url}"
                         alert_text = (f"Lights were detected ON and turned OFF "
                                       f"during the blackout period for {base_url}.")
                         # wandb_api_key no longer passed
-                        send_wandb_alert(wandb_project, alert_title_specific, alert_text) 
+                        send_wandb_alert(wandb_project, alert_title_specific, alert_text)
                 print(f"--- Finished processing URL: {base_url} ---")
         else:
             print("Current time is outside the blackout period. No action needed for any URL.")
-        
+
         print(f"Waiting for 60 seconds before next check cycle for all URLs...")
         time.sleep(60)
 
