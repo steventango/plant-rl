@@ -161,7 +161,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         if self.enforce_night and self.is_night(self.get_local_time() + self.duration):
             await self.sleep_until_next_step(self.duration)
             await self.lights_off_and_sleep_until_morning()
-            action = self.dim_action
+            await self.put_action(self.dim_action)
             logger.info(f"Local time: {self.get_local_time()}. Nighttime ended. Reference spectrum applied.")
             woke = True
 
