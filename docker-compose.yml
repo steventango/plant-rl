@@ -200,6 +200,25 @@ services:
               capabilities:
                 - gpu
 
+  lightbar-monitor:
+    build:
+      context: ./lightbar_monitor
+      dockerfile: Dockerfile
+    networks:
+      - plant-rl
+    environment:
+      # WANDB_API_KEY is expected to be set in the environment where docker-compose is run
+      - WANDB_API_KEY=${WANDB_API_KEY}
+      # User must configure this with comma-separated URLs, e.g., "http://host1:port,http://host2:port"
+      - LIGHTBAR_API_BASE_URLS="YOUR_LIGHTBAR_API_BASE_URLS_HERE" 
+      # Optional: Override default light off payload (JSON string)
+      # - LIGHT_OFF_PAYLOAD='{"array": [[0,0,0,0,0,0], [0,0,0,0,0,0]]}'
+      # Optional: Override default W&B project name
+      # - WANDB_PROJECT=my_lightbar_alerts
+      # Optional: Override default W&B alert title
+      # - WANDB_ALERT_TITLE=Custom Light Alert
+    restart: unless-stopped
+
 networks:
   plant-rl:
     name: plant-rl
