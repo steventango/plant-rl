@@ -88,6 +88,7 @@ class MockPlantGrowthChamber(PlantGrowthChamber):
         return reward, observation, terminal, info
 
     async def put_action(self, action: int):
+        logger.debug(f"action: {action}")
         self.last_action = action
 
     async def sleep_until(self, wake_time: datetime):
