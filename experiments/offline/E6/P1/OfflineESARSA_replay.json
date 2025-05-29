@@ -1,11 +1,12 @@
 {
     "agent": "OfflineESARSA",
     "problem": "OfflinePlantGrowthChamber",
-    "total_steps": 100001,
+    "total_steps": 300001,
     "episode_cutoff": -1,
     "metaParameters": {
         "environment":{
-            "use_photon_count": false,
+            "type": "1hrStep",
+            "use_photon_count": true,
             "dataset_paths": [
                 [
                      "data/online/E7/P2/Constant1/z1",
@@ -20,7 +21,7 @@
         "alpha": 0.1,
         "epsilon": 0.0,
         "w0": 0.0,
-        "gamma": 1,
+        "gamma": 0.99,
         "buffer_type": "uniform",
         "buffer_size": 100000,
         "batch": 32,
@@ -28,8 +29,8 @@
         "representation": {
             "which_tc": "RichTileCoder",
             "strategy": -1,
-            "tiles": 4,
-            "tilings": 4
+            "tiles": 12,
+            "tilings": 1
         }
     }
 }
