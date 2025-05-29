@@ -152,36 +152,46 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         return observation, self.get_info()
 
     async def step(self, action: np.ndarray):
-        logger.info(f"Step {self.n_step} with action {action}")
-        terminal = self.get_terminal()
-
-        duration = self.duration
-        woke = False
-        if self.enforce_night and self.is_night():
-            await self.lights_off_and_sleep_until_morning()
-            action = self.dim_action
-            logger.info("Nighttime ended. Reference spectrum applied.")
-            duration /= 2
-            woke = True
-
+        logger.info(f"Local time: {self.get_local_time()}. Step {self.n_step} with action {action}")
         await self.put_action(action)
 
+        terminal = self.get_terminal()
+
+        woke = False
+        if self.enforce_night and self.is_night(self.get_local_time() + self.duration):
+            await self.sleep_until_next_step(self.duration)
+            await self.lights_off_and_sleep_until_morning()
+            await self.put_action(self.dim_action)
+            logger.info(f"Local time: {self.get_local_time()}. Nighttime ended. Reference spectrum applied.")
+            woke = True
+
         # calculate the time left until the next step
-        await self.sleep_until_next_step(duration)
+        await self.sleep_until_next_step(self.duration)
         observation = await self.get_observation()
         if woke:
             reward = self.reward_function()
         else:
             reward = 0
-        logger.info(f"Step {self.n_step} completed. Reward: {reward}, Terminal: {terminal}")
+        logger.info(f"Local time: {self.get_local_time()}. Step {self.n_step} completed. Reward: {reward}, Terminal: {terminal}")
         self.n_step += 1
 
         return reward, observation, terminal, self.get_info()
 
-    def is_night(self):
-        local_time = self.get_local_time()
+    def is_night(self, local_time: datetime | None = None) -> bool:
+        """
+        Determine whether the given time falls within nighttime hours.
+        
+        Args:
+            local_time (datetime | None): The local time to check. If None, the current local time
+                is retrieved using self.get_local_time().
+        
+        Returns:
+            bool: True if the time is between 9 PM and 9 AM, False otherwise.
+        """
+        if local_time is None:
+            local_time = self.get_local_time()
         is_night = local_time.hour >= 21 or local_time.hour < 9
-        logger.info(f"Local time: {local_time}, is_night: {is_night}")
+        logger.info(f"{local_time} is_night: {is_night}")
         return is_night
 
     def get_next_step_time(self, duration: timedelta):
