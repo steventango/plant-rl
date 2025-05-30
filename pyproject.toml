@@ -24,6 +24,7 @@ dependencies = [
 
     'gymnasium[atari, box2d]>=1.0.0',
     'optuna',
+    'aiofiles',
     'ale_py',
     'pillow',
     'numba>=0.55.0',

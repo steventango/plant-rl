@@ -3,6 +3,7 @@ import os
 import shutil
 import sys
 import warnings
+import aiofiles
 
 sys.path.append(os.getcwd())
 import argparse
@@ -43,15 +44,12 @@ parser.add_argument('--gpu', action='store_true', default=False)
 parser.add_argument('-d', '--deploy', action='store_true', default=False, 
                     help='Allows for easily restarting logging for crashed runs in deployment. If the run already exists, then wandb will resume logging to the same run.')
 
-args = parser.parse_args()
-
 # ---------------------------
 # -- Library Configuration --
 # ---------------------------
 import jax
 
-device = 'gpu' if args.gpu else 'cpu'
-jax.config.update('jax_platform_name', device)
+# Moved args parsing and jax config to if __name__ == "__main__"
 
 logging.basicConfig(
     level=logging.ERROR,
@@ -59,9 +57,7 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 logger = logging.getLogger('exp')
-prod = 'cdr' in socket.gethostname() or args.silent
-if not prod:
-    logger.setLevel(logging.DEBUG)
+# Moved prod definition and logger.setLevel to if __name__ == "__main__"
 
 
 # ----------------------
@@ -69,11 +65,7 @@ if not prod:
 # ----------------------
 timeout_handler = TimeoutHandler()
 
-exp = ExperimentModel.load(args.exp)
-indices = args.idxs
-
-Problem = getProblem(exp.problem)
-
+# Moved exp, indices, Problem to main function
 
 def save_images(env, dataset_path: Path, save_keys):
     isoformat = env.time.isoformat(timespec='seconds').replace(':', '')
@@ -95,11 +87,15 @@ def backup_and_save(exp, collector, idx, base):
     db_file_bak = context.resolve('results.db.bak')
     if os.path.exists(db_file):
         shutil.copy(db_file, db_file_bak)
-    saveCollector(exp, collector, base=base)
+    saveCollector(exp, collector, base=base) # exp will be passed or available to backup_and_save
 
-async def main():
+async def main(args_namespace):
+    exp = ExperimentModel.load(args_namespace.exp)
+    indices = args_namespace.idxs
+    Problem = getProblem(exp.problem)
+
     for idx in indices:
-        chk = Checkpoint(exp, idx, base_path=args.checkpoint_path)
+        chk = Checkpoint(exp, idx, base_path=args_namespace.checkpoint_path)
         chk.load_if_exists()
         timeout_handler.before_cancel(chk.save)
 
@@ -138,7 +134,7 @@ async def main():
         glue = chk.build("glue", lambda: AsyncRLGlue(agent, env))
         chk.initial_value('episode', 0)
 
-        context = exp.buildSaveContext(idx, base=args.save_path)
+        context = exp.buildSaveContext(idx, base=args_namespace.save_path)
         agent_path = Path(context.resolve()).relative_to('results')
         dataset_path = Path('/data') / agent_path  / f"z{env.zone.identifier}"
         images_save_keys = problem.exp_params.get("image_save_keys", default_save_keys)
@@ -150,11 +146,11 @@ async def main():
             "context": str(agent_path)
         }
 
-        if args.deploy:
-            run_id = args.exp.replace("/", "-").removesuffix(".json")
+        if args_namespace.deploy:
+            run_id = args_namespace.exp.replace("/", "-").removesuffix(".json")
             resume= "allow"
         else:
-            run_id = args.exp.replace("/", "-").removesuffix(".json") + '-' + datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+            run_id = args_namespace.exp.replace("/", "-").removesuffix(".json") + '-' + datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
             resume = "never"
             
         wandb_run = wandb.init(
@@ -178,8 +174,7 @@ async def main():
         if glue.total_steps == 0:
             s, a, info = await glue.start()
             episode = chk['episode']
-            is_mock_env = exp.problem.startswith("Mock")
-            log(env, glue, wandb_run, s, a, info, is_mock_env=is_mock_env, episode=episode)
+            log(env, glue, wandb_run, s, a, info, episode=episode)
             interaction = Interaction(
                 o=s,
                 a=a,
@@ -189,7 +184,7 @@ async def main():
             )
             if not exp.problem.startswith("Mock"):
                 img_name = save_images(env, dataset_path, images_save_keys)
-                append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
+                await append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
 
         for step in range(glue.total_steps, exp.total_steps):
             collector.next_frame()
@@ -221,11 +216,11 @@ async def main():
 
             episodic_return = glue.total_reward if interaction.t else None
             episode = chk['episode']
-            log(env, glue, wandb_run, interaction.o, interaction.a, interaction.extra, is_mock_env=is_mock_env, r=interaction.r, t=interaction.t, episodic_return=episodic_return, episode=episode)
+            log(env, glue, wandb_run, interaction.o, interaction.a, interaction.extra, interaction.r, interaction.t, episodic_return, episode)
 
-            if not is_mock_env:
+            if not exp.problem.startswith("Mock"):
                 img_name = save_images(env, dataset_path, images_save_keys)
-                append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
+                await append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
 
             if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
                 # collect some data
@@ -244,7 +239,7 @@ async def main():
                 logger.debug(f'{episode} {step} {glue.total_reward} {avg_time:.4}ms {int(fps)}')
 
                 s, a, info = await glue.start()
-                log(env, glue, wandb_run, s, a, info, is_mock_env=is_mock_env)
+                log(env, glue, wandb_run, s, a, info)
                 interaction = Interaction(
                     o=s,
                     a=a,
@@ -254,9 +249,13 @@ async def main():
                 )
                 if not exp.problem.startswith("Mock"):
                     img_name = save_images(env, dataset_path, images_save_keys)
-                    append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
+                    await append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
 
-            backup_and_save(exp, collector, idx, args.save_path)
+            # Pass exp to backup_and_save if it's not accessible otherwise.
+            # Or make backup_and_save a method of a class that holds exp.
+            # For now, assuming backup_and_save can access exp if it's defined in main's scope
+            # or passed appropriately. If backup_and_save is called from here, it has access to `exp`.
+            backup_and_save(exp, collector, idx, args_namespace.save_path)
 
         collector.reset()
 
@@ -271,10 +270,10 @@ async def main():
         # ------------
         # -- Saving --
         # ------------
-        backup_and_save(exp, collector, idx, args.save_path)
+        backup_and_save(exp, collector, idx, args_namespace.save_path)
         wandb_run.finish()
 
-def append_csv(chk, env, glue, raw_csv_path, img_name, interaction):
+async def append_csv(chk, env, glue, raw_csv_path, img_name, interaction):
     expanded_info = {}
     for key, value in interaction.extra.items():
         if isinstance(value, pd.DataFrame):
@@ -310,18 +309,49 @@ def append_csv(chk, env, glue, raw_csv_path, img_name, interaction):
         left_on=["frame"],
         right_on=["frame"],
     )
-    if raw_csv_path.exists():
-        df_old = pd.read_csv(raw_csv_path)
-        shutil.copy(raw_csv_path, raw_csv_path.with_suffix('.bak'))
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore",
-                message="The behavior of DataFrame concatenation with empty or all-NA entries is deprecated.",
-                category=FutureWarning
-            )
-            df = pd.concat([df_old, df], ignore_index=True)
-    df.to_csv(raw_csv_path, index=False)
+    if await asyncio.to_thread(raw_csv_path.exists):
+        # Read only the header of the existing CSV
+        async with aiofiles.open(raw_csv_path, mode='r') as f:
+            existing_header = (await f.readline()).strip()
+        existing_columns = existing_header.split(',')
+        new_columns = df.columns.tolist()
+
+        if existing_columns == new_columns:
+            # Columns are the same, append without header
+            async with aiofiles.open(raw_csv_path, mode='a', newline='') as f:
+                await asyncio.to_thread(df.to_csv, f, header=False, index=False)
+        else:
+            # Columns are different, read old data, backup, concatenate, and write with header
+            df_old = await asyncio.to_thread(pd.read_csv, raw_csv_path)
+            await asyncio.to_thread(shutil.copy, raw_csv_path, raw_csv_path.with_suffix('.bak'))
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore",
+                    message="The behavior of DataFrame concatenation with empty or all-NA entries is deprecated.",
+                    category=FutureWarning,
+                )
+                # pd.concat is generally CPU bound and fast, might not need to_thread
+                # but being consistent for now.
+                df = await asyncio.to_thread(pd.concat, [df_old, df], ignore_index=True)
+            await asyncio.to_thread(df.to_csv, raw_csv_path, index=False)
+    else:
+        # File does not exist, write with header
+        await asyncio.to_thread(df.to_csv, raw_csv_path, index=False)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    args = parser.parse_args()
+
+    device = 'gpu' if args.gpu else 'cpu'
+    jax.config.update('jax_platform_name', device)
+    
+    # Update logging setup based on args if needed, e.g. args.silent
+    # This part of logging was already conditional on args.silent (via `prod`)
+    # so it might be okay, but good to ensure `prod` is updated if it moves.
+    # `prod` calculation:
+    # Configure logger level based on parsed args
+    prod = 'cdr' in socket.gethostname() or args.silent
+    if not prod:
+        logger.setLevel(logging.DEBUG)
+
+    asyncio.run(main(args))
