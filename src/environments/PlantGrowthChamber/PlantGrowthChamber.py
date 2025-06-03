@@ -44,8 +44,44 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.minimum_area_count = 5
         self.prev_plant_areas = np.zeros(self.zone.num_plants)
         self.enforce_night = True
-        self.dim_action = 0.675 * np.array([0.398, 0.762, 0.324, 0.000, 0.332, 0.606])
+        self.bright_action = 1.0 * np.array([0.398, 0.762, 0.324, 0.000, 0.332, 0.606])
+        self.dim_action = 0.675 * self.bright_action
+        self.twilight_intensities = np.array(
+            [
+                0.002827982971,
+                0.01109596503,
+                0.02471504108,
+                0.0435358277,
+                0.06735132485,
+                0.09590206704,
+                0.1288751694,
+                0.1659110052,
+                0.2066022518,
+                0.2505043837,
+                0.2971366267,
+                0.3459895889,
+                0.3965281229,
+                0.4481989566,
+                0.5004364171,
+                0.5526691081,
+                0.604325633,
+                0.654840319,
+                0.7036608481,
+                0.7502520726,
+                0.7941046008,
+                0.8347386124,
+                0.8717086279,
+                0.9046111404,
+                0.9330855692,
+                0.9568199834,
+                0.9755549175,
+                0.9890862332,
+                0.9972641654,
+            ]
+        )
+        self.twilight_minutes = len(self.twilight_intensities) + 1 if self.twilight_intensities is not None else 0
         self.normalize_reward = normalize_reward
+        self.glue = None
 
         self.last_action = None
 
@@ -143,7 +179,18 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.n_step = 0
         if self.enforce_night and self.is_night():
             await self.lights_off_and_sleep_until_morning()
-        await self.put_action(self.dim_action)
+            logger.info(f"Local time: {self.get_local_time()}. Nighttime ended.")
+            if self.twilight_intensities is not None:
+                for twilight_intensity in self.twilight_intensities:
+                    action = self.bright_action * twilight_intensity
+                    await self.put_action(action)
+                    logger.info(f"Local time: {self.get_local_time()}. Dawn step with action {action}")
+                    await self.sleep_until_next_step(timedelta(minutes=1))
+                    await self.get_observation()
+                    self.glue.log()
+            else:
+                await self.put_action(self.dim_action)
+
         self.clean_areas = []
         self.daily_mean_clean_areas = defaultdict(list)
         await self.sleep_until_next_step(self.duration)
@@ -158,21 +205,45 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         terminal = self.get_terminal()
 
         woke = False
-        if self.enforce_night and self.is_night(self.get_local_time() + self.duration):
+        if self.enforce_night and self.is_night(
+            self.get_local_time() + self.duration - timedelta(minutes=self.twilight_minutes)
+        ):
             await self.sleep_until_next_step(self.duration)
+            if self.twilight_intensities is not None:
+                logger.info(f"Local time: {self.get_local_time()}. Twilight started.")
+                for twilight_intensity in reversed(self.twilight_intensities):
+                    action = self.bright_action * twilight_intensity
+                    await self.put_action(self.bright_action * twilight_intensity)
+                    logger.info(f"Local time: {self.get_local_time()}. Dusk step with action {action}")
+                    await self.sleep_until_next_step(timedelta(minutes=1))
+                    await self.get_observation()
+                    self.glue.log()
             await self.lights_off_and_sleep_until_morning()
-            await self.put_action(self.dim_action)
-            logger.info(f"Local time: {self.get_local_time()}. Nighttime ended. Reference spectrum applied.")
+            logger.info(f"Local time: {self.get_local_time()}. Nighttime ended.")
+            if self.twilight_intensities is not None:
+                for twilight_intensity in self.twilight_intensities:
+                    action = self.bright_action * twilight_intensity
+                    await self.put_action(action)
+                    logger.info(f"Local time: {self.get_local_time()}. Dawn step with action {action}")
+                    await self.sleep_until_next_step(timedelta(minutes=1))
+                    await self.get_observation()
+                    self.glue.log()
+            else:
+                logger.info("Reference spectrum applied.")
+                await self.put_action(self.dim_action)
             woke = True
 
         # calculate the time left until the next step
-        await self.sleep_until_next_step(self.duration)
+        if self.twilight_minutes == 0 or not woke:
+            await self.sleep_until_next_step(self.duration)
         observation = await self.get_observation()
         if woke:
             reward = self.reward_function()
         else:
             reward = 0
-        logger.info(f"Local time: {self.get_local_time()}. Step {self.n_step} completed. Reward: {reward}, Terminal: {terminal}")
+        logger.info(
+            f"Local time: {self.get_local_time()}. Step {self.n_step} completed. Reward: {reward}, Terminal: {terminal}"
+        )
         self.n_step += 1
 
         return reward, observation, terminal, self.get_info()
@@ -180,11 +251,11 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
     def is_night(self, local_time: datetime | None = None) -> bool:
         """
         Determine whether the given time falls within nighttime hours.
-        
+
         Args:
             local_time (datetime | None): The local time to check. If None, the current local time
                 is retrieved using self.get_local_time().
-        
+
         Returns:
             bool: True if the time is between 9 PM and 9 AM, False otherwise.
         """
@@ -218,8 +289,8 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     async def lights_off_and_sleep_until_morning(self):
         action = np.zeros(6)
-        await self.put_action(action)
         logger.info(f"Nighttime enforced!")
+        await self.put_action(action)
         morning_time = self.get_morning_time()
         await self.sleep_until(morning_time)
 
