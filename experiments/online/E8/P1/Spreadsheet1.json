@@ -9,7 +9,7 @@
             "timezone": "America/Edmonton"
         },
         "filepath": "experiments/online/E8/P1/poisson1.xlsx",
-        "compatibility_mode": true,
+        "compatibility_mode": false,
         "timezone": "America/Edmonton"
     }
 }
