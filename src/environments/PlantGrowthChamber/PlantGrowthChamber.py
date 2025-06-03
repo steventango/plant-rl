@@ -177,23 +177,14 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     async def start(self):
         self.n_step = 0
-        if self.enforce_night and self.is_night():
-            await self.lights_off_and_sleep_until_morning()
-            logger.info(f"Local time: {self.get_local_time()}. Nighttime ended.")
-            if self.twilight_intensities is not None:
-                for twilight_intensity in self.twilight_intensities:
-                    action = self.bright_action * twilight_intensity
-                    await self.put_action(action)
-                    logger.info(f"Local time: {self.get_local_time()}. Dawn step with action {action}")
-                    await self.sleep_until_next_step(timedelta(minutes=1))
-                    await self.get_observation()
-                    self.glue.log()
-            else:
-                await self.put_action(self.dim_action)
+        woke = await self.execute_night_transition()
+        if self.twilight_intensities is None:
+            await self.put_action(self.dim_action)
 
         self.clean_areas = []
         self.daily_mean_clean_areas = defaultdict(list)
-        await self.sleep_until_next_step(self.duration)
+        if self.twilight_minutes == 0 or not woke:
+            await self.sleep_until_next_step(self.duration)
         observation = await self.get_observation()
         self.n_step = 1
         return observation, self.get_info()
@@ -204,6 +195,24 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         terminal = self.get_terminal()
 
+        woke = await self.execute_night_transition()
+
+        # calculate the time left until the next step
+        if self.twilight_minutes == 0 or not woke:
+            await self.sleep_until_next_step(self.duration)
+        observation = await self.get_observation()
+        if woke:
+            reward = self.reward_function()
+        else:
+            reward = 0
+        logger.info(
+            f"Local time: {self.get_local_time()}. Step {self.n_step} completed. Reward: {reward}, Terminal: {terminal}"
+        )
+        self.n_step += 1
+
+        return reward, observation, terminal, self.get_info()
+
+    async def execute_night_transition(self):
         woke = False
         if self.enforce_night and self.is_night(
             self.get_local_time() + self.duration - timedelta(minutes=self.twilight_minutes)
@@ -232,21 +241,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 logger.info("Reference spectrum applied.")
                 await self.put_action(self.dim_action)
             woke = True
-
-        # calculate the time left until the next step
-        if self.twilight_minutes == 0 or not woke:
-            await self.sleep_until_next_step(self.duration)
-        observation = await self.get_observation()
-        if woke:
-            reward = self.reward_function()
-        else:
-            reward = 0
-        logger.info(
-            f"Local time: {self.get_local_time()}. Step {self.n_step} completed. Reward: {reward}, Terminal: {terminal}"
-        )
-        self.n_step += 1
-
-        return reward, observation, terminal, self.get_info()
+        return woke
 
     def is_night(self, local_time: datetime | None = None) -> bool:
         """
