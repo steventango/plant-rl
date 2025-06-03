@@ -199,8 +199,8 @@ class AsyncRLGlue:
         return img_path.name if img_path else None
 
     def log(self):
-        # if self.is_mock_env:
-        #     return
+        if self.is_mock_env:
+            return
 
         img_name = self.save_images(self.dataset_path, self.images_save_keys)
         raw_csv_path = self.dataset_path / "raw.csv"
