@@ -1,0 +1,15 @@
+{
+    "agent": "Spreadsheet1",
+    "problem": "TemporalPlantGrowthChamber",
+    "total_steps": 40320,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": 1,
+            "timezone": "America/Edmonton"
+        },
+        "filepath": "experiments/online/E8/P1/poisson1.xlsx",
+        "compatibility_mode": true,
+        "timezone": "America/Edmonton"
+    }
+}
