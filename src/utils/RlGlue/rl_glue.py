@@ -131,40 +131,47 @@ class AsyncRLGlue:
 
 
     def append_csv(self, chk, raw_csv_path: Path, img_name: str, interaction: Interaction):
+        data_dict = {
+            "time": [self.environment.time],
+            "frame": [self.num_steps],
+            **expand("action", self.environment.last_action),
+            "steps": [self.num_steps],
+            "image_name": [img_name],
+            "episode": [chk["episode"] if chk is not None else None],
+        }
         expanded_info = {}
-        for key, value in interaction.extra.items():
-            if isinstance(value, pd.DataFrame):
-                continue
-            elif isinstance(value, np.ndarray):
-                expanded_info.update(expand(key, value))
-            else:
-                expanded_info.update(expand(key, value))
-        df = pd.DataFrame(
-            {
-                "time": [self.environment.time],
-                "frame": [self.num_steps],
+        if interaction is not None:
+            interaction_data = {
                 **expand("state", interaction.o),
-                **expand("action", self.environment.last_action),
                 "agent_action": [interaction.a],
                 "reward": [interaction.r],
                 "terminal": [interaction.t],
-                "steps": [self.num_steps],
-                "image_name": [img_name],
                 "return": [self.total_reward if interaction.t else None],
-                "episode": [chk["episode"] if chk is not None else None],
-                **expanded_info,
             }
+            data_dict.update(interaction_data)
+            for key, value in interaction.extra.items():
+                if isinstance(value, pd.DataFrame):
+                    continue
+                elif isinstance(value, np.ndarray):
+                    expanded_info.update(expand(key, value))
+                else:
+                    expanded_info.update(expand(key, value))
+            data_dict.update(expanded_info)
+
+        df = pd.DataFrame(
+            data_dict
         )
-        interaction.extra["df"].reset_index(inplace=True)
-        interaction.extra["df"]["plant_id"] = interaction.extra["df"].index
-        interaction.extra["df"]["frame"] = self.num_steps
-        df = pd.merge(
-            df,
-            interaction.extra["df"],
-            how="left",
-            left_on=["frame"],
-            right_on=["frame"],
-        )
+        if interaction is not None:
+            interaction.extra["df"].reset_index(inplace=True)
+            interaction.extra["df"]["plant_id"] = interaction.extra["df"].index
+            interaction.extra["df"]["frame"] = self.num_steps
+            df = pd.merge(
+                df,
+                interaction.extra["df"],
+                how="left",
+                left_on=["frame"],
+                right_on=["frame"],
+            )
         if raw_csv_path.exists():
             df_old = pd.read_csv(raw_csv_path)
             shutil.copy(raw_csv_path, raw_csv_path.with_suffix(".bak"))
@@ -192,8 +199,8 @@ class AsyncRLGlue:
         return img_path.name if img_path else None
 
     def log(self):
-        if self.is_mock_env:
-            return
+        # if self.is_mock_env:
+        #     return
 
         img_name = self.save_images(self.dataset_path, self.images_save_keys)
         raw_csv_path = self.dataset_path / "raw.csv"
