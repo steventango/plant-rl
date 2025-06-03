@@ -183,8 +183,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         self.clean_areas = []
         self.daily_mean_clean_areas = defaultdict(list)
-        if self.twilight_minutes == 0 or not woke:
-            await self.sleep_until_next_step(self.duration)
+        await self.sleep_until_next_step(self.duration)
         observation = await self.get_observation()
         self.n_step = 1
         return observation, self.get_info()
@@ -198,8 +197,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         woke = await self.execute_night_transition()
 
         # calculate the time left until the next step
-        if self.twilight_minutes == 0 or not woke:
-            await self.sleep_until_next_step(self.duration)
+        await self.sleep_until_next_step(self.duration)
         observation = await self.get_observation()
         if woke:
             reward = self.reward_function()
