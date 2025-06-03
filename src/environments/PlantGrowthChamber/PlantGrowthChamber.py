@@ -214,33 +214,35 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     async def execute_night_transition(self):
         woke = False
-        if self.enforce_night and self.is_night(
-            self.get_local_time() + self.duration - timedelta(minutes=self.twilight_minutes)
-        ):
-            await self.sleep_until_next_step(self.duration)
-            if self.twilight_intensities is not None:
-                logger.info(f"Local time: {self.get_local_time()}. Twilight started.")
-                for twilight_intensity in reversed(self.twilight_intensities):
-                    action = self.bright_action * twilight_intensity
-                    await self.put_action(self.bright_action * twilight_intensity)
-                    logger.info(f"Local time: {self.get_local_time()}. Dusk step with action {action}")
-                    await self.sleep_until_next_step(timedelta(minutes=1))
-                    await self.get_observation()
-                    self.glue.log()
-            await self.lights_off_and_sleep_until_morning()
-            logger.info(f"Local time: {self.get_local_time()}. Nighttime ended.")
-            if self.twilight_intensities is not None:
-                for twilight_intensity in self.twilight_intensities:
-                    action = self.bright_action * twilight_intensity
-                    await self.put_action(action)
-                    logger.info(f"Local time: {self.get_local_time()}. Dawn step with action {action}")
-                    await self.sleep_until_next_step(timedelta(minutes=1))
-                    await self.get_observation()
-                    self.glue.log()
-            else:
-                logger.info("Reference spectrum applied.")
-                await self.put_action(self.dim_action)
-            woke = True
+        if self.enforce_night:
+            if not self.is_night(self.get_local_time()) and self.is_night(
+                self.get_local_time() + self.duration - timedelta(minutes=self.twilight_minutes)
+            ):
+                await self.sleep_until_next_step(self.duration)
+                if self.twilight_intensities is not None:
+                    logger.info(f"Local time: {self.get_local_time()}. Twilight started.")
+                    for twilight_intensity in reversed(self.twilight_intensities):
+                        action = self.bright_action * twilight_intensity
+                        await self.put_action(self.bright_action * twilight_intensity)
+                        logger.info(f"Local time: {self.get_local_time()}. Dusk step with action {action}")
+                        await self.sleep_until_next_step(timedelta(minutes=1))
+                        await self.get_observation()
+                        self.glue.log()
+            if self.is_night(self.get_local_time()):
+                await self.lights_off_and_sleep_until_morning()
+                logger.info(f"Local time: {self.get_local_time()}. Nighttime ended.")
+                if self.twilight_intensities is not None:
+                    for twilight_intensity in self.twilight_intensities:
+                        action = self.bright_action * twilight_intensity
+                        await self.put_action(action)
+                        logger.info(f"Local time: {self.get_local_time()}. Dawn step with action {action}")
+                        await self.sleep_until_next_step(timedelta(minutes=1))
+                        await self.get_observation()
+                        self.glue.log()
+                else:
+                    logger.info("Reference spectrum applied.")
+                    await self.put_action(self.dim_action)
+                woke = True
         return woke
 
     def is_night(self, local_time: datetime | None = None) -> bool:
