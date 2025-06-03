@@ -2,14 +2,13 @@ import asyncio
 import os
 import shutil
 import sys
-import warnings
 
 sys.path.append(os.getcwd())
 import argparse
 import logging
 import socket
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
@@ -24,11 +23,10 @@ import wandb
 from experiment import ExperimentModel
 from problems.registry import getProblem
 from utils.checkpoint import Checkpoint
-from utils.logger import expand, log
+from utils.logger import log
 from utils.preempt import TimeoutHandler
-from utils.RlGlue.rl_glue import AsyncRLGlue, Interaction
+from utils.RlGlue.rl_glue import AsyncRLGlue
 
-default_save_keys = {"left", "right"}
 
 # ------------------
 # -- Command Args --
@@ -40,8 +38,13 @@ parser.add_argument('--save_path', type=str, default='./')
 parser.add_argument('--checkpoint_path', type=str, default='./checkpoints/')
 parser.add_argument('--silent', action='store_true', default=False)
 parser.add_argument('--gpu', action='store_true', default=False)
-parser.add_argument('-d', '--deploy', action='store_true', default=False, 
-                    help='Allows for easily restarting logging for crashed runs in deployment. If the run already exists, then wandb will resume logging to the same run.')
+parser.add_argument(
+    "-d",
+    "--deploy",
+    action="store_true",
+    default=False,
+    help="Allows for easily restarting logging for crashed runs in deployment. If the run already exists, then wandb will resume logging to the same run.",
+)
 
 args = parser.parse_args()
 
@@ -73,20 +76,6 @@ exp = ExperimentModel.load(args.exp)
 indices = args.idxs
 
 Problem = getProblem(exp.problem)
-
-
-def save_images(env, dataset_path: Path, save_keys):
-    isoformat = env.time.isoformat(timespec='seconds').replace(':', '')
-    images_path = dataset_path / "images"
-    images_path.mkdir(parents=True, exist_ok=True)
-    img_path = None
-    for key, image in env.images.items():
-        if save_keys != "*" and key not in save_keys:
-            continue
-        img_path = images_path / f"{isoformat}_{key}.jpg"
-        image = image.convert("RGB")
-        image.save(img_path, "JPEG", quality=90)
-    return img_path.name if img_path else None
 
 
 def backup_and_save(exp, collector, idx, base):
@@ -135,15 +124,14 @@ async def main():
         agent = chk.build('a', problem.getAgent)
         env = chk.build('e', problem.getEnvironment)
 
-        glue = chk.build("glue", lambda: AsyncRLGlue(agent, env))
-        chk.initial_value('episode', 0)
-
         context = exp.buildSaveContext(idx, base=args.save_path)
         agent_path = Path(context.resolve()).relative_to('results')
         dataset_path = Path('/data') / agent_path  / f"z{env.zone.identifier}"
-        images_save_keys = problem.exp_params.get("image_save_keys", default_save_keys)
-        dataset_path.mkdir(parents=True, exist_ok=True)
-        raw_csv_path = dataset_path / "raw.csv"
+        images_save_keys = problem.exp_params.get("image_save_keys")
+
+        glue = chk.build("glue", lambda: AsyncRLGlue(agent, env, dataset_path, images_save_keys))
+        env.glue = glue
+        chk.initial_value('episode', 0)
 
         config = {
             **problem.params,
@@ -156,7 +144,7 @@ async def main():
         else:
             run_id = args.exp.replace("/", "-").removesuffix(".json") + '-' + datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
             resume = "never"
-            
+
         wandb_run = wandb.init(
             entity="plant-rl",
             project="main",
@@ -173,23 +161,13 @@ async def main():
         start_time = time.time()
         # Track the current active save task (if any)
         current_save_task = None
+        is_mock_env = exp.problem.startswith("Mock")
 
         # if we haven't started yet, then make the first interaction
         if glue.total_steps == 0:
-            s, a, info = await glue.start()
-            episode = chk['episode']
-            is_mock_env = exp.problem.startswith("Mock")
-            log(env, glue, wandb_run, s, a, info, is_mock_env=is_mock_env, episode=episode)
-            interaction = Interaction(
-                o=s,
-                a=a,
-                t=False,
-                r=None,
-                extra=info,
-            )
-            if not exp.problem.startswith("Mock"):
-                img_name = save_images(env, dataset_path, images_save_keys)
-                append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
+            interaction = await glue.start()
+            episode = chk["episode"]
+            log(env, glue, wandb_run, interaction.o, interaction.a, interaction.extra, is_mock_env=is_mock_env, episode=episode)
 
         for step in range(glue.total_steps, exp.total_steps):
             collector.next_frame()
@@ -223,10 +201,6 @@ async def main():
             episode = chk['episode']
             log(env, glue, wandb_run, interaction.o, interaction.a, interaction.extra, is_mock_env=is_mock_env, r=interaction.r, t=interaction.t, episodic_return=episodic_return, episode=episode)
 
-            if not is_mock_env:
-                img_name = save_images(env, dataset_path, images_save_keys)
-                append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
-
             if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
                 # collect some data
                 collector.collect('return', glue.total_reward)
@@ -243,18 +217,8 @@ async def main():
                 episode = chk['episode']
                 logger.debug(f'{episode} {step} {glue.total_reward} {avg_time:.4}ms {int(fps)}')
 
-                s, a, info = await glue.start()
-                log(env, glue, wandb_run, s, a, info, is_mock_env=is_mock_env)
-                interaction = Interaction(
-                    o=s,
-                    a=a,
-                    t=False,
-                    r=None,
-                    extra=info,
-                )
-                if not exp.problem.startswith("Mock"):
-                    img_name = save_images(env, dataset_path, images_save_keys)
-                    append_csv(chk, env, glue, raw_csv_path, img_name, interaction)
+                interaction = await glue.start()
+                log(env, glue, wandb_run, interaction.o, interaction.a, interaction.extra, is_mock_env=is_mock_env)
 
             backup_and_save(exp, collector, idx, args.save_path)
 
@@ -273,54 +237,6 @@ async def main():
         # ------------
         backup_and_save(exp, collector, idx, args.save_path)
         wandb_run.finish()
-
-def append_csv(chk, env, glue, raw_csv_path, img_name, interaction):
-    expanded_info = {}
-    for key, value in interaction.extra.items():
-        if isinstance(value, pd.DataFrame):
-            continue
-        elif isinstance(value, np.ndarray):
-            expanded_info.update(expand(key, value))
-        else:
-            expanded_info.update(expand(key, value))
-    df = pd.DataFrame(
-        {
-            "time": [env.time],
-            "frame": [glue.num_steps],
-            **expand("state", interaction.o),
-            **expand("action", env.last_action),
-            "agent_action": [interaction.a],
-            "reward": [interaction.r],
-            "terminal": [interaction.t],
-            "steps": [glue.num_steps],
-            "image_name": [img_name],
-            "return": [glue.total_reward if interaction.t else None],
-            "episode": [chk['episode']],
-            **expanded_info,
-        }
-    )
-
-    interaction.extra["df"].reset_index(inplace=True)
-    interaction.extra["df"]["plant_id"] = interaction.extra["df"].index
-    interaction.extra["df"]["frame"] = glue.num_steps
-    df = pd.merge(
-        df,
-        interaction.extra["df"],
-        how="left",
-        left_on=["frame"],
-        right_on=["frame"],
-    )
-    if raw_csv_path.exists():
-        df_old = pd.read_csv(raw_csv_path)
-        shutil.copy(raw_csv_path, raw_csv_path.with_suffix('.bak'))
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore",
-                message="The behavior of DataFrame concatenation with empty or all-NA entries is deprecated.",
-                category=FutureWarning
-            )
-            df = pd.concat([df_old, df], ignore_index=True)
-    df.to_csv(raw_csv_path, index=False)
 
 
 if __name__ == "__main__":
