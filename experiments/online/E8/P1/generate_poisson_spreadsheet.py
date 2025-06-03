@@ -9,7 +9,6 @@ def generate_policy(filename, interval = 10, lam = 3):
     days = 28
     reference_action = np.array([0.398, 0.762, 0.324, 0.000, 0.332, 0.606])
     data = []
-    day = 0
 
     intensity = np.random.choice([0.675, 1])
 
