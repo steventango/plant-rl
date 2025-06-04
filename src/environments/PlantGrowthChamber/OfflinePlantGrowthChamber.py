@@ -52,8 +52,9 @@ class OfflinePlantGrowthChamber:
         # Compute an area indicator for each day
         local_dates = df['time'].dt.date
         for date_val, group in df.groupby(local_dates):            
-            self.daily_area_indicator[date_val] = np.mean(np.sort(group['mean_clean_area'])[-5:])  # max area  
-            #self.daily_area_indicator[date_val] = np.mean(group['mean_clean_area'][:5])  # morning area (need to reset normalization bounds if using this)
+            self.daily_area_indicator[date_val] = np.mean(group['mean_clean_area'][:5])  # morning area
+            #self.daily_area_indicator[date_val] = np.mean(np.sort(group['mean_clean_area'])[-5:])  # max area  
+
 
         return df
 
@@ -66,7 +67,7 @@ class OfflinePlantGrowthChamber:
         mean_clean_area = self.dataset.iloc[self.index]["mean_clean_area"]
         if self.daily_area:
             area_indicator = self.daily_area_indicator[pd.to_datetime(local_time).date()] 
-            normalized_mean_clean_area = normalize(mean_clean_area / area_indicator, 0.75, 1.05)   # bounds suitable when using max area as benchmark
+            normalized_mean_clean_area = normalize(mean_clean_area / area_indicator, 0.85, 1.3)   # note: for max area use (0.75, 1.05)
         else:
             normalized_mean_clean_area = normalize(mean_clean_area, 0, 100)   #TODO check if bounds appropriate
 
@@ -154,7 +155,8 @@ class OfflinePlantGrowthChamber_1hrStep(OfflinePlantGrowthChamber):
         elif average_action <= 2:
             return int(0)
         elif average_action == 3: 
-            return int(np.random.choice([0, 1]))
+            #return int(np.random.choice([0, 1]))  
+            return int(0)  
     
     def step(self, _):
         # Update action history based on previous action
@@ -222,7 +224,7 @@ class OfflinePlantGrowthChamber_1hrStep_MC_AreaOnly(OfflinePlantGrowthChamber_1h
         if self.use_photon_count: 
             raise ValueError(f'This env is incompatible with use_photon_count.')
         else: 
-            return 0.0, s1
+            return s1, 0.0
 
 class OfflinePlantGrowthChamber_1hrStep_MC_TimeOnly(OfflinePlantGrowthChamber_1hrStep_MC):   
     def get_observation(self):
