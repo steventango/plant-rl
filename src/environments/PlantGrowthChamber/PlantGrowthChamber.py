@@ -214,7 +214,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         woke = False
         if self.enforce_night:
             if not self.is_night(self.get_local_time()) and self.is_night(
-                self.get_local_time() + self.duration - timedelta(minutes=self.twilight_minutes)
+                self.get_local_time() + self.duration + timedelta(minutes=self.twilight_minutes)
             ):
                 await self.sleep_until_next_step(self.duration)
                 if self.twilight_intensities is not None:
