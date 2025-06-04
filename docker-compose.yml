@@ -16,7 +16,7 @@ services:
       - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
-    command: python src/main_real.py -e experiments/online/E8/P0/Spreadsheet1.json -i 0 --deploy
+    command: python src/main_real.py -e experiments/online/E8/P1/Spreadsheet1.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -96,7 +96,7 @@ services:
       - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
-    command: python src/main_real.py -e experiments/online/E8/P0/Spreadsheet6.json -i 0 --deploy
+    command: python src/main_real.py -e experiments/online/E8/P1/Spreadsheet6.json -i 0 --deploy
     deploy:
       resources:
         reservations:
