@@ -50,7 +50,7 @@ class AsyncRLGlue:
         self.total_reward = 0
 
         s, env_info = await self.environment.start()
-        self.last_action, agent_info = await self.agent.start(s)
+        self.last_action, agent_info = await self.agent.start(s, env_info)
         plan_task = asyncio.create_task(self.plan())
         background_tasks.add(plan_task)
         info = {**env_info, **agent_info}
@@ -129,7 +129,6 @@ class AsyncRLGlue:
 
         return is_terminal
 
-
     def append_csv(self, chk, raw_csv_path: Path, img_name: str, interaction: Interaction):
         data_dict = {
             "time": [self.environment.time],
@@ -162,7 +161,7 @@ class AsyncRLGlue:
             data_dict
         )
         if interaction is not None:
-            interaction.extra["df"].reset_index(inplace=True)
+            interaction.extra["df"].reset_index(inplace=True, drop=True)
             interaction.extra["df"]["plant_id"] = interaction.extra["df"].index
             interaction.extra["df"]["frame"] = self.num_steps
             df = pd.merge(
@@ -183,7 +182,6 @@ class AsyncRLGlue:
                 )
                 df = pd.concat([df_old, df], ignore_index=True)
         df.to_csv(raw_csv_path, index=False)
-
 
     def save_images(self, dataset_path: Path, save_keys: set[str]):
         isoformat = self.environment.time.isoformat(timespec="seconds").replace(":", "")

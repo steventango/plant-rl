@@ -79,7 +79,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 0.9972641654,
             ]
         )
-        self.twilight_minutes = len(self.twilight_intensities) + 1 if self.twilight_intensities is not None else 0
         self.normalize_reward = normalize_reward
         self.glue = None
 
@@ -177,9 +176,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     async def start(self):
         self.n_step = 0
-        woke = await self.execute_night_transition()
-        if self.twilight_intensities is None:
-            await self.put_action(self.dim_action)
+        await self.execute_night_transition()
 
         self.clean_areas = []
         self.daily_mean_clean_areas = defaultdict(list)
@@ -213,49 +210,89 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
     async def execute_night_transition(self):
         woke = False
         if self.enforce_night:
-            if not self.is_night(self.get_local_time()) and self.is_night(
-                self.get_local_time() + self.duration + timedelta(minutes=self.twilight_minutes)
-            ):
+            if not self.is_dusk() and self.next_step_is_dusk():
                 await self.sleep_until_next_step(self.duration)
-                if self.twilight_intensities is not None:
-                    logger.info(f"Local time: {self.get_local_time()}. Twilight started.")
-                    for twilight_intensity in reversed(self.twilight_intensities):
-                        action = self.bright_action * twilight_intensity
-                        await self.put_action(self.bright_action * twilight_intensity)
-                        logger.info(f"Local time: {self.get_local_time()}. Dusk step with action {action}")
-                        await self.sleep_until_next_step(timedelta(minutes=1))
-                        await self.get_observation()
-                        self.glue.log()
-            if self.is_night(self.get_local_time()):
+            if self.is_dusk():
+                await self.execute_dusk()
+            if self.is_night():
                 await self.lights_off_and_sleep_until_morning()
-                logger.info(f"Local time: {self.get_local_time()}. Nighttime ended.")
-                if self.twilight_intensities is not None:
-                    for twilight_intensity in self.twilight_intensities:
-                        action = self.bright_action * twilight_intensity
-                        await self.put_action(action)
-                        logger.info(f"Local time: {self.get_local_time()}. Dawn step with action {action}")
-                        await self.sleep_until_next_step(timedelta(minutes=1))
-                        await self.get_observation()
-                        self.glue.log()
-                else:
-                    logger.info("Reference spectrum applied.")
-                    await self.put_action(self.dim_action)
+            if self.is_dawn():
+                await self.execute_dawn()
+                woke = True
+            elif self.twilight_intensities is None:
+                logger.info("Reference spectrum applied.")
+                await self.put_action(self.dim_action)
                 woke = True
         return woke
 
-    def is_night(self, local_time: datetime | None = None) -> bool:
+    async def execute_dawn(self):
+        current_local_time = self.get_local_time()
+        logger.info(f"Local time: {current_local_time}. Nighttime ended.")
+        for twilight_intensity in self.twilight_intensities[current_local_time.minute:]:
+            await self.get_observation()
+            self.glue.log()
+            action = self.bright_action * twilight_intensity
+            await self.sleep_until_next_step(timedelta(minutes=1))
+            logger.info(f"Local time: {self.get_local_time()}. Dawn step {twilight_intensity}")
+            await self.put_action(action)
+
+    async def execute_dusk(self):
+        current_local_time = self.get_local_time()
+        logger.info(f"Local time: {current_local_time}. Twilight started.")
+        end_index = 2 * len(self.twilight_intensities) + 1 - current_local_time.minute
+        for twilight_intensity in reversed(self.twilight_intensities[:end_index]):
+            await self.get_observation()
+            self.glue.log()
+            action = self.bright_action * twilight_intensity
+            await self.sleep_until_next_step(timedelta(minutes=1))
+            logger.info(f"Local time: {self.get_local_time()}. Dusk step {twilight_intensity}")
+            await self.put_action(action)
+        await self.sleep_until_next_step(timedelta(minutes=1))
+
+    def is_dawn(self) -> bool:
+        """
+        Determine whether the current local time is within dawn hours (9:00 AM to 9:29 AM).
+
+        Returns:
+            bool: True if the current local time is between 9:00 AM and 9:29 AM, False otherwise.
+        """
+        local_time = self.get_local_time()
+        is_dawn = local_time.hour == 9 and local_time.minute < len(self.twilight_intensities) + 1
+        logger.info(f"{local_time} is_dawn: {is_dawn}")
+        return is_dawn
+
+    def is_dusk(self) -> bool:
+        """
+        Determine whether the current local time is within dusk hours (8:30 PM to 8:59 PM).
+
+        Returns:
+            bool: True if the current local time is between 8:30 PM and 8:59 PM, False otherwise.
+        """
+        local_time = self.get_local_time()
+        is_dusk = local_time.hour == 20 and len(self.twilight_intensities) < local_time.minute
+        logger.info(f"{local_time} is_dusk: {is_dusk}")
+        return is_dusk
+
+    def next_step_is_dusk(self) -> bool:
+        """
+        Determine whether the next step local time will be within dusk hours (8:30 PM to 8:59 PM).
+
+        Returns:
+            bool: True if the next step local time is between 8:30 PM and 8:59 PM, False otherwise.
+        """
+        local_time = self.get_local_time() + self.duration
+        is_dusk = local_time.hour == 20 and len(self.twilight_intensities) < local_time.minute
+        logger.info(f"{local_time} next_step_is_dusk: {is_dusk}")
+        return is_dusk
+
+    def is_night(self) -> bool:
         """
         Determine whether the given time falls within nighttime hours.
-
-        Args:
-            local_time (datetime | None): The local time to check. If None, the current local time
-                is retrieved using self.get_local_time().
 
         Returns:
             bool: True if the time is between 9 PM and 9 AM, False otherwise.
         """
-        if local_time is None:
-            local_time = self.get_local_time()
+        local_time = self.get_local_time()
         is_night = local_time.hour >= 21 or local_time.hour < 9
         logger.info(f"{local_time} is_night: {is_night}")
         return is_night
