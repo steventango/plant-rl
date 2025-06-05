@@ -161,7 +161,7 @@ class AsyncRLGlue:
             data_dict
         )
         if interaction is not None:
-            interaction.extra["df"].reset_index(inplace=True)
+            interaction.extra["df"].reset_index(inplace=True, drop=True)
             interaction.extra["df"]["plant_id"] = interaction.extra["df"].index
             interaction.extra["df"]["frame"] = self.num_steps
             df = pd.merge(
