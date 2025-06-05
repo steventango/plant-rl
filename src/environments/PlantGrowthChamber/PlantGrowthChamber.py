@@ -239,7 +239,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
     async def execute_dusk(self):
         current_local_time = self.get_local_time()
         logger.info(f"Local time: {current_local_time}. Twilight started.")
-        end_index = 2 * len(self.twilight_intensities) + 2 - current_local_time.minute
+        end_index = 2 * len(self.twilight_intensities) + 1 - current_local_time.minute
         for twilight_intensity in reversed(self.twilight_intensities[:end_index]):
             await self.get_observation()
             self.glue.log()
