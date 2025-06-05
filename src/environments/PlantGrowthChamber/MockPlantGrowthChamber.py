@@ -28,6 +28,7 @@ class MockPlantGrowthChamber(PlantGrowthChamber):
             self.config = json.load(f)
         kwargs["zone"] = deserialize_zone(self.config["zone"])
         self.index = 0
+        self.time = self.dataset_df["time"].min()
         self.mock_area = kwargs.get("mock_area", False)
         self.plant_stat_columns = [
             "in_bounds",
@@ -67,8 +68,7 @@ class MockPlantGrowthChamber(PlantGrowthChamber):
         self.images["left"] = Image.open(path)
 
     def get_time(self):
-        row = self.dataset_df[self.dataset_df["frame"] == self.index].iloc[0]
-        return row["time"]
+        return self.time
 
     def get_terminal(self):
         return self.index >= self.dataset_df["frame"].max()
@@ -92,11 +92,16 @@ class MockPlantGrowthChamber(PlantGrowthChamber):
         self.last_action = action
 
     async def sleep_until(self, wake_time: datetime):
-        while self.get_time() < wake_time and not self.get_terminal():
-            self.index += 1
-            if self.index >= self.dataset_df["frame"].max():
+        while self.time < wake_time and not self.get_terminal():
+            self.time = wake_time
+            if self.index + 1 >= self.dataset_df["frame"].max():
                 self.index = 0
                 break
+            next_row = self.dataset_df[self.dataset_df["frame"] == self.index + 1].iloc[0]
+            next_time = next_row["time"]
+            if next_time >= self.time:
+                self.time = next_time
+                self.index += 1
 
 
     async def close(self):
