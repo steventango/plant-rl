@@ -177,8 +177,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
     async def start(self):
         self.n_step = 0
         await self.execute_night_transition()
-        if self.twilight_intensities is None:
-            await self.put_action(self.dim_action)
 
         self.clean_areas = []
         self.daily_mean_clean_areas = defaultdict(list)
@@ -212,6 +210,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
     async def execute_night_transition(self):
         woke = False
         if self.enforce_night:
+            if not self.is_dusk() and self.next_step_is_dusk():
+                await self.sleep_until_next_step(self.duration)
+                await self.sleep_until_next_step(timedelta(minutes=1))
             if self.is_dusk():
                 await self.execute_dusk()
             if self.is_night():
@@ -228,10 +229,12 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
     async def execute_dawn(self):
         current_local_time = self.get_local_time()
         logger.info(f"Local time: {current_local_time}. Nighttime ended.")
-        for twilight_intensity in self.twilight_intensities[current_local_time.minute:]:
+        for i, twilight_intensity in enumerate(self.twilight_intensities[current_local_time.minute - 1:]):
             action = self.bright_action * twilight_intensity
             logger.info(f"Local time: {self.get_local_time()}. Dawn step {twilight_intensity}")
             await self.put_action(action)
+            if i == len(self.twilight_intensities) - 1:
+                break
             await self.sleep_until_next_step(timedelta(minutes=1))
             await self.get_observation()
             self.glue.log()
@@ -239,7 +242,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
     async def execute_dusk(self):
         current_local_time = self.get_local_time()
         logger.info(f"Local time: {current_local_time}. Twilight started.")
-        end_index = len(self.twilight_intensities) - current_local_time.minute - 30
+        end_index = 2 * len(self.twilight_intensities) + 2 - current_local_time.minute
         for twilight_intensity in reversed(self.twilight_intensities[:end_index]):
             action = self.bright_action * twilight_intensity
             logger.info(f"Local time: {self.get_local_time()}. Dusk step {twilight_intensity}")
@@ -250,26 +253,38 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     def is_dawn(self) -> bool:
         """
-        Determine whether the current local time is within dawn hours (9 AM to 9:30 AM).
+        Determine whether the current local time is within dawn hours (9:01 AM to 9:30 AM).
 
         Returns:
-            bool: True if the current local time is between 9 AM and 9:30 AM, False otherwise.
+            bool: True if the current local time is between 9:01 AM and 9:30 AM, False otherwise.
         """
         local_time = self.get_local_time()
-        is_dawn = local_time.hour == 9 and local_time.minute < 30 and self.twilight_intensities is not None
+        is_dawn = local_time.hour == 9 and 0 < local_time.minute < len(self.twilight_intensities) + 1 and self.twilight_intensities is not None
         logger.info(f"{local_time} is_dawn: {is_dawn}")
         return is_dawn
 
     def is_dusk(self) -> bool:
         """
-        Determine whether the current local time is within dusk hours (8:30 PM to 9 PM).
+        Determine whether the current local time is within dusk hours (8:31 PM to 9:00 PM).
 
         Returns:
-            bool: True if the current local time is between 8:30 PM and 9 PM, False otherwise.
+            bool: True if the current local time is between 8:31 PM and 9:00 PM, False otherwise.
         """
         local_time = self.get_local_time()
-        is_dusk = local_time.hour == 20 and local_time.minute >= 30 and self.twilight_intensities is not None
+        is_dusk = local_time.hour == 20 and local_time.minute > len(self.twilight_intensities) + 1 and self.twilight_intensities is not None
         logger.info(f"{local_time} is_dusk: {is_dusk}")
+        return is_dusk
+
+    def next_step_is_dusk(self) -> bool:
+        """
+        Determine whether the next step local time will be within dusk hours (8:31 PM to 9:00 PM).
+
+        Returns:
+            bool: True if the next step local time is between 8:31 PM and 9:00 PM, False otherwise.
+        """
+        local_time = self.get_local_time() + self.duration + timedelta(minutes=1)
+        is_dusk = local_time.hour == 20 and local_time.minute > len(self.twilight_intensities) + 1 and self.twilight_intensities is not None
+        logger.info(f"{local_time} next_step_is_dusk: {is_dusk}")
         return is_dusk
 
     def is_night(self) -> bool:
@@ -292,7 +307,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
     def get_morning_time(self):
         local_time = self.get_local_time()
         local_time_greater_than_9 = local_time.hour >= 9
-        morning_time = local_time.replace(hour=9, minute=0, second=0, microsecond=0)
+        morning_time = local_time.replace(hour=9, minute=1, second=0, microsecond=0)
         if local_time_greater_than_9:
             morning_time += timedelta(days=1)
         return morning_time
