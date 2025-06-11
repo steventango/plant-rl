@@ -31,12 +31,12 @@
         "buffer_size": 100000,
         "batch": 256,
         "replay_ratio": 1,
-        "n_step": 12,
+        "n_step": 66,
 
         "representation": {
             "which_tc": "RichTileCoder",
             "strategy": -1,
-            "tiles": 12,
+            "tiles": 11,
             "tilings": 1
         }
     }
