@@ -8,7 +8,12 @@
             "normalize_reward": true,
             "dataset_paths": [
                 [
-                    "/data/online/E7/P3/ESARSA3/z3test"
+                    "/data/online/E7/P2/Constant1/z1",
+                    "/data/online/E7/P2/Constant2/z2",
+                    "/data/online/E7/P3/ESARSA3/z3",
+                    "/data/online/E7/P4/LinearESARSA6/z6",
+                    "/data/online/E7/P4/LinearESARSA8/z8",
+                    "/data/online/E7/P4/LinearESARSA9/z9"
                 ]
         ]
         },
@@ -19,7 +24,7 @@
         "buffer_type": "uniform",
         "buffer_size": 100000,
         "batch": "buffer",
-        "gamma": 0.999,
+        "gamma": 0.8,
         "replay_ratio": 1,
 
         "representation": {
