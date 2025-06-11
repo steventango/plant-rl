@@ -137,7 +137,8 @@ class OfflinePlantGrowthChamber:
         terminal = self.index + 72 >= len(self.dataset) 
         info = {}
         if terminal:
-            logger.info(f'Added {self.index} transitions to the replay buffer.')
+            dataset_path = self.dataset_paths[self.dataset_index]
+            logger.info(f'Added {self.index} transitions from {dataset_path} to the replay buffer.')
             self.dataset_index += 1
             if self.dataset_index >= len(self.dataset_paths):
                 info.update({"exhausted": True})
