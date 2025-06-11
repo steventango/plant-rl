@@ -82,7 +82,7 @@ class OfflinePlantGrowthChamber:
         observation = np.hstack(
             [
                 np.clip(normalized_seconds_since_morning, 0, 1),
-                np.clip(normalize(self.dli, 0, 72), 0, 1),
+                np.clip(normalize(self.dli, 0, 66), 0, 1),
                 np.clip(normalized_mean_clean_area, 0, 0.9999),
                 np.clip(normalized_openness, 0, 0.9999),
             ]
