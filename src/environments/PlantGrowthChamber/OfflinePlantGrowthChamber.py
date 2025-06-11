@@ -1,11 +1,10 @@
 import logging
-from datetime import timedelta
+from datetime import time, timedelta
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytz
-from math import floor
 
 from utils.functions import normalize
 
@@ -50,11 +49,11 @@ class OfflinePlantGrowthChamber:
             .reset_index()
         )
 
-        # Remove time stamps at 9:05, which was the terminal state added for the daily episode scenario
-        df = df[df['time'].dt.strftime('%H:%M') != '09:05']
+        # Remove time stamps before 9:30 and after 20:30, which are not relevant when twilight is used
+        df = df[(time(9, 30) <= df['time'].dt.time) & (df['time'].dt.time <= time(20, 31))]
 
         # Remove incomplete days 
-        df = self.remove_incomplete_days(df, timestamps_per_day = 72)
+        df = self.remove_incomplete_days(df, timestamps_per_day = 67)
 
         # Compute morning and max areas on each day
         local_dates = df['time'].dt.date
