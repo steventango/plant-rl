@@ -1,11 +1,14 @@
 from PyExpUtils.collection.Collector import Collector
 
-from environments.PlantGrowthChamber.OfflinePlantGrowthChamber import OfflinePlantGrowthChamber as Env
+from environments.PlantGrowthChamber.OfflinePlantGrowthChamber import (
+    OfflinePlantGrowthChamber as Env,
+)
 from environments.PlantGrowthChamber.OfflinePlantGrowthChamber import (
     OfflinePlantGrowthChamber_1hrStep,
     OfflinePlantGrowthChamber_1hrStep_MC,
     OfflinePlantGrowthChamber_1hrStep_MC_AreaOnly,
     OfflinePlantGrowthChamber_1hrStep_MC_TimeOnly,
+    OfflinePlantGrowthChamberTimeDLI,
 )
 from experiment.ExperimentModel import ExperimentModel
 from problems.BaseProblem import BaseProblem
@@ -30,6 +33,9 @@ class OfflinePlantGrowthChamber(BaseProblem):
             self.observations = (2,)
         elif self.env_params["type"] == "1hrStep_MC_TimeOnly":
             self.env = OfflinePlantGrowthChamber_1hrStep_MC_TimeOnly(**self.env_params)
+            self.observations = (2,)
+        elif self.env_params["type"] == "TimeDLI":
+            self.env = OfflinePlantGrowthChamberTimeDLI(**self.env_params)
             self.observations = (2,)
         else:
             raise ValueError(f"Env type invalid.")
