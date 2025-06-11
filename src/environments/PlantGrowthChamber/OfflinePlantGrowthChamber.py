@@ -43,7 +43,7 @@ class OfflinePlantGrowthChamber:
             .agg(
                 {
                     "plant_id": "first",
-                    "agent_action": "first",
+                    "action.0": "first",
                     "mean_clean_area": "first",
                 }
             )
@@ -88,7 +88,7 @@ class OfflinePlantGrowthChamber:
         return observation
 
     def get_action(self):
-        agent_action = self.dataset.iloc[self.index]['agent_action']
+        agent_action = self.dataset.iloc[self.index]['action.0'] > 0.3
         return int(agent_action)
 
     def get_reward(self):
@@ -162,7 +162,7 @@ class OfflinePlantGrowthChamber_1hrStep(OfflinePlantGrowthChamber):
         return np.hstack([s[0], np.clip(normalize(self.dli, 0, 12), 0, 1), s[2], s[3]])
     
     def get_action(self):
-        agent_actions = self.dataset.iloc[self.index:self.index + 6]['agent_action']
+        agent_actions = (self.dataset.iloc[self.index:self.index + 6]['action.0'] > 0.3).astype(int)
         average_action = agent_actions.sum()
         if average_action >= 4: 
             return int(1)
