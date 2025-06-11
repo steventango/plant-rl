@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 from utils.functions import normalize
+from environments.PlantGrowthChamber.utils import get_one_hot_time_observation
 
 logger = logging.getLogger("OfflinePlantGrowthChamber")
 logger.setLevel(logging.DEBUG)
@@ -13,7 +14,7 @@ logger.setLevel(logging.DEBUG)
 
 class OfflinePlantGrowthChamber:
     def __init__(self, *args, **kwargs):
-        self.dataset_paths = sorted(Path(path) for path in kwargs["dataset_paths"])
+        self.dataset_paths = [Path(path) for path in kwargs["dataset_paths"]]
         self.dataset_index = 0
         self.index = 0
         self.daily_area = kwargs.get("daily_area", False)
@@ -35,6 +36,8 @@ class OfflinePlantGrowthChamber:
             )
             .reset_index()
         )
+
+        df = self.remove_incomplete_days(df)
 
         # Populate daily_mean_clean_areas
         local_dates = df['time'].dt.date
@@ -58,13 +61,17 @@ class OfflinePlantGrowthChamber:
             normalized_mean_clean_area = (mean_clean_area - current_morning_area) / current_morning_area
         else:
             normalized_mean_clean_area = normalize(mean_clean_area, 0, 100)
-        clipped_mean_clean_area = np.clip(normalized_mean_clean_area, 0, 1)
-        return clipped_seconds_since_morning, clipped_mean_clean_area
+        # clipped_mean_clean_area = np.clip(normalized_mean_clean_area, 0, 1)
+        # return clipped_seconds_since_morning, 0.5
+        return get_one_hot_time_observation(local_time)
 
     def get_action(self):
-        agent_action = self.dataset.iloc[self.index]["agent_action"].astype(int)
-        if agent_action < 0 or agent_action > 3:
+        agent_action = self.dataset.iloc[self.index]["agent_action"]
+        if pd.isna(agent_action):
             agent_action = -1
+        else:
+            agent_action = int(agent_action)
+
         return agent_action
 
     def get_reward(self):
@@ -99,13 +106,20 @@ class OfflinePlantGrowthChamber:
     def step(self, _):
         self.index += 1
         info = {"action": self.get_action()}
-        terminal = self.index >= len(self.dataset) - 1
-        if terminal:
+        if self.index >= len(self.dataset) - 1:
             self.dataset_index += 1
             if self.dataset_index >= len(self.dataset_paths):
                 info.update({"exhausted": True})
-        return self.get_reward(), self.get_observation(), terminal, info
+        return self.get_reward(), self.get_observation(), False, info
 
+    def remove_incomplete_days(self, df, min_timestamps = 72):  # Note on min_timestamps: Exp 3 has 73 time stamps per day, but older datasets may have only 72.
+        local_dates = df["time"].dt.tz_convert("America/Edmonton").dt.date
+        complete_dates = []
+        for date_val, group in df.groupby(local_dates):
+            if len(group) >= min_timestamps:
+                complete_dates.append(date_val)
+
+        return df[local_dates.isin(complete_dates)]
 
 class OfflinePlantGrowthChamberTOD(OfflinePlantGrowthChamber):
     def get_observation(self):

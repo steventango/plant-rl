@@ -48,15 +48,15 @@ class LinearAgent(BaseAgent):
         return a, self.info
 
     def step(self, r: float, sp: np.ndarray | None, extra: Dict[str, Any]):
+        # sample next action
+        xp = None
+        if sp is not None:
+            xp = sp # Uses unprocessed features from env
         if "action" in extra:
             a = extra["action"]
         else:
             a = -1
-
-            # sample next action
-            xp = None
-            if sp is not None:
-                xp = sp # Uses unprocessed features from env
+            if xp is not None:
                 pi = self.policy(xp)
                 a = sample(pi, rng=self.rng)
 
