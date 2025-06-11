@@ -67,9 +67,9 @@ class OfflinePlantGrowthChamber:
     def get_observation(self):
         # tod
         local_time = self.dataset.iloc[self.index]["time"]
-        morning_time = local_time.replace(hour=9, minute=10, second=0, microsecond=0)
+        morning_time = local_time.replace(hour=9, minute=30, second=0, microsecond=0)
         seconds_since_morning = (local_time - morning_time).total_seconds()
-        normalized_seconds_since_morning = seconds_since_morning / (12 * 3600)
+        normalized_seconds_since_morning = seconds_since_morning / (11 * 3600)
 
         # area
         mean_clean_area = self.dataset.iloc[self.index]["mean_clean_area"]
