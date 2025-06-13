@@ -4,16 +4,16 @@ This starts a FastAPI server that controls the lightbar.
 
 ## Installation
 ```bash
-rsync -azP api/install-docker-buster.sh zone8:~/Desktop/
-ssh zone8 -t "cd ~/Desktop && ./install-docker-buster.sh"
-rsync -azP api/lightbar/ zone8:~/Desktop/lightbar
-ssh zone8 -t "cd ~/Desktop/lightbar && echo 'ZONE=8' > .env && docker compose up -d"
+rsync -azP api/install-docker-buster.sh mitacs-zone8:~/Desktop/
+ssh mitacs-zone8 -t "cd ~/Desktop && ./install-docker-buster.sh"
+rsync -azP api/lightbar/ mitacs-zone8:~/Desktop/lightbar
+ssh mitacs-zone8 -t "cd ~/Desktop/lightbar && echo 'ZONE=mitacs-zone8' > .env && docker compose up -d"
 ```
 
 ## Update
 ```bash
-rsync -azP api/lightbar/ zone8:~/Desktop/lightbar
-ssh zone8 -t "cd ~/Desktop/lightbar && docker compose up -d"
+rsync -azP api/lightbar/ mitacs-zone8:~/Desktop/lightbar
+ssh mitacs-zone8 -t "cd ~/Desktop/lightbar && docker compose up -d"
 ```
 
 
