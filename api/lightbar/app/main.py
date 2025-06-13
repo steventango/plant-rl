@@ -11,7 +11,7 @@ from .lightbar import Lightbar
 from .zones import ZONES
 
 app = FastAPI()
-zone = ZONES.get(int(os.getenv("ZONE", 2)))
+zone = ZONES.get(os.getenv("ZONE", "mitacs-zone2"))
 
 
 class Action(BaseModel):
