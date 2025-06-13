@@ -17,10 +17,10 @@ ZONES = {
     "alliance-zone10": Zone(0x30, 0x39),
     "alliance-zone11": Zone(0x34, 0x35),
     "alliance-zone12": Zone(0x08, 0x09),
-    "mitacs-1": Zone(0x25, 0x33),
-    "mitacs-2": Zone(0x69, 0x71),
-    "mitacs-3": Zone(0x1b, 0x1c),
-    "mitacs-6": Zone(0x58, 0x67),
-    "mitacs-8": Zone(0x10, 0x11),
-    "mitacs-9": Zone(0x63, 0x65)
+    "mitacs-zone1": Zone(0x25, 0x33),
+    "mitacs-zone2": Zone(0x69, 0x71),
+    "mitacs-zone3": Zone(0x1b, 0x1c),
+    "mitacs-zone6": Zone(0x58, 0x67),
+    "mitacs-zone8": Zone(0x10, 0x11),
+    "mitacs-zone9": Zone(0x63, 0x65)
 }
