@@ -1,7 +1,7 @@
 from PyExpUtils.collection.Collector import Collector
 
 from environments.PlantGrowthChamber.OfflinePlantGrowthChamber import OfflinePlantGrowthChamber as Env
-from environments.PlantGrowthChamber.OfflinePlantGrowthChamber import OfflinePlantGrowthChamber_1hrStep, OfflinePlantGrowthChamber_1hrStep_MC, OfflinePlantGrowthChamber_1hrStep_MC_AreaOnly, OfflinePlantGrowthChamber_1hrStep_MC_TimeOnly
+from environments.PlantGrowthChamber.OfflinePlantGrowthChamber import OfflinePlantGrowthChamber_1hrStep, OfflinePlantGrowthChamber_1hrStep_MC, OfflinePlantGrowthChamber_1hrStep_MC_OpennessOnly, OfflinePlantGrowthChamber_1hrStep_MC_TimeOnly, OfflinePlantGrowthChamber_1hrStep_MC_Area_Openness
 from experiment.ExperimentModel import ExperimentModel
 from problems.BaseProblem import BaseProblem
 
@@ -20,11 +20,14 @@ class OfflinePlantGrowthChamber(BaseProblem):
         elif self.env_params['type'] == '1hrStep_MC':
             self.env = OfflinePlantGrowthChamber_1hrStep_MC(**self.env_params)
             self.observations = (4,)
-        elif self.env_params['type'] == '1hrStep_MC_AreaOnly':
-            self.env = OfflinePlantGrowthChamber_1hrStep_MC_AreaOnly(**self.env_params)
+        elif self.env_params['type'] == '1hrStep_MC_OpennessOnly':
+            self.env = OfflinePlantGrowthChamber_1hrStep_MC_OpennessOnly(**self.env_params)
             self.observations = (2,)
         elif self.env_params['type'] == '1hrStep_MC_TimeOnly':
             self.env = OfflinePlantGrowthChamber_1hrStep_MC_TimeOnly(**self.env_params)
+            self.observations = (2,)
+        elif self.env_params['type'] == '1hrStep_MC_Area_Openness':
+            self.env = OfflinePlantGrowthChamber_1hrStep_MC_Area_Openness(**self.env_params)
             self.observations = (2,)
         else:
             raise ValueError(f"Env type invalid.")

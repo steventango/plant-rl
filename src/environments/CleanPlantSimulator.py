@@ -8,9 +8,9 @@ logger.setLevel(logging.DEBUG)
 class CleanPlantSimulator(BaseEnvironment):
     '''
     Simulate the evolution of plant area based on lighting conditions.
-    Assumptions: (i) Plant motion throughout each day is the same gaussian curve.
+    Assumptions: (i) Plant motion throughout each day is modeled by a gaussian curve.
                  (ii) Growth only occurs at night. Overnight growth is 20% if lighting is standard.
-                 (iii) Changing lighting only affects overnight growth.
+                 (iii) Poor lighting reduces overnight growth and affects the shape of the gaussian curve.
     State = [time of day, 
              daily light integral (dli),
              plant area, 
@@ -46,9 +46,9 @@ class CleanPlantSimulator(BaseEnvironment):
 
         observation = np.hstack([self.normalize(tod, 0, self.steps_per_day),
                                  self.normalize(daily_light_integral, 0, self.steps_per_day),
-                                 self.normalize(area, 1, 14),
-                                 self.normalize(openness, 0.97, 1.15)
-                                 ])
+                                 self.normalize(area, 0.5, 14),
+                                 self.normalize(openness, 0.97, 1.15)])
+        
         return observation
 
     def get_reward(self, percent_overnight_growth):
@@ -102,6 +102,9 @@ class CleanPlantSimulator(BaseEnvironment):
         Model the daily area curve by a Gaussian curve. 
         Input: x is the number of steps so far today.
         """
+        slowing = 1 + (x - self.dli) / self.steps_per_day
+        x = x / slowing
+
         stdev = self.steps_per_day
         mu = self.steps_per_day / 2
         gaussian = self.current_morning_size * np.exp(-0.5 * ((x - mu) / stdev) ** 2)
