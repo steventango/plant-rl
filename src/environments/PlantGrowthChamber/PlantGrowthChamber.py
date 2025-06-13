@@ -14,7 +14,7 @@ from utils.metrics import UnbiasedExponentialMovingAverage as UEMA
 from utils.RlGlue.environment import BaseAsyncEnvironment
 
 from .cv import process_image
-from .zones import get_zone
+from .zones import load_zone_from_config
 
 logger = logging.getLogger("PlantGrowthChamber")
 logger.setLevel(logging.DEBUG)
@@ -22,9 +22,9 @@ logger.setLevel(logging.DEBUG)
 
 class PlantGrowthChamber(BaseAsyncEnvironment):
 
-    def __init__(self, zone: int | None = None, timezone: str = "Etc/UTC", normalize_reward: bool = False, **kwargs):
+    def __init__(self, zone: str | None = None, timezone: str = "Etc/UTC", normalize_reward: bool = False, **kwargs):
         if zone is not None:
-            self.zone = get_zone(zone) if isinstance(zone, int) else zone
+            self.zone = load_zone_from_config(zone) if isinstance(zone, str) else zone
         self.images = {}
         self.image = None
         self.tz = ZoneInfo(timezone)
