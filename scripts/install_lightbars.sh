@@ -25,7 +25,7 @@ for hostname in "${hostnames[@]}"; do
     rsync -azP api/lightbar/ ${hostname}:~/Desktop/lightbar
     ssh ${hostname} -t "cd ~/Desktop/lightbar && echo 'ZONE=${hostname}' > .env && docker compose up -d"
     echo "Update completed for ${hostname}"
-  )
+  ) &
 done
 
 # Wait for all background processes to complete
