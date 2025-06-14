@@ -66,24 +66,17 @@ async def _run_single_zone_test(
             print(f"Zone ID {zone_id} Channel {channel_idx_plus_1}: Observation attempt complete.")
 
             if obs_image is not None:
-                # Extract numeric part of zone_id for filename, e.g., "01" from "mitacs-zone01"
-                zone_suffix = zone_id.split("-")[-1]  # e.g., "zone01"
-                zone_numeric_part = zone_suffix.replace("zone", "")  # e.g., "01"
-
-                # Construct filename compatible with plot_images
-                img_filename = f"zone{zone_numeric_part}_cam1_channel{channel_idx_plus_1}.jpg"
+                # Create action array string for filename
+                action_str = str(arr_vals).replace(" ", "")
+                img_filename = f"{zone_id}_{action_str}.jpg"
                 img_path = output_dir / img_filename
 
                 try:
                     obs_image = Image.fromarray(obs_image)
                     obs_image.save(img_path)
-                    print(f"Zone ID {zone_id}: Saved image for channel {channel_idx_plus_1} to {img_path}")
+                    print(f"Zone ID {zone_id}: Saved image for action {action_str} to {img_path}")
                 except Exception as e_save:
-                    print(
-                        f"Zone ID {zone_id}: Failed to save image {img_path} for channel {channel_idx_plus_1}: {e_save}"
-                    )
-            else:
-                print(f"Zone ID {zone_id} Channel {channel_idx_plus_1}: No image data received from observation.")
+                    print(f"Zone ID {zone_id}: Failed to save image {img_path}: {e_save}")
 
         except Exception as e:
             print(f"Zone ID {zone_id} Channel {channel_idx_plus_1}: Failed to get observation: {e}")
@@ -104,16 +97,17 @@ async def _run_single_zone_test(
         print(f"Zone ID {zone_id}: Observation attempt after lights off complete.")
 
         if obs_image_off is not None:
-            zone_suffix = zone_id.split("-")[-1]
-            zone_numeric_part = zone_suffix.replace("zone", "")
-            img_filename_off = f"zone{zone_numeric_part}_cam1_channel_off.jpg"
+            # Create off action array string for filename
+            off_action_str = str(off_payload.tolist()).replace(" ", "")
+            img_filename_off = f"{zone_id}_{off_action_str}.jpg"
             img_path_off = output_dir / img_filename_off
+
             try:
                 obs_image_off = Image.fromarray(obs_image_off)
                 obs_image_off.save(img_path_off)
-                print(f"Zone ID {zone_id}: Saved image after lights off to {img_path_off}")
+                print(f"Zone ID {zone_id}: Saved image for off state to {img_path_off}")
             except Exception as e_save:
-                print(f"Zone ID {zone_id}: Failed to save image {img_path_off} after lights off: {e_save}")
+                print(f"Zone ID {zone_id}: Failed to save image {img_path_off}: {e_save}")
         else:
             print(f"Zone ID {zone_id}: No image data received from observation after lights off.")
     except Exception as e:
@@ -124,9 +118,7 @@ async def _run_single_zone_test(
 
 
 def plot_images(image_dir: Path, num_channels_for_plot: int, show_plot_flag: bool):
-    """
-    Plots images from the specified directory into a grid.
-    """
+    """Plots images from the specified directory into a grid."""
     image_dir_path = Path(image_dir)
     if not image_dir_path.is_dir():
         print(f"Error: Directory '{image_dir_path}' not found.")
@@ -136,129 +128,54 @@ def plot_images(image_dir: Path, num_channels_for_plot: int, show_plot_flag: boo
     for item in image_dir_path.iterdir():
         if item.is_file() and item.name.lower().endswith((".png", ".jpg", ".jpeg")):
             try:
-                filename_stem = item.stem  # e.g., "zone01_cam1_channel3" or "zone01_cam1_channel_off"
-                parts = filename_stem.split("_")
+                # Split filename into zone_id and action
+                zone_id, action_str = item.stem.split("_", 1)
 
-                if len(parts) < 3:  # Basic check for "zone_cam_channel" structure
-                    print(f"Skipping file with unexpected name format (too few parts): {item.name}")
-                    continue
-
-                zone_str = parts[0].replace("zone", "")
-                zone = int(zone_str)
-                cam_str = parts[1].replace("cam", "")
-                cam = int(cam_str)
-
-                channel_key_str_part = parts[2]
-                if channel_key_str_part == "channel" and len(parts) > 3 and parts[3] == "off":
-                    channel_key = "off"
-                elif (
-                    channel_key_str_part.startswith("channel") and channel_key_str_part != "channel"
-                ):  # Avoid "channel" itself if not followed by "off"
-                    channel_key = int(channel_key_str_part.replace("channel", ""))
-                else:
-                    print(f"Skipping file with unexpected channel format: {item.name}")
-                    continue
-
-                if zone not in images_data:
-                    images_data[zone] = {}
-                if cam not in images_data[zone]:
-                    images_data[zone][cam] = {}
-                images_data[zone][cam][channel_key] = item
-            except (IndexError, ValueError) as e:
-                print(f"Skipping file with unexpected name format or value error: {item.name} ({e})")
+                if zone_id not in images_data:
+                    images_data[zone_id] = {}
+                images_data[zone_id][action_str] = item
+            except Exception as e:
+                print(f"Skipping file with unexpected name format: {item.name} ({e})")
                 continue
 
     if not images_data:
-        print(
-            f"No images found or parsed in '{image_dir_path}'. Ensure filenames are like 'zoneZ_camC_channelCH.jpg' or 'zoneZ_camC_channel_off.jpg'."
-        )
+        print(f"No images found or parsed in '{image_dir_path}'.")
         return
 
     sorted_zones = sorted(images_data.keys())
     num_rows = len(sorted_zones)
-    if num_rows == 0:
-        print("No zone data to plot.")
-        return
+    # Generate all possible action strings
+    action_strs = []
+    for i in range(num_channels_for_plot):
+        action = ["0"] * num_channels_for_plot
+        action[i] = "1"
+        action_strs.append(f"[{','.join(action)}]")
+    action_strs.append(f"[{','.join(['0']*num_channels_for_plot)}]")  # off state
+    num_cols = len(action_strs)
 
-    # Determine if cam1 or cam2 have any data across all zones
-    has_cam1_overall = any(1 in images_data.get(z, {}) and images_data[z][1] for z in sorted_zones)
-    has_cam2_overall = any(2 in images_data.get(z, {}) and images_data[z][2] for z in sorted_zones)
-
-    # num_channels_for_plot are the explicit numbered channels (e.g., 1-6)
-    # We add one more column for the "off" state image.
-    num_display_cols_per_cam = num_channels_for_plot + 1
-
-    max_cols = 0
-    if has_cam1_overall:
-        max_cols += num_display_cols_per_cam
-    if has_cam2_overall:
-        max_cols += num_display_cols_per_cam
-
-    if max_cols == 0:
-        print(
-            f"No valid camera (1 or 2) image data found to plot in '{image_dir_path}'. Check image data and filenames."
-        )
-        return
-
-    fig, axes = plt.subplots(num_rows, max_cols, figsize=(max_cols * 2.5, num_rows * 2.5), squeeze=False)
+    fig, axes = plt.subplots(num_rows, num_cols, figsize=(num_cols * 2.5, num_rows * 2.5), squeeze=False)
     fig.suptitle(f"Growth Chamber Test Results from: {image_dir_path.name}", fontsize=16)
 
-    channels_to_render_keys = list(range(1, num_channels_for_plot + 1)) + ["off"]
+    for i, zone_id in enumerate(sorted_zones):
+        axes[i, 0].set_ylabel(f"{zone_id}", rotation=0, size="large", labelpad=30)
 
-    for i, zone_key in enumerate(sorted_zones):
-        axes[i, 0].set_ylabel(f"Zone {zone_key}", rotation=0, size="large", labelpad=30)
-        col_idx = 0
+        for col_idx, action_str in enumerate(action_strs):
+            if action_str in images_data.get(zone_id, {}):
+                try:
+                    img_path = images_data[zone_id][action_str]
+                    img = Image.open(img_path)
+                    axes[i, col_idx].imshow(img)
+                    axes[i, col_idx].set_title(action_str, fontsize=8)
+                except Exception as e:
+                    axes[i, col_idx].text(0.5, 0.5, "Error", ha="center", va="center")
+                    axes[i, col_idx].set_title(f"{action_str}\n(err)", fontsize=8)
+                    print(f"Error loading {img_path}: {e}")
+            else:
+                axes[i, col_idx].text(0.5, 0.5, "N/A", ha="center", va="center")
+                axes[i, col_idx].set_title(f"{action_str}\n(miss)", fontsize=8)
 
-        for cam_num_plot in [1, 2]:
-            # Determine if this camera column block should be rendered for this row
-            # It should be rendered if the camera has data overall, to maintain consistent column structure.
-            should_render_cam_block = (cam_num_plot == 1 and has_cam1_overall) or (
-                cam_num_plot == 2 and has_cam2_overall
-            )
-
-            if not should_render_cam_block:
-                continue
-
-            for ch_key in channels_to_render_keys:
-                if col_idx >= max_cols:  # Should not happen if max_cols is calculated correctly
-                    print(
-                        f"Warning: col_idx {col_idx} exceeded max_cols {max_cols}. Skipping plot for Zone {zone_key}, Cam {cam_num_plot}, Ch {ch_key}"
-                    )
-                    break
-
-                title = f"C{cam_num_plot} Ch{ch_key}" if isinstance(ch_key, int) else f"C{cam_num_plot} Off"
-                img_path_to_load_str = ""  # For error messages
-
-                # Check if image exists for this specific zone, cam, and channel_key
-                if cam_num_plot in images_data.get(zone_key, {}) and ch_key in images_data[zone_key].get(
-                    cam_num_plot, {}
-                ):
-                    try:
-                        img_path_to_load = images_data[zone_key][cam_num_plot][ch_key]
-                        img_path_to_load_str = str(img_path_to_load)
-                        img = Image.open(img_path_to_load)
-                        axes[i, col_idx].imshow(img)
-                        axes[i, col_idx].set_title(title)
-                    except FileNotFoundError:
-                        axes[i, col_idx].text(0.5, 0.5, "No Img", ha="center", va="center")
-                        axes[i, col_idx].set_title(f"{title} (exp)")
-                    except Exception as e_load:
-                        axes[i, col_idx].text(0.5, 0.5, "Error", ha="center", va="center")
-                        axes[i, col_idx].set_title(f"{title} (err)")
-                        print(f"Error loading {img_path_to_load_str or 'path_not_set'}: {e_load}")
-                else:  # Image missing for this specific slot (zone/cam/channel)
-                    axes[i, col_idx].text(0.5, 0.5, "N/A", ha="center", va="center")
-                    axes[i, col_idx].set_title(f"{title} (miss)")
-
-                axes[i, col_idx].set_xticks([])
-                axes[i, col_idx].set_yticks([])
-                col_idx += 1
-
-        # Fill any remaining columns in the row with blank axes if one camera is missing entirely
-        # but space was allocated in max_cols.
-        while col_idx < max_cols:
-            axes[i, col_idx].axis("off")
-            col_idx += 1
+            axes[i, col_idx].set_xticks([])
+            axes[i, col_idx].set_yticks([])
 
     plt.tight_layout(rect=(0, 0.03, 1, 0.95))
 
