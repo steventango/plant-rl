@@ -128,52 +128,45 @@ def plot_images(image_dir: Path, show_plot_flag: bool):
     sorted_zones = sorted(images_data.keys())
     num_rows = len(sorted_zones)
 
-    # Sort actions to ensure consistent column order
-    # Put all-zeros array last
-    def sort_key(action):
-        # Convert string to list of floats for comparison
-        values = eval(action)  # Safe since we control the input
-        return (sum(values), action)  # Sort by sum first, then by string repr
-
-    action_strs = sorted(action_set, key=sort_key)
+    action_strs = sorted(action_set, reverse=True)
     num_cols = len(action_strs)
 
     # Dynamically adjust figure size and font sizes
-    cell_width = 7
-    cell_height = 4
-    figsize = (max(20, num_cols * cell_width), max(12, num_rows * cell_height))
+    cell_width = 5
+    cell_height = 2.5
+    figsize = (num_cols * cell_width, num_rows * cell_height)
 
-    suptitle_fontsize = int(max(18, 28 - num_cols))
-    ylabel_fontsize = int(max(14, 22 - num_rows))
-    title_fontsize = int(max(9, 16 - num_cols / 1.5))  # Ensure minimum readable size
-    ylabel_pad = 50  # Increased padding for y-labels
+    suptitle_fontsize = 24
+    ylabel_fontsize = 24
+    title_fontsize = 24
 
     fig, axes = plt.subplots(num_rows, num_cols, figsize=figsize, squeeze=False)
     fig.suptitle(f"Growth Chamber Test Results", fontsize=suptitle_fontsize)
 
     for i, zone_id in enumerate(sorted_zones):
-        axes[i, 0].set_ylabel(f"{zone_id}", rotation=0, size=ylabel_fontsize, labelpad=ylabel_pad)
+        axes[i, 0].set_ylabel(f"{zone_id}", rotation=0, size=ylabel_fontsize, labelpad=64)
 
         for col_idx, action_str in enumerate(action_strs):
             if action_str in images_data.get(zone_id, {}):
+                img_path = images_data[zone_id][action_str]
                 try:
-                    img_path = images_data[zone_id][action_str]
                     img = Image.open(img_path)
                     axes[i, col_idx].imshow(img)
+                    if i == 0:
                     axes[i, col_idx].set_title(action_str, fontsize=title_fontsize)
                 except Exception as e:
                     axes[i, col_idx].text(0.5, 0.5, "Error", ha="center", va="center")
-                    axes[i, col_idx].set_title(f"{action_str}\n(err)", fontsize=title_fontsize)
+                    axes[i, col_idx].set_title("(err)", fontsize=title_fontsize)
                     print(f"Error loading {img_path}: {e}")
             else:
                 axes[i, col_idx].text(0.5, 0.5, "N/A", ha="center", va="center")
-                axes[i, col_idx].set_title(f"{action_str}\n(miss)", fontsize=title_fontsize)
+                axes[i, col_idx].set_title("(miss)", fontsize=title_fontsize)
 
             axes[i, col_idx].set_xticks([])
             axes[i, col_idx].set_yticks([])
 
-    # Adjust layout to prevent overlap, provide more space for labels/titles
-    plt.tight_layout(rect=(0.03, 0.03, 0.97, 0.93))
+    # Adjust layout to prevent overlap
+    plt.tight_layout(rect=(0.1, 0.05, 0.95, 0.95))
 
     output_plot_filename = image_dir_path / "growth_chamber_test_summary.png"
     try:
