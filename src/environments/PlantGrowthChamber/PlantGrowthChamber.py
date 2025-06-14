@@ -97,17 +97,17 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         self.get_plant_stats()
 
-        self.plant_areas = self.df["area"].to_numpy().flatten()
+        if not self.df.empty:
+            self.plant_areas = self.df["area"].to_numpy().flatten()
 
-        clean_area = self.get_clean_area(self.plant_areas)
+            clean_area = self.get_clean_area(self.plant_areas)
 
-        self.clean_areas.append(clean_area)
+            self.clean_areas.append(clean_area)
 
-        # Update daily mean clean areas history
-        current_local_date = self.get_local_time().date()
-        mean_area_this_step = np.mean(clean_area) if clean_area.size > 0 else 0.0
-        # Removed check for key existence, defaultdict handles it
-        self.daily_mean_clean_areas[current_local_date].append(mean_area_this_step)
+            # Update daily mean clean areas history
+            current_local_date = self.get_local_time().date()
+            mean_area_this_step = np.mean(clean_area) if clean_area.size > 0 else 0.0
+            self.daily_mean_clean_areas[current_local_date].append(mean_area_this_step)
 
         return self.time, self.image, self.plant_stats
 
