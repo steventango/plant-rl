@@ -160,11 +160,21 @@ def plot_images(image_dir: Path, num_channels_for_plot: int, show_plot_flag: boo
     action_strs = sorted(action_set, key=sort_key)
     num_cols = len(action_strs)
 
-    fig, axes = plt.subplots(num_rows, num_cols, figsize=(num_cols * 5, num_rows * 2.5), squeeze=False)
-    fig.suptitle(f"Growth Chamber Test Results", fontsize=16)
+    # Dynamically adjust figure size and font sizes
+    cell_width = 7
+    cell_height = 4
+    figsize = (max(20, num_cols * cell_width), max(12, num_rows * cell_height))
+
+    suptitle_fontsize = int(max(18, 28 - num_cols))
+    ylabel_fontsize = int(max(14, 22 - num_rows))
+    title_fontsize = int(max(9, 16 - num_cols / 1.5))  # Ensure minimum readable size
+    ylabel_pad = 50  # Increased padding for y-labels
+
+    fig, axes = plt.subplots(num_rows, num_cols, figsize=figsize, squeeze=False)
+    fig.suptitle(f"Growth Chamber Test Results", fontsize=suptitle_fontsize)
 
     for i, zone_id in enumerate(sorted_zones):
-        axes[i, 0].set_ylabel(f"{zone_id}", rotation=0, size="large", labelpad=30)
+        axes[i, 0].set_ylabel(f"{zone_id}", rotation=0, size=ylabel_fontsize, labelpad=ylabel_pad)
 
         for col_idx, action_str in enumerate(action_strs):
             if action_str in images_data.get(zone_id, {}):
@@ -172,19 +182,20 @@ def plot_images(image_dir: Path, num_channels_for_plot: int, show_plot_flag: boo
                     img_path = images_data[zone_id][action_str]
                     img = Image.open(img_path)
                     axes[i, col_idx].imshow(img)
-                    axes[i, col_idx].set_title(action_str, fontsize=8)
+                    axes[i, col_idx].set_title(action_str, fontsize=title_fontsize)
                 except Exception as e:
                     axes[i, col_idx].text(0.5, 0.5, "Error", ha="center", va="center")
-                    axes[i, col_idx].set_title(f"{action_str}\n(err)", fontsize=8)
+                    axes[i, col_idx].set_title(f"{action_str}\n(err)", fontsize=title_fontsize)
                     print(f"Error loading {img_path}: {e}")
             else:
                 axes[i, col_idx].text(0.5, 0.5, "N/A", ha="center", va="center")
-                axes[i, col_idx].set_title(f"{action_str}\n(miss)", fontsize=8)
+                axes[i, col_idx].set_title(f"{action_str}\n(miss)", fontsize=title_fontsize)
 
             axes[i, col_idx].set_xticks([])
             axes[i, col_idx].set_yticks([])
 
-    plt.tight_layout(rect=(0, 0.03, 1, 0.95))
+    # Adjust layout to prevent overlap, provide more space for labels/titles
+    plt.tight_layout(rect=(0.03, 0.03, 0.97, 0.93))
 
     output_plot_filename = image_dir_path / "growth_chamber_test_summary.png"
     try:
