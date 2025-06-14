@@ -65,6 +65,27 @@ def load_zone_from_config(identifier: str) -> Zone:
     return deserialize_zone(config["zone"])
 
 
+ZONE_IDENTIFIERS = [
+    "alliance-zone01",
+    "alliance-zone02",
+    "alliance-zone03",
+    "alliance-zone04",
+    "alliance-zone05",
+    "alliance-zone06",
+    "alliance-zone07",
+    "alliance-zone08",
+    "alliance-zone09",
+    "alliance-zone10",
+    "alliance-zone11",
+    "alliance-zone12",
+    "mitacs-zone01",
+    "mitacs-zone02",
+    "mitacs-zone03",
+    "mitacs-zone06",
+    "mitacs-zone08",
+    "mitacs-zone09",
+]
+
 SCALE = 4
 POT_HEIGHT = 60 * SCALE
 POT_WIDTH = 60 * SCALE
