@@ -18,13 +18,13 @@ ZONE_IDENTIFIERS = [
     # "alliance-zone03",
     # "alliance-zone04",
     "alliance-zone05",
-    # "alliance-zone06",
-    # "alliance-zone07",
-    # "alliance-zone08",
-    # "alliance-zone09",
-    # "alliance-zone10",
-    # "alliance-zone11",
-    # "alliance-zone12",
+    "alliance-zone06",
+    "alliance-zone07",
+    "alliance-zone08",
+    "alliance-zone09",
+    "alliance-zone10",
+    "alliance-zone11",
+    "alliance-zone12",
 ]
 OUTPUT_DIR = Path(__file__).parent.parent.parent / "test_data" / "results"
 LIGHT_INTENSITY = 1
