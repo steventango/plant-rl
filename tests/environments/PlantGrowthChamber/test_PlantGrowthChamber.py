@@ -44,13 +44,23 @@ async def _run_single_zone_test(
 
     chamber = PlantGrowthChamber(zone=zone_id, timezone="America/Edmonton")
 
+    # Generate all actions: one-hot for each channel, then all-off
+    actions = []
     for ch_idx in range(num_channels):
-        channel_idx_plus_1 = ch_idx + 1
-        print(f"Zone ID {zone_id}: Testing Channel {channel_idx_plus_1}")
-
         arr_vals = [light_intensity if i == ch_idx else 0.0 for i in range(num_channels)]
-        light_payload = np.array(arr_vals, dtype=float)
+        actions.append(arr_vals)
+    # Add the off action (all zeros)
+    off_payload = [0.0] * num_channels
+    actions.append(off_payload)
 
+    for action_idx, arr_vals in enumerate(actions):
+        action_str = str(arr_vals).replace(" ", "")
+        if action_idx < num_channels:
+            print(f"Zone ID {zone_id}: Testing Channel {action_idx + 1}")
+        else:
+            print(f"Zone ID {zone_id}: Turning off lights.")
+
+        light_payload = np.array(arr_vals, dtype=float)
         try:
             await chamber.put_action(light_payload)
         except Exception as e:
@@ -60,14 +70,13 @@ async def _run_single_zone_test(
         print(f"Zone ID {zone_id}: Waiting {sleep_duration} seconds for lights and camera...")
         await asyncio.sleep(sleep_duration)
 
-        print(f"Zone ID {zone_id}: Attempting observation for Channel {channel_idx_plus_1}")
+        print(f"Zone ID {zone_id}: Attempting observation for action {action_str}")
         try:
+            chamber.images = {}
             _, obs_image, _ = await chamber.get_observation()
-            print(f"Zone ID {zone_id} Channel {channel_idx_plus_1}: Observation attempt complete.")
+            print(f"Zone ID {zone_id}: Observation attempt complete for action {action_str}.")
 
             if obs_image is not None:
-                # Create action array string for filename
-                action_str = str(arr_vals).replace(" ", "")
                 img_filename = f"{zone_id}_{action_str}.jpg"
                 img_path = output_dir / img_filename
 
@@ -77,41 +86,10 @@ async def _run_single_zone_test(
                     print(f"Zone ID {zone_id}: Saved image for action {action_str} to {img_path}")
                 except Exception as e_save:
                     print(f"Zone ID {zone_id}: Failed to save image {img_path}: {e_save}")
-
+            else:
+                print(f"Zone ID {zone_id}: No image data received from observation for action {action_str}.")
         except Exception as e:
-            print(f"Zone ID {zone_id} Channel {channel_idx_plus_1}: Failed to get observation: {e}")
-
-    print(f"Zone ID {zone_id}: Turning off lights.")
-    off_payload = np.zeros(num_channels)  # Light off payload for PlantGrowthChamber
-    try:
-        await chamber.put_action(off_payload)
-    except Exception as e:
-        print(f"Zone ID {zone_id}: Error turning off lights via PlantGrowthChamber: {e}")
-
-    # Capture an image after turning off lights
-    print(f"Zone ID {zone_id}: Waiting {sleep_duration} seconds for camera after turning off lights...")
-    await asyncio.sleep(sleep_duration)
-    print(f"Zone ID {zone_id}: Attempting observation after turning off lights.")
-    try:
-        _, obs_image_off, _ = await chamber.get_observation()
-        print(f"Zone ID {zone_id}: Observation attempt after lights off complete.")
-
-        if obs_image_off is not None:
-            # Create off action array string for filename
-            off_action_str = str(off_payload.tolist()).replace(" ", "")
-            img_filename_off = f"{zone_id}_{off_action_str}.jpg"
-            img_path_off = output_dir / img_filename_off
-
-            try:
-                obs_image_off = Image.fromarray(obs_image_off)
-                obs_image_off.save(img_path_off)
-                print(f"Zone ID {zone_id}: Saved image for off state to {img_path_off}")
-            except Exception as e_save:
-                print(f"Zone ID {zone_id}: Failed to save image {img_path_off}: {e_save}")
-        else:
-            print(f"Zone ID {zone_id}: No image data received from observation after lights off.")
-    except Exception as e:
-        print(f"Zone ID {zone_id}: Failed to get observation after lights off: {e}")
+            print(f"Zone ID {zone_id}: Failed to get observation for action {action_str}: {e}")
 
     await chamber.close()  # Close the chamber resources
     print(f"Finished test for Zone ID {zone_id}")
