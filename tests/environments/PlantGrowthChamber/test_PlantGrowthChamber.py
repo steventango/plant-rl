@@ -17,7 +17,7 @@ ZONE_IDENTIFIERS = [
     "alliance-zone02",
     # "alliance-zone03",
     # "alliance-zone04",
-    # "alliance-zone05",
+    "alliance-zone05",
     # "alliance-zone06",
     # "alliance-zone07",
     # "alliance-zone08",
@@ -125,8 +125,12 @@ def plot_images(image_dir: Path, num_channels_for_plot: int, show_plot_flag: boo
         return
 
     images_data = {}
+    action_set = set()  # Keep track of all unique actions
+
     for item in image_dir_path.iterdir():
         if item.is_file() and item.name.lower().endswith((".png", ".jpg", ".jpeg")):
+            if item.name == "growth_chamber_test_summary.png":
+                continue
             try:
                 # Split filename into zone_id and action
                 zone_id, action_str = item.stem.split("_", 1)
@@ -134,6 +138,7 @@ def plot_images(image_dir: Path, num_channels_for_plot: int, show_plot_flag: boo
                 if zone_id not in images_data:
                     images_data[zone_id] = {}
                 images_data[zone_id][action_str] = item
+                action_set.add(action_str)  # Add to set of unique actions
             except Exception as e:
                 print(f"Skipping file with unexpected name format: {item.name} ({e})")
                 continue
@@ -144,17 +149,19 @@ def plot_images(image_dir: Path, num_channels_for_plot: int, show_plot_flag: boo
 
     sorted_zones = sorted(images_data.keys())
     num_rows = len(sorted_zones)
-    # Generate all possible action strings
-    action_strs = []
-    for i in range(num_channels_for_plot):
-        action = ["0"] * num_channels_for_plot
-        action[i] = "1"
-        action_strs.append(f"[{','.join(action)}]")
-    action_strs.append(f"[{','.join(['0']*num_channels_for_plot)}]")  # off state
+
+    # Sort actions to ensure consistent column order
+    # Put all-zeros array last
+    def sort_key(action):
+        # Convert string to list of floats for comparison
+        values = eval(action)  # Safe since we control the input
+        return (sum(values), action)  # Sort by sum first, then by string repr
+
+    action_strs = sorted(action_set, key=sort_key)
     num_cols = len(action_strs)
 
-    fig, axes = plt.subplots(num_rows, num_cols, figsize=(num_cols * 2.5, num_rows * 2.5), squeeze=False)
-    fig.suptitle(f"Growth Chamber Test Results from: {image_dir_path.name}", fontsize=16)
+    fig, axes = plt.subplots(num_rows, num_cols, figsize=(num_cols * 5, num_rows * 2.5), squeeze=False)
+    fig.suptitle(f"Growth Chamber Test Results", fontsize=16)
 
     for i, zone_id in enumerate(sorted_zones):
         axes[i, 0].set_ylabel(f"{zone_id}", rotation=0, size="large", labelpad=30)
