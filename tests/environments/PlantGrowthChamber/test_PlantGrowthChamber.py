@@ -53,12 +53,9 @@ async def _run_single_zone_test(
     off_payload = [0.0] * num_channels
     actions.append(off_payload)
 
-    for action_idx, arr_vals in enumerate(actions):
+    for arr_vals in actions:
         action_str = str(arr_vals).replace(" ", "")
-        if action_idx < num_channels:
-            print(f"Zone ID {zone_id}: Testing Channel {action_idx + 1}")
-        else:
-            print(f"Zone ID {zone_id}: Turning off lights.")
+        print(f"Zone ID {zone_id}: Testing Action {action_str}")
 
         light_payload = np.array(arr_vals, dtype=float)
         try:
