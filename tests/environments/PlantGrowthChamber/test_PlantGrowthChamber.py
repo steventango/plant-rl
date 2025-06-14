@@ -117,7 +117,7 @@ async def _run_single_zone_test(
     print(f"Finished test for Zone ID {zone_id}")
 
 
-def plot_images(image_dir: Path, num_channels_for_plot: int, show_plot_flag: bool):
+def plot_images(image_dir: Path, show_plot_flag: bool):
     """Plots images from the specified directory into a grid."""
     image_dir_path = Path(image_dir)
     if not image_dir_path.is_dir():
@@ -209,7 +209,7 @@ def plot_images(image_dir: Path, num_channels_for_plot: int, show_plot_flag: boo
 
 @skipif_github_actions
 @pytest.mark.asyncio
-async def test_cycle_lights_and_observe_all_default_zones():
+async def test_cycle_lights_and_observe_all_zones():
     """Pytest test function to run the chamber tests with default parameters."""
     if not OUTPUT_DIR.exists():
         OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -239,4 +239,4 @@ async def test_cycle_lights_and_observe_all_default_zones():
     print(f"Pytest: All zone tests completed. Images are in their respective chamber-defined locations.")
 
     print("Pytest: Generating plot...")
-    plot_images(OUTPUT_DIR, NUM_CHANNELS, False)
+    plot_images(OUTPUT_DIR, False)
