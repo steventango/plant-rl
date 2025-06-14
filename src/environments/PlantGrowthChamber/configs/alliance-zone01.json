@@ -2,6 +2,7 @@
     "zone": {
         "identifier": "alliance-zone01",
         "camera_left_url": "http://alliance-zone01-camera01.ccis.ualberta.ca:8080/observation",
+        "camera_right_url": "http://alliance-zone01-camera02.ccis.ualberta.ca:8080/observation",
         "lightbar_url": "http://142.244.191.26:8080/action",
         "trays": []
     }
