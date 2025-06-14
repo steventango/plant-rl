@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 import numpy as np
 from PIL import Image
 
-from environments.PlantGrowthChamber.utils import get_session
+from environments.PlantGrowthChamber.utils import create_session  # Changed import
 from utils.functions import normalize
 from utils.metrics import UnbiasedExponentialMovingAverage as UEMA
 from utils.RlGlue.environment import BaseAsyncEnvironment
@@ -30,6 +30,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.tz = ZoneInfo(timezone)
         self.tz_utc = ZoneInfo("Etc/UTC")
         self.time = self.get_time()
+        self.session = None
 
         self.clean_areas = []
         # stores a list of arrays of observed areas in mm^2.
@@ -83,6 +84,12 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.glue = None
 
         self.last_action = None
+
+    async def _ensure_session(self):
+        """Ensures an aiohttp session is available and returns it."""
+        if self.session is None:
+            self.session = await create_session()
+        return self.session
 
     async def get_observation(self):
         self.time = self.get_time()
@@ -138,7 +145,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
     async def get_image(self):
         """Fetch images from cameras using aiohttp"""
         tasks = []
-        session = await get_session()
+        session = await self._ensure_session()
         if self.zone.camera_left_url:
             tasks.append(self._fetch_image(session, self.zone.camera_left_url, "left"))
         if self.zone.camera_right_url:
@@ -167,7 +174,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         action = np.tile(action, (2, 1))
 
         try:
-            session = await get_session()
+            session = await self._ensure_session()
             logger.debug(f"{self.zone.lightbar_url}: {action}")
             await session.put(self.zone.lightbar_url, json={"array": action.tolist()}, timeout=10)
         except Exception as e:
@@ -370,14 +377,15 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         # Turn off lights
         try:
             await self.put_action(np.zeros(6))
-            logger.info("Lights turned off during environment closure")
+            logger.info(f"Lights turned off for zone {self.zone.identifier} during environment closure")
         except Exception as e:
-            logger.error(f"Failed to turn off lights during close: {e}")
+            logger.error(f"Failed to turn off lights for zone {self.zone.identifier} during close: {e}")
 
         # Close the aiohttp RetryClient
-        try:
-            session = await get_session()
-            await session.close()
-            logger.info("Closed aiohttp RetryClient")
-        except Exception as e:
-            logger.error(f"Error closing aiohttp session: {str(e)}")
+        if self.session:
+            try:
+                await self.session.close()
+                logger.info(f"Closed aiohttp session for zone {self.zone.identifier}")
+            except Exception as e:
+                logger.error(f"Error closing aiohttp session for zone {self.zone.identifier}: {str(e)}")
+            self.session = None
