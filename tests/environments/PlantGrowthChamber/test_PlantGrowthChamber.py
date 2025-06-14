@@ -141,7 +141,7 @@ def plot_images(image_dir: Path, show_plot_flag: bool):
     fig.suptitle(f"Growth Chamber Test Results", fontsize=suptitle_fontsize)
 
     for i, zone_id in enumerate(sorted_zones):
-        axes[i, 0].set_ylabel(f"{zone_id}", rotation=0, size=ylabel_fontsize, labelpad=64)
+        axes[i, 0].set_ylabel(f"{zone_id}", rotation=0, size=ylabel_fontsize, labelpad=100)
 
         for col_idx, action_str in enumerate(action_strs):
             if action_str in images_data.get(zone_id, {}):
@@ -150,7 +150,7 @@ def plot_images(image_dir: Path, show_plot_flag: bool):
                     img = Image.open(img_path)
                     axes[i, col_idx].imshow(img)
                     if i == 0:
-                    axes[i, col_idx].set_title(action_str, fontsize=title_fontsize)
+                        axes[i, col_idx].set_title(action_str, fontsize=title_fontsize)
                 except Exception as e:
                     axes[i, col_idx].text(0.5, 0.5, "Error", ha="center", va="center")
                     axes[i, col_idx].set_title("(err)", fontsize=title_fontsize)
@@ -163,7 +163,7 @@ def plot_images(image_dir: Path, show_plot_flag: bool):
             axes[i, col_idx].set_yticks([])
 
     # Adjust layout to prevent overlap
-    plt.tight_layout(rect=(0.1, 0.05, 0.95, 0.95))
+    plt.tight_layout()
 
     output_plot_filename = image_dir_path / "growth_chamber_test_summary.png"
     try:
@@ -196,12 +196,12 @@ async def test_cycle_lights_and_observe_all_zones():
     for zone_id_val in ZONE_IDENTIFIERS:
         tasks.append(
             _run_single_zone_test(
-                zone_id=zone_id_val,
-                output_dir=OUTPUT_DIR,
-                num_channels=NUM_CHANNELS,
-                light_intensity=LIGHT_INTENSITY,
-                sleep_duration=SLEEP_DURATION,
-            )
+            zone_id=zone_id_val,
+            output_dir=OUTPUT_DIR,
+            num_channels=NUM_CHANNELS,
+            light_intensity=LIGHT_INTENSITY,
+            sleep_duration=SLEEP_DURATION,
+        )
         )
     await asyncio.gather(*tasks)
     print(f"Pytest: All zone tests completed. Images are in their respective chamber-defined locations.")
