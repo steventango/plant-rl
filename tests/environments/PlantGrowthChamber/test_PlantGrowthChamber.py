@@ -213,7 +213,10 @@ async def test_cycle_lights_and_observe_all_default_zones():
     """Pytest test function to run the chamber tests with default parameters."""
     if not OUTPUT_DIR.exists():
         OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
+    else:
+        for item in OUTPUT_DIR.iterdir():
+            if item.is_file() and item.name.lower().endswith((".png", ".jpg", ".jpeg")):
+                item.unlink()
     print(f"Pytest: Output directory set to {OUTPUT_DIR}")
 
     tasks = []
