@@ -160,6 +160,13 @@ class OfflinePlantGrowthChamber:
         return df[df["time"].dt.date.isin(complete_dates)]
 
 
+class OfflinePlantGrowthChamberTime(OfflinePlantGrowthChamber):
+    def get_observation(self):
+        super_obs =super().get_observation()
+        obs = super_obs[[0, 1]]
+        return obs
+
+
 class OfflinePlantGrowthChamberTimeDLI(OfflinePlantGrowthChamber):
     def get_observation(self):
         super_obs =super().get_observation()
