@@ -46,9 +46,9 @@ def plot_q_diff(daytime_observation_space, area_observation_space, Q_diff):
     ax_q_diff.set_title(f"Q(s, a=1) - Q(s, a=0)")
     ax_q_diff.set_xlabel("s[0]")
     hour_interval = 6
-    ax_q_diff.set_xticks(np.arange(0, len(daytime_observation_space) + 1, hour_interval))
+    ax_q_diff.set_xticks(np.arange(0, len(daytime_observation_space), hour_interval))
     ax_q_diff.set_xticklabels(
-        [f"{int(t * 12) + 9}:30" for t in daytime_observation_space[::hour_interval]] + ["21:30"]
+        [f"{int(t * 11) + 9}:30" for t in daytime_observation_space[::hour_interval]]
     )
     ax_q_diff.set_ylabel("s[1]")
     ax_q_diff.set_yticks(np.arange(0, len(area_observation_space), 10))
@@ -77,9 +77,9 @@ def plot_q_diff(daytime_observation_space, area_observation_space, Q_diff):
     )
     ax_policy.set_title(rf"Policy")
     ax_policy.set_xlabel("s[0]")
-    ax_policy.set_xticks(np.arange(0, len(daytime_observation_space) + 1, hour_interval))
+    ax_policy.set_xticks(np.arange(0, len(daytime_observation_space), hour_interval))
     ax_policy.set_xticklabels(
-        [f"{int(t * 12) + 9}:30" for t in daytime_observation_space[::hour_interval]] + ["21:30"]
+        [f"{int(t * 11) + 9}:30" for t in daytime_observation_space[::hour_interval]]
     )
     ax_policy.set_ylabel("s[1]")
     ax_policy.set_yticks(np.arange(0, len(area_observation_space), 10))
@@ -120,7 +120,7 @@ def plot_q(daytime_observation_space, area_observation_space, Q):
         hour_interval = 6
         ax.set_xticks(np.arange(0, len(daytime_observation_space), hour_interval))  # Set ticks every hour
         ax.set_xticklabels(
-            [f"{int(t * 12) + 9}:30" for t in daytime_observation_space[::hour_interval]]
+            [f"{int(t * 11) + 9}:30" for t in daytime_observation_space[::hour_interval]]
         )  # Format as hours
 
         ax.set_ylabel("s[1]")  # Area is now on the y-axis
