@@ -234,7 +234,7 @@ def plot_state_action_distribution(df, q_plots_dir, logger):
 
                         ax.invert_yaxis()
 
-                    plt.tight_layout(rect=[0, 0, 1, 0.96])  # Adjust layout to make space for suptitle
+                    plt.tight_layout()  # Adjust layout to make space for suptitle
                     plot_filename = q_plots_dir / "state_action_count_heatmap.jpg"
                     plt.savefig(plot_filename)
                     plt.close()
