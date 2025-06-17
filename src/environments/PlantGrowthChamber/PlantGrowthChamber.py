@@ -100,6 +100,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.plant_areas = self.df["area"].to_numpy().flatten()
 
         clean_area = self.get_clean_area(self.plant_areas)
+        self.df["clean_area"] = clean_area
 
         self.clean_areas.append(clean_area)
 
@@ -109,7 +110,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         # Removed check for key existence, defaultdict handles it
         self.daily_mean_clean_areas[current_local_date].append(mean_area_this_step)
 
-        return self.time, self.image, self.plant_stats
+        return self.time, self.image, self.df
 
     def get_plant_stats(self):
         self.df, self.detections = process_image(self.image, self.zone.trays, self.images)
