@@ -1,28 +1,28 @@
 {
     "zone": {
-        "identifier": 8,
-        "camera_right_url": "http://mitacs-zone08-camera02.ccis.ualberta.ca:8080/observation",
-        "lightbar_url": "http://mitacs-zone8.ccis.ualberta.ca:8080/action",
+        "identifier": "mitacs-zone06",
+        "camera_right_url": "http://mitacs-zone06-camera02.ccis.ualberta.ca:8080/observation",
+        "lightbar_url": "http://mitacs-zone6.ccis.ualberta.ca:8080/action",
         "trays": [
             {
                 "n_tall": 3,
                 "n_wide": 6,
                 "rect": {
                     "top_left": [
-                        1047,
-                        90
+                        1044,
+                        353
                     ],
                     "top_right": [
-                        2242,
-                        270
+                        2249,
+                        434
                     ],
                     "bottom_left": [
-                        972,
-                        729
+                        1023,
+                        996
                     ],
                     "bottom_right": [
-                        2250,
-                        857
+                        2286,
+                        1009
                     ]
                 }
             },
@@ -31,20 +31,20 @@
                 "n_wide": 6,
                 "rect": {
                     "top_left": [
-                        954,
-                        836
+                        1031,
+                        1101
                     ],
                     "top_right": [
-                        2233,
-                        944
+                        2289,
+                        1107
                     ],
                     "bottom_left": [
-                        910,
-                        1516
+                        1042,
+                        1773
                     ],
                     "bottom_right": [
-                        2160,
-                        1554
+                        2254,
+                        1711
                     ]
                 }
             }

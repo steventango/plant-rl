@@ -13,7 +13,7 @@ ssh mitacs-zone8 -t "cd ~/Desktop/lightbar && echo 'ZONE=mitacs-zone8' > .env &&
 ## Update
 ```bash
 rsync -azP api/lightbar/ mitacs-zone8:~/Desktop/lightbar
-ssh mitacs-zone8 -t "cd ~/Desktop/lightbar && docker compose up -d"
+ssh mitacs-zone8 -t "cd ~/Desktop/lightbar && docker compose pull && docker compose restart"
 ```
 
 

@@ -8,13 +8,13 @@ from zoneinfo import ZoneInfo
 import numpy as np
 from PIL import Image
 
-from environments.PlantGrowthChamber.utils import get_session
+from environments.PlantGrowthChamber.utils import create_session  # Changed import
 from utils.functions import normalize
 from utils.metrics import UnbiasedExponentialMovingAverage as UEMA
 from utils.RlGlue.environment import BaseAsyncEnvironment
 
 from .cv import process_image
-from .zones import get_zone
+from .zones import load_zone_from_config
 
 logger = logging.getLogger("PlantGrowthChamber")
 logger.setLevel(logging.DEBUG)
@@ -22,14 +22,15 @@ logger.setLevel(logging.DEBUG)
 
 class PlantGrowthChamber(BaseAsyncEnvironment):
 
-    def __init__(self, zone: int | None = None, timezone: str = "Etc/UTC", normalize_reward: bool = False, **kwargs):
+    def __init__(self, zone: str | None = None, timezone: str = "Etc/UTC", normalize_reward: bool = False, **kwargs):
         if zone is not None:
-            self.zone = get_zone(zone) if isinstance(zone, int) else zone
+            self.zone = load_zone_from_config(zone) if isinstance(zone, str) else zone
         self.images = {}
         self.image = None
         self.tz = ZoneInfo(timezone)
         self.tz_utc = ZoneInfo("Etc/UTC")
         self.time = self.get_time()
+        self.session = None
 
         self.clean_areas = []
         # stores a list of arrays of observed areas in mm^2.
@@ -84,6 +85,12 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         self.last_action = None
 
+    async def _ensure_session(self):
+        """Ensures an aiohttp session is available and returns it."""
+        if self.session is None:
+            self.session = await create_session()
+        return self.session
+
     async def get_observation(self):
         self.time = self.get_time()
 
@@ -97,18 +104,18 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         self.get_plant_stats()
 
-        self.plant_areas = self.df["area"].to_numpy().flatten()
+        if not self.df.empty:
+            self.plant_areas = self.df["area"].to_numpy().flatten()
 
-        clean_area = self.get_clean_area(self.plant_areas)
-        self.df["clean_area"] = clean_area
+            clean_area = self.get_clean_area(self.plant_areas)
+            self.df["clean_area"] = clean_area
 
-        self.clean_areas.append(clean_area)
+            self.clean_areas.append(clean_area)
 
-        # Update daily mean clean areas history
-        current_local_date = self.get_local_time().date()
-        mean_area_this_step = np.mean(clean_area) if clean_area.size > 0 else 0.0
-        # Removed check for key existence, defaultdict handles it
-        self.daily_mean_clean_areas[current_local_date].append(mean_area_this_step)
+            # Update daily mean clean areas history
+            current_local_date = self.get_local_time().date()
+            mean_area_this_step = np.mean(clean_area) if clean_area.size > 0 else 0.0
+            self.daily_mean_clean_areas[current_local_date].append(mean_area_this_step)
 
         return self.time, self.image, self.df
 
@@ -139,7 +146,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
     async def get_image(self):
         """Fetch images from cameras using aiohttp"""
         tasks = []
-        session = await get_session()
+        session = await self._ensure_session()
         if self.zone.camera_left_url:
             tasks.append(self._fetch_image(session, self.zone.camera_left_url, "left"))
         if self.zone.camera_right_url:
@@ -168,7 +175,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         action = np.tile(action, (2, 1))
 
         try:
-            session = await get_session()
+            session = await self._ensure_session()
             logger.debug(f"{self.zone.lightbar_url}: {action}")
             await session.put(self.zone.lightbar_url, json={"array": action.tolist()}, timeout=10)
         except Exception as e:
@@ -371,14 +378,15 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         # Turn off lights
         try:
             await self.put_action(np.zeros(6))
-            logger.info("Lights turned off during environment closure")
+            logger.info(f"Lights turned off for zone {self.zone.identifier} during environment closure")
         except Exception as e:
-            logger.error(f"Failed to turn off lights during close: {e}")
+            logger.error(f"Failed to turn off lights for zone {self.zone.identifier} during close: {e}")
 
         # Close the aiohttp RetryClient
-        try:
-            session = await get_session()
-            await session.close()
-            logger.info("Closed aiohttp RetryClient")
-        except Exception as e:
-            logger.error(f"Error closing aiohttp session: {str(e)}")
+        if self.session:
+            try:
+                await self.session.close()
+                logger.info(f"Closed aiohttp session for zone {self.zone.identifier}")
+            except Exception as e:
+                logger.error(f"Error closing aiohttp session for zone {self.zone.identifier}: {str(e)}")
+            self.session = None

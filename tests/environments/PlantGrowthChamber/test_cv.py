@@ -11,7 +11,7 @@ import seaborn as sns
 from PIL import Image
 
 from environments.PlantGrowthChamber.cv import process_image
-from environments.PlantGrowthChamber.zones import Rect, Tray, Zone, get_zone
+from environments.PlantGrowthChamber.zones import Rect, Tray, Zone, load_zone_from_config
 from utils.metrics import iqm
 
 TEST_DIR = Path(__file__).parent.parent.parent / "test_data"
@@ -52,37 +52,37 @@ def get_plant_area(test_dir: Path, zone: Zone):
 
 @skipif_github_actions
 def test_process_E8_zone_1():
-    zone = get_zone(1)
+    zone = load_zone_from_config("mitacs-zone01")
     get_plant_area(E8_TEST_DIR, zone)
 
 
 @skipif_github_actions
 def test_process_E8_zone_2():
-    zone = get_zone(2)
+    zone = load_zone_from_config("mitacs-zone02")
     get_plant_area(E8_TEST_DIR, zone)
 
 
 @skipif_github_actions
 def test_process_E8_zone_3():
-    zone = get_zone(3)
+    zone = load_zone_from_config("mitacs-zone03")
     get_plant_area(E8_TEST_DIR, zone)
 
 
 @skipif_github_actions
 def test_process_E8_zone_6():
-    zone = get_zone(6)
+    zone = load_zone_from_config("mitacs-zone06")
     get_plant_area(E8_TEST_DIR, zone)
 
 
 @skipif_github_actions
 def test_process_E8_zone_8():
-    zone = get_zone(8)
+    zone = load_zone_from_config("mitacs-zone08")
     get_plant_area(E8_TEST_DIR, zone)
 
 
 @skipif_github_actions
 def test_process_E8_zone_9():
-    zone = get_zone(9)
+    zone = load_zone_from_config("mitacs-zone09")
     get_plant_area(E8_TEST_DIR, zone)
 
 

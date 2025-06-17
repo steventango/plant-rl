@@ -149,7 +149,7 @@ def call_grounding_dino_api(
 
 def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, Image.Image]):
     if not trays:
-        raise ValueError("No trays provided")
+        return pd.DataFrame(), sv.Detections(np.zeros((0, 4)))
 
     camera_matrix = np.array([[1800.0, 0.0, 1296.0], [0.0, 1800.0, 972.0], [0.0, 0.0, 1.0]])
     dist_coeffs = np.array([0.0, 0.0, 0.0, 0.0])
