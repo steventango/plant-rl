@@ -8,4 +8,4 @@ class CVPlantGrowthChamberIntensity(CVPlantGrowthChamber, PlantGrowthChamberInte
 
     def __init__(self, **kwargs):
         CVPlantGrowthChamber.__init__(self, **kwargs)
-        PlantGrowthChamberIntensity.__init__(self, zone=kwargs['zone'])
+        PlantGrowthChamberIntensity.__init__(self, **kwargs)

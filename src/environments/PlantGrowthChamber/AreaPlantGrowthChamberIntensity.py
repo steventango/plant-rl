@@ -10,4 +10,4 @@ class AreaPlantGrowthChamberIntensity(AreaPlantGrowthChamber, PlantGrowthChamber
 
     def __init__(self, **kwargs):
         AreaPlantGrowthChamber.__init__(self, **kwargs)
-        PlantGrowthChamberIntensity.__init__(self, zone=kwargs['zone'])
+        PlantGrowthChamberIntensity.__init__(self, **kwargs)
