@@ -1,28 +1,28 @@
 {
     "zone": {
-        "identifier": 9,
-        "camera_right_url": "http://mitacs-zone09-camera02.ccis.ualberta.ca:8080/observation",
-        "lightbar_url": "http://mitacs-zone9.ccis.ualberta.ca:8080/action",
+        "identifier": "mitacs-zone08",
+        "camera_right_url": "http://mitacs-zone08-camera02.ccis.ualberta.ca:8080/observation",
+        "lightbar_url": "http://mitacs-zone8.ccis.ualberta.ca:8080/action",
         "trays": [
             {
                 "n_tall": 3,
                 "n_wide": 6,
                 "rect": {
                     "top_left": [
-                        1010,
-                        250
+                        1047,
+                        90
                     ],
                     "top_right": [
-                        2250,
-                        404
+                        2242,
+                        270
                     ],
                     "bottom_left": [
-                        941,
-                        936
+                        972,
+                        729
                     ],
                     "bottom_right": [
-                        2263,
-                        1020
+                        2250,
+                        857
                     ]
                 }
             },
@@ -31,20 +31,20 @@
                 "n_wide": 6,
                 "rect": {
                     "top_left": [
-                        942,
-                        1028
+                        954,
+                        836
                     ],
                     "top_right": [
-                        2262,
-                        1118
+                        2233,
+                        944
                     ],
                     "bottom_left": [
-                        915,
-                        1737
+                        910,
+                        1516
                     ],
                     "bottom_right": [
-                        2195,
-                        1758
+                        2160,
+                        1554
                     ]
                 }
             }

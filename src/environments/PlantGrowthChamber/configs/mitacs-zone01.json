@@ -1,28 +1,28 @@
 {
     "zone": {
-        "identifier": 3,
-        "camera_right_url": "http://mitacs-zone03-camera02.ccis.ualberta.ca:8080/observation",
-        "lightbar_url": "http://mitacs-zone3.ccis.ualberta.ca:8080/action",
+        "identifier": "mitacs-zone01",
+        "camera_left_url": "http://mitacs-zone01-camera02.ccis.ualberta.ca:8080/observation",
+        "lightbar_url": "http://mitacs-zone1.ccis.ualberta.ca:8080/action",
         "trays": [
             {
                 "n_tall": 3,
                 "n_wide": 6,
                 "rect": {
                     "top_left": [
-                        1144,
-                        85
+                        737,
+                        99
                     ],
                     "top_right": [
-                        2335,
-                        320
+                        2000,
+                        197
                     ],
                     "bottom_left": [
-                        1020,
-                        724
+                        707,
+                        799
                     ],
                     "bottom_right": [
-                        2315,
-                        926
+                        2038,
+                        812
                     ]
                 }
             },
@@ -31,20 +31,20 @@
                 "n_wide": 6,
                 "rect": {
                     "top_left": [
-                        1017,
-                        839
+                        704,
+                        888
                     ],
                     "top_right": [
-                        2290,
-                        1010
+                        2025,
+                        885
                     ],
                     "bottom_left": [
-                        944,
-                        1522
+                        726,
+                        1582
                     ],
                     "bottom_right": [
-                        2185,
-                        1638
+                        2000,
+                        1501
                     ]
                 }
             }

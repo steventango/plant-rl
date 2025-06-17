@@ -1,28 +1,28 @@
 {
     "zone": {
-        "identifier": 6,
-        "camera_right_url": "http://mitacs-zone06-camera02.ccis.ualberta.ca:8080/observation",
-        "lightbar_url": "http://mitacs-zone6.ccis.ualberta.ca:8080/action",
+        "identifier": "mitacs-zone02",
+        "camera_right_url": "http://mitacs-zone02-camera02.ccis.ualberta.ca:8080/observation",
+        "lightbar_url": "http://mitacs-zone2.ccis.ualberta.ca:8080/action",
         "trays": [
             {
                 "n_tall": 3,
                 "n_wide": 6,
                 "rect": {
                     "top_left": [
-                        1044,
-                        353
+                        369,
+                        287
                     ],
                     "top_right": [
-                        2249,
-                        434
+                        1648,
+                        198
                     ],
                     "bottom_left": [
-                        1023,
-                        996
+                        345,
+                        918
                     ],
                     "bottom_right": [
-                        2286,
-                        1009
+                        1679,
+                        879
                     ]
                 }
             },
@@ -31,20 +31,20 @@
                 "n_wide": 6,
                 "rect": {
                     "top_left": [
-                        1031,
-                        1101
+                        351,
+                        1004
                     ],
                     "top_right": [
-                        2289,
-                        1107
+                        1695,
+                        1013
                     ],
                     "bottom_left": [
-                        1042,
-                        1773
+                        376,
+                        1617
                     ],
                     "bottom_right": [
-                        2254,
-                        1711
+                        1645,
+                        1693
                     ]
                 }
             }

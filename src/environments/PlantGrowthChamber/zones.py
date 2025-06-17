@@ -26,7 +26,7 @@ class Tray:
 
 @dataclass
 class Zone:
-    identifier: int
+    identifier: str
     camera_left_url: str | None
     camera_right_url: str | None
     lightbar_url: str | None
@@ -59,29 +59,32 @@ def deserialize_zone(zone: dict) -> Zone:
     )
 
 
-def load_zone_from_config(identifier: int) -> Zone:
-    with open(CONFIG_DIR / f"z{identifier}.json") as f:
+def load_zone_from_config(identifier: str) -> Zone:
+    with open(CONFIG_DIR / f"{identifier}.json") as f:
         config = json.load(f)
     return deserialize_zone(config["zone"])
 
 
-def get_zone(indentifier: int):
-    match indentifier:
-        case 1:
-            return load_zone_from_config(1)
-        case 2:
-            return load_zone_from_config(2)
-        case 3:
-            return load_zone_from_config(3)
-        case 6:
-            return load_zone_from_config(6)
-        case 8:
-            return load_zone_from_config(8)
-        case 9:
-            return load_zone_from_config(9)
-        case _:
-            raise ValueError(f"Unknown zone indentifier: {indentifier}")
-
+ZONE_IDENTIFIERS = [
+    "alliance-zone01",
+    "alliance-zone02",
+    "alliance-zone03",
+    "alliance-zone04",
+    "alliance-zone05",
+    "alliance-zone06",
+    "alliance-zone07",
+    "alliance-zone08",
+    "alliance-zone09",
+    "alliance-zone10",
+    "alliance-zone11",
+    "alliance-zone12",
+    "mitacs-zone01",
+    "mitacs-zone02",
+    "mitacs-zone03",
+    "mitacs-zone06",
+    "mitacs-zone08",
+    "mitacs-zone09",
+]
 
 SCALE = 4
 POT_HEIGHT = 60 * SCALE
