@@ -9,5 +9,8 @@ class AreaPlantGrowthChamber(PlantGrowthChamber):
 
     async def get_observation(self):
         epoch_time, _, df = await super().get_observation()
-        mean_clean_area = df["clean_area"].mean() if "clean_area" in df else 0.0
+        if not df.empty:
+            mean_clean_area = df["clean_area"].mean() if "clean_area" in df else 0.0
+        else:
+            mean_clean_area = 0.0
         return np.array([mean_clean_area])
