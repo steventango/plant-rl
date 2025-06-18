@@ -99,7 +99,7 @@ class OfflinePlantGrowthChamber:
     def get_reward(self):
         if self.index == 0:
             return 0.0
-        if self.dataset.iloc[self.index]["time"].date() == self.dataset.iloc[self.index - 1]["time"].date():
+        if self.daily_reward and self.dataset.iloc[self.index]["time"].date() == self.dataset.iloc[self.index - 1]["time"].date():
             return 0.0
 
         today_local_date = self.dataset.iloc[self.index]["time"].date()
@@ -107,26 +107,31 @@ class OfflinePlantGrowthChamber:
 
         if self.reward_type == "max_mean":
             today_areas = self.daily_areas.get(today_local_date, [])
-            today_area = np.mean(np.sort(today_areas)[-10:]) if today_areas else 0
+            today_area = np.mean(np.sort(today_areas)[-10:]) if len(today_areas) else 0
             yesterday_areas = self.daily_areas.get(yesterday_local_date, [])
-            yesterday_area = np.mean(np.sort(yesterday_areas)[-10:]) if yesterday_areas else 0
+            yesterday_area = np.mean(np.sort(yesterday_areas)[-10:]) if len(yesterday_areas) else 0
         elif self.reward_type == "max":
             today_areas = self.daily_areas.get(today_local_date, [])
-            today_area = np.max(today_areas) if today_areas else 0
+            today_area = np.max(today_areas) if len(today_areas) else 0
             yesterday_areas = self.daily_areas.get(yesterday_local_date, [])
-            yesterday_area = np.max(yesterday_areas) if yesterday_areas else 0
+            yesterday_area = np.max(yesterday_areas) if len(yesterday_areas) else 0
         elif self.reward_type == "mean":
             today_areas = self.daily_areas.get(today_local_date, [])
-            today_area = np.mean(today_areas) if today_areas else 0
+            today_area = np.mean(today_areas) if len(today_areas) else 0
             yesterday_areas = self.daily_areas.get(yesterday_local_date, [])
-            yesterday_area = np.mean(yesterday_areas) if yesterday_areas else 0
+            yesterday_area = np.mean(yesterday_areas) if len(yesterday_areas) else 0
         elif self.reward_type == "first":
             today_areas = self.daily_areas.get(today_local_date, [])
-            today_area = today_areas[0] if today_areas else 0
+            today_area = today_areas[0] if len(today_areas) else 0
             yesterday_areas = self.daily_areas.get(yesterday_local_date, [])
-            yesterday_area = yesterday_areas[0] if yesterday_areas else 0
+            yesterday_area = yesterday_areas[0] if len(yesterday_areas) else 0
+        else:
+            raise ValueError(f"Invalid reward type: {self.reward_type}")
         if self.daily_reward:
-            reward = normalize(today_area / yesterday_area - 1, 0, 0.35)
+            if yesterday_area == 0:
+                reward = 0.0
+            else:
+                reward = normalize(today_area / yesterday_area - 1, 0, 0.35)
         else:
             reward = normalize(today_area - yesterday_area, 0, 150)
 
