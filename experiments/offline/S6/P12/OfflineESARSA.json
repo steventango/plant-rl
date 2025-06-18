@@ -5,8 +5,8 @@
     "episode_cutoff": -1,
     "metaParameters": {
         "environment":{
-            "type": "Time",
-            "reward_type": "mean",
+            "type": "TimeDLI",
+            "reward_type": "first",
             "dataset_paths": [
                 [
                     "/data/online/E7/P2/Constant1/z1",
