@@ -8,6 +8,4 @@ from environments.PlantGrowthChamber.PlantGrowthChamberIntensity import PlantGro
 class MockAreaPlantGrowthChamberIntensity(MockPlantGrowthChamber, AreaPlantGrowthChamber, PlantGrowthChamberIntensity):
 
     def __init__(self, *args, **kwargs):
-        MockPlantGrowthChamber.__init__(self, *args, **kwargs)
-        AreaPlantGrowthChamber.__init__(self, *args, **kwargs)
-        PlantGrowthChamberIntensity.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
