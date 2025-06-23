@@ -91,13 +91,12 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
         return np.zeros(6)
 
     async def start(self, observation: Any, extra: dict[str, Any] = {}) -> tuple[Any, dict[str, Any]]:
-        night_enforced = self.maybe_enforce_night()
-        if not night_enforced:
+        if not self.maybe_enforce_action():
             self.last_action_info = await asyncio.to_thread(self.agent.start, observation, extra)
             self.agent_started = True
         return self.last_action_info
 
-    def maybe_enforce_night(self):
+    def maybe_enforce_action(self):
         if not self.enforce_night:
             return False
         if self.is_night():
@@ -116,8 +115,7 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
     async def step(self, reward: float, observation: Any, extra: dict[str, Any]) -> tuple[Any, dict[str, Any]]:
         current_time = self.get_local_time()
 
-        night_enforced = self.maybe_enforce_night()
-        if night_enforced:
+        if self.maybe_enforce_action():
             return self.last_action_info
 
         if not self.agent_started:
