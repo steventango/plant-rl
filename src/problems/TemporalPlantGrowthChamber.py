@@ -4,10 +4,12 @@ from environments.PlantGrowthChamber.TemporalPlantGrowthChamber import (
     TemporalPlantGrowthChamber as Env,
 )
 from experiment.ExperimentModel import ExperimentModel
-from problems.BaseAsyncProblem import BaseAsyncProblem
+from problems.BasePlantGrowthChamberAsyncProblem import (
+    BasePlantGrowthChamberAsyncProblem,
+)
 
 
-class TemporalPlantGrowthChamber(BaseAsyncProblem):
+class TemporalPlantGrowthChamber(BasePlantGrowthChamberAsyncProblem):
     def __init__(self, exp: ExperimentModel, idx: int, collector: Collector):
         super().__init__(exp, idx, collector)
 
