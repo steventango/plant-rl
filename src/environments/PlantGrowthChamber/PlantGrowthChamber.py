@@ -182,7 +182,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     async def sleep_until(self, wake_time: datetime):
         time_left = wake_time - self.get_time()
-        logger.info(f"Sleeping until {wake_time} (in {time_left})")
+        logger.info(f"Sleeping until {wake_time.astimezone(self.tz)} (in {time_left})")
         await asyncio.sleep(time_left.total_seconds())
 
     async def sleep_until_next_step(self, duration: timedelta):
