@@ -190,6 +190,11 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         await self.sleep_until(next_step_time)
 
     def get_info(self):
+        if self.df.empty:
+            return {
+                "df": self.df,
+                "env_time": self.time.timestamp(),
+            }
         N = 3
         raw_area = self.plant_areas[:N]
         mean = np.array([self.uema_areas[i].compute() for i in range(self.zone.num_plants)]).flatten()[:N]
