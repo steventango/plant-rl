@@ -202,6 +202,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             "uema_area": mean,
             "upper_area": upper,
             "lower_area": lower,
+            "env_time": self.time.timestamp(),
         }
 
     def get_terminal(self) -> bool:
