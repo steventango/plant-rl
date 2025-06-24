@@ -44,7 +44,7 @@ dependencies = [
     'plantcv~=4.2.1',
     'pandas[excel]',
     'seaborn',
-    'supervision>=0.25.1',
+    'supervision',
     'wandb[media]',
     'torch',
     'aiohttp>=3.11.18',
