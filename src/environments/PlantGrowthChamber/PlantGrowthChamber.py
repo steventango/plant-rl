@@ -227,7 +227,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             reward = normalize(current_95p_mean_area - prior_95p_mean_area, 0, 50)
 
         # if reward only @ 9:30 AM
-        if self.sparse_reward and self.get_local_time().hour != 9 or self.get_local_time().minute != 30:
+        if self.sparse_reward and not (self.get_local_time().hour == 9 and self.get_local_time().minute == 30):
             return 0
 
         return reward
