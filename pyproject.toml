@@ -49,13 +49,16 @@ dependencies = [
     'torch',
     'aiohttp>=3.11.18',
     'aiohttp-retry',
+    'scipy<1.16',
 ]
 
 [project.optional-dependencies]
 dev = [
+    'flake8',
     'pip',
     'ruff',
     'pyright',
+    'pytest',
     'commitizen',
     'pre-commit',
 ]
