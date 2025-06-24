@@ -96,6 +96,7 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
             logger.info(f"Starting agent at {self.env_local_time}")
             self.last_action_info = await asyncio.to_thread(self.agent.start, observation, extra)
             self.agent_started = True
+            self.last_action_time = self.env_time
         return self.last_action_info
 
     def maybe_enforce_action(self):
@@ -128,13 +129,13 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
             logger.info(f"Starting agent at {self.env_local_time}")
             self.last_action_info = await asyncio.to_thread(self.agent.start, observation, extra)
             self.agent_started = True
+            self.last_action_time = self.env_time
             return self.last_action_info
 
         # During daytime, poll the agent based on environment time
         # Only poll if enough time has passed since the last action
         assert self.env_time is not None, "Environment time must be set before checking action timestep."
-        if self.last_action_time is None:
-            self.last_action_time = self.env_time
+        assert self.last_action_time is not None, "Last action time must be set before checking action timestep."
         time_since_last_action = self.env_time - self.last_action_time
 
         action_timestep_minutes = self.action_timestep.total_seconds() / 60
