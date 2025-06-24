@@ -30,7 +30,7 @@ class SpreadsheetAgent(BaseAgent):
     # ----------------------
     # -- RLGlue interface --
     # ----------------------
-    def start(self, observation: np.ndarray):
+    def start(self, observation: np.ndarray, extra: Dict[str, Any]) -> Tuple[np.ndarray, Dict[str, Any]]:
         utc_time = observation[0]
         return self.get_action(utc_time), {}
 

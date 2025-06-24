@@ -17,7 +17,7 @@ class ContinuousRandomAgent(BaseAgent):
     # ----------------------
     # -- RLGlue interface --
     # ----------------------
-    def start(self, observation: np.ndarray):
+    def start(self, observation: np.ndarray, extra: Dict[str, Any]) -> Tuple[np.ndarray, Dict[str, Any]]:
         return self.rng.uniform(self.low, self.high, self.actions), {}
 
     def step(self, reward: float, observation: np.ndarray | None, extra: Dict[str, Any]):

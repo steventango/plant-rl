@@ -17,7 +17,7 @@ class DiscreteRandomAgent(BaseAgent):
     # ----------------------
     # -- RLGlue interface --
     # ----------------------
-    def start(self, observation: np.ndarray):
+    def start(self, observation: np.ndarray, extra: Dict[str, Any]) -> Tuple[np.ndarray, Dict[str, Any]]:
         return sample(self.pi, rng=self.rng), {}
 
     def step(self, reward: float, observation: np.ndarray | None, extra: Dict[str, Any]):

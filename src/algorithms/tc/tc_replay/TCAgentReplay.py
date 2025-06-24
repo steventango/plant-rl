@@ -39,7 +39,7 @@ class TCAgentReplay(TCAgent):
     # ----------------------
     # -- RLGlue interface --
     # ----------------------
-    def start(self, s: np.ndarray):
+    def start(self, s: np.ndarray, extra: Dict[str, Any]) -> Tuple[np.ndarray, Dict[str, Any]]:
         self.buffer.flush()
 
         x = self.get_rep(s)

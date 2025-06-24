@@ -17,7 +17,7 @@ class SequenceAgent(BaseAgent):
     # ----------------------
     # -- RLGlue interface --
     # ----------------------
-    def start(self, observation: np.ndarray):
+    def start(self, observation: np.ndarray, extra: Dict[str, Any]) -> Tuple[np.ndarray, Dict[str, Any]]:
         action = self.actions[self.steps]
         self.steps += 1
         return action, {}
