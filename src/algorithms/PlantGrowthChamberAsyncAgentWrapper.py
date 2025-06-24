@@ -93,6 +93,7 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
         self.update_time_from_extra(extra)
 
         if not self.maybe_enforce_action():
+            logger.info(f"Starting agent at {self.env_local_time}")
             self.last_action_info = await asyncio.to_thread(self.agent.start, observation, extra)
             self.agent_started = True
         return self.last_action_info
@@ -124,6 +125,7 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
             return self.last_action_info
 
         if not self.agent_started:
+            logger.info(f"Starting agent at {self.env_local_time}")
             self.last_action_info = await asyncio.to_thread(self.agent.start, observation, extra)
             self.agent_started = True
             return self.last_action_info
