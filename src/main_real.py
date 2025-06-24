@@ -126,7 +126,7 @@ async def main():
 
         context = exp.buildSaveContext(idx, base=args.save_path)
         agent_path = Path(context.resolve()).relative_to('results')
-        dataset_path = Path('/data') / agent_path  / f"z{env.zone.identifier}"
+        dataset_path = Path('/data') / agent_path  / env.zone.identifier
         images_save_keys = problem.exp_params.get("image_save_keys")
 
         glue = chk.build("glue", lambda: AsyncRLGlue(agent, env, dataset_path, images_save_keys))
