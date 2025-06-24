@@ -21,7 +21,8 @@ jobs:
     - uses: astral-sh/setup-uv@v6
       with:
         python-version: 3.11
-    - run: uv pip install -r api/lightbar/requirements.txt
+    - run: |
+        uv venv
+        uv pip install -r api/lightbar/requirements.txt
     - name: Test with pytest
-      run: |
-        uv run pytest api/lightbar/tests
+      run: uv run pytest api/lightbar/tests

@@ -21,7 +21,8 @@ jobs:
     - uses: astral-sh/setup-uv@v6
       with:
         python-version: 3.11
-    - run: uv pip install -r api/status/requirements.txt
+    - run: |
+        uv venv
+        uv pip install -r api/status/requirements.txt
     - name: Test with pytest
-      run: |
-        uv run pytest api/status/tests
+      run: uv run pytest api/status/tests
