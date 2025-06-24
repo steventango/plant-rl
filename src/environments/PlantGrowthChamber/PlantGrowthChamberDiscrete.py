@@ -13,6 +13,8 @@ class PlantGrowthChamberDiscrete(PlantGrowthChamber):
             1: reference_spectrum,
         }
 
-    async def step(self, action: int):
+    async def step(self, action: int | np.ndarray):
+        if isinstance(action, np.ndarray):
+            return await super().step(action)
         action = self.action_map[action]
         return await super().step(action)
