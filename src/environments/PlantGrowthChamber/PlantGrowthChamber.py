@@ -148,6 +148,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             raise
 
     async def start(self):
+        logger.info(f"Local time: {self.get_local_time()}. Step 0")
         self.n_step = 0
         self.clean_areas = []
         self.daily_mean_clean_areas = defaultdict(list)
