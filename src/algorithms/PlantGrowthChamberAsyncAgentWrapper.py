@@ -94,7 +94,7 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
 
         if not self.maybe_enforce_action():
             logger.info(f"Starting agent at {self.env_local_time}")
-            self.last_action_info = await asyncio.to_thread(lambda: self.agent.start(observation, extra))
+            self.last_action_info = await asyncio.to_thread(self.agent.start, observation, extra)
             self.agent_started = True
             self.last_action_time = self.env_time
         return self.last_action_info
@@ -127,7 +127,7 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
 
         if not self.agent_started:
             logger.info(f"Starting agent at {self.env_local_time}")
-            self.last_action_info = await asyncio.to_thread(lambda: self.agent.start(observation, extra))
+            self.last_action_info = await asyncio.to_thread(self.agent.start, observation, extra)
             self.agent_started = True
             self.last_action_time = self.env_time
             return self.last_action_info
@@ -146,7 +146,7 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
             logger.info(
                 f"Polling agent at timestep mark: {self.env_local_time}, time since last action: {time_since_last_action}"
             )
-            self.last_action_info = await asyncio.to_thread(lambda: self.agent.step(reward, observation, extra))
+            self.last_action_info = await asyncio.to_thread(self.agent.step, reward, observation, extra)
             self.last_action_time = self.env_time
 
         return self.last_action_info
