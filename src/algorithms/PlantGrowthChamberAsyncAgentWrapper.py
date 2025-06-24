@@ -32,29 +32,29 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
         self.env_local_time = self.env_time.astimezone(self.tz)
 
     def is_dawn(self) -> bool:
-        """Determine whether the environment time is within dawn hours (9:00 AM to 9:29 AM)."""
+        """Determine whether the environment time is within dawn hours (9:01 AM to 9:29 AM)."""
         assert self.env_local_time is not None, "Environment local time must be set before checking dawn."
-        is_dawn = self.env_local_time.hour == 9 and self.env_local_time.minute < len(TWILIGHT_INTENSITIES_30_MIN)
+        is_dawn = self.env_local_time.hour == 9 and 0 < self.env_local_time.minute < 30
         return is_dawn
 
     def is_dusk(self) -> bool:
-        """Determine whether the environment time is within dusk hours (8:30 PM to 8:59 PM)."""
+        """Determine whether the environment time is within dusk hours (8:31 PM to 8:59 PM)."""
         assert self.env_local_time is not None, "Environment local time must be set before checking dusk."
-        is_dusk = self.env_local_time.hour == 20 and self.env_local_time.minute >= (
-            60 - len(TWILIGHT_INTENSITIES_30_MIN)
-        )
+        is_dusk = self.env_local_time.hour == 20 and 31 <= self.env_local_time.minute
         return is_dusk
 
     def is_night(self) -> bool:
         """Determine whether the environment time falls within nighttime hours."""
         assert self.env_local_time is not None, "Environment local time must be set before checking night."
-        is_night = self.env_local_time.hour >= 21 or self.env_local_time.hour < 9
+        is_night = self.env_local_time.hour >= 21 or self.env_local_time.hour < 9 or (
+            self.env_local_time.hour == 9 and self.env_local_time.minute < 1
+        )
         return is_night
 
     def get_dawn_action(self) -> np.ndarray:
         """Calculate the appropriate light intensity for dawn based on current environment time."""
         assert self.env_local_time is not None, "Environment local time must be set before getting dawn action."
-        minute_in_dawn = self.env_local_time.minute
+        minute_in_dawn = self.env_local_time.minute - 1
 
         if minute_in_dawn >= len(TWILIGHT_INTENSITIES_30_MIN):
             intensity = TWILIGHT_INTENSITIES_30_MIN[-1]
@@ -131,7 +131,8 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
         # During daytime, poll the agent based on environment time
         # Only poll if enough time has passed since the last action
         assert self.env_time is not None, "Environment time must be set before checking action timestep."
-        assert self.last_action_time is not None, "Last action time must be set before checking action timestep."
+        if self.last_action_time is None:
+            self.last_action_time = self.env_time
         time_since_last_action = self.env_time - self.last_action_time
 
         action_timestep_minutes = self.action_timestep.total_seconds() / 60
