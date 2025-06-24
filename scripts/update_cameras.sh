@@ -16,3 +16,6 @@ for hostname in "${hostnames[@]}"; do
   rsync -azP api/camera/ ${hostname}:~/Desktop/camera
   ssh ${hostname} -t "cd ~/Desktop/camera && docker-compose pull && docker-compose restart"
 done
+
+wait
+echo "All camera updates completed"

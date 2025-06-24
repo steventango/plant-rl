@@ -3,15 +3,39 @@
 
 # Array of camera hostnames
 hostnames=(
-  zone01-camera01
-  zone01-camera02
-  zone02-camera01
-  zone02-camera02
-  zone03-camera01
-  zone03-camera02
-  zone06-camera01
-  zone08-camera01
-  zone09-camera01
+  mitacs-zone01-camera01
+  mitacs-zone01-camera02
+  mitacs-zone02-camera01
+  mitacs-zone02-camera02
+  mitacs-zone03-camera01
+  mitacs-zone03-camera02
+  mitacs-zone06-camera02
+  mitacs-zone08-camera02
+  mitacs-zone09-camera02
+  alliance-zone01-camera01
+  alliance-zone01-camera02
+  alliance-zone02-camera01
+  alliance-zone02-camera02
+  alliance-zone03-camera01
+  alliance-zone03-camera02
+  alliance-zone04-camera01
+  alliance-zone04-camera02
+  alliance-zone05-camera01
+  alliance-zone05-camera02
+  alliance-zone06-camera01
+  alliance-zone06-camera02
+  alliance-zone07-camera01
+  alliance-zone07-camera02
+  alliance-zone08-camera01
+  alliance-zone08-camera02
+  alliance-zone09-camera01
+  alliance-zone09-camera02
+  alliance-zone10-camera01
+  alliance-zone10-camera02
+  alliance-zone11-camera01
+  alliance-zone11-camera02
+  alliance-zone12-camera01
+  alliance-zone12-camera02
 )
 
 for hostname in "${hostnames[@]}"; do

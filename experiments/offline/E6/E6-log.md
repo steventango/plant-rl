@@ -121,7 +121,7 @@ There seems to be increasing preference toward the peak. Is it luck?
 - Using state=daily area alone is enough for learning this simple task of off/on. 
 - Additional info about the env (e.g. heightened preference for action 1) may be more obvious with just one state dimension.
 
-##  Phase P7
+##  Phase P8
 ### Objectives: 
 - Repeat P6 with state = tod. This was first studied in P3.
 ### Methods: 

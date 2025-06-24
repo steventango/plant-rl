@@ -44,20 +44,23 @@ dependencies = [
     'plantcv~=4.2.1',
     'pandas[excel]',
     'seaborn',
-    'supervision>=0.25.1',
+    'supervision',
     'wandb[media]',
     'torch',
     'aiohttp>=3.11.18',
     'aiohttp-retry',
+    'scipy<1.16',
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     'pip',
     'ruff',
     'pyright',
     'commitizen',
     'pre-commit',
+    'pytest',
+    'pytest-cov'
 ]
 
 [tool]

@@ -29,7 +29,7 @@ class LinearAgent(BaseAgent):
     # ----------------------
     # -- RLGlue interface --
     # ----------------------
-    def start(self, s: np.ndarray):
+    def start(self, s: np.ndarray, extra: Dict[str, Any]) -> Tuple[int, Dict[str, Any]]:
         self.lag.flush()
 
         x = s # Uses unprocessed features from env

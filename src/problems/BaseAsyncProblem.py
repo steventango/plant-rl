@@ -1,10 +1,11 @@
 from typing import Optional
-from PyExpUtils.collection.Collector import Collector
-from utils.RlGlue.environment import BaseAsyncEnvironment
 
-from experiment.ExperimentModel import ExperimentModel
-from utils.RlGlue.agent import BaseAsyncAgent, AsyncAgentWrapper
+from PyExpUtils.collection.Collector import Collector
+
 from algorithms.registry import getAgent
+from experiment.ExperimentModel import ExperimentModel
+from utils.RlGlue.agent import AsyncAgentWrapper, BaseAsyncAgent
+from utils.RlGlue.environment import BaseAsyncEnvironment
 
 
 class BaseAsyncProblem:

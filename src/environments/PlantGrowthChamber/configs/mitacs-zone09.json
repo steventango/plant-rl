@@ -1,28 +1,28 @@
 {
     "zone": {
-        "identifier": 2,
-        "camera_right_url": "http://mitacs-zone02-camera02.ccis.ualberta.ca:8080/observation",
-        "lightbar_url": "http://mitacs-zone2.ccis.ualberta.ca:8080/action",
+        "identifier": "mitacs-zone09",
+        "camera_right_url": "http://mitacs-zone09-camera02.ccis.ualberta.ca:8080/observation",
+        "lightbar_url": "http://mitacs-zone9.ccis.ualberta.ca:8080/action",
         "trays": [
             {
                 "n_tall": 3,
                 "n_wide": 6,
                 "rect": {
                     "top_left": [
-                        369,
-                        287
+                        1010,
+                        250
                     ],
                     "top_right": [
-                        1648,
-                        198
+                        2250,
+                        404
                     ],
                     "bottom_left": [
-                        345,
-                        918
+                        941,
+                        936
                     ],
                     "bottom_right": [
-                        1679,
-                        879
+                        2263,
+                        1020
                     ]
                 }
             },
@@ -31,20 +31,20 @@
                 "n_wide": 6,
                 "rect": {
                     "top_left": [
-                        351,
-                        1004
+                        942,
+                        1028
                     ],
                     "top_right": [
-                        1695,
-                        1013
+                        2262,
+                        1118
                     ],
                     "bottom_left": [
-                        376,
-                        1617
+                        915,
+                        1737
                     ],
                     "bottom_right": [
-                        1645,
-                        1693
+                        2195,
+                        1758
                     ]
                 }
             }

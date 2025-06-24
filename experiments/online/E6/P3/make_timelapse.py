@@ -10,20 +10,20 @@ from moviepy.video.io.ImageSequenceClip import ImageSequenceClip
 from tqdm.contrib.concurrent import process_map
 
 from environments.PlantGrowthChamber.cv import process_image
-from environments.PlantGrowthChamber.zones import get_zone
+from environments.PlantGrowthChamber.zones import load_zone_from_config
 
 
 def get_key(value):
     return int(re.findall(r"\d+", value)[-1])
 
 
-def get_image(image_path, zone_identifier: int):
+def get_image(image_path, zone_identifier: str):
     image = imread(image_path)
     iso_format = os.path.basename(image_path).split("_")[0]
     timestamp = datetime.fromisoformat(iso_format)
     timestamp_str = timestamp.strftime("%Y-%m-%d %H:%M:%S")
     debug_images = {}
-    zone = get_zone(zone_identifier)
+    zone = load_zone_from_config(zone_identifier)
     process_image(image, zone.trays, debug_images)
     shape_image = debug_images["shape_image"]
     shape_image = np.array(shape_image)
@@ -51,8 +51,9 @@ def make_timelapse(pattern, output_video, zone):
 
 
 def main():
-    for zone in [1, 2 , 6, 9]:
-        pattern = f"data/online/E6/P3/Spreadsheet-{zone}/z{zone}/*.jpg"
+    for zone in ["mitacs-zone01", "mitacs-zone02", "mitacs-zone06", "mitacs-zone09"]:
+        zone_number = int(zone.split("-")[-1].replace("zone", ""))
+        pattern = f"data/online/E6/P3/Spreadsheet-{zone_number}/z{zone_number}/*.jpg"
         make_timelapse(pattern, output_video=f"timelapse_{zone}.mp4", zone=zone)
 
 
