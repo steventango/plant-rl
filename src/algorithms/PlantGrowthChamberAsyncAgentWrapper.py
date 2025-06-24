@@ -23,41 +23,38 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
         self.last_action_time = None
         self.tz = ZoneInfo(agent.params.get("timezone", "Etc/UTC"))
         self.tz_utc = ZoneInfo("Etc/UTC")
+        self.env_time = None
+        self.env_local_time = None
 
-    def get_time(self):
-        return datetime.now(tz=self.tz_utc)
-
-    def get_local_time(self):
-        return self.get_time().astimezone(self.tz)
+    def update_time_from_extra(self, extra: dict[str, Any]) -> None:
+        """Extract time from environment info dictionary."""
+        self.env_time = datetime.fromtimestamp(extra["env_time"], tz=self.tz_utc)
+        self.env_local_time = self.env_time.astimezone(self.tz)
 
     def is_dawn(self) -> bool:
-        """
-        Determine whether the current local time is within dawn hours (9:00 AM to 9:29 AM).
-        """
-        local_time = self.get_local_time()
-        is_dawn = local_time.hour == 9 and local_time.minute < len(TWILIGHT_INTENSITIES_30_MIN)
+        """Determine whether the environment time is within dawn hours (9:00 AM to 9:29 AM)."""
+        assert self.env_local_time is not None, "Environment local time must be set before checking dawn."
+        is_dawn = self.env_local_time.hour == 9 and self.env_local_time.minute < len(TWILIGHT_INTENSITIES_30_MIN)
         return is_dawn
 
     def is_dusk(self) -> bool:
-        """
-        Determine whether the current local time is within dusk hours (8:30 PM to 8:59 PM).
-        """
-        local_time = self.get_local_time()
-        is_dusk = local_time.hour == 20 and local_time.minute >= (60 - len(TWILIGHT_INTENSITIES_30_MIN))
+        """Determine whether the environment time is within dusk hours (8:30 PM to 8:59 PM)."""
+        assert self.env_local_time is not None, "Environment local time must be set before checking dusk."
+        is_dusk = self.env_local_time.hour == 20 and self.env_local_time.minute >= (
+            60 - len(TWILIGHT_INTENSITIES_30_MIN)
+        )
         return is_dusk
 
     def is_night(self) -> bool:
-        """
-        Determine whether the given time falls within nighttime hours.
-        """
-        local_time = self.get_local_time()
-        is_night = local_time.hour >= 21 or local_time.hour < 9
+        """Determine whether the environment time falls within nighttime hours."""
+        assert self.env_local_time is not None, "Environment local time must be set before checking night."
+        is_night = self.env_local_time.hour >= 21 or self.env_local_time.hour < 9
         return is_night
 
     def get_dawn_action(self) -> np.ndarray:
-        """Calculate the appropriate light intensity for dawn based on current time."""
-        current_local_time = self.get_local_time()
-        minute_in_dawn = current_local_time.minute
+        """Calculate the appropriate light intensity for dawn based on current environment time."""
+        assert self.env_local_time is not None, "Environment local time must be set before getting dawn action."
+        minute_in_dawn = self.env_local_time.minute
 
         if minute_in_dawn >= len(TWILIGHT_INTENSITIES_30_MIN):
             intensity = TWILIGHT_INTENSITIES_30_MIN[-1]
@@ -68,9 +65,11 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
         return BRIGHT_ACTION * intensity
 
     def get_dusk_action(self) -> np.ndarray:
-        """Calculate the appropriate light intensity for dusk based on current time."""
-        current_local_time = self.get_local_time()
-        minute_in_hour = current_local_time.minute
+        """Calculate the appropriate light intensity for dusk based on current environment time."""
+        if self.env_local_time is None:
+            return np.zeros(6)
+
+        minute_in_hour = self.env_local_time.minute
 
         # Calculate which twilight intensity to use
         idx = len(TWILIGHT_INTENSITIES_30_MIN) - (60 - minute_in_hour)
@@ -91,6 +90,8 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
         return np.zeros(6)
 
     async def start(self, observation: Any, extra: dict[str, Any] = {}) -> tuple[Any, dict[str, Any]]:
+        self.update_time_from_extra(extra)
+
         if not self.maybe_enforce_action():
             self.last_action_info = await asyncio.to_thread(self.agent.start, observation, extra)
             self.agent_started = True
@@ -101,39 +102,47 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
             return False
         if self.is_night():
             action = self.get_night_action()
-            self.last_action_info = (action, {"agent_info": {}})
+            self.last_action_info = (action, {})
+            logger.info(f"Enforcing night mode at {self.env_local_time}")
             return True
         if self.is_dawn():
             action = self.get_dawn_action()
-            self.last_action_info = (action, {"agent_info": {}})
+            self.last_action_info = (action, {})
+            logger.info(f"Enforcing dawn transition at {self.env_local_time}")
             return True
         if self.is_dusk():
             action = self.get_dusk_action()
-            self.last_action_info = (action, {"agent_info": {}})
+            self.last_action_info = (action, {})
+            logger.info(f"Enforcing dusk transition at {self.env_local_time}")
             return True
+        return False
 
     async def step(self, reward: float, observation: Any, extra: dict[str, Any]) -> tuple[Any, dict[str, Any]]:
-        current_time = self.get_local_time()
+        self.update_time_from_extra(extra)
 
         if self.maybe_enforce_action():
             return self.last_action_info
 
         if not self.agent_started:
             self.last_action_info = await asyncio.to_thread(self.agent.start, observation, extra)
+            self.agent_started = True
             return self.last_action_info
 
-        # During daytime, poll the agent every action_timestep minutes
-        now = datetime.now()
-        action_timestep = self.action_timestep
-        time_since_last_action = now - (self.last_action_time if self.last_action_time else now)
-        action_timestep_minutes = action_timestep.total_seconds() / 60
-        should_poll = now.minute % action_timestep_minutes == 0
+        # During daytime, poll the agent based on environment time
+        # Only poll if enough time has passed since the last action
+        assert self.env_time is not None, "Environment time must be set before checking action timestep."
+        assert self.last_action_time is not None, "Last action time must be set before checking action timestep."
+        time_since_last_action = self.env_time - self.last_action_time
 
-        if time_since_last_action > action_timestep or should_poll:
+        action_timestep_minutes = self.action_timestep.total_seconds() / 60
+        assert self.env_local_time is not None, "Environment local time must be set before checking action timestep."
+        should_poll = self.env_local_time.minute % action_timestep_minutes == 0
+
+        if time_since_last_action >= self.action_timestep or should_poll:
             logger.info(
-                f"Polling agent at timestep mark: {current_time}, time since last action: {time_since_last_action}"
+                f"Polling agent at timestep mark: {self.env_local_time}, time since last action: {time_since_last_action}"
             )
             self.last_action_info = await asyncio.to_thread(self.agent.step, reward, observation, extra)
-            self.last_action_time = now
+            self.last_action_time = self.env_time
 
         return self.last_action_info
