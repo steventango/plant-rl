@@ -176,6 +176,7 @@ def plot_images(image_dir: Path, show_plot_flag: bool):
 
 
 @skipif_github_actions
+@pytest.mark.skip(reason="Skipping to prevent accidental execution during automated runs.")
 @pytest.mark.asyncio
 async def test_cycle_lights_and_observe_all_zones():
     """Pytest test function to run the chamber tests with default parameters."""
