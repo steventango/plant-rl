@@ -23,5 +23,4 @@ jobs:
         python-version: 3.11
     - run: uv sync --dev --prerelease=allow
     - name: Test with pytest
-      run: |
-        uv run pytest --cov=src
+      run: uv run pytest --cov=src tests

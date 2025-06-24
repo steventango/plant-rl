@@ -7,7 +7,7 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from src.environments.PlantGrowthChamber.PlantGrowthChamber import PlantGrowthChamber
+from environments.PlantGrowthChamber.PlantGrowthChamber import PlantGrowthChamber
 
 # from src.environments.PlantGrowthChamber.zones import ZONE_IDENTIFIERS
 
