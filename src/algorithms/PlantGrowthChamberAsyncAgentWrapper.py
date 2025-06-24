@@ -38,9 +38,9 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
         return is_dawn
 
     def is_dusk(self) -> bool:
-        """Determine whether the environment time is within dusk hours (8:31 PM to 8:59 PM)."""
+        """Determine whether the environment time is within dusk hours (8:30 PM to 8:59 PM)."""
         assert self.env_local_time is not None, "Environment local time must be set before checking dusk."
-        is_dusk = self.env_local_time.hour == 20 and 31 <= self.env_local_time.minute
+        is_dusk = self.env_local_time.hour == 20 and 30 <= self.env_local_time.minute
         return is_dusk
 
     def is_night(self) -> bool:
@@ -57,7 +57,7 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
         minute_in_dawn = self.env_local_time.minute - 1
 
         if minute_in_dawn >= len(TWILIGHT_INTENSITIES_30_MIN):
-            intensity = TWILIGHT_INTENSITIES_30_MIN[-1]
+            intensity = 1
         else:
             intensity = TWILIGHT_INTENSITIES_30_MIN[minute_in_dawn]
 
@@ -76,7 +76,7 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
 
         # Safety check to ensure we're within array bounds
         if idx < 0:
-            intensity = TWILIGHT_INTENSITIES_30_MIN[0]
+            intensity = 1
         elif idx >= len(TWILIGHT_INTENSITIES_30_MIN):
             intensity = 0  # Complete darkness at end of dusk
         else:
