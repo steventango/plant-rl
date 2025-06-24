@@ -83,7 +83,7 @@ class MockPlantGrowthChamber(PlantGrowthChamber):
 
     async def step(self, action: np.ndarray):
         reward, observation, terminal, info = await super().step(action)
-        if self.simulate and action == 0:
+        if self.simulate and np.sum(action) == 0:
             reward -= 0.5 * abs(reward)
         return reward, observation, terminal, info
 
@@ -99,7 +99,7 @@ class MockPlantGrowthChamber(PlantGrowthChamber):
                 break
             next_row = self.dataset_df[self.dataset_df["frame"] == self.index + 1].iloc[0]
             next_time = next_row["time"]
-            if next_time >= self.time:
+            if next_time <= self.time:
                 self.time = next_time
                 self.index += 1
 
