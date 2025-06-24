@@ -2,6 +2,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
+# from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
@@ -29,6 +30,9 @@ class MockPlantGrowthChamber(PlantGrowthChamber):
         kwargs["zone"] = deserialize_zone(self.config["zone"])
         self.index = 0
         self.time = self.dataset_df["time"].min()
+        # For testing purposes, we can set a fixed time
+        # tzinfo = ZoneInfo("America/Edmonton")
+        # self.time = datetime(2022, 7, 22, 9, 25, 0, tzinfo=tzinfo)
         self.mock_area = kwargs.get("mock_area", False)
         self.plant_stat_columns = [
             "in_bounds",
