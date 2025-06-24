@@ -1,0 +1,19 @@
+name: Pyright
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ "**.py", ".github/workflows/pyright.yml" ]
+  pull_request:
+    branches: [ main ]
+    paths: [ "**.py", ".github/workflows/pyright.yml" ]
+
+jobs:
+  pyright:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv sync --dev
+      - run: echo "$PWD/.venv/bin" >> $GITHUB_PATH
+      - uses: jakebailey/pyright-action@v2

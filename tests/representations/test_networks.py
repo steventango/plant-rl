@@ -1,6 +1,6 @@
 import haiku as hk
 import jax.numpy as jnp
-from src.representations.networks import NetworkBuilder
+from representations.networks import NetworkBuilder
 
 def one_layer_Relu():
     builder = NetworkBuilder(

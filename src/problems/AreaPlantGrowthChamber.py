@@ -1,7 +1,7 @@
 from PyExpUtils.collection.Collector import Collector
 
-from environments.PlantGrowthChamber.MockTemporalPlantGrowthChamber import (
-    MockTemporalPlantGrowthChamber as Env,
+from environments.PlantGrowthChamber.CVPlantGrowthChamber import (
+    CVPlantGrowthChamber as Env,
 )
 from experiment.ExperimentModel import ExperimentModel
 from problems.BasePlantGrowthChamberAsyncProblem import (
@@ -9,7 +9,7 @@ from problems.BasePlantGrowthChamberAsyncProblem import (
 )
 
 
-class MockTemporalPlantGrowthChamber(BasePlantGrowthChamberAsyncProblem):
+class CVPlantGrowthChamber(BasePlantGrowthChamberAsyncProblem):
     def __init__(self, exp: ExperimentModel, idx: int, collector: Collector):
         super().__init__(exp, idx, collector)
 

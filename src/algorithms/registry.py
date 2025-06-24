@@ -4,6 +4,7 @@ from algorithms.BaseAgent import BaseAgent
 from algorithms.BernoulliAgent import BernoulliAgent
 from algorithms.ConstantAgent import ConstantAgent
 from algorithms.ContinuousRandomAgent import ContinuousRandomAgent
+from algorithms.MotionTrackingRecipe import MotionTrackingRecipe 
 from algorithms.DiscreteRandomAgent import DiscreteRandomAgent
 from algorithms.linear.ESARSA import ESARSA as LinearESARSA
 from algorithms.linear.linearDQN.LinearDynamicBatchDQN import \
@@ -77,6 +78,9 @@ def getAgent(name) -> Type[BaseAgent]:
 
     if name == 'ContinuousRandom':
         return ContinuousRandomAgent
+    
+    if name == 'MotionTrackingRecipe':
+        return MotionTrackingRecipe
 
     if name.startswith("Sequence"):
         return SequenceAgent
