@@ -52,15 +52,15 @@ dependencies = [
     'scipy<1.16',
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
-    'flake8',
     'pip',
     'ruff',
     'pyright',
-    'pytest',
     'commitizen',
     'pre-commit',
+    'pytest',
+    'pytest-cov'
 ]
 
 [tool]
