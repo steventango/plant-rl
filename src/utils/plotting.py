@@ -46,9 +46,9 @@ def plot_q_diff(daytime_observation_space, area_observation_space, Q_diff):
     ax_q_diff.set_title(f"Q(s, a=1) - Q(s, a=0)")
     ax_q_diff.set_xlabel("s[0]")
     hour_interval = 6
-    ax_q_diff.set_xticks(np.arange(0, len(daytime_observation_space) + 1, hour_interval))
+    ax_q_diff.set_xticks(np.arange(0, len(daytime_observation_space), hour_interval))
     ax_q_diff.set_xticklabels(
-        [f"{int(t * 12) + 9}" for t in daytime_observation_space[::hour_interval]] + [21]
+        [f"{int(t * 11) + 9}:30" for t in daytime_observation_space[::hour_interval]]
     )
     ax_q_diff.set_ylabel("s[1]")
     ax_q_diff.set_yticks(np.arange(0, len(area_observation_space), 10))
@@ -58,12 +58,12 @@ def plot_q_diff(daytime_observation_space, area_observation_space, Q_diff):
 
     # Plot Policy
     ax_policy = axs[1]
-    policy_cutoff = 1e-1
-    policy = (Q_diff > policy_cutoff).astype(int) - (Q_diff < -policy_cutoff).astype(int) 
+    policy_cutoff = 0
+    policy = (Q_diff > policy_cutoff).astype(int) - (Q_diff < -policy_cutoff).astype(int)
 
     # Create a discrete colormap for the policy: -1 (blue), 0 (gray), 1 (red),
-    cmap_policy = mcolors.ListedColormap(['blue', 'gray', 'red'])
-    bounds = [-1.5, -0.5, 0.5, 1.5]
+    cmap_policy = mcolors.ListedColormap(['blue', 'red'])
+    bounds = [-1.5, 0, 1.5]
     norm_policy = mcolors.BoundaryNorm(bounds, cmap_policy.N)
 
 
@@ -73,13 +73,13 @@ def plot_q_diff(daytime_observation_space, area_observation_space, Q_diff):
         cmap=cmap_policy,
         norm=norm_policy,
         cbar=True,
-        cbar_kws={"ticks": [-1, 0, 1]}, # Ticks for the policy colorbar
+        cbar_kws={"ticks": [-1, 1]}, # Ticks for the policy colorbar
     )
-    ax_policy.set_title(rf"Policy (Preferred Action, $\Delta$Q={policy_cutoff})")
+    ax_policy.set_title(rf"Policy")
     ax_policy.set_xlabel("s[0]")
-    ax_policy.set_xticks(np.arange(0, len(daytime_observation_space) + 1, hour_interval))
+    ax_policy.set_xticks(np.arange(0, len(daytime_observation_space), hour_interval))
     ax_policy.set_xticklabels(
-        [f"{int(t * 12) + 9}" for t in daytime_observation_space[::hour_interval]] + [21]
+        [f"{int(t * 11) + 9}:30" for t in daytime_observation_space[::hour_interval]]
     )
     ax_policy.set_ylabel("s[1]")
     ax_policy.set_yticks(np.arange(0, len(area_observation_space), 10))
@@ -89,8 +89,8 @@ def plot_q_diff(daytime_observation_space, area_observation_space, Q_diff):
 
     # Set labels for policy colorbar
     cbar = ax_policy.collections[0].colorbar
-    cbar.set_ticklabels(['action 0', 'hard to tell', 'action 1'])
-
+    cbar.set_ticklabels(['A=0', 'A=1'])
+    fig.tight_layout()
     fig.suptitle("ESARSA Q-value Difference and Policy", fontsize=16)
 
 
@@ -118,9 +118,9 @@ def plot_q(daytime_observation_space, area_observation_space, Q):
 
         ax.set_xlabel("s[0]")
         hour_interval = 6
-        ax.set_xticks(np.arange(0, len(daytime_observation_space) + 1, hour_interval))  # Set ticks every hour
+        ax.set_xticks(np.arange(0, len(daytime_observation_space), hour_interval))  # Set ticks every hour
         ax.set_xticklabels(
-            [f"{int(t * 12) + 9}" for t in daytime_observation_space[::hour_interval]] + [21]
+            [f"{int(t * 11) + 9}:30" for t in daytime_observation_space[::hour_interval]]
         )  # Format as hours
 
         ax.set_ylabel("s[1]")  # Area is now on the y-axis
@@ -128,5 +128,5 @@ def plot_q(daytime_observation_space, area_observation_space, Q):
         ax.set_yticklabels([f"{area:.1f}" for area in area_observation_space[::10]])  # Format as float
         ax.set_yticklabels(ax.get_yticklabels(), rotation=0)  # Rotate y ticks
         ax.invert_yaxis()  # Invert the y-axis
-
+    fig.tight_layout()
     fig.suptitle("ESARSA Q-values", fontsize=16)

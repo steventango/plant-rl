@@ -27,8 +27,10 @@ class OfflinePlantGrowthChamber:
         self.dataset_index = 0
         self.index = 0
         self.daily_reward = kwargs.get("daily_reward", True)  # if true, use "percentage" overnight growth as reward
+        self.reward_type = kwargs.get("reward_type", "max_mean")
         self.daily_morning_areas = {}
         self.daily_max_areas = {}
+        self.daily_areas = {}
         self.dli = 0
 
     def load_dataset(self, dataset_path: Path) -> pd.DataFrame:
@@ -61,6 +63,7 @@ class OfflinePlantGrowthChamber:
         for date_val, group in df.groupby(local_dates):
             self.daily_morning_areas[date_val] = np.mean(group["mean_clean_area"][:5])  # morning areas
             self.daily_max_areas[date_val] = np.mean(np.sort(group["mean_clean_area"])[-10:])  # max areas
+            self.daily_areas[date_val] = group["mean_clean_area"].values
 
         return df
 
@@ -96,18 +99,43 @@ class OfflinePlantGrowthChamber:
     def get_reward(self):
         if self.index == 0:
             return 0.0
-        if self.dataset.iloc[self.index]["time"].date() == self.dataset.iloc[self.index - 1]["time"].date():
-            return 0.0
-
-        today_local_date = self.dataset.iloc[self.index]["time"].date()
-        yesterday_local_date = today_local_date - timedelta(days=1)
-
-        today_max_area = self.daily_max_areas.get(today_local_date, 0)
-        yesterday_max_area = self.daily_max_areas.get(yesterday_local_date, 0)
         if self.daily_reward:
-            reward = normalize(today_max_area / yesterday_max_area - 1, 0, 0.35)
+            if self.dataset.iloc[self.index]["time"].date() == self.dataset.iloc[self.index - 1]["time"].date():
+                return 0.0
+
+            today_local_date = self.dataset.iloc[self.index]["time"].date()
+            yesterday_local_date = today_local_date - timedelta(days=1)
+
+            if self.reward_type == "max_mean":
+                today_areas = self.daily_areas.get(today_local_date, [])
+                today_area = np.mean(np.sort(today_areas)[-10:]) if len(today_areas) else 0
+                yesterday_areas = self.daily_areas.get(yesterday_local_date, [])
+                yesterday_area = np.mean(np.sort(yesterday_areas)[-10:]) if len(yesterday_areas) else 0
+            elif self.reward_type == "max":
+                today_areas = self.daily_areas.get(today_local_date, [])
+                today_area = np.max(today_areas) if len(today_areas) else 0
+                yesterday_areas = self.daily_areas.get(yesterday_local_date, [])
+                yesterday_area = np.max(yesterday_areas) if len(yesterday_areas) else 0
+            elif self.reward_type == "mean":
+                today_areas = self.daily_areas.get(today_local_date, [])
+                today_area = np.mean(today_areas) if len(today_areas) else 0
+                yesterday_areas = self.daily_areas.get(yesterday_local_date, [])
+                yesterday_area = np.mean(yesterday_areas) if len(yesterday_areas) else 0
+            elif self.reward_type == "first":
+                today_areas = self.daily_areas.get(today_local_date, [])
+                today_area = today_areas[0] if len(today_areas) else 0
+                yesterday_areas = self.daily_areas.get(yesterday_local_date, [])
+                yesterday_area = yesterday_areas[0] if len(yesterday_areas) else 0
+            else:
+                raise ValueError(f"Invalid reward type: {self.reward_type}")
+            if yesterday_area == 0:
+                reward = 0.0
+            else:
+                reward = normalize(today_area / yesterday_area - 1, 0, 0.35)
         else:
-            reward = normalize(today_max_area - yesterday_max_area, 0, 150)
+            current_area = self.dataset.iloc[self.index]["mean_clean_area"]
+            previous_area = self.dataset.iloc[self.index - 1]["mean_clean_area"]
+            reward = normalize(current_area - previous_area, 0, 150)
 
         return reward
 
@@ -158,6 +186,13 @@ class OfflinePlantGrowthChamber:
                 complete_dates.append(date_val)
 
         return df[df["time"].dt.date.isin(complete_dates)]
+
+
+class OfflinePlantGrowthChamberTime(OfflinePlantGrowthChamber):
+    def get_observation(self):
+        super_obs =super().get_observation()
+        obs = super_obs[[0, 1]]
+        return obs
 
 
 class OfflinePlantGrowthChamberTimeDLI(OfflinePlantGrowthChamber):

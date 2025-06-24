@@ -77,7 +77,7 @@ def plot_q_values_and_diff(logger, agent, q_plots_dir, step):  # Renamed origina
             tile_coder = agent.tile_coder
 
             # Define observation space for plotting (as in plot_q_values.py)
-            daytime_observation_space = np.linspace(0, 1, 11 * 6, endpoint=True)
+            daytime_observation_space = np.linspace(0, 1, 11 * 6, endpoint=False)
             area_observation_space = np.linspace(0, 1, 11 * 6, endpoint=True)
 
             num_actions = weights.shape[0]
@@ -224,7 +224,7 @@ def plot_state_action_distribution(df, q_plots_dir, logger):
                         xtick_indices = np.arange(0, num_daytime_bins, hour_interval)
                         ax.set_xticks(xtick_indices + 0.5)
                         xtick_labels_values = daytime_observation_space_for_labels[::hour_interval]
-                        ax.set_xticklabels([f"{int(t * 12) + 9}" for t in xtick_labels_values])
+                        ax.set_xticklabels([f"{int(t * 11) + 9}" for t in xtick_labels_values])
 
                         area_tick_interval = 10
                         ytick_indices = np.arange(0, num_area_bins, area_tick_interval)
@@ -234,7 +234,7 @@ def plot_state_action_distribution(df, q_plots_dir, logger):
 
                         ax.invert_yaxis()
 
-                    plt.tight_layout(rect=[0, 0, 1, 0.96])  # Adjust layout to make space for suptitle
+                    plt.tight_layout()  # Adjust layout to make space for suptitle
                     plot_filename = q_plots_dir / "state_action_count_heatmap.jpg"
                     plt.savefig(plot_filename)
                     plt.close()
