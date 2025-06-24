@@ -21,7 +21,7 @@ jobs:
     - uses: astral-sh/setup-uv@v6
       with:
         python-version: 3.11
-    - run: uv sync --prerelease=allow --requirements api/camera/requirements-test.txt
+    - run: uv pip install -r api/camera/requirements-test.txt
     - name: Test with pytest
       run: |
         uv run pytest api/camera/tests
