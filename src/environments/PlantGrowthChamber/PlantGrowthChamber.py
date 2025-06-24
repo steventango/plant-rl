@@ -49,6 +49,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.glue = None
 
         self.last_action = None
+        self.plant_areas = np.array([])
 
     async def _ensure_session(self):
         """Ensures an aiohttp session is available and returns it."""
