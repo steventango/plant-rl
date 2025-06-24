@@ -17,6 +17,7 @@
         "alpha": 0.1,
         "epsilon": 0.1,
         "gamma": 0,
-        "w0": 0
+        "w0": 0,
+        "timezone": "America/Edmonton"
     }
 }
