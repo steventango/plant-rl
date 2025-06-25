@@ -85,10 +85,10 @@ submit_all = """#!/bin/bash
 # start scheduling
 for path in missing:
     for g in group(missing[path], groupSize):
-        l = list(g)
-        print("scheduling:", path, f"{min(l)}-{max(l)}")
+        lst = list(g)
+        print("scheduling:", path, f"{min(lst)}-{max(lst)}")
         # make sure to only request the number of CPU cores necessary
-        tasks = min([groupSize, len(l)])
+        tasks = min([groupSize, len(lst)])
         par_tasks = max(int(tasks // slurm.sequential), 1)
         cores = par_tasks * threads
         sub = dataclasses.replace(slurm, cores=cores)
@@ -98,7 +98,7 @@ for path in missing:
         runner = f"apptainer exec -C -B .:${{HOME}} -W ${{SLURM_TMPDIR}} pyproject.sif python {cmdline.entry} -e {path} --save_path {cmdline.results} -i "
 
         # generate the gnu-parallel command for dispatching to many CPUs across server nodes
-        parallel = Slurm.buildParallel(runner, l, sub)
+        parallel = Slurm.buildParallel(runner, lst, sub)
 
         # generate the bash script
         script = getJobScript(parallel)
@@ -108,7 +108,7 @@ for path in missing:
             print(f"script={script}")
             exit()
 
-        script_name = f"slurm_scripts/job_{min(l)}-{max(l)}.sh"
+        script_name = f"slurm_scripts/job_{min(lst)}-{max(lst)}.sh"
         with open(script_name, "w") as f:
             f.write(script)
         os.chmod(script_name, 0o755)
