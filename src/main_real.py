@@ -260,7 +260,7 @@ async def main():
             # -- Saving --
             # ------------
             backup_and_save(exp, collector, idx, args.save_path)
-            env.close()
+            await env.close()
             chk.save()
             wandb_run.finish()
 
