@@ -41,7 +41,7 @@ class GreedyAC(BaseAgent):
             entropy_from_single_sample=True,
             activation="relu")
 
-    def start(self, observation: Any) -> int:
+    def start(self, observation: Any, extra: Dict[str, Any]) -> int:
         self.state = observation
         self.action = self.greedy_ac.sample_action(self.state)
         return self.action

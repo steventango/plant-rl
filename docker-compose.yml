@@ -16,7 +16,7 @@ services:
       - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
-    command: python src/main_real.py -e experiments/online/E8/P1/Spreadsheet1.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E9/P0/Spreadsheet1.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -42,7 +42,7 @@ services:
       - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
-    command: python src/main_real.py -e experiments/online/E8/P1/Bernoulli2.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E9/P0/Spreadsheet2.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -69,7 +69,61 @@ services:
       - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
-    command: python src/main_real.py -e experiments/online/E8/P1/Bernoulli3.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E9/P0/Spreadsheet3.json -i 0 --deploy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  zone4:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - plant-rl
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/root/.ssh:cached
+      - ~/.gitconfig:/root/.gitconfig:cached
+      - ~/.config:/root/.config:cached
+      - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
+      - ~/.cache:/root/.cache:cached
+      - ~/.netrc:/root/.netrc:cached
+      - /extra-storage:/data:cached
+    restart: unless-stopped
+    command: uv run python src/main_real.py -e experiments/online/E9/P0/Spreadsheet4.json -i 0 --deploy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  zone5:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - plant-rl
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/root/.ssh:cached
+      - ~/.gitconfig:/root/.gitconfig:cached
+      - ~/.config:/root/.config:cached
+      - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
+      - ~/.cache:/root/.cache:cached
+      - ~/.netrc:/root/.netrc:cached
+      - /extra-storage:/data:cached
+    restart: unless-stopped
+    command: uv run python src/main_real.py -e experiments/online/E9/P0/Spreadsheet5.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -96,7 +150,34 @@ services:
       - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
-    command: python src/main_real.py -e experiments/online/E8/P1/Spreadsheet6.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E9/P0/Spreadsheet6.json -i 0 --deploy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  zone7:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - plant-rl
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/root/.ssh:cached
+      - ~/.gitconfig:/root/.gitconfig:cached
+      - ~/.config:/root/.config:cached
+      - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
+      - ~/.cache:/root/.cache:cached
+      - ~/.netrc:/root/.netrc:cached
+      - /extra-storage:/data:cached
+    restart: unless-stopped
+    command: uv run python src/main_real.py -e experiments/online/E9/P0/Spreadsheet7.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -123,7 +204,7 @@ services:
       - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
-    command: python src/main_real.py -e experiments/online/E8/P1/Bernoulli8.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E9/P0/Spreadsheet8.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -150,7 +231,88 @@ services:
       - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
-    command: python src/main_real.py -e experiments/online/E8/P1/Bernoulli9.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E9/P0/Spreadsheet9.json -i 0 --deploy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  zone10:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - plant-rl
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/root/.ssh:cached
+      - ~/.gitconfig:/root/.gitconfig:cached
+      - ~/.config:/root/.config:cached
+      - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
+      - ~/.cache:/root/.cache:cached
+      - ~/.netrc:/root/.netrc:cached
+      - /extra-storage:/data:cached
+    restart: unless-stopped
+    command: uv run python src/main_real.py -e experiments/online/E9/P0/Spreadsheet10.json -i 0 --deploy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  zone11:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - plant-rl
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/root/.ssh:cached
+      - ~/.gitconfig:/root/.gitconfig:cached
+      - ~/.config:/root/.config:cached
+      - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
+      - ~/.cache:/root/.cache:cached
+      - ~/.netrc:/root/.netrc:cached
+      - /extra-storage:/data:cached
+    restart: unless-stopped
+    command: uv run python src/main_real.py -e experiments/online/E9/P0/Spreadsheet11.json -i 0 --deploy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  zone12:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - plant-rl
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/root/.ssh:cached
+      - ~/.gitconfig:/root/.gitconfig:cached
+      - ~/.config:/root/.config:cached
+      - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
+      - ~/.cache:/root/.cache:cached
+      - ~/.netrc:/root/.netrc:cached
+      - /extra-storage:/data:cached
+    restart: unless-stopped
+    command: uv run python src/main_real.py -e experiments/online/E9/P0/Spreadsheet12.json -i 0 --deploy
     deploy:
       resources:
         reservations:

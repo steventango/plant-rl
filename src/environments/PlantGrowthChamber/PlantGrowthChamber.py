@@ -49,6 +49,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.glue = None
 
         self.last_action = None
+        self.plant_areas = np.array([])
 
     async def _ensure_session(self):
         """Ensures an aiohttp session is available and returns it."""
@@ -181,7 +182,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     async def sleep_until(self, wake_time: datetime):
         time_left = wake_time - self.get_time()
-        logger.info(f"Sleeping until {wake_time} (in {time_left})")
+        logger.info(f"Sleeping until {wake_time.astimezone(self.tz)} (in {time_left})")
         await asyncio.sleep(time_left.total_seconds())
 
     async def sleep_until_next_step(self, duration: timedelta):
@@ -189,6 +190,11 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         await self.sleep_until(next_step_time)
 
     def get_info(self):
+        if self.df.empty:
+            return {
+                "df": self.df,
+                "env_time": self.time.timestamp(),
+            }
         N = 3
         raw_area = self.plant_areas[:N]
         mean = np.array([self.uema_areas[i].compute() for i in range(self.zone.num_plants)]).flatten()[:N]
