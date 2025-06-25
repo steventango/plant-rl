@@ -78,9 +78,9 @@ class IHT:
 
 
 def hashcoords(coordinates, m, readonly=False):
-    if type(m) == IHT:
+    if type(m) is IHT:
         return m.getindex(tuple(coordinates), readonly)
-    if type(m) == int:
+    if type(m) is int:
         return basehash(tuple(coordinates)) % m
     if m is None:
         return coordinates
