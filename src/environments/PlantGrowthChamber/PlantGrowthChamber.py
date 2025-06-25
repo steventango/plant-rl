@@ -237,9 +237,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
     def get_terminal(self) -> bool:
         return False
 
-    def get_mean_area(self, date):
-        return self.daily_mean_clean_areas.get(date, 0.0)
-
     def reward_function(self):
         today_morning_local_date = self.get_local_time().replace(
             hour=9, minute=30, second=0, microsecond=0
@@ -249,7 +246,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         today_morning_mean_area = self.daily_mean_clean_areas.get(
             today_morning_local_date, 0.0
         )
-        yesterday_morning_mean_area = self.get_mean_area(yesterday_morning_local_date)
+        yesterday_morning_mean_area = self.daily_mean_clean_areas.get(
+            yesterday_morning_local_date, 0.0
+        )
 
         if self.normalize_reward:
             if yesterday_morning_mean_area == 0:
