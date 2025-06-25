@@ -255,12 +255,12 @@ async def main():
 
             collector.reset()
 
-            env.close()
         finally:
             # ------------
             # -- Saving --
             # ------------
             backup_and_save(exp, collector, idx, args.save_path)
+            env.close()
             chk.save()
             wandb_run.finish()
 
