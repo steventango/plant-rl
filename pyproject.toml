@@ -21,7 +21,6 @@ dependencies = [
     # custom minatar with jit compiled environments
     'MinAtar @ git+https://github.com/andnp/MinAtar',
     'foragerenv @ git+https://github.com/andnp/forager',
-
     'gymnasium[atari, box2d]>=1.0.0',
     'optuna',
     'ale_py',
@@ -60,6 +59,7 @@ dev = [
     'commitizen',
     'pre-commit',
     'pytest',
+    "pytest-asyncio>=1.0.0",
     'pytest-cov'
 ]
 

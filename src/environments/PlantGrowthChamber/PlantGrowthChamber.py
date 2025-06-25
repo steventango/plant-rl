@@ -21,8 +21,13 @@ logger.setLevel(logging.DEBUG)
 
 
 class PlantGrowthChamber(BaseAsyncEnvironment):
-
-    def __init__(self, zone: str | None = None, timezone: str = "Etc/UTC", normalize_reward: bool = False, **kwargs):
+    def __init__(
+        self,
+        zone: str | None = None,
+        timezone: str = "Etc/UTC",
+        normalize_reward: bool = False,
+        **kwargs,
+    ):
         if zone is not None:
             self.zone = load_zone_from_config(zone) if isinstance(zone, str) else zone
         self.images = {}
@@ -34,9 +39,8 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.session = None
 
         self.clean_areas = []
-        # stores a list of arrays of observed areas in mm^2.
-        # i.e. self.clean_areas[-1] contains the latest areas of individual plants
-        self.daily_mean_clean_areas = defaultdict(list)
+        # i.e. a mapping from datetime to the mean clean area
+        self.daily_mean_clean_areas = defaultdict(float)
         self.gamma = 0.99
         self.n_step = 0
         self.duration = timedelta(minutes=1)
@@ -62,7 +66,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         await self.get_image()
         if "left" in self.images and "right" in self.images:
-            self.image = np.hstack((np.array(self.images["left"]), np.array(self.images["right"])))
+            self.image = np.hstack(
+                (np.array(self.images["left"]), np.array(self.images["right"]))
+            )
         elif "left" in self.images:
             self.image = np.array(self.images["left"])
         elif "right" in self.images:
@@ -71,7 +77,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.get_plant_stats()
 
         if not self.df.empty:
-            self.plant_areas = self.df["area"].to_numpy().flatten()
+            self.plant_areas = self.df["area"].to_numpy().flatten()  # type: ignore
 
             clean_area = self.get_clean_area(self.plant_areas)
             self.df["clean_area"] = clean_area
@@ -79,21 +85,27 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             self.clean_areas.append(clean_area)
 
             # Update daily mean clean areas history
-            current_local_date = self.get_local_time().date()
+            current_local_date = self.get_local_time().replace(second=0, microsecond=0)
             mean_area_this_step = np.mean(clean_area) if clean_area.size > 0 else 0.0
-            self.daily_mean_clean_areas[current_local_date].append(mean_area_this_step)
+            self.daily_mean_clean_areas[current_local_date] = float(mean_area_this_step)
 
         return self.time, self.image, self.df
 
     def get_plant_stats(self):
-        self.df, self.detections = process_image(self.image, self.zone.trays, self.images)
+        assert self.image is not None, "Image must be fetched before processing."
+        self.df, self.detections = process_image(
+            self.image, self.zone.trays, self.images
+        )
         self.plant_stats = np.array(self.df, dtype=np.float32)
 
     def get_clean_area(self, plant_areas):
         clean_area = plant_areas.copy()
-        mean = np.array([self.uema_areas[i].compute() for i in range(self.zone.num_plants)]).flatten()
+        mean = np.array(
+            [self.uema_areas[i].compute() for i in range(self.zone.num_plants)]
+        ).flatten()
         cond = (self.area_count > self.minimum_area_count) & (
-            (plant_areas < (1 - self.clean_area_lower) * mean) | (plant_areas > (1 + self.clean_area_upper) * mean)
+            (plant_areas < (1 - self.clean_area_lower) * mean)
+            | (plant_areas > (1 + self.clean_area_upper) * mean)
         )
         clean_area[cond] = self.prev_plant_areas[cond]
         self.prev_plant_areas[~cond] = plant_areas[~cond]
@@ -116,7 +128,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         if self.zone.camera_left_url:
             tasks.append(self._fetch_image(session, self.zone.camera_left_url, "left"))
         if self.zone.camera_right_url:
-            tasks.append(self._fetch_image(session, self.zone.camera_right_url, "right"))
+            tasks.append(
+                self._fetch_image(session, self.zone.camera_right_url, "right")
+            )
 
         if tasks:
             await asyncio.gather(*tasks)
@@ -143,7 +157,10 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         try:
             session = await self._ensure_session()
             logger.debug(f"{self.zone.lightbar_url}: {action}")
-            await session.put(self.zone.lightbar_url, json={"array": action.tolist()}, timeout=10)
+            assert self.zone.lightbar_url is not None, "Lightbar URL must be set."
+            await session.put(
+                self.zone.lightbar_url, json={"array": action.tolist()}, timeout=10
+            )
         except Exception as e:
             logger.error(f"Error: {self.zone.lightbar_url} after retries: {str(e)}")
             raise
@@ -152,14 +169,16 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         logger.info(f"Local time: {self.get_local_time()}. Step 0")
         self.n_step = 0
         self.clean_areas = []
-        self.daily_mean_clean_areas = defaultdict(list)
+        self.daily_mean_clean_areas = defaultdict(float)
         await self.sleep_until_next_step(self.duration)
         observation = await self.get_observation()
         self.n_step = 1
         return observation, self.get_info()
 
     async def step(self, action: np.ndarray):
-        logger.info(f"Local time: {self.get_local_time()}. Step {self.n_step} with action {action}")
+        logger.info(
+            f"Local time: {self.get_local_time()}. Step {self.n_step} with action {action}"
+        )
         await self.put_action(action)
 
         terminal = self.get_terminal()
@@ -177,7 +196,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     def get_next_step_time(self, duration: timedelta):
         duration_s = duration.total_seconds()
-        wake_time = datetime.fromtimestamp((self.get_time().timestamp() // duration_s + 1) * duration_s, tz=self.tz_utc)
+        wake_time = datetime.fromtimestamp(
+            (self.get_time().timestamp() // duration_s + 1) * duration_s, tz=self.tz_utc
+        )
         return wake_time
 
     async def sleep_until(self, wake_time: datetime):
@@ -197,7 +218,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             }
         N = 3
         raw_area = self.plant_areas[:N]
-        mean = np.array([self.uema_areas[i].compute() for i in range(self.zone.num_plants)]).flatten()[:N]
+        mean = np.array(
+            [self.uema_areas[i].compute() for i in range(self.zone.num_plants)]
+        ).flatten()[:N]
         upper = mean * (1 + self.clean_area_upper)
         lower = mean * (1 - self.clean_area_lower)
         return {
@@ -214,26 +237,34 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
     def get_terminal(self) -> bool:
         return False
 
-    def calculate_95p_mean_area(self, date):
-        mean_areas = self.daily_mean_clean_areas.get(date, [])
-        return np.percentile(np.array(mean_areas), 95) if mean_areas else 0.0
-
     def reward_function(self):
-        current_local_date = self.get_local_time().date()
-        yesterday_local_date = current_local_date - timedelta(days=1)
+        today_morning_local_date = self.get_local_time().replace(
+            hour=9, minute=30, second=0, microsecond=0
+        )
+        yesterday_morning_local_date = today_morning_local_date - timedelta(days=1)
 
-        current_95p_mean_area = self.calculate_95p_mean_area(current_local_date)
-        prior_95p_mean_area = self.calculate_95p_mean_area(yesterday_local_date)
+        today_morning_mean_area = self.daily_mean_clean_areas.get(
+            today_morning_local_date, 0.0
+        )
+        yesterday_morning_mean_area = self.daily_mean_clean_areas.get(
+            yesterday_morning_local_date, 0.0
+        )
 
         if self.normalize_reward:
-            if prior_95p_mean_area == 0:
+            if yesterday_morning_mean_area == 0:
                 return 0
-            reward = normalize(current_95p_mean_area / prior_95p_mean_area - 1, 0, 0.35)
+            reward = normalize(
+                today_morning_mean_area / yesterday_morning_mean_area - 1, 0, 0.35
+            )
         else:
-            reward = normalize(current_95p_mean_area - prior_95p_mean_area, 0, 50)
+            reward = normalize(
+                today_morning_mean_area - yesterday_morning_mean_area, 0, 50
+            )
 
         # if reward only @ 9:30 AM
-        if self.sparse_reward and not (self.get_local_time().hour == 9 and self.get_local_time().minute == 30):
+        if self.sparse_reward and not (
+            self.get_local_time().hour == 9 and self.get_local_time().minute == 30
+        ):
             return 0
 
         return reward
@@ -243,9 +274,13 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         # Turn off lights
         try:
             await self.put_action(np.zeros(6))
-            logger.info(f"Lights turned off for zone {self.zone.identifier} during environment closure")
+            logger.info(
+                f"Lights turned off for zone {self.zone.identifier} during environment closure"
+            )
         except Exception as e:
-            logger.error(f"Failed to turn off lights for zone {self.zone.identifier} during close: {e}")
+            logger.error(
+                f"Failed to turn off lights for zone {self.zone.identifier} during close: {e}"
+            )
 
         # Close the aiohttp RetryClient
         if self.session:
@@ -253,5 +288,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 await self.session.close()
                 logger.info(f"Closed aiohttp session for zone {self.zone.identifier}")
             except Exception as e:
-                logger.error(f"Error closing aiohttp session for zone {self.zone.identifier}: {str(e)}")
+                logger.error(
+                    f"Error closing aiohttp session for zone {self.zone.identifier}: {str(e)}"
+                )
             self.session = None

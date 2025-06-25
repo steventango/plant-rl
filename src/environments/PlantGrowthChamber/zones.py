@@ -78,12 +78,12 @@ ZONE_IDENTIFIERS = [
     "alliance-zone10",
     "alliance-zone11",
     "alliance-zone12",
-    "mitacs-zone01",
-    "mitacs-zone02",
-    "mitacs-zone03",
-    "mitacs-zone06",
-    "mitacs-zone08",
-    "mitacs-zone09",
+    # "mitacs-zone01",
+    # "mitacs-zone02",
+    # "mitacs-zone03",
+    # "mitacs-zone06",
+    # "mitacs-zone08",
+    # "mitacs-zone09",
 ]
 
 SCALE = 4
