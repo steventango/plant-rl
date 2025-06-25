@@ -3,6 +3,13 @@
 import lzma
 import pickle
 
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+from matplotlib.colors import ListedColormap
+
+from representations.RichTileCoder import RichTileCoder, RichTileCoderConfig
+
 # checkpoints/results/online/E5/P4/ESARSA/0/chk.pkl.xz
 
 with lzma.open("checkpoints/results/online/E5/P4/ESARSA/0/chk.pkl.xz", "rb") as f:
@@ -16,10 +23,6 @@ weights = data["a"].w
 
 # plot weights
 
-import matplotlib.pyplot as plt
-import numpy as np
-import seaborn as sns
-from matplotlib.colors import ListedColormap
 
 # (4, 800)
 
@@ -56,7 +59,6 @@ print(f"Number of Zeros in weights: {zero_count}")
 
 # %%
 # map indices back to original features
-from src.representations.RichTileCoder import RichTileCoder, RichTileCoderConfig
 
 # "representation": {
 #       "tiles": 4,

@@ -208,7 +208,7 @@ plt.tight_layout()
 plt.savefig("plots/outputs/barplots_E7.png", dpi=300)
 
 # %%
-import matplotlib.pyplot as plt
+
 
 # Create a grid of line plots with dots for datapoints
 unique_days = plot_df["day"].unique()

@@ -1,6 +1,13 @@
 # %%
+import sys
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+
+sys.path.append("/workspaces/plant-rl/src")
+
+from utils.metrics import UnbiasedExponentialMovingAverage as uema
 
 df = pd.read_csv("area.csv")
 xs = df["xs"].values
@@ -8,13 +15,6 @@ ys = df["ys"].values
 
 # %%
 # %%
-import sys
-
-import matplotlib.pyplot as plt
-
-sys.path.append("/workspaces/plant-rl/src")
-
-from utils.metrics import UnbiasedExponentialMovingAverage as uema
 
 
 def calc_ema(xs, alpha):

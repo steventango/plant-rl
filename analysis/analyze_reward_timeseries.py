@@ -1,5 +1,8 @@
 # %%
+import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
+from matplotlib.dates import DateFormatter, DayLocator, HourLocator
 
 
 def normalize(x, lower, upper):
@@ -47,9 +50,6 @@ for df in [df_1, df_2]:
 df_1.head()
 
 # %%
-import matplotlib.pyplot as plt
-import seaborn as sns
-from matplotlib.dates import DateFormatter, DayLocator, HourLocator
 
 # Add a source column to identify each dataset
 df_1["source"] = "Constant Dim"

@@ -1,7 +1,15 @@
 # %%
 
+from collections import defaultdict
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
+from matplotlib.colors import ListedColormap
+
+from representations.RichTileCoder import RichTileCoder, RichTileCoderConfig
+from representations.tile3 import IHT
 
 # %%
 df = pd.read_csv("data.csv")
@@ -35,15 +43,6 @@ states.shape, actions.shape
 
 # (4, 800)
 # %%
-import sys
-
-import matplotlib.pyplot as plt
-import numpy as np
-import seaborn as sns
-from matplotlib.colors import ListedColormap
-
-sys.path.append("/workspaces/plant-rl")
-from src.representations.RichTileCoder import RichTileCoder, RichTileCoderConfig
 
 config = RichTileCoderConfig(
     tiles=4,
@@ -52,7 +51,6 @@ config = RichTileCoderConfig(
     wrap_time=True,
 )
 
-from representations.tile3 import IHT
 
 tile_coder = RichTileCoder(config)
 tile_coder.maxSize = 80000
@@ -62,7 +60,6 @@ times = np.linspace(0, 1, 24 * 12, endpoint=True)
 # %%
 areas = np.linspace(-1, 1, 100)
 
-from collections import defaultdict
 
 inverse_mapping = defaultdict(set)
 for i, area in enumerate(areas):

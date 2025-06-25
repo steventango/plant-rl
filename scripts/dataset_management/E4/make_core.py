@@ -1,4 +1,5 @@
 # %%
+import numpy as np
 import pandas as pd
 
 df = pd.read_csv("/data/online/E4/P1/z2/images/processed/v1.0.0/E4_policy.csv")
@@ -36,7 +37,7 @@ for i in range(6):
 df = df.drop(columns=["actions", "light_on"])
 
 # %%
-import numpy as np
+
 
 df["image_name"] = (
     df["time"].dt.tz_convert("America/Edmonton").dt.strftime("%Y-%m-%dT%H%M%S") + ".jpg"

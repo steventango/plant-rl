@@ -209,7 +209,7 @@ df2["time"] = pd.to_datetime(df2["time"])
 df2["light_on"] = df2["light_on"].astype(int)
 
 # %%
-import matplotlib.pyplot as plt
+
 
 # Sort DataFrame by time to ensure proper ordering
 df2 = df2.sort_values("time")
