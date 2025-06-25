@@ -172,7 +172,7 @@ for target_str in ["09:20", "09:30", "09:40", "09:50", "10:00"]:
 
     # Group data by day and sort agents by percent_action_1 within each day
     plot_data_grouped = []
-    for day, group in plot_df.groupby("day"):
+    for _day, group in plot_df.groupby("day"):
         sorted_group = group.sort_values(by="percent_action_1", ascending=True)
         plot_data_grouped.append(sorted_group)
 
