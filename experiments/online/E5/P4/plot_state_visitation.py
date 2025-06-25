@@ -35,7 +35,8 @@ states = np.stack(df["state"].to_numpy())
 actions = df["action"].to_numpy()
 
 
-states.shape, actions.shape
+print(states.shape)
+print(actions.shape)
 # %%
 
 # %%

@@ -88,7 +88,7 @@ def process_image(image):
 
 df = pd.read_csv(Path(__file__).parent / "new_area_over_time.csv")
 df["timestamp"] = pd.to_datetime(df["timestamp"])
-df
+print(df)
 
 # %%
 # if value < 10, set to nan, for non timestamp columns

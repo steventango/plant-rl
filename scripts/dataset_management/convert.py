@@ -39,7 +39,7 @@ for col in ["action", "area", "state"]:
         )
     df = df.drop(columns=[col])
 # %%
-df
+print(df)
 # %%
 
 

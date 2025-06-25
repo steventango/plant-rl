@@ -3,14 +3,14 @@ import pandas as pd
 
 # %%
 df_online = pd.read_csv("/workspaces/plant-rl/experiments/online/E6/P3/data.csv")
-df_online
+print(df_online)
 
 # %%
 df_offline = pd.read_csv("/workspaces/plant-rl/experiments/offline/E6/P3/data.csv")
-df_offline
+print(df_offline)
 
 # %%
-df_online.columns
+print(df_online.columns)
 
 # %%
 # join the two dataframes on the timestamp column
