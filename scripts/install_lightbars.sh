@@ -2,10 +2,10 @@
 
 # Define lightbar hostnames in an array
 hostnames=(
-  # "alliance-zone1"
+  "alliance-zone1"
   "alliance-zone2"
-  # "alliance-zone3"
-  # "alliance-zone4"
+  "alliance-zone3"
+  "alliance-zone4"
   "alliance-zone5"
   "alliance-zone6"
   "alliance-zone7"
