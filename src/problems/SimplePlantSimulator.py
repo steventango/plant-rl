@@ -1,11 +1,12 @@
 from PyExpUtils.collection.Collector import Collector
-from environments.SimplePlantSimulator import SimplePlantSimulator as DefaultEnv
+
 from environments.SimplePlantSimulator import (
-    Daily_ContextBandit,
     Daily_Bandit,
+    Daily_ContextBandit,
     Daily_ESARSA_TOD,
+    TOD_action,
 )
-from environments.SimplePlantSimulator import TOD_action
+from environments.SimplePlantSimulator import SimplePlantSimulator as DefaultEnv
 from experiment.ExperimentModel import ExperimentModel
 from problems.BaseProblem import BaseProblem
 

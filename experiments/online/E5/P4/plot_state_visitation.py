@@ -1,8 +1,7 @@
 # %%
 
-import pandas as pd
 import numpy as np
-
+import pandas as pd
 
 # %%
 df = pd.read_csv("data.csv")
@@ -34,16 +33,14 @@ states.shape, actions.shape
 # %%
 # plot weights
 
+# (4, 800)
+# %%
+import sys
+
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 from matplotlib.colors import ListedColormap
-
-# (4, 800)
-
-
-# %%
-import sys
 
 sys.path.append("/workspaces/plant-rl")
 from src.representations.RichTileCoder import RichTileCoder, RichTileCoderConfig

@@ -1,13 +1,12 @@
-import numpy as np
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
+import haiku as hk
 import jax
 import jax.numpy as jnp
-import haiku as hk
+import numpy as np
 
 import utils.hk as hku
 from utils.functions import fta
-
 
 ModuleBuilder = Callable[[], Callable[[jax.Array | np.ndarray], jax.Array]]
 

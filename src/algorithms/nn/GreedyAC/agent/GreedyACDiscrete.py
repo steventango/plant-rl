@@ -1,15 +1,17 @@
 # Import modules
 # from gym.spaces import Box, Discrete
 import inspect
+
+import numpy as np
 import torch
 import torch.nn.functional as F
 from torch.optim import Adam
-import numpy as np
-from .baseAgent import BaseAgent
-from ..utils.experience_replay import TorchBuffer as ExperienceReplay
-from ..value_function.MLP import Q as QMLP
+
 from ..policy.MLP import Softmax
 from ..utils import nn_utils
+from ..utils.experience_replay import TorchBuffer as ExperienceReplay
+from ..value_function.MLP import Q as QMLP
+from .baseAgent import BaseAgent
 
 
 class GreedyACDiscrete(BaseAgent):

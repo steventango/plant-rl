@@ -1,14 +1,14 @@
-import jax
-import optax
-import numpy as np
-import utils.chex as cxu
-
 from abc import abstractmethod
 from typing import Any, Dict, Tuple
+
+import jax
+import numpy as np
+import optax
 from PyExpUtils.collection.Collector import Collector
 from ReplayTables.interface import Timestep
 from ReplayTables.registry import build_buffer
 
+import utils.chex as cxu
 from algorithms.BaseAgent import BaseAgent
 from algorithms.linear.linearDQN.linear_networks import LinearNetworkBuilder
 from utils.checkpoint import checkpointable

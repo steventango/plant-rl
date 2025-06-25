@@ -3,16 +3,14 @@ import sys
 
 sys.path.append(os.getcwd() + "/src")
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from PyExpPlotting.matplot import save, setDefaultConference
 from PyExpUtils.results.Collection import ResultCollection
-
 from RlEvaluation.config import data_definition
-from RlEvaluation.temporal import extract_learning_curves, curve_percentile_bootstrap_ci
 from RlEvaluation.statistics import Statistic
+from RlEvaluation.temporal import curve_percentile_bootstrap_ci, extract_learning_curves
 from RlEvaluation.utils.pandas import split_over_column
-
 
 # from analysis.confidence_intervals import bootstrapCI
 from experiment.ExperimentModel import ExperimentModel

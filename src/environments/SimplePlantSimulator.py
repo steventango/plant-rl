@@ -1,14 +1,14 @@
+import datetime
+import logging
 import os
+from math import floor
+
 import numpy as np
 import pandas as pd
 from RlGlue.environment import BaseEnvironment
+
 from utils.functions import PiecewiseLinear
-from math import floor
-import datetime
 from utils.metrics import UnbiasedExponentialMovingAverage as uema
-
-
-import logging
 
 logger = logging.getLogger("rlglue")
 logger.setLevel(logging.DEBUG)

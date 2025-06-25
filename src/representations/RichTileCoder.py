@@ -1,7 +1,9 @@
-from representations.tile3 import tiles, IHT
-from typing import List, Optional, Sequence, Tuple
 from dataclasses import dataclass
+from typing import List, Optional, Sequence, Tuple
+
 import numpy as np
+
+from representations.tile3 import IHT, tiles
 
 Range = Tuple[float, float]
 

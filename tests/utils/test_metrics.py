@@ -1,7 +1,8 @@
 import jax.numpy as jnp
-import pytest
 import matplotlib.pyplot as plt
 import numpy as np
+import pytest
+
 from utils.metrics import UnbiasedExponentialMovingAverage, iqm
 
 

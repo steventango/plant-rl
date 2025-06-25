@@ -1,11 +1,11 @@
 # Import modules
-import torch
 import numpy as np
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.distributions import Normal, Independent
-from ..utils.nn_utils import weights_init_
+from torch.distributions import Independent, Normal
 
+from ..utils.nn_utils import weights_init_
 
 # Global variables
 EPSILON = 1e-6

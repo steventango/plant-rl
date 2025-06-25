@@ -1,8 +1,9 @@
-import numpy as np
-import gymnasium as gym
-from gymnasium.error import DependencyNotInstalled
-from typing import Optional
 from collections import defaultdict
+from typing import Optional
+
+import gymnasium as gym
+import numpy as np
+from gymnasium.error import DependencyNotInstalled
 
 # state IDs
 EMPTY = -1

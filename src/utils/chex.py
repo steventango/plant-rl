@@ -1,6 +1,7 @@
-from typing import Any, Callable, Type, TypeVar
-import chex
 import dataclasses
+from typing import Any, Callable, Type, TypeVar
+
+import chex
 import typing_extensions
 
 T = TypeVar("T")

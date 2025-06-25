@@ -1,6 +1,7 @@
-from representations.TileCoder import DenseTileCoder, TileCoderConfig
-from representations.RichTileCoder import RichTileCoder, RichTileCoderConfig
 import numpy as np
+
+from representations.RichTileCoder import RichTileCoder, RichTileCoderConfig
+from representations.TileCoder import DenseTileCoder, TileCoderConfig
 
 
 class TestRichTileCoder:

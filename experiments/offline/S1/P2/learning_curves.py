@@ -3,6 +3,7 @@ import sys
 
 sys.path.append(os.getcwd() + "/src")
 import enum
+
 import matplotlib.pyplot as plt
 import numpy as np
 import RlEvaluation.hypers as Hypers

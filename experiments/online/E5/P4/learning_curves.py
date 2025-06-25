@@ -7,7 +7,6 @@ from typing import Any, List, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from utils.metrics import UnbiasedExponentialMovingAverage as uema
 from PyExpPlotting.matplot import save, setDefaultConference
 from RlEvaluation.config import DataDefinition, data_definition, maybe_global
 from RlEvaluation.interpolation import Interpolation, compute_step_return
@@ -17,6 +16,7 @@ from RlEvaluation.temporal import (
 from RlEvaluation.utils.pandas import split_over_column, subset_df
 
 from experiment.tools import parseCmdLineArgs
+from utils.metrics import UnbiasedExponentialMovingAverage as uema
 from utils.metrics import iqm
 
 setDefaultConference("neurips")

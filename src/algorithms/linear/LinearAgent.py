@@ -1,11 +1,11 @@
-import numpy as np
-
 from abc import abstractmethod
 from typing import Any, Dict, Tuple
+
+import numpy as np
 from PyExpUtils.collection.Collector import Collector
 from PyExpUtils.utils.random import sample
-from ReplayTables.interface import Timestep
 from ReplayTables.ingress.LagBuffer import LagBuffer
+from ReplayTables.interface import Timestep
 
 from algorithms.BaseAgent import BaseAgent
 from utils.checkpoint import checkpointable

@@ -12,6 +12,7 @@ import socket
 import time
 from pathlib import Path
 
+import jax
 import matplotlib.pyplot as plt  # Added import
 import numpy as np
 import seaborn as sns
@@ -45,7 +46,7 @@ args = parser.parse_args()
 # ---------------------------
 # -- Library Configuration --
 # ---------------------------
-import jax
+
 
 device = "gpu" if args.gpu else "cpu"
 jax.config.update("jax_platform_name", device)

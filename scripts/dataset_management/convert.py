@@ -1,8 +1,8 @@
 # %%
 from pathlib import Path
+
 import numpy as np
 import pandas as pd
-
 
 # %%
 df = pd.read_csv("online/E6/P5/data.csv")

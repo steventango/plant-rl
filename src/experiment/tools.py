@@ -1,7 +1,8 @@
-import sys
 import glob
+import sys
 from collections import namedtuple
 from typing import Generator
+
 import PyExpUtils.utils.path as Path
 
 NON_DOMAIN_FOLDERS = ["plots"]

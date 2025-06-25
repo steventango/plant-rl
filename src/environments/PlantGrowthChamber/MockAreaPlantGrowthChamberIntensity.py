@@ -1,8 +1,8 @@
-from environments.PlantGrowthChamber.MockPlantGrowthChamber import (
-    MockPlantGrowthChamber,
-)
 from environments.PlantGrowthChamber.AreaPlantGrowthChamber import (
     AreaPlantGrowthChamber,
+)
+from environments.PlantGrowthChamber.MockPlantGrowthChamber import (
+    MockPlantGrowthChamber,
 )
 from environments.PlantGrowthChamber.PlantGrowthChamberIntensity import (
     PlantGrowthChamberIntensity,

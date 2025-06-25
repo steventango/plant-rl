@@ -1,6 +1,5 @@
 from PyExpUtils.collection.Collector import Collector
 
-
 from environments.PlantGrowthChamber.CVPlantGrowthChamberIntensity import (
     CVPlantGrowthChamberIntensity_MotionTracking as Env,
 )

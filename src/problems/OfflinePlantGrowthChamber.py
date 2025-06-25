@@ -6,9 +6,9 @@ from environments.PlantGrowthChamber.OfflinePlantGrowthChamber import (
 from environments.PlantGrowthChamber.OfflinePlantGrowthChamber import (
     OfflinePlantGrowthChamber_1hrStep,
     OfflinePlantGrowthChamber_1hrStep_MC,
+    OfflinePlantGrowthChamber_1hrStep_MC_Area_Openness,
     OfflinePlantGrowthChamber_1hrStep_MC_OpennessOnly,
     OfflinePlantGrowthChamber_1hrStep_MC_TimeOnly,
-    OfflinePlantGrowthChamber_1hrStep_MC_Area_Openness,
     OfflinePlantGrowthChamberTimeDLI,
 )
 from experiment.ExperimentModel import ExperimentModel

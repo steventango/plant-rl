@@ -1,5 +1,6 @@
-from environments.Gridworld.Gridworld import Gridworld as Env
 from PyExpUtils.collection.Collector import Collector
+
+from environments.Gridworld.Gridworld import Gridworld as Env
 from experiment.ExperimentModel import ExperimentModel
 from problems.BaseProblem import BaseProblem
 

@@ -1,9 +1,9 @@
-from inspect import signature, Parameter
+from inspect import Parameter, signature
 from typing import Callable, List, NamedTuple, Sequence, TypeVar, Union
-import numpy as np
 
 import jax
 import jax.numpy as jnp
+import numpy as np
 
 Batch = NamedTuple(
     "Batch",

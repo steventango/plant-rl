@@ -1,11 +1,11 @@
-import numpy as np
-
-from numba import njit
 from typing import Dict, Tuple
-from utils.checkpoint import checkpointable
+
+import numpy as np
+from numba import njit
 from PyExpUtils.collection.Collector import Collector
 
 from algorithms.tc.TCAgent import TCAgent
+from utils.checkpoint import checkpointable
 
 
 # TODO Note this will break with new updates to TCAgent and DenseTileCoder, which outputs binary vectors

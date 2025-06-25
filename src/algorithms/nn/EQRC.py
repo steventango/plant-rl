@@ -1,17 +1,17 @@
 from functools import partial
 from typing import Dict, Tuple
+
+import haiku as hk
+import jax
+import numpy as np
+import optax
 from PyExpUtils.collection.Collector import Collector
 from ReplayTables.interface import Batch
 
-from algorithms.nn.NNAgent import NNAgent, AgentState
-from representations.networks import NetworkBuilder
-from utils.jax import vmap_except, argmax_with_random_tie_breaking
-
-import jax
-import optax
-import numpy as np
-import haiku as hk
 import utils.hk as hku
+from algorithms.nn.NNAgent import AgentState, NNAgent
+from representations.networks import NetworkBuilder
+from utils.jax import argmax_with_random_tie_breaking, vmap_except
 
 tree_leaves = jax.tree_util.tree_leaves
 tree_map = jax.tree_util.tree_map

@@ -1,7 +1,7 @@
-import numpy as np
-
-from numba import njit
 from typing import Dict, Tuple
+
+import numpy as np
+from numba import njit
 from PyExpUtils.collection.Collector import Collector
 
 from algorithms.tc.tc_replay.TCAgentReplay import TCAgentReplay

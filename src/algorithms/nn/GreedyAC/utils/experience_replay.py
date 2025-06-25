@@ -1,7 +1,8 @@
 # Import modules
+from abc import ABC, abstractmethod
+
 import numpy as np
 import torch
-from abc import ABC, abstractmethod
 
 
 # Class definitions

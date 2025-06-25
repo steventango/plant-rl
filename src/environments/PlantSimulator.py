@@ -1,8 +1,10 @@
 import os
-from math import sin, cos, pi
+from math import cos, pi, sin
+
 import numpy as np
 import pandas as pd
 from RlGlue.environment import BaseEnvironment
+
 from utils.functions import PiecewiseLinear
 from utils.metrics import UnbiasedExponentialMovingAverage as uema
 from utils.metrics import iqm

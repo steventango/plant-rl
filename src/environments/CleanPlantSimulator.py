@@ -1,7 +1,7 @@
+import logging
+
 import numpy as np
 from RlGlue.environment import BaseEnvironment
-
-import logging
 
 logger = logging.getLogger("rlglue")
 logger.setLevel(logging.DEBUG)

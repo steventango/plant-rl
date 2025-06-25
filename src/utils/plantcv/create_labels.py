@@ -1,12 +1,13 @@
 # Create labels base on clean mask and optionally, multiple ROIs
-import cv2
 import os
+
+import cv2
 import numpy as np
-from skimage.measure import label
-from skimage.color import label2rgb
 from plantcv.plantcv import params
 from plantcv.plantcv._debug import _debug
-from plantcv.plantcv._helpers import _roi_filter, _cv2_findcontours
+from plantcv.plantcv._helpers import _cv2_findcontours, _roi_filter
+from skimage.color import label2rgb
+from skimage.measure import label
 
 
 def create_labels(mask, rois=None, roi_type="partial"):

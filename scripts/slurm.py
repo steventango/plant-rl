@@ -1,17 +1,18 @@
-import sys
 import os
+import sys
 
 sys.path.append(os.getcwd() + "/src")
 
-import math
 import argparse
 import dataclasses
-import PyExpUtils.runner.Slurm as Slurm
-import experiment.ExperimentModel as Experiment
-
+import math
 from functools import partial
-from PyExpUtils.utils.generator import group
+
+import PyExpUtils.runner.Slurm as Slurm
 from PyExpUtils.runner.utils import approximate_cost, gather_missing_indices
+from PyExpUtils.utils.generator import group
+
+import experiment.ExperimentModel as Experiment
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--cluster", type=str, required=True)

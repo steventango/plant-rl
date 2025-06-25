@@ -1,4 +1,5 @@
 import numpy as np
+
 from environments.PlantGrowthChamber.PlantGrowthChamberIntensity import (
     PlantGrowthChamberIntensity,
 )

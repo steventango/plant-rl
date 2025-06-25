@@ -4,11 +4,11 @@ from algorithms.BaseAgent import BaseAgent
 from algorithms.BernoulliAgent import BernoulliAgent
 from algorithms.ConstantAgent import ConstantAgent
 from algorithms.ContinuousRandomAgent import ContinuousRandomAgent
-from algorithms.MotionTrackingController import MotionTrackingController
 from algorithms.DiscreteRandomAgent import DiscreteRandomAgent
 from algorithms.linear.ESARSA import ESARSA as LinearESARSA
 from algorithms.linear.linearDQN.LinearDynamicBatchDQN import LinearDynamicBatchDQN
 from algorithms.linear.LinearQL import LinearQL
+from algorithms.MotionTrackingController import MotionTrackingController
 from algorithms.nn.DQN import DQN
 from algorithms.nn.DynamicBatchDQN import DynamicBatchDQN
 from algorithms.nn.EQRC import EQRC
@@ -18,9 +18,9 @@ from algorithms.SpreadsheetAgent import SpreadsheetAgent
 from algorithms.tc.ESARSA import ESARSA
 from algorithms.tc.QL import QL
 from algorithms.tc.SoftmaxAC import SoftmaxAC
+from algorithms.tc.tc_offline.ESARSA import ESARSA as OfflineESARSA
 from algorithms.tc.tc_replay.ESARSA import ESARSA as ReplayESARSA
 from algorithms.tc.tc_replay.QL import QL as QLReplay
-from algorithms.tc.tc_offline.ESARSA import ESARSA as OfflineESARSA
 
 
 def getAgent(name) -> Type[BaseAgent]:

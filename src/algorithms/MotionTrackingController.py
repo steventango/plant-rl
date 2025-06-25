@@ -1,13 +1,13 @@
-from typing import Any, Dict, Tuple
 import logging
+from collections import defaultdict
+from math import tanh
+from typing import Any, Dict, Tuple
 
 import numpy as np
-from math import tanh
-from collections import defaultdict
-from utils.metrics import UnbiasedExponentialMovingAverage as uema
-
 from PyExpUtils.collection.Collector import Collector
+
 from algorithms.BaseAgent import BaseAgent
+from utils.metrics import UnbiasedExponentialMovingAverage as uema
 
 logger = logging.getLogger("MotionTrackingController")
 logger.setLevel(logging.DEBUG)

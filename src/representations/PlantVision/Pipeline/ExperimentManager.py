@@ -1,22 +1,23 @@
-import os
-from pathlib import Path
 import json
+import os
 import shutil
-from Regex import Regex, RegexBuilder
-from Undistortion import (
-    Undistortion,
-    load_undistortion_from_dict,
-    load_undistortion_from_file,
-)
-from Roi import RoiList
+from pathlib import Path
+
+from Experiment import Experiment
 from HSVThreshold import (
     HSVThreshold,
     load_threshold_from_dict,
     load_threshold_from_file,
 )
-from TimeFrame import TimeFrameList
-from Experiment import Experiment
 from Pipeline import Pipeline
+from Regex import Regex, RegexBuilder
+from Roi import RoiList
+from TimeFrame import TimeFrameList
+from Undistortion import (
+    Undistortion,
+    load_undistortion_from_dict,
+    load_undistortion_from_file,
+)
 
 
 class ExperimentManager:

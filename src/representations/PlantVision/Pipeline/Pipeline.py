@@ -1,13 +1,14 @@
-from Experiment import Experiment
-from pathlib import Path
-import os
-import multiprocessing as mp
 import csv
+import multiprocessing as mp
+import os
 import time
 from datetime import datetime
-from plantcv import plantcv as pcv
+from pathlib import Path
+
 import cv2
 from csv_x_over_time import csv_x_over_time
+from Experiment import Experiment
+from plantcv import plantcv as pcv
 
 
 def listener(outfilepath: Path, queue):

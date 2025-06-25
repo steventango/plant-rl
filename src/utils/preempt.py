@@ -3,8 +3,8 @@ Set of tools to handle preempted jobs (i.e. jobs that timed out).
 Checkpointing requires enough logic to be handled in a separate file.
 """
 
-import signal
 import logging
+import signal
 from typing import Any, Callable, List
 
 Callback = Callable[[], Any]

@@ -1,15 +1,17 @@
 # Import modules
-from gymnasium.spaces import Box, Discrete
+import inspect
+
+import numpy as np
 import torch
 import torch.nn.functional as F
+from gymnasium.spaces import Box, Discrete
 from torch.optim import Adam
-import numpy as np
-from .baseAgent import BaseAgent
+
+from ..policy.MLP import Gaussian, Softmax, SquashedGaussian
+from ..utils import nn_utils
 from ..utils.experience_replay import TorchBuffer as ExperienceReplay
 from ..value_function.MLP import Q as QMLP
-from ..policy.MLP import SquashedGaussian, Gaussian, Softmax
-from ..utils import nn_utils
-import inspect
+from .baseAgent import BaseAgent
 
 
 class GreedyAC(BaseAgent):

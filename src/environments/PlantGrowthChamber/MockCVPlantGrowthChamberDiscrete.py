@@ -1,7 +1,7 @@
+from environments.PlantGrowthChamber.CVPlantGrowthChamber import CVPlantGrowthChamber
 from environments.PlantGrowthChamber.MockPlantGrowthChamber import (
     MockPlantGrowthChamber,
 )
-from environments.PlantGrowthChamber.CVPlantGrowthChamber import CVPlantGrowthChamber
 from environments.PlantGrowthChamber.PlantGrowthChamberDiscrete import (
     PlantGrowthChamberDiscrete,
 )

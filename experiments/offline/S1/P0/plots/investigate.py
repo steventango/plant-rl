@@ -7,11 +7,10 @@ xs = df["xs"].values
 ys = df["ys"].values
 
 # %%
-import matplotlib.pyplot as plt
-
-
 # %%
 import sys
+
+import matplotlib.pyplot as plt
 
 sys.path.append("/workspaces/plant-rl/src")
 

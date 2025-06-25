@@ -1,14 +1,13 @@
-import numpy as np
-
-from numba import njit
+import logging
 from typing import Dict, Tuple
+
+import numpy as np
+from numba import njit
 from PyExpUtils.collection.Collector import Collector
 
 from algorithms.tc.TCAgent import TCAgent
 from utils.checkpoint import checkpointable
 from utils.policies import egreedy_probabilities
-
-import logging
 
 logger = logging.getLogger("esarsa")
 logger.setLevel(logging.DEBUG)

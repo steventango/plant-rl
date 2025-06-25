@@ -7,9 +7,8 @@ from contextlib import nullcontext
 import litserve as ls
 import torch
 from PIL import Image
-from transformers import AutoModelForZeroShotObjectDetection
-
 from processing_grounding_dino import BatchGroundingDinoProcessor
+from transformers import AutoModelForZeroShotObjectDetection
 
 
 class GroundingDinoAPI(ls.LitAPI):

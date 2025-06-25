@@ -1,10 +1,11 @@
 from typing import Optional
+
 from PyExpUtils.collection.Collector import Collector
 from RlGlue.environment import BaseEnvironment
 
-from experiment.ExperimentModel import ExperimentModel
 from algorithms.BaseAgent import BaseAgent
 from algorithms.registry import getAgent
+from experiment.ExperimentModel import ExperimentModel
 
 
 class BaseProblem:

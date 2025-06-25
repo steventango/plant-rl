@@ -6,9 +6,10 @@ which can be found at https://github.com/samuelfneumann/GreedyAC/tree/master
 from typing import Any, Dict, Tuple
 
 import numpy as np
+from PyExpUtils.collection.Collector import Collector
 
 from algorithms.BaseAgent import BaseAgent
-from PyExpUtils.collection.Collector import Collector
+
 from .agent.GreedyACDiscrete import GreedyACDiscrete
 
 

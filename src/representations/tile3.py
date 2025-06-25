@@ -26,6 +26,9 @@ an integer "size" (range of the indices from 0), or nil (for testing, indicating
 coordinates are to be returned without being converted to indices).
 """
 
+from itertools import zip_longest
+from math import floor
+
 basehash = hash
 
 
@@ -81,10 +84,6 @@ def hashcoords(coordinates, m, readonly=False):
         return basehash(tuple(coordinates)) % m
     if m is None:
         return coordinates
-
-
-from math import floor
-from itertools import zip_longest
 
 
 def tiles(ihtORsize, numtilings, floats, ints=None, readonly=False):

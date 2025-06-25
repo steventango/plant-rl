@@ -1,5 +1,6 @@
-import sys
 import json
+import sys
+
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 
 

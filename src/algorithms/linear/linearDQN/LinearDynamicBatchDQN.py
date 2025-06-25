@@ -1,19 +1,19 @@
 from functools import partial
 from typing import Any, Dict, Tuple
+
+import chex
+import haiku as hk
+import jax
+import jax.numpy as jnp
+import numpy as np
+import optax
 from PyExpUtils.collection.Collector import Collector
 from ReplayTables.ReplayBuffer import Batch
 
-from algorithms.linear.linearDQN.linear_NNAgent import LinearNNAgent
-from algorithms.linear.linearDQN.linear_networks import LinearNetworkBuilder
-from utils.jax import huber_loss
-
-import jax
-import chex
-import optax
-import numpy as np
-import haiku as hk
-import jax.numpy as jnp
 import utils.chex as cxu
+from algorithms.linear.linearDQN.linear_networks import LinearNetworkBuilder
+from algorithms.linear.linearDQN.linear_NNAgent import LinearNNAgent
+from utils.jax import huber_loss
 
 
 @cxu.dataclass

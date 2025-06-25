@@ -1,6 +1,6 @@
 import gymnasium
-from RlGlue.environment import BaseEnvironment
 import numpy as np
+from RlGlue.environment import BaseEnvironment
 
 
 class Gridworld(BaseEnvironment):

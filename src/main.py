@@ -1,7 +1,6 @@
 import os
 import sys
 
-
 sys.path.append(os.getcwd())
 import argparse
 import logging
@@ -10,6 +9,7 @@ import socket
 import time
 from pathlib import Path
 
+import jax
 import numpy as np
 import torch
 from PyExpUtils.collection.Collector import Collector
@@ -40,7 +40,7 @@ args = parser.parse_args()
 # ---------------------------
 # -- Library Configuration --
 # ---------------------------
-import jax
+
 
 device = "gpu" if args.gpu else "cpu"
 jax.config.update("jax_platform_name", device)

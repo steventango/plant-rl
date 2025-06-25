@@ -1,5 +1,6 @@
 import haiku as hk
 import jax.numpy as jnp
+
 from representations.networks import NetworkBuilder
 
 

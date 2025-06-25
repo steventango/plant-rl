@@ -1,6 +1,7 @@
-from ExperimentManager import ExperimentManager
 import argparse
 from pathlib import Path
+
+from ExperimentManager import ExperimentManager
 
 
 def create():
