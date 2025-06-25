@@ -243,7 +243,7 @@ for idx, rew in enumerate(
 
     # Plot the bar chart
     ax.bar(
-        [agent_name.lstrip("Bernoulli ") for agent_name in returns.keys()],
+        [agent_name.removeprefix("Bernoulli ") for agent_name in returns.keys()],
         agent_returns,
         color=colors,
     )
