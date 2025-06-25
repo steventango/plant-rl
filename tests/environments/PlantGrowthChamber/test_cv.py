@@ -103,7 +103,7 @@ def test_process_E8_zone_9():
 @skipif_github_actions
 def test_process_E5_zone_1():
     zone = Zone(
-        identifier=1,
+        identifier="mitacs-zone01",
         camera_left_url="http://mitacs-zone01-camera02.ccis.ualberta.ca:8080/observation",
         camera_right_url=None,
         lightbar_url="http://mitacs-zone1.ccis.ualberta.ca:8080/action",
@@ -136,7 +136,7 @@ def test_process_E5_zone_1():
 @skipif_github_actions
 def test_process_E5_zone_2():
     zone = Zone(
-        identifier=2,
+        identifier="mitacs-zone02",
         camera_left_url=None,
         camera_right_url="http://mitacs-zone02-camera02.ccis.ualberta.ca:8080/observation",
         lightbar_url="http://mitacs-zone2.ccis.ualberta.ca:8080/action",
@@ -169,7 +169,7 @@ def test_process_E5_zone_2():
 @skipif_github_actions
 def test_process_E4_zone_1():
     zone = Zone(
-        identifier=1,
+        identifier="mitacs-zone01",
         camera_left_url="http://mitacs-zone01-camera02.ccis.ualberta.ca:8080/observation",
         camera_right_url=None,
         lightbar_url="http://mitacs-zone1.ccis.ualberta.ca:8080/action",
@@ -202,7 +202,7 @@ def test_process_E4_zone_1():
 @skipif_github_actions
 def test_process_E4_zone_6():
     zone = Zone(
-        identifier=6,
+        identifier="mitacs-zone06",
         camera_left_url="http://mitacs-zone06-camera01.ccis.ualberta.ca:8080/observation",
         camera_right_url=None,
         lightbar_url="http://mitacs-zone6.ccis.ualberta.ca:8080/action",
@@ -225,7 +225,7 @@ def test_process_E4_zone_6():
 @skipif_github_actions
 def test_process_E4_zone_3():
     zone = Zone(
-        identifier=3,
+        identifier="mitacs-zone03",
         camera_left_url="http://mitacs-zone03-camera01.ccis.ualberta.ca:8080/observation",
         camera_right_url=None,
         lightbar_url="http://mitacs-zone3.ccis.ualberta.ca:8080/action",
