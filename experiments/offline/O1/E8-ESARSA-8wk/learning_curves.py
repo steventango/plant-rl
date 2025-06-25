@@ -12,7 +12,7 @@ from PyExpPlotting.matplot import save, setDefaultConference
 from PyExpUtils.results.Collection import ResultCollection
 from RlEvaluation.config import data_definition
 from RlEvaluation.statistics import Statistic
-from RlEvaluation.temporal import TimeSummary, extract_learning_curves
+from RlEvaluation.temporal import extract_learning_curves
 from RlEvaluation.utils.pandas import split_over_column
 
 from experiment.ExperimentModel import ExperimentModel

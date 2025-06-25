@@ -12,7 +12,6 @@ from PyExpUtils.results.Collection import ResultCollection
 from RlEvaluation.config import data_definition
 from RlEvaluation.statistics import Statistic
 from RlEvaluation.temporal import (
-    TimeSummary,
     curve_percentile_bootstrap_ci,
     extract_learning_curves,
 )
