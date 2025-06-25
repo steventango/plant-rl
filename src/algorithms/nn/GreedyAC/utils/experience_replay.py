@@ -125,10 +125,6 @@ class ExperienceReplay(ABC):
         self.position = (self.position + 1) % self.capacity
         self._sampleable = False
 
-    @property
-    def sampleable(self):
-        return self._sampleable
-
     def is_sampleable(self, batch_size):
         if self.position < batch_size and not self.sampleable:
             return False
