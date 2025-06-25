@@ -3,7 +3,7 @@ from representations.RichTileCoder import RichTileCoder, RichTileCoderConfig
 import numpy as np
 
 
-class RichTileCoder:
+class TestRichTileCoder:
     def setup_method(self):
         self.num_tiles = (2, 16)
         self.num_tilings = 8
@@ -13,7 +13,7 @@ class RichTileCoder:
             tiles=self.num_tiles,
             tilings=self.num_tilings,
             dims=self.dims,
-            wrap_time=True,
+            strategy=None,
             input_ranges=None,
         )
         self.tile_coder = RichTileCoder(self.config)
@@ -40,8 +40,9 @@ class RichTileCoder:
         assert self.tile_coder.maxSize == expected_max_size
 
     def test_x_values(self):
-        point1 = np.array([0, 0.5])
-        point2 = np.array([1, 0.5])
+        x_edge = 1 / self.num_tilings / self.num_tiles[0]
+        point1 = np.array([x_edge, 0.5])
+        point2 = np.array([1.5 * x_edge, 0.5])
 
         indices1 = self.tile_coder.get_indices(point1)
         indices2 = self.tile_coder.get_indices(point2)
@@ -60,7 +61,7 @@ class RichTileCoder:
     def test_y_values(self):
         y_edge = 1 / self.num_tilings / self.num_tiles[1]
         point1 = np.array([0.5, y_edge])
-        point2 = np.array([0.5, y_edge + y_edge / 2])
+        point2 = np.array([0.5, 1.5 * y_edge])
 
         indices1 = self.tile_coder.get_indices(point1)
         indices2 = self.tile_coder.get_indices(point2)
@@ -77,7 +78,7 @@ class RichTileCoder:
         )
 
 
-class AndyTileCoder:
+class TestAndyTileCoder:
     def setup_method(self):
         self.num_tiles = (2, 16)
         self.num_tilings = 8
