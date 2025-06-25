@@ -60,8 +60,8 @@ class SoftmaxAC(TCAgent):
         self.theta = np.zeros((actions, self.rep.features()), dtype=np.float32)
 
     def policy(self, x: np.ndarray):
-        l = compute_logits(self.theta, x)
-        return softmax(l, self.tau)
+        logits = compute_logits(self.theta, x)
+        return softmax(logits, self.tau)
 
     def update(self, x, a, xp, r, gamma):
         if xp is None:

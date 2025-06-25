@@ -42,8 +42,8 @@ class TimeFrameList:
     def load_from_file(self, path: Path) -> bool:
         try:
             with open(path, "r") as f:
-                l = json.load(f)
-                for tfd in l:
+                lst = json.load(f)
+                for tfd in lst:
                     # {'date': '2022-04-12', 'ontime': '12:00', 'offtime': '13:00'}
                     day: date = datetime.strptime(tfd["date"], "%Y-%m-%d").date()
                     time1: time = datetime.strptime(tfd["ontime"], "%H:%M").time()
@@ -54,9 +54,9 @@ class TimeFrameList:
             return False
         return True
 
-    def load_from_list(self, l: list) -> bool:
+    def load_from_list(self, lst: list) -> bool:
         try:
-            for tfd in l:
+            for tfd in lst:
                 # {'date': '2022-04-12', 'ontime': '12:00', 'offtime': '13:00'}
                 day: date = datetime.strptime(tfd["date"], "%Y-%m-%d").date()
                 time1: time = datetime.strptime(tfd["ontime"], "%H:%M").time()

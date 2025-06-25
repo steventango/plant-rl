@@ -75,6 +75,6 @@ def iqm(a: jax.Array, q: float) -> float:
     a (ArrayLike) – N-dimensional array input.
     q (float) – floating-point values between 0.0 and 1.0.
     """
-    l, u = jnp.quantile(a, jnp.array([q, 1 - q]))
-    b = a[(a >= l) & (a <= u)]
+    lower, upper = jnp.quantile(a, jnp.array([q, 1 - q]))
+    b = a[(a >= lower) & (a <= upper)]
     return jnp.mean(b).item() if b.size > 0 else jnp.nan

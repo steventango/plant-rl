@@ -36,8 +36,8 @@ class RoiList:
     def load_from_file(self, path: Path) -> bool:
         try:
             with open(path, "r") as f:
-                l = json.load(f)
-                for rd in l:
+                lst = json.load(f)
+                for rd in lst:
                     cx: int = int(rd["cx"])
                     cy: int = int(rd["cy"])
                     r: int = int(rd["r"])
@@ -51,9 +51,9 @@ class RoiList:
             return False
         return True
 
-    def load_from_list(self, l: list) -> bool:
+    def load_from_list(self, lst: list) -> bool:
         try:
-            for rd in l:
+            for rd in lst:
                 cx: int = int(rd["cx"])
                 cy: int = int(rd["cy"])
                 r: int = int(rd["r"])

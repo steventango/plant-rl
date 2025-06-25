@@ -80,7 +80,7 @@ class PlantSimulator(BaseEnvironment):
                 self.time_of_day(),
                 self.countdown(),
                 self.normalize(iqm(self.observed_areas[-1], self.q)),
-                self.normalize(self.history.compute(), l=-5, u=30),
+                self.normalize(self.history.compute(), lower=-5, upper=30),
             ]
         )
         return observation
@@ -306,8 +306,8 @@ class PlantSimulator(BaseEnvironment):
             (cos(2 * pi * self.num_steps / total_steps) + 1) / 2,
         ]
 
-    def normalize(self, x, l=0, u=11258):  # normalize areas to between 0 and 1
-        return (x - l) / (u - l)
+    def normalize(self, x, lower=0, upper=11258):  # normalize areas to between 0 and 1
+        return (x - lower) / (upper - lower)
 
     def frozen_time(self, action):
         # Amount of frozen time (in unit of time step), given action
@@ -366,7 +366,7 @@ class PlantSimulator_OneTime(PlantSimulator):
             [
                 self.linear_time_of_day(),
                 self.normalize(iqm(self.observed_areas[-1], self.q)),
-                self.normalize(self.history.compute(), l=-5, u=30),
+                self.normalize(self.history.compute(), lower=-5, upper=30),
             ]
         )
         return observation

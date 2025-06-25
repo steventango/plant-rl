@@ -87,8 +87,8 @@ class SimplePlantSimulator(BaseEnvironment):
         observation = np.hstack(
             [
                 self.time_of_day(),
-                self.normalize(new_area, l=0, u=600),
-                self.normalize(plant_motion, l=-0.05, u=0.05),
+                self.normalize(new_area, lower=0, upper=600),
+                self.normalize(plant_motion, lower=-0.05, upper=0.05),
             ]
         )
 
@@ -169,8 +169,8 @@ class SimplePlantSimulator(BaseEnvironment):
         step_today = self.day_steps % self.steps_per_day
         return step_today / self.steps_per_day
 
-    def normalize(self, x, l, u):
-        return (x - l) / (u - l)
+    def normalize(self, x, lower, upper):
+        return (x - lower) / (upper - lower)
 
     def frozen_time(self, action):
         # Amount of frozen time (in unit of time step), given action

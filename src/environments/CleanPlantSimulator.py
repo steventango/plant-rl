@@ -109,8 +109,8 @@ class CleanPlantSimulator(BaseEnvironment):
     def get_info(self):
         return {"gamma": self.gamma}
 
-    def normalize(self, x, l, u):
-        return (x - l) / (u - l)
+    def normalize(self, x, lower, upper):
+        return (x - lower) / (upper - lower)
 
     def daily_area_curve(self, x):
         """
