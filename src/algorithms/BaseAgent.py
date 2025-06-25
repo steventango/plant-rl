@@ -12,7 +12,7 @@ class BaseAgent(utils.RlGlue.agent.BaseAgent):
         observations: Tuple[int, ...],
         actions: int,
         params: Dict,
-        collector: Collector,
+        collector: Collector | None,
         seed: int,
     ):
         self.observations = observations

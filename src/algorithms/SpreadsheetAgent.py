@@ -19,7 +19,7 @@ class SpreadsheetAgent(BaseAgent):
         observations: Tuple[int, ...],
         actions: int,
         params: Dict,
-        collector: Collector,
+        collector: Collector | None,
         seed: int,
     ):
         super().__init__(observations, actions, params, collector, seed)
