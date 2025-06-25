@@ -8,9 +8,7 @@ import pytest
 from PIL import Image
 
 from environments.PlantGrowthChamber.PlantGrowthChamber import PlantGrowthChamber
-
-from src.environments.PlantGrowthChamber.zones import ZONE_IDENTIFIERS
-
+from environments.PlantGrowthChamber.zones import ZONE_IDENTIFIERS
 
 OUTPUT_DIR = Path(__file__).parent.parent.parent / "test_data" / "results"
 LIGHT_INTENSITY = 1
