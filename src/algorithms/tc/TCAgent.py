@@ -60,7 +60,9 @@ class TCAgent(BaseAgent):
     # ----------------------
     # -- RLGlue interface --
     # ----------------------
-    def start(self, s: np.ndarray, extra: Dict[str, Any] = {}):
+    def start(self, s: np.ndarray, extra: Dict[str, Any] | None = None):
+        if extra is None:
+            extra = {}
         self.lag.flush()
 
         x = self.get_rep(s)

@@ -56,7 +56,6 @@ class LinearDynamicBatchDQN(LinearNNAgent):
     def _values(self, state: AgentState, x: jax.Array):
         #phi = self.phi(state.params, x).out
         #return self.q(state.params, phi)
-        vals = self.q(state.params, x)
         return self.q(state.params, x)
 
     def update(self):

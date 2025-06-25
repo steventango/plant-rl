@@ -45,7 +45,7 @@ def main():
 
     assert df is not None
 
-    exp = results.get_any_exp()
+    results.get_any_exp()
 
     for env, env_df in split_over_column(df, col='environment'):
         f, ax = plt.subplots(2, 1)

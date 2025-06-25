@@ -45,7 +45,7 @@ if __name__ == "__main__":
 
     exp = results.get_any_exp()
 
-    for env, env_df in split_over_column(df, col='environment'):
+    for _env, env_df in split_over_column(df, col='environment'):
         for alg, sub_df in split_over_column(env_df, col='algorithm'):
             if len(sub_df) == 0: continue
 

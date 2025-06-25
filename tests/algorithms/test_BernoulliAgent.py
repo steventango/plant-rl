@@ -78,6 +78,6 @@ class TestBernoulliAgent:
                 collector=MagicMock(),
                 seed=42
             )
-            assert False, "Should have raised an AssertionError"
+            raise Exception("Should have raised an AssertionError")
         except AssertionError:
             pass

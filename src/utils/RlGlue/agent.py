@@ -7,7 +7,7 @@ from RlGlue.agent import BaseAgent as RlGlueBaseAgent
 
 class BaseAgent(RlGlueBaseAgent):
     @abstractmethod
-    def start(self, observation: Any, extra: dict[str, Any] = {}) -> tuple[Any, dict[str, Any]]:
+    def start(self, observation: Any, extra: dict[str, Any] | None = None) -> tuple[Any, dict[str, Any]]:
         raise NotImplementedError("Expected `start` to be implemented")
 
     @abstractmethod
@@ -21,7 +21,7 @@ class BaseAgent(RlGlueBaseAgent):
 
 class BaseAsyncAgent:
     @abstractmethod
-    async def start(self, observation: Any, extra: dict[str, Any] = {}) -> tuple[Any, dict[str, Any]]:
+    async def start(self, observation: Any, extra: dict[str, Any] = None) -> tuple[Any, dict[str, Any]]:
         raise NotImplementedError("Expected `start` to be implemented")
 
     @abstractmethod
@@ -41,7 +41,9 @@ class AsyncAgentWrapper(BaseAsyncAgent):
     def __init__(self, agent: BaseAgent):
         self.agent = agent
 
-    async def start(self, observation: Any, extra: dict[str, Any] = {}) -> tuple[Any, dict[str, Any]]:
+    async def start(self, observation: Any, extra: dict[str, Any] = None) -> tuple[Any, dict[str, Any]]:
+        if extra is None:
+            extra = {}
         return await asyncio.to_thread(self.agent.start, observation)
 
     async def step(self, reward: float, observation: Any, extra: dict[str, Any]) -> tuple[Any, dict[str, Any]]:

@@ -2,27 +2,27 @@
 Tile Coding Software version 3.0beta
 by Rich Sutton
 based on a program created by Steph Schaeffer and others
-External documentation and recommendations on the use of this code is available in the 
+External documentation and recommendations on the use of this code is available in the
 reinforcement learning textbook by Sutton and Barto, and on the web.
 These need to be understood before this code is.
 
 This software is for Python 3 or more.
 
 This is an implementation of grid-style tile codings, based originally on
-the UNH CMAC code (see http://www.ece.unh.edu/robots/cmac.htm), but by now highly changed. 
+the UNH CMAC code (see http://www.ece.unh.edu/robots/cmac.htm), but by now highly changed.
 Here we provide a function, "tiles", that maps floating and integer
 variables to a list of tiles, and a second function "tiles-wrap" that does the same while
 wrapping some floats to provided widths (the lower wrap value is always 0).
 
 The float variables will be gridded at unit intervals, so generalization
-will be by approximately 1 in each direction, and any scaling will have 
+will be by approximately 1 in each direction, and any scaling will have
 to be done externally before calling tiles.
 
 Num-tilings should be a power of 2, e.g., 16. To make the offsetting work properly, it should
 also be greater than or equal to four times the number of floats.
 
-The first argument is either an index hash table of a given size (created by (make-iht size)), 
-an integer "size" (range of the indices from 0), or nil (for testing, indicating that the tile 
+The first argument is either an index hash table of a given size (created by (make-iht size)),
+an integer "size" (range of the indices from 0), or nil (for testing, indicating that the tile
 coordinates are to be returned without being converted to indices).
 """
 
@@ -65,13 +65,15 @@ class IHT:
 def hashcoords(coordinates, m, readonly=False):
     if type(m)==IHT: return m.getindex(tuple(coordinates), readonly)
     if type(m)==int: return basehash(tuple(coordinates)) % m
-    if m==None: return coordinates
+    if m is None: return coordinates
 
 from math import floor
 from itertools import zip_longest
 
-def tiles (ihtORsize, numtilings, floats, ints=[], readonly=False):
+def tiles (ihtORsize, numtilings, floats, ints=None, readonly=False):
     """returns num-tilings tile indices corresponding to the floats and ints"""
+    if ints is None:
+        ints = []
     qfloats = [floor(f*numtilings) for f in floats]
     Tiles = []
     for tiling in range(numtilings):
@@ -85,8 +87,10 @@ def tiles (ihtORsize, numtilings, floats, ints=[], readonly=False):
         Tiles.append(hashcoords(coords, ihtORsize, readonly))
     return Tiles
 
-def tileswrap (ihtORsize, numtilings, floats, wrapwidths, ints=[], readonly=False):
+def tileswrap (ihtORsize, numtilings, floats, wrapwidths, ints=None, readonly=False):
     """returns num-tilings tile indices corresponding to the floats and ints, wrapping some floats"""
+    if ints is None:
+        ints = []
     qfloats = [floor(f*numtilings) for f in floats]
     Tiles = []
     for tiling in range(numtilings):

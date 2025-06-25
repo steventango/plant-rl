@@ -21,7 +21,7 @@ class RoiList:
         self.pcv_rois = None
 
     def create_pcv_rois(self, undistorted_img):
-        if self.pcv_rois == None:
+        if self.pcv_rois is None:
             contours = []
             hiers = []
             for roi in self.data:

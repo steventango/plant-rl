@@ -90,9 +90,9 @@ def buildFeatureNetwork(inputs: Tuple, params: Dict[str, Any], rng: Any):
 
         elif name == 'OneLayerRelu':
             layers = reluLayers([hidden], name='phi')
-            
+
         elif name == 'identity':
-            
+
 
         else:
             raise NotImplementedError()

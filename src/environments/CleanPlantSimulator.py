@@ -11,12 +11,12 @@ class CleanPlantSimulator(BaseEnvironment):
     Assumptions: (i) Plant motion throughout each day is modeled by a gaussian curve.
                  (ii) Growth only occurs at night. Overnight growth is 20% if lighting is standard.
                  (iii) Poor lighting reduces overnight growth and affects the shape of the gaussian curve.
-    State = [time of day, 
+    State = [time of day,
              daily light integral (dli),
-             plant area, 
+             plant area,
              plant openness] (all normalized to [0,1])
     Action = [low, standard]
-    Reward = percentage or raw overnight growth assigned to last time stamp of each day 
+    Reward = percentage or raw overnight growth assigned to last time stamp of each day
     Time Step = 10 min
     Episode duration = 14 days
     '''
@@ -99,7 +99,7 @@ class CleanPlantSimulator(BaseEnvironment):
 
     def daily_area_curve(self, x):
         """
-        Model the daily area curve by a Gaussian curve. 
+        Model the daily area curve by a Gaussian curve.
         Input: x is the number of steps so far today.
         """
         slowing = 1 + (x - self.dli) / self.steps_per_day

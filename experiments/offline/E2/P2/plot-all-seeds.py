@@ -46,7 +46,7 @@ def main():
 
     exp = results.get_any_exp()
 
-    for env, env_df in split_over_column(df, col='environment'):
+    for _env, env_df in split_over_column(df, col='environment'):
         for alg, alg_df in split_over_column(env_df, col='algorithm'):
 
             # Pick the best learning rate
@@ -65,7 +65,7 @@ def main():
 
             assert np.all(np.isclose(xs[0], xs))
 
-            res = curve_percentile_bootstrap_ci(
+            curve_percentile_bootstrap_ci(
                 rng=np.random.default_rng(0),
                 y=ys,
                 statistic=Statistic.mean,

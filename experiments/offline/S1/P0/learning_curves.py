@@ -47,7 +47,7 @@ def main():
 
     assert df is not None
 
-    exp = results.get_any_exp()
+    results.get_any_exp()
 
     for env, env_df in split_over_column(df, col='environment'):
         for metric in ["reward", "action"]:
@@ -69,7 +69,7 @@ def main():
                 xs_a = np.asarray(xs_a)
                 ys_a = np.asarray(ys_a)
 
-                res = curve_percentile_bootstrap_ci(
+                curve_percentile_bootstrap_ci(
                     rng=np.random.default_rng(0),
                     y=ys_a,
                     statistic=Statistic.mean,

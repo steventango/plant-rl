@@ -89,7 +89,9 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
         """Return a zero action for night time (lights off)."""
         return np.zeros(6)
 
-    async def start(self, observation: Any, extra: dict[str, Any] = {}) -> tuple[Any, dict[str, Any]]:
+    async def start(self, observation: Any, extra: dict[str, Any] | None = None) -> tuple[Any, dict[str, Any]]:
+        if extra is None:
+            extra = {}
         self.update_time_from_extra(extra)
 
         if not self.maybe_enforce_action():

@@ -49,7 +49,7 @@ def main():
 
     assert df is not None
 
-    exp = results.get_any_exp()
+    results.get_any_exp()
 
     for env, env_df in split_over_column(df, col='environment'):
         for alg, alg_df in split_over_column(env_df, col='algorithm'):

@@ -39,7 +39,7 @@ def create():
 
 
 def list_experiments():
-    mngr = ExperimentManager(True)
+    ExperimentManager(True)
 
 
 def run_experiment():

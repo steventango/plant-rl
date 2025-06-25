@@ -40,7 +40,7 @@ def clean_area(df):
     df["clean_area"] = df["area"].copy()
     df["mean"] = 0.
     df["var"] = 0.
-    for plant_id, group in df.groupby("plant_id"):
+    for _plant_id, group in df.groupby("plant_id"):
         uemw = UEMW()
         for i, row in group.iterrows():
             # if the area is greater than 2 standard deviations from the moving average
@@ -114,7 +114,7 @@ def main():
             path_prefix = dataset / "processed" / pipeline_version / "images"
             # sort descending by percent_diff
             df_agg = df_agg.sort_values(by="percent_diff", ascending=False)
-            for i, row in df_agg.head(10).iterrows():
+            for _i, row in df_agg.head(10).iterrows():
                 _, prev_row = next(df_agg[df_agg["frame"] == row["frame"] - 1].iterrows())
                 print(f"Jump detected at frame {row['frame']}!")
                 print(f"Area current: {row[area_col]}")

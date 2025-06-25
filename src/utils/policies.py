@@ -25,7 +25,8 @@ def fromActionArray(probs: NpList, rng: np.random.Generator):
     return Policy(lambda s: probs, rng)
 
 def createEGreedy(get_values: Callable[[Any], np.ndarray], actions: int, epsilon: float, rng: np.random.Generator):
-    probs = lambda state: egreedy_probabilities(get_values(state), actions, epsilon)
+    def probs(state):
+        return egreedy_probabilities(get_values(state), actions, epsilon)
 
     return Policy(probs, rng)
 

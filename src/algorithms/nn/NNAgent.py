@@ -127,7 +127,9 @@ class NNAgent(BaseAgent):
     # ----------------------
     # -- RLGlue interface --
     # ----------------------
-    def start(self, x: np.ndarray, extra: Dict[str, Any] = {}):
+    def start(self, x: np.ndarray, extra: Dict[str, Any] | None = None):
+        if extra is None:
+            extra = {}
         self.buffer.flush()
         x = np.asarray(x)
         pi = self.policy(x)

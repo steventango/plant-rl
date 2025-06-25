@@ -1,5 +1,5 @@
 """
-The purpose of this script is to create a new csv file that contains a timestamp column, and 
+The purpose of this script is to create a new csv file that contains a timestamp column, and
 columns for a certain trait of each of the plants.
 
 example:

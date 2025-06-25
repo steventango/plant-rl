@@ -283,7 +283,7 @@ class TrayConfigApp:
         tag = f"tray_{len(self.tray_configs)}"
 
         # Draw polygon connecting the points with semi-transparent fill
-        polygon_id = self.canvas.create_polygon(
+        self.canvas.create_polygon(
             points[0][0],
             points[0][1],  # top-left
             points[1][0],
@@ -304,7 +304,7 @@ class TrayConfigApp:
             center_x = sum(p[0] for p in points) / 4
             center_y = sum(p[1] for p in points) / 4
 
-            label_id = self.canvas.create_text(
+            self.canvas.create_text(
                 center_x, center_y, text=label, fill="green", font=("Arial", 12, "bold"), tags=tag
             )
 

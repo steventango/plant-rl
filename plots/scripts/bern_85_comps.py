@@ -119,7 +119,7 @@ manual_colors = {
             "Bernoulli p=0.65": 'lime'
         }
 # Loop through each agent and plot its data
-for i, agent in enumerate(agents):
+for _i, agent in enumerate(agents):
     agent_data = plot_data[plot_data['agent'] == agent]
     plt.plot(
         agent_data['relative_time'],

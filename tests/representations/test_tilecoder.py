@@ -35,7 +35,6 @@ class RichTileCoder():
         assert self.tile_coder.maxSize == expected_max_size
 
     def test_x_values(self):
-        x_edge = 1 / self.num_tilings / self.num_tiles[0]
         point1 = np.array([0, 0.5])
         point2 = np.array([1, 0.5])
 
@@ -52,7 +51,6 @@ class RichTileCoder():
             "Encodings for close x-values should be identical"
 
     def test_y_values(self):
-        x_edge = 1 / self.num_tilings / self.num_tiles[0]
         y_edge = 1 / self.num_tilings / self.num_tiles[1]
         point1 = np.array([0.5, y_edge])
         point2 = np.array([0.5, y_edge + y_edge/2])
@@ -107,7 +105,6 @@ class AndyTileCoder():
             "Encodings for close x-values should be identical"
 
     def test_y_values(self):
-        x_edge = 1 / self.num_tilings / self.num_tiles[0]
         y_edge = 1 / self.num_tilings / self.num_tiles[1]
         point1 = np.array([0.5, y_edge])
         point2 = np.array([0.5, y_edge + y_edge/2])

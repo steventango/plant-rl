@@ -18,7 +18,7 @@ class SimplePlantSimulator(BaseEnvironment):
     State = [linear time-of-day,
              average area,
              percentage change in average area over 1 step (for tracking plant motion)
-            ] 
+            ]
     Action = [low, standard]
     Reward = raw change in average area over 1 step (includes large overnight growth)
     '''

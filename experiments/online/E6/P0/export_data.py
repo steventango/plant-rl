@@ -23,7 +23,7 @@ def main():
 
     results = ResultCollection.fromExperiments(Model=ExperimentModel)
 
-    dd = data_definition(
+    data_definition(
         hyper_cols=results.get_hyperparameter_columns(),
         seed_col="seed",
         time_col="frame",

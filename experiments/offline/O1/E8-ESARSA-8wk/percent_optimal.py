@@ -44,7 +44,7 @@ def main():
 
     assert df is not None
 
-    exp = results.get_any_exp()
+    results.get_any_exp()
 
     for env, env_df in split_over_column(df, col='environment'):
         f, ax = plt.subplots()
@@ -90,7 +90,7 @@ def main():
                 y=ys,
                 statistic=Statistic.mean,
             )
-            
+
             ax[1].plot(rescale_time(xs[0],1), res.sample_stat, label=alg, color=COLORS[alg], linewidth=0.5)
             ax[1].fill_between(rescale_time(xs[0], 1), res.ci[0], res.ci[1], color=COLORS[alg], alpha=0.2)
             ax[1].legend()

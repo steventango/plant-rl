@@ -47,10 +47,10 @@ def main():
 
     assert df is not None
 
-    exp = results.get_any_exp()
+    results.get_any_exp()
 
     for env, env_df in split_over_column(df, col='environment'):
-        for last_day, filter_df in split_over_column(env_df, col='environment.last_day'):
+        for _last_day, filter_df in split_over_column(env_df, col='environment.last_day'):
 
             for metric in ["reward", "action"]:
                 f, ax = plt.subplots(5, 1)
@@ -74,7 +74,7 @@ def main():
                     xs_a = np.asarray(xs_a)
                     ys_a = np.asarray(ys_a)
 
-                    res = curve_percentile_bootstrap_ci(
+                    curve_percentile_bootstrap_ci(
                         rng=np.random.default_rng(0),
                         y=ys_a,
                         statistic=Statistic.mean,

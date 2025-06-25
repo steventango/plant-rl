@@ -45,7 +45,7 @@ def main():
         df[metric] = df[metric].apply(maybe_convert_to_array)
 
     dfs = []
-    for alg, sub_df in split_over_column(df, col="algorithm"):
+    for _alg, sub_df in split_over_column(df, col="algorithm"):
 
         x = sub_df[dd.time_col].to_numpy()
 
