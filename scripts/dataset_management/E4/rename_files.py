@@ -14,12 +14,15 @@ def get_file_date(file_path):
     mod_time = os.path.getmtime(file_path)
     return datetime.fromtimestamp(mod_time)
 
+
 def main():
     # Directory containing the files to rename
-    source_dir = Path("/workspaces/plant-rl/old/results/online/E4/P0/Spreadsheet/0/images")
+    source_dir = Path(
+        "/workspaces/plant-rl/old/results/online/E4/P0/Spreadsheet/0/images"
+    )
 
     # Get all image files
-    image_files = list(source_dir.glob('**/*.png')) + list(source_dir.glob('**/*.jpg'))
+    image_files = list(source_dir.glob("**/*.png")) + list(source_dir.glob("**/*.jpg"))
     image_files = sorted(image_files, key=lambda x: x.name)
     print(f"Found {len(image_files)} image files")
 
@@ -35,7 +38,7 @@ def main():
             # Get file's modification date in ISO format
             file_date = get_file_date(file_path)
             file_date = file_date.replace(microsecond=0)
-            iso_date = file_date.isoformat().replace(':', '')
+            iso_date = file_date.isoformat().replace(":", "")
 
             # Create new file name with ISO date
             new_filename = f"{iso_date}{file_ext}"
@@ -57,6 +60,7 @@ def main():
             errors += 1
 
     print(f"Renamed {renamed_count} files. Encountered {errors} errors.")
+
 
 if __name__ == "__main__":
     main()

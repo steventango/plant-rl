@@ -13,6 +13,7 @@ class AccumulatedOutput:
     activations: Dict[str, jax.Array]
     out: jax.Array
 
+
 def accumulatingSequence(fs: Sequence[Layer]):
     def _inner(x: jax.Array):
         out: Dict[str, jax.Array] = {}
@@ -24,4 +25,5 @@ def accumulatingSequence(fs: Sequence[Layer]):
                 out[f.name] = y
 
         return AccumulatedOutput(activations=out, out=y)
+
     return _inner

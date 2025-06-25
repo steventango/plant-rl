@@ -4,9 +4,10 @@ import pandas as pd
 import numpy as np
 
 
-#%%
+# %%
 df = pd.read_csv("data.csv")
 # %%
+
 
 def to_numpy(string_list):
     """Converts a string representation of a list of numbers to a NumPy array."""
@@ -14,7 +15,7 @@ def to_numpy(string_list):
         return string_list
     try:
         # Remove the brackets and split by space
-        numbers_str = string_list.strip('[]').split()
+        numbers_str = string_list.strip("[]").split()
         # Convert the strings to floats and create a NumPy array
         return np.array([float(num) for num in numbers_str])
     except AttributeError:
@@ -30,7 +31,7 @@ actions = df["action"].to_numpy()
 states.shape, actions.shape
 # %%
 
-#%%
+# %%
 # plot weights
 
 import matplotlib.pyplot as plt
@@ -43,6 +44,7 @@ from matplotlib.colors import ListedColormap
 
 # %%
 import sys
+
 sys.path.append("/workspaces/plant-rl")
 from src.representations.RichTileCoder import RichTileCoder, RichTileCoderConfig
 
@@ -54,6 +56,7 @@ config = RichTileCoderConfig(
 )
 
 from representations.tile3 import IHT
+
 tile_coder = RichTileCoder(config)
 tile_coder.maxSize = 80000
 tile_coder.iht = IHT(tile_coder.maxSize)
@@ -63,6 +66,7 @@ times = np.linspace(0, 1, 24 * 12, endpoint=True)
 areas = np.linspace(-1, 1, 100)
 
 from collections import defaultdict
+
 inverse_mapping = defaultdict(set)
 for i, area in enumerate(areas):
     for j, time in enumerate(times):
@@ -70,7 +74,7 @@ for i, area in enumerate(areas):
         for index in indices:
             inverse_mapping[index].add((i, j))
 
-#%%
+# %%
 num_actions = np.unique(actions).shape[0]
 N = np.zeros((len(times), len(areas), num_actions))
 
@@ -84,7 +88,7 @@ for state, action in zip(states, actions, strict=False):
             N[time_index, area_index, action] += 1
 
 
-#%%
+# %%
 N /= 32
 # %%
 # plot Q values
@@ -116,21 +120,27 @@ for action, ax in zip(range(num_actions), axs, strict=False):
         cbar=(action == num_actions - 1),  # Add colorbar only to the last subplot
         vmin=vmin,
         vmax=vmax,
-        cbar_ax=None if action < num_actions - 1 else fig.add_axes([0.92, 0.15, 0.02, 0.7]),
+        cbar_ax=None
+        if action < num_actions - 1
+        else fig.add_axes([0.92, 0.15, 0.02, 0.7]),
     )
     ax.set_title(f"Action {action} ({action_labels[action]})")
     ax.set_xlabel("Time (h)" if action == num_actions - 1 else "")
     ax.set_ylabel("Area")  # Area is now on the y-axis
     ax.set_xticks(np.arange(0, len(times) + 1, hour_interval))  # Set ticks every hour
-    ax.set_xticklabels([f"{int(t * 24)}" for t in times[::hour_interval]] + [24])  # Format as hours
+    ax.set_xticklabels(
+        [f"{int(t * 24)}" for t in times[::hour_interval]] + [24]
+    )  # Format as hours
     ax.set_yticks(np.arange(0, len(areas) + 1, 20))  # Set y ticks every 10 areas
-    ax.set_yticklabels([f"{area:.1f}" for area in areas[::20]] + [f"{1:.1f}"])  # Format as float
+    ax.set_yticklabels(
+        [f"{area:.1f}" for area in areas[::20]] + [f"{1:.1f}"]
+    )  # Format as float
     ax.invert_yaxis()  # Invert the y-axis
 
 fig.suptitle("ESARSA(λ) N(s, a)", fontsize=16)
 plt.tight_layout(rect=[0, 0, 0.9, 1])  # Adjust layout to fit colorbar
 plt.show()
-#%%
+# %%
 # also plot ESARSA(λ) N(s)
 
 Ns = np.sum(N, axis=2)
@@ -147,7 +157,9 @@ ax.set_title("ESARSA(λ) N(s)")
 ax.set_xlabel("Time (h)")
 ax.set_ylabel("Area")  # Area is now on the y-axis
 ax.set_xticks(np.arange(0, len(times), hour_interval))  # Set ticks every hour
-ax.set_xticklabels([f"{int(t * 24)}" for t in times[::hour_interval]])  # Format as hours
+ax.set_xticklabels(
+    [f"{int(t * 24)}" for t in times[::hour_interval]]
+)  # Format as hours
 ax.set_yticks(np.arange(0, len(areas), 20))  # Set y ticks every 10 areas
 ax.set_yticklabels([f"{area:.1f}" for area in areas[::20]])  # Format as float
 ax.set_yticklabels(ax.get_yticklabels(), rotation=0)  # Rotate y ticks
@@ -181,7 +193,9 @@ ax.set_title("ESARSA(λ) N(s)")
 ax.set_xlabel("Time (h)")
 ax.set_ylabel("Area")  # Area is now on the y-axis
 ax.set_xticks(np.arange(0, len(times), hour_interval))  # Set ticks every hour
-ax.set_xticklabels([f"{int(t * 24)}" for t in times[::hour_interval]])  # Format as hours
+ax.set_xticklabels(
+    [f"{int(t * 24)}" for t in times[::hour_interval]]
+)  # Format as hours
 ax.set_yticks(np.arange(0, len(areas), 20))  # Set y ticks every 10 areas
 ax.set_yticklabels([f"{area:.1f}" for area in areas[::20]])  # Format as float
 ax.set_yticklabels(ax.get_yticklabels(), rotation=0)  # Rotate y ticks

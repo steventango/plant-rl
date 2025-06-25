@@ -59,8 +59,9 @@ def soft_update(target, source, tau):
         The weighting for the weighted average
     """
     with torch.no_grad():
-        for target_param, param in zip(target.parameters(),
-                                       source.parameters(), strict=False):
+        for target_param, param in zip(
+            target.parameters(), source.parameters(), strict=False
+        ):
             # Use in-place operations mul_ and add_ to avoid
             # copying tensor data
             target_param.data.mul_(1.0 - tau)
@@ -79,8 +80,9 @@ def hard_update(target, source):
         The source network
     """
     with torch.no_grad():
-        for target_param, param in zip(target.parameters(),
-                                       source.parameters(), strict=False):
+        for target_param, param in zip(
+            target.parameters(), source.parameters(), strict=False
+        ):
             target_param.data.copy_(param.data)
 
 
@@ -96,6 +98,7 @@ def init_layers(layers, init_scheme):
         'xavier_normal', 'uniform', 'normal', 'orthogonal', by default None.
         If None, leaves the default PyTorch initialization.
     """
+
     def fill_weights(layers, init_fn):
         for i in range(len(layers)):
             init_fn(layers[i].weight)
@@ -115,8 +118,9 @@ def init_layers(layers, init_scheme):
         return
 
 
-def _calc_conv_outputs(in_height, in_width, kernel_size, dilation=1, padding=0,
-                       stride=1):
+def _calc_conv_outputs(
+    in_height, in_width, kernel_size, dilation=1, padding=0, stride=1
+):
     """
     Calculates the output height and width given in input height and width and
     the kernel size.
@@ -150,12 +154,10 @@ def _calc_conv_outputs(in_height, in_width, kernel_size, dilation=1, padding=0,
     if isinstance(stride, int):
         stride = [stride] * 2
 
-    out_height = in_height + 2 * padding[0] - dilation[0] * (
-        kernel_size[0] - 1) - 1
+    out_height = in_height + 2 * padding[0] - dilation[0] * (kernel_size[0] - 1) - 1
     out_height //= stride[0]
 
-    out_width = in_width + 2 * padding[1] - dilation[1] * (
-        kernel_size[1] - 1) - 1
+    out_width = in_width + 2 * padding[1] - dilation[1] * (kernel_size[1] - 1) - 1
     out_width //= stride[1]
 
     return out_height + 1, out_width + 1

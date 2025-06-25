@@ -29,14 +29,18 @@ class OfflinePlantGrowthChamber(BaseProblem):
         elif self.env_params["type"] == "1hrStep_MC":
             self.env = OfflinePlantGrowthChamber_1hrStep_MC(**self.env_params)
             self.observations = (4,)
-        elif self.env_params['type'] == '1hrStep_MC_OpennessOnly':
-            self.env = OfflinePlantGrowthChamber_1hrStep_MC_OpennessOnly(**self.env_params)
+        elif self.env_params["type"] == "1hrStep_MC_OpennessOnly":
+            self.env = OfflinePlantGrowthChamber_1hrStep_MC_OpennessOnly(
+                **self.env_params
+            )
             self.observations = (2,)
         elif self.env_params["type"] == "1hrStep_MC_TimeOnly":
             self.env = OfflinePlantGrowthChamber_1hrStep_MC_TimeOnly(**self.env_params)
             self.observations = (2,)
-        elif self.env_params['type'] == '1hrStep_MC_Area_Openness':
-            self.env = OfflinePlantGrowthChamber_1hrStep_MC_Area_Openness(**self.env_params)
+        elif self.env_params["type"] == "1hrStep_MC_Area_Openness":
+            self.env = OfflinePlantGrowthChamber_1hrStep_MC_Area_Openness(
+                **self.env_params
+            )
             self.observations = (2,)
         elif self.env_params["type"] == "Time":
             self.env = OfflinePlantGrowthChamberTime(**self.env_params)

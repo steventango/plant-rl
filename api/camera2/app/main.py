@@ -11,6 +11,7 @@ app = FastAPI()
 @lru_cache(maxsize=None)
 def get_camera():
     from picamera2 import Picamera2
+
     camera = Picamera2()
     camera.configure("still")
     camera.start()

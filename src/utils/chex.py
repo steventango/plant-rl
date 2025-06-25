@@ -3,7 +3,8 @@ import chex
 import dataclasses
 import typing_extensions
 
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 @typing_extensions.dataclass_transform(
     eq_default=True,

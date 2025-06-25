@@ -78,10 +78,13 @@ class TimeFrameList:
         json_l = []
         for tf in self.data:
             tf: TimeFrame
-            json_l.append({"date": tf.get_date(),
-                           "ontime": tf.get_time1(),
-                           "offtime": tf.get_time2()})
+            json_l.append(
+                {
+                    "date": tf.get_date(),
+                    "ontime": tf.get_time1(),
+                    "offtime": tf.get_time2(),
+                }
+            )
 
         with open(dirpath / "timeframe.json", "w") as f:
             json.dump(json_l, f)
-

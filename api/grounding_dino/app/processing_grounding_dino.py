@@ -71,7 +71,9 @@ class BatchGroundingDinoProcessor(GroundingDinoProcessor):
             text_thresholds = [text_thresholds] * batch_logits.shape[0]
 
         if target_sizes is not None and len(target_sizes) != len(batch_logits):
-            raise ValueError("Make sure that you pass in as many target sizes as the batch dimension of the logits")
+            raise ValueError(
+                "Make sure that you pass in as many target sizes as the batch dimension of the logits"
+            )
 
         batch_probs = torch.sigmoid(batch_logits)  # (batch_size, num_queries, 256)
         batch_scores = torch.max(batch_probs, dim=-1)[0]  # (batch_size, num_queries)
@@ -87,12 +89,21 @@ class BatchGroundingDinoProcessor(GroundingDinoProcessor):
             else:
                 img_h, img_w = target_sizes.unbind(1)
 
-            scale_fct = torch.stack([img_w, img_h, img_w, img_h], dim=1).to(batch_boxes.device)
+            scale_fct = torch.stack([img_w, img_h, img_w, img_h], dim=1).to(
+                batch_boxes.device
+            )
             batch_boxes = batch_boxes * scale_fct[:, None, :]
 
         results = []
         for idx, (scores, boxes, probs, threshold, text_threshold) in enumerate(
-            zip(batch_scores, batch_boxes, batch_probs, thresholds, text_thresholds, strict=False)
+            zip(
+                batch_scores,
+                batch_boxes,
+                batch_probs,
+                thresholds,
+                text_thresholds,
+                strict=False,
+            )
         ):
             keep = scores > threshold
             scores = scores[keep]

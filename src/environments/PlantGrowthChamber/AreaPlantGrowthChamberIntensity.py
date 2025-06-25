@@ -6,8 +6,9 @@ from environments.PlantGrowthChamber.PlantGrowthChamberIntensity import (
 )
 
 
-class AreaPlantGrowthChamberIntensity(AreaPlantGrowthChamber, PlantGrowthChamberIntensity):
-
+class AreaPlantGrowthChamberIntensity(
+    AreaPlantGrowthChamber, PlantGrowthChamberIntensity
+):
     def __init__(self, **kwargs):
         AreaPlantGrowthChamber.__init__(self, **kwargs)
         PlantGrowthChamberIntensity.__init__(self, **kwargs)

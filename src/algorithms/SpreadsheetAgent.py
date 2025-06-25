@@ -14,13 +14,20 @@ def linear_interpolation(first, second, completed):
 
 
 class SpreadsheetAgent(BaseAgent):
-    def __init__(self, observations: Tuple[int, ...], actions: int, params: Dict, collector: Collector, seed: int):
+    def __init__(
+        self,
+        observations: Tuple[int, ...],
+        actions: int,
+        params: Dict,
+        collector: Collector,
+        seed: int,
+    ):
         super().__init__(observations, actions, params, collector, seed)
         self.df = pd.read_excel(self.params["filepath"])
         self.compatibility_mode = self.params.get("compatibility_mode", False)
-        self.df["datetime"] = self.df["Day"] * 86400 + pd.to_datetime(self.df["Time"], format="%H:%M:%S").apply(
-            lambda x: x.hour * 3600 + x.minute * 60 + x.second
-        )
+        self.df["datetime"] = self.df["Day"] * 86400 + pd.to_datetime(
+            self.df["Time"], format="%H:%M:%S"
+        ).apply(lambda x: x.hour * 3600 + x.minute * 60 + x.second)
         tz = ZoneInfo(self.params.get("timezone", "Etc/UTC"))
         dt = datetime.now(tz)
         offset = dt.utcoffset()
@@ -30,11 +37,15 @@ class SpreadsheetAgent(BaseAgent):
     # ----------------------
     # -- RLGlue interface --
     # ----------------------
-    def start(self, observation: np.ndarray, extra: Dict[str, Any]) -> Tuple[np.ndarray, Dict[str, Any]]:
+    def start(
+        self, observation: np.ndarray, extra: Dict[str, Any]
+    ) -> Tuple[np.ndarray, Dict[str, Any]]:
         utc_time = observation[0]
         return self.get_action(utc_time), {}
 
-    def step(self, reward: float, observation: np.ndarray | None, extra: Dict[str, Any]):
+    def step(
+        self, reward: float, observation: np.ndarray | None, extra: Dict[str, Any]
+    ):
         utc_time = observation[0]
         return self.get_action(utc_time), {}
 
@@ -63,9 +74,13 @@ class SpreadsheetAgent(BaseAgent):
         if clock_time < first_datetime:
             clock_time += cycle_length
 
-        region_completed = (clock_time - first_datetime) / (second_datetime - first_datetime)
+        region_completed = (clock_time - first_datetime) / (
+            second_datetime - first_datetime
+        )
 
-        light_scaling_factor = linear_interpolation(first_point["Scaling"], second_point["Scaling"], region_completed)
+        light_scaling_factor = linear_interpolation(
+            first_point["Scaling"], second_point["Scaling"], region_completed
+        )
 
         first_color = np.array(
             [

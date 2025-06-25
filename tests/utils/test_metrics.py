@@ -114,11 +114,11 @@ class TestUnbiasedExponentialMovingAverage:
             uema.total = (1 - beta) * uema.total + beta * value
         fig, ax = plt.subplots(1, 2)
         ax[0].plot(count_trace_history)
-        ax[0].set_xlabel('count_trace')
-        ax[1].plot(beta_history, label=f'last beta={beta_history[-1]:.2g}')
+        ax[0].set_xlabel("count_trace")
+        ax[1].plot(beta_history, label=f"last beta={beta_history[-1]:.2g}")
         ax[1].legend()
-        ax[1].set_xlabel('beta')
-        plt.savefig('tests/utils/plot_trace.jpg')
+        ax[1].set_xlabel("beta")
+        plt.savefig("tests/utils/plot_trace.jpg")
 
 
 def test_iqm():

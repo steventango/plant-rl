@@ -3,9 +3,10 @@ import gymnasium
 from RlGlue.environment import BaseEnvironment
 import numpy as np
 
+
 class CliffWalking(BaseEnvironment):
     def __init__(self, max_steps: Optional[int] = None):
-        self.env = gymnasium.make('CliffWalking-v0')
+        self.env = gymnasium.make("CliffWalking-v0")
 
     def start(self):
         s, info = self.env.reset()

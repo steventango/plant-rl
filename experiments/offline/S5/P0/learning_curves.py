@@ -1,7 +1,7 @@
 import os
 import sys
 
-sys.path.append(os.getcwd() + '/src')
+sys.path.append(os.getcwd() + "/src")
 
 
 import enum
@@ -69,7 +69,9 @@ def main():
             print(env, alg)
             Hypers.pretty_print(report)
 
-            xs, ys = extract_learning_curves(sub_df, report.best_configuration, metric="action", interpolation=None)
+            xs, ys = extract_learning_curves(
+                sub_df, report.best_configuration, metric="action", interpolation=None
+            )
             xs = np.asarray(xs)
             ys = np.asarray(ys)
 

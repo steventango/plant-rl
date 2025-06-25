@@ -15,6 +15,7 @@ import haiku as hk
 import jax.numpy as jnp
 import utils.chex as cxu
 
+
 @cxu.dataclass
 class AgentState:
     params: Any
@@ -29,15 +30,23 @@ def q_loss(q, a, r, gamma, qp):
     delta = target - q[a]
 
     return huber_loss(1.0, q[a], target), {
-        'delta': delta,
+        "delta": delta,
     }
 
+
 class DynamicBatchDQN(NNAgent):
-    def __init__(self, observations: Tuple, actions: int, params: Dict, collector: Collector, seed: int):
+    def __init__(
+        self,
+        observations: Tuple,
+        actions: int,
+        params: Dict,
+        collector: Collector,
+        seed: int,
+    ):
         super().__init__(observations, actions, params, collector, seed)
         # set up the target network parameters
-        self.target_refresh = params['target_refresh']
-        self.min_batch_size = params['min_batch']
+        self.target_refresh = params["target_refresh"]
+        self.min_batch_size = params["min_batch"]
 
         self.state = AgentState(
             params=self.state.params,
@@ -49,7 +58,7 @@ class DynamicBatchDQN(NNAgent):
     # -- NN agent interface --
     # ------------------------
     def _build_heads(self, builder: NetworkBuilder) -> None:
-        self.q = builder.addHead(lambda: hk.Linear(self.actions, name='q'))
+        self.q = builder.addHead(lambda: hk.Linear(self.actions, name="q"))
 
     # internal compiled version of the value function
     @partial(jax.jit, static_argnums=0)
@@ -73,7 +82,6 @@ class DynamicBatchDQN(NNAgent):
             return
 
         for _ in range(self.updates_per_step):
-
             # Sample min(batch_size, buffer_size) transitions so that we can do still do updates
             # before collecting batch_size samples when batch_size is large
             batch = self.buffer.sample(min(self.buffer.size(), self.batch_size))
@@ -82,7 +90,7 @@ class DynamicBatchDQN(NNAgent):
 
             metrics = jax.device_get(metrics)
 
-            priorities = metrics['delta']
+            priorities = metrics["delta"]
             self.buffer.update_batch(batch, priorities=priorities)
 
             for k, v in metrics.items():
@@ -112,7 +120,9 @@ class DynamicBatchDQN(NNAgent):
 
         return new_state, metrics
 
-    def _loss(self, params: hk.Params, target: hk.Params, batch: Batch, weights: jax.Array):
+    def _loss(
+        self, params: hk.Params, target: hk.Params, batch: Batch, weights: jax.Array
+    ):
         phi = self.phi(params, batch.x).out
         phi_p = self.phi(target, batch.xp).out
 

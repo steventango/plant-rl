@@ -67,8 +67,15 @@ indices = args.idxs
 Problem = getProblem(exp.problem)
 
 
-def plot_q_values_and_diff(logger, agent, q_plots_dir, step):  # Renamed original plot function
-    if hasattr(agent, "w") and hasattr(agent, "tile_coder") and agent.w is not None and agent.tile_coder is not None:
+def plot_q_values_and_diff(
+    logger, agent, q_plots_dir, step
+):  # Renamed original plot function
+    if (
+        hasattr(agent, "w")
+        and hasattr(agent, "tile_coder")
+        and agent.w is not None
+        and agent.tile_coder is not None
+    ):
         try:
             weights = agent.w
             tile_coder = agent.tile_coder
@@ -78,11 +85,19 @@ def plot_q_values_and_diff(logger, agent, q_plots_dir, step):  # Renamed origina
             area_observation_space = np.linspace(0, 1, 11 * 6, endpoint=True)
 
             num_actions = weights.shape[0]
-            Q_vals = get_Q(weights, tile_coder, daytime_observation_space, area_observation_space, num_actions)
+            Q_vals = get_Q(
+                weights,
+                tile_coder,
+                daytime_observation_space,
+                area_observation_space,
+                num_actions,
+            )
 
             # Plot and save Q-values
             q_plot_filename = q_plots_dir / f"q_values_step_{step:06d}.jpg"
-            plot_q(daytime_observation_space, area_observation_space, Q_vals)  # Call the plot function
+            plot_q(
+                daytime_observation_space, area_observation_space, Q_vals
+            )  # Call the plot function
             plt.savefig(q_plot_filename)  # Save the figure
             plt.close()  # Close the figure
 
@@ -96,7 +111,9 @@ def plot_q_values_and_diff(logger, agent, q_plots_dir, step):  # Renamed origina
                 Q_diff = Q_vals[:, :, 0]
 
             q_diff_plot_filename = q_plots_dir / f"q_diff_step_{step:06d}.jpg"
-            plot_q_diff(daytime_observation_space, area_observation_space, Q_diff)  # Call the plot function
+            plot_q_diff(
+                daytime_observation_space, area_observation_space, Q_diff
+            )  # Call the plot function
             plt.savefig(q_diff_plot_filename)  # Save the figure
             plt.close()  # Close the figure
             logger.info(f"Step {step}: Saved Q-value plots to {q_plots_dir}")
@@ -119,10 +136,14 @@ def plot_state_action_distribution(df, q_plots_dir, logger):
         if not plot_df.empty:
             # Extract state components
             plot_df["daytime"] = plot_df["observation"].apply(
-                lambda x: x[0] if isinstance(x, (list, np.ndarray)) and len(x) > 0 else np.nan
+                lambda x: x[0]
+                if isinstance(x, (list, np.ndarray)) and len(x) > 0
+                else np.nan
             )
             plot_df["area"] = plot_df["observation"].apply(
-                lambda x: x[1] if isinstance(x, (list, np.ndarray)) and len(x) > 1 else np.nan
+                lambda x: x[1]
+                if isinstance(x, (list, np.ndarray)) and len(x) > 1
+                else np.nan
             )
             plot_df.dropna(subset=["daytime", "area"], inplace=True)
 
@@ -131,7 +152,9 @@ def plot_state_action_distribution(df, q_plots_dir, logger):
                 num_daytime_bins = 11
                 num_area_bins = 11
 
-                daytime_bin_edges = np.linspace(0, 1, num_daytime_bins + 1, endpoint=True)
+                daytime_bin_edges = np.linspace(
+                    0, 1, num_daytime_bins + 1, endpoint=True
+                )
                 area_bin_edges = np.linspace(0, 1, num_area_bins + 1, endpoint=True)
 
                 daytime_bin_labels = range(num_daytime_bins)
@@ -145,19 +168,33 @@ def plot_state_action_distribution(df, q_plots_dir, logger):
                     right=True,
                 )
                 plot_df["area_bin"] = pd.cut(
-                    plot_df["area"], bins=area_bin_edges, labels=area_bin_labels, include_lowest=True, right=True
+                    plot_df["area"],
+                    bins=area_bin_edges,
+                    labels=area_bin_labels,
+                    include_lowest=True,
+                    right=True,
                 )
                 plot_df.dropna(subset=["daytime_bin", "area_bin"], inplace=True)
 
                 if not plot_df.empty:
-                    actions_to_plot = sorted([action for action in plot_df["action"].unique() if action in [0.0, 1.0]])
+                    actions_to_plot = sorted(
+                        [
+                            action
+                            for action in plot_df["action"].unique()
+                            if action in [0.0, 1.0]
+                        ]
+                    )
                     if not actions_to_plot:
                         logger.info("No actions 0 or 1 found in the data to plot.")
                         return
 
                     num_subplots = len(actions_to_plot)
-                    fig, axs = plt.subplots(1, num_subplots, figsize=(6 * num_subplots, 5), squeeze=False)
-                    fig.suptitle("State-Action Distribution (Count per Bin)", fontsize=16)
+                    fig, axs = plt.subplots(
+                        1, num_subplots, figsize=(6 * num_subplots, 5), squeeze=False
+                    )
+                    fig.suptitle(
+                        "State-Action Distribution (Count per Bin)", fontsize=16
+                    )
 
                     # Determine global max count for consistent color scaling if desired, or use individual scales
                     # For now, using individual scales by not setting vmax explicitly for sns.heatmap or setting it per subplot.
@@ -177,14 +214,22 @@ def plot_state_action_distribution(df, q_plots_dir, logger):
                             heatmap_data = (
                                 action_df.groupby(["daytime_bin", "area_bin"])
                                 .size()  # Get counts
-                                .unstack(fill_value=0)  # Fill non-observed bins with 0 count
+                                .unstack(
+                                    fill_value=0
+                                )  # Fill non-observed bins with 0 count
                             )
                             # Ensure all bins are present
                             heatmap_data = heatmap_data.reindex(
-                                index=daytime_bin_labels, columns=area_bin_labels, fill_value=0
+                                index=daytime_bin_labels,
+                                columns=area_bin_labels,
+                                fill_value=0,
                             )
 
-                            current_max_count = heatmap_data.max().max() if not heatmap_data.empty else 0
+                            current_max_count = (
+                                heatmap_data.max().max()
+                                if not heatmap_data.empty
+                                else 0
+                            )
 
                             sns.heatmap(
                                 heatmap_data.T,  # Transpose for daytime on x, area on y
@@ -194,40 +239,60 @@ def plot_state_action_distribution(df, q_plots_dir, logger):
                                 vmax=(
                                     current_max_count if current_max_count > 0 else 1
                                 ),  # Avoid error if all counts are 0
-                                cbar_kws={"label": f"Count of Action {int(action_val)}"},
+                                cbar_kws={
+                                    "label": f"Count of Action {int(action_val)}"
+                                },
                                 square=False,
                             )
                         else:
                             # If no data for this action, plot an empty heatmap or indicate no data
                             # For simplicity, seaborn will plot an empty grid if heatmap_data is all 0s or empty after reindex
-                            empty_heatmap_data = pd.DataFrame(0, index=daytime_bin_labels, columns=area_bin_labels)
+                            empty_heatmap_data = pd.DataFrame(
+                                0, index=daytime_bin_labels, columns=area_bin_labels
+                            )
                             sns.heatmap(
                                 empty_heatmap_data.T,
                                 ax=ax,
                                 cmap="viridis",
                                 vmin=0,
                                 vmax=1,
-                                cbar_kws={"label": f"Count of Action {int(action_val)} (No Data)"},
+                                cbar_kws={
+                                    "label": f"Count of Action {int(action_val)} (No Data)"
+                                },
                                 square=False,
                             )
 
                         ax.set_title(f"Distribution of Action {int(action_val)}")
                         ax.set_xlabel("s[0]")
-                        ax.set_ylabel("s[1]" if i == 0 else "")  # Only label y-axis on the first plot
+                        ax.set_ylabel(
+                            "s[1]" if i == 0 else ""
+                        )  # Only label y-axis on the first plot
 
-                        daytime_observation_space_for_labels = np.linspace(0, 1, num_daytime_bins, endpoint=True)
-                        area_observation_space_for_labels = np.linspace(0, 1, num_area_bins, endpoint=True)
+                        daytime_observation_space_for_labels = np.linspace(
+                            0, 1, num_daytime_bins, endpoint=True
+                        )
+                        area_observation_space_for_labels = np.linspace(
+                            0, 1, num_area_bins, endpoint=True
+                        )
                         hour_interval = 6
                         xtick_indices = np.arange(0, num_daytime_bins, hour_interval)
                         ax.set_xticks(xtick_indices + 0.5)
-                        xtick_labels_values = daytime_observation_space_for_labels[::hour_interval]
-                        ax.set_xticklabels([f"{int(t * 11) + 9}" for t in xtick_labels_values])
+                        xtick_labels_values = daytime_observation_space_for_labels[
+                            ::hour_interval
+                        ]
+                        ax.set_xticklabels(
+                            [f"{int(t * 11) + 9}" for t in xtick_labels_values]
+                        )
 
                         area_tick_interval = 10
                         ytick_indices = np.arange(0, num_area_bins, area_tick_interval)
                         ax.set_yticks(ytick_indices + 0.5)
-                        ytick_labels_values = area_observation_space_for_labels[::area_tick_interval]
-                        ax.set_yticklabels([f"{area:.1f}" for area in ytick_labels_values], rotation=0)
+                        ytick_labels_values = area_observation_space_for_labels[
+                            ::area_tick_interval
+                        ]
+                        ax.set_yticklabels(
+                            [f"{area:.1f}" for area in ytick_labels_values], rotation=0
+                        )
 
                         ax.invert_yaxis()
 
@@ -237,13 +302,20 @@ def plot_state_action_distribution(df, q_plots_dir, logger):
                     plt.close()
                     logger.info(f"Saved state-action count heatmaps to {plot_filename}")
                 else:
-                    logger.info("No data points left after binning for state-action distribution heatmap.")
+                    logger.info(
+                        "No data points left after binning for state-action distribution heatmap."
+                    )
             else:
-                logger.info("No valid data points to plot for state-action distribution after processing observations.")
+                logger.info(
+                    "No valid data points to plot for state-action distribution after processing observations."
+                )
         else:
             logger.info("No actions recorded to plot state-action distribution.")
     except Exception as e:
-        logger.error(f"Error during state-action distribution heatmap plotting: {e}", exc_info=True)
+        logger.error(
+            f"Error during state-action distribution heatmap plotting: {e}",
+            exc_info=True,
+        )
 
 
 for idx in indices:
@@ -364,9 +436,15 @@ for idx in indices:
                 expanded_info.update(expand(key, value))
             wandb_run.log(expanded_info, step=step)
 
-        if step == 0 or step % 10 ** int(np.log10(step)) == 0 or step == exp.total_steps - 1:
+        if (
+            step == 0
+            or step % 10 ** int(np.log10(step)) == 0
+            or step == exp.total_steps - 1
+        ):
             # Plot and save Q-values
-            plot_q_values_and_diff(logger, agent, q_plots_dir, step)  # Updated function call
+            plot_q_values_and_diff(
+                logger, agent, q_plots_dir, step
+            )  # Updated function call
 
     collector.reset()
 

@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+
 class BaseAgent(ABC):
     """
     Class BaseAgent implements the base functionality for all agents
@@ -11,6 +12,7 @@ class BaseAgent(ABC):
     self.info : dict
         A dictionary which records agent info
     """
+
     def __init__(self):
         """
         Constructor
@@ -21,6 +23,7 @@ class BaseAgent(ABC):
     """
     BaseAgent is the abstract base class for all agents
     """
+
     @abstractmethod
     def sample_action(self, state):
         """

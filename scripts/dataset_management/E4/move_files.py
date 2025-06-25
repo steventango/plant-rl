@@ -30,5 +30,7 @@ for filename in files_to_move:
         print(f"Moved: {filename}")
 
 # Print summary
-print(f"\nOperation complete: {moved_count} files moved from {source_dir} to {destination_dir}")
+print(
+    f"\nOperation complete: {moved_count} files moved from {source_dir} to {destination_dir}"
+)
 print(f"Files moved had filenames >= {threshold_filename}")

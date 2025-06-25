@@ -1,7 +1,7 @@
 import os
 import sys
 
-sys.path.append(os.getcwd() + '/src')
+sys.path.append(os.getcwd() + "/src")
 
 
 import numpy as np
@@ -47,7 +47,9 @@ def main():
 
     for env, env_df in split_over_column(df, col="environment"):
         f, ax = plt.subplots(1)
-        for replay_ratio, sub_df in sorted(split_over_column(env_df, col="replay_ratio"), key=lambda x: x[0]):
+        for replay_ratio, sub_df in sorted(
+            split_over_column(env_df, col="replay_ratio"), key=lambda x: x[0]
+        ):
             report = Hypers.select_best_hypers(
                 sub_df,
                 metric="reward",
@@ -60,13 +62,21 @@ def main():
             print(env, replay_ratio)
             Hypers.pretty_print(report)
 
-            xs, ys = extract_learning_curves(sub_df, report.best_configuration, metric="action", interpolation=None)
+            xs, ys = extract_learning_curves(
+                sub_df, report.best_configuration, metric="action", interpolation=None
+            )
             xs = np.asarray(xs)
             ys = np.asarray(ys)
 
             ema_action = calculate_ema(xs, ys)
             mean_ema_action = np.mean(ema_action, axis=0)
-            line = ax.plot(xs[0], mean_ema_action, linewidth=1, label=f"k={replay_ratio}", alpha=0.8)
+            line = ax.plot(
+                xs[0],
+                mean_ema_action,
+                linewidth=1,
+                label=f"k={replay_ratio}",
+                alpha=0.8,
+            )
             color = line[0].get_color()
             for i in range(xs.shape[0]):
                 ax.plot(xs[0], ema_action[i], linewidth=0.5, alpha=0.5, color=color)
@@ -78,7 +88,13 @@ def main():
         ax.set_ylim(0.5, 1)
         ax.legend()
 
-        save(save_path=f"{path}/plots", plot_name="action", save_type="jpg", width=3, height_ratio=1/3)
+        save(
+            save_path=f"{path}/plots",
+            plot_name="action",
+            save_type="jpg",
+            width=3,
+            height_ratio=1 / 3,
+        )
 
 
 def calculate_ema(xs, ys):

@@ -1,9 +1,13 @@
 import numpy as np
-from environments.PlantGrowthChamber.PlantGrowthChamberIntensity import PlantGrowthChamberIntensity
+from environments.PlantGrowthChamber.PlantGrowthChamberIntensity import (
+    PlantGrowthChamberIntensity,
+)
+
 
 class CVPlantGrowthChamberIntensity(PlantGrowthChamberIntensity):
     def __init__(self, **kwargs):
         PlantGrowthChamberIntensity.__init__(self, **kwargs)
+
 
 class CVPlantGrowthChamberIntensity_MotionTracking(CVPlantGrowthChamberIntensity):
     async def get_observation(self):

@@ -28,12 +28,12 @@ from utils.RlGlue.rl_glue import LoggingRlGlue
 # -- Command Args --
 # ------------------
 parser = argparse.ArgumentParser()
-parser.add_argument('-e', '--exp', type=str, required=True)
-parser.add_argument('-i', '--idxs', nargs='+', type=int, required=True)
-parser.add_argument('--save_path', type=str, default='./')
-parser.add_argument('--checkpoint_path', type=str, default='./checkpoints/')
-parser.add_argument('--silent', action='store_true', default=False)
-parser.add_argument('--gpu', action='store_true', default=False)
+parser.add_argument("-e", "--exp", type=str, required=True)
+parser.add_argument("-i", "--idxs", nargs="+", type=int, required=True)
+parser.add_argument("--save_path", type=str, default="./")
+parser.add_argument("--checkpoint_path", type=str, default="./checkpoints/")
+parser.add_argument("--silent", action="store_true", default=False)
+parser.add_argument("--gpu", action="store_true", default=False)
 
 args = parser.parse_args()
 
@@ -42,12 +42,12 @@ args = parser.parse_args()
 # ---------------------------
 import jax
 
-device = 'gpu' if args.gpu else 'cpu'
-jax.config.update('jax_platform_name', device)
+device = "gpu" if args.gpu else "cpu"
+jax.config.update("jax_platform_name", device)
 
 logging.basicConfig(level=logging.ERROR)
-logger = logging.getLogger('exp')
-prod = 'cdr' in socket.gethostname() or args.silent
+logger = logging.getLogger("exp")
+prod = "cdr" in socket.gethostname() or args.silent
 if not prod:
     logger.setLevel(logging.DEBUG)
 
@@ -65,21 +65,24 @@ for idx in indices:
     chk.load_if_exists()
     timeout_handler.before_cancel(chk.save)
 
-    collector = chk.build('collector', lambda: Collector(
-        # specify which keys to actually store and ultimately save
-        # Options are:
-        #  - Identity() (save everything)
-        #  - Window(n)  take a window average of size n
-        #  - Subsample(n) save one of every n elements
-        config={
-            'return': Identity(),       # total reward at the end of episode
-            'reward': Identity(),       # reward at each step
-            'episode': Identity(),
-            'steps': Identity(),
-            'action': Identity(),
-        },
-        default=Ignore(),
-    ))
+    collector = chk.build(
+        "collector",
+        lambda: Collector(
+            # specify which keys to actually store and ultimately save
+            # Options are:
+            #  - Identity() (save everything)
+            #  - Window(n)  take a window average of size n
+            #  - Subsample(n) save one of every n elements
+            config={
+                "return": Identity(),  # total reward at the end of episode
+                "reward": Identity(),  # reward at each step
+                "episode": Identity(),
+                "steps": Identity(),
+                "action": Identity(),
+            },
+            default=Ignore(),
+        ),
+    )
     collector.setIdx(idx)
     run = exp.getRun(idx)
 
@@ -95,20 +98,17 @@ for idx in indices:
     torch.backends.cudnn.deterministic = True
 
     # build stateful things and attach to checkpoint
-    problem = chk.build('p', lambda: Problem(exp, idx, collector))
-    agent = chk.build('a', problem.getAgent)
-    env = chk.build('e', problem.getEnvironment)
+    problem = chk.build("p", lambda: Problem(exp, idx, collector))
+    agent = chk.build("a", problem.getAgent)
+    env = chk.build("e", problem.getEnvironment)
 
-    glue = chk.build('glue', lambda: LoggingRlGlue(agent, env))
-    chk.initial_value('episode', 0)
+    glue = chk.build("glue", lambda: LoggingRlGlue(agent, env))
+    chk.initial_value("episode", 0)
 
     context = exp.buildSaveContext(idx, base=args.save_path)
-    agent_path = Path(context.resolve()).relative_to('results')
+    agent_path = Path(context.resolve()).relative_to("results")
 
-    config = {
-        **problem.params,
-        "context": str(agent_path)
-    }
+    config = {**problem.params, "context": str(agent_path)}
 
     wandb_run = wandb.init(
         entity="plant-rl",
@@ -132,29 +132,43 @@ for idx in indices:
         collector.next_frame()
         chk.maybe_save()
         interaction = glue.step()
-        log(env, glue, wandb_run, interaction.o, interaction.a, interaction.extra, interaction.r)
+        log(
+            env,
+            glue,
+            wandb_run,
+            interaction.o,
+            interaction.a,
+            interaction.extra,
+            interaction.r,
+        )
 
-        collector.collect('reward', interaction.r)
-        collector.collect('episode', chk['episode'])
-        collector.collect('steps', glue.num_steps)
-        collector.collect('action', interaction.a)  # or int.from_bytes(glue.last_action, byteorder='little') for GAC
+        collector.collect("reward", interaction.r)
+        collector.collect("episode", chk["episode"])
+        collector.collect("steps", glue.num_steps)
+        collector.collect(
+            "action", interaction.a
+        )  # or int.from_bytes(glue.last_action, byteorder='little') for GAC
 
-        if interaction.t or (exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff):
+        if interaction.t or (
+            exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff
+        ):
             # allow agent to cleanup traces or other stateful episodic info
             agent.cleanup()
 
             # Collect total reward
-            collector.collect('return', glue.total_reward)
+            collector.collect("return", glue.total_reward)
 
             # track how many episodes are completed (cutoff is counted as termination for this count)
-            chk['episode'] += 1
+            chk["episode"] += 1
 
             # compute the average time-per-step in ms
             avg_time = 1000 * (time.time() - start_time) / (step + 1)
             fps = step / (time.time() - start_time)
 
-            episode = chk['episode']
-            logger.debug(f'{episode} {step} {glue.total_reward} {avg_time:.4}ms {int(fps)}')
+            episode = chk["episode"]
+            logger.debug(
+                f"{episode} {step} {glue.total_reward} {avg_time:.4}ms {int(fps)}"
+            )
 
             glue.start()
 

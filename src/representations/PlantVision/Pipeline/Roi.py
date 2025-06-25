@@ -25,7 +25,7 @@ class RoiList:
             contours = []
             hiers = []
             for roi in self.data:
-                roi : Roi
+                roi: Roi
                 r_obj = pcv.roi.circle(img=undistorted_img, x=roi.cx, y=roi.cy, r=roi.r)
                 contours.append(r_obj.contours)
                 hiers.append(r_obj.hierarchy)
@@ -82,4 +82,3 @@ class RoiList:
 
         with open(dirpath / "rois.json", "w") as f:
             json.dump(json_l, f)
-

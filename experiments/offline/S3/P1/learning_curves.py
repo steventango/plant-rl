@@ -29,7 +29,9 @@ COLORS = {
 if __name__ == "__main__":
     path, should_save, save_type = parseCmdLineArgs()
 
-    results = ResultCollection.fromExperiments(metrics=["episode", "return"], Model=ExperimentModel)
+    results = ResultCollection.fromExperiments(
+        metrics=["episode", "return"], Model=ExperimentModel
+    )
 
     data_definition(
         hyper_cols=results.get_hyperparameter_columns(),
@@ -62,7 +64,9 @@ if __name__ == "__main__":
         alphas = []
         best_scores = []
         # TODO: make colors and font size consistent
-        for alpha_val, sub_df in sorted(split_over_column(lambda_df, col="alpha"), key=lambda x: x[0]):
+        for alpha_val, sub_df in sorted(
+            split_over_column(lambda_df, col="alpha"), key=lambda x: x[0]
+        ):
             sub_df = sub_df[sub_df["episode"] < 50]
             print(sub_df["return"].count())
             score = -np.nanmean(sub_df["return"])
@@ -78,7 +82,10 @@ if __name__ == "__main__":
         r"ESARSA($\lambda$) with replacing traces"
     )
     ax.set_xlabel(r"$\alpha \times$ number of tilings (8)")
-    ax.set_ylabel("Mountain Car\nSteps per episode\n averaged over\nfirst 50 episodes\nand 30 runs", rotation=0)
+    ax.set_ylabel(
+        "Mountain Car\nSteps per episode\n averaged over\nfirst 50 episodes\nand 30 runs",
+        rotation=0,
+    )
     ax.yaxis.set_label_coords(-0.2, 0.5)
 
     ax.legend()

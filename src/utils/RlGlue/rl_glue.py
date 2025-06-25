@@ -15,7 +15,7 @@ from utils.logger import expand
 from utils.RlGlue.agent import BaseAgent, BaseAsyncAgent
 from utils.RlGlue.environment import BaseAsyncEnvironment
 
-logger = logging.getLogger('rlglue')
+logger = logging.getLogger("rlglue")
 logger.setLevel(logging.DEBUG)
 
 
@@ -25,7 +25,13 @@ default_save_keys = {"left", "right"}
 
 
 class AsyncRLGlue:
-    def __init__(self, agent: BaseAsyncAgent, env: BaseAsyncEnvironment, dataset_path: Path, images_save_keys: set[str] | None):
+    def __init__(
+        self,
+        agent: BaseAsyncAgent,
+        env: BaseAsyncEnvironment,
+        dataset_path: Path,
+        images_save_keys: set[str] | None,
+    ):
         self.environment = env
         self.agent = agent
 
@@ -65,9 +71,9 @@ class AsyncRLGlue:
         return self.last_interaction
 
     async def step(self) -> Interaction:
-        assert (
-            self.last_action is not None
-        ), "Action is None; make sure to call glue.start() before calling glue.step()."
+        assert self.last_action is not None, (
+            "Action is None; make sure to call glue.start() before calling glue.step()."
+        )
         reward, s, term, env_info = await self.environment.step(self.last_action)
 
         self.total_reward += reward
@@ -98,7 +104,9 @@ class AsyncRLGlue:
         except asyncio.CancelledError:
             pass
 
-    async def end(self, reward: float, s: Any, term: bool, env_info: dict) -> Interaction:
+    async def end(
+        self, reward: float, s: Any, term: bool, env_info: dict
+    ) -> Interaction:
         self.num_episodes += 1
         agent_info = await self.agent.end(reward, env_info)
         for task in background_tasks:
@@ -129,7 +137,9 @@ class AsyncRLGlue:
 
         return is_terminal
 
-    def append_csv(self, chk, raw_csv_path: Path, img_name: str, interaction: Interaction):
+    def append_csv(
+        self, chk, raw_csv_path: Path, img_name: str, interaction: Interaction
+    ):
         data_dict = {
             "time": [self.environment.time],
             "frame": [self.num_steps],
@@ -157,9 +167,7 @@ class AsyncRLGlue:
                     expanded_info.update(expand(key, value))
             data_dict.update(expanded_info)
 
-        df = pd.DataFrame(
-            data_dict
-        )
+        df = pd.DataFrame(data_dict)
         if interaction is not None:
             interaction.extra["df"].reset_index(inplace=True, drop=True)
             interaction.extra["df"]["plant_id"] = interaction.extra["df"].index
@@ -206,7 +214,6 @@ class AsyncRLGlue:
 
 
 class LoggingRlGlue(RlGlue):
-
     def __init__(self, agent: BaseAgent, env: BaseEnvironment):
         super().__init__(agent, env)
         self.agent = agent
@@ -222,7 +229,9 @@ class LoggingRlGlue(RlGlue):
         return s, self.last_action, info
 
     def step(self) -> Interaction:
-        assert self.last_action is not None, 'Action is None; make sure to call glue.start() before calling glue.step().'
+        assert self.last_action is not None, (
+            "Action is None; make sure to call glue.start() before calling glue.step()."
+        )
         (reward, s, term, env_info) = self.environment.step(self.last_action)
 
         self.total_reward += reward
@@ -233,11 +242,19 @@ class LoggingRlGlue(RlGlue):
             self.num_episodes += 1
             self.agent.end(reward, {**env_info})
             return Interaction(
-                o=s, a=None, t=term, r=reward, extra=env_info,
+                o=s,
+                a=None,
+                t=term,
+                r=reward,
+                extra=env_info,
             )
 
         self.last_action, agent_info = self.agent.step(reward, s, env_info)
         info = {**env_info, **agent_info}
         return Interaction(
-            o=s, a=self.last_action, t=term, r=reward, extra=info,
+            o=s,
+            a=self.last_action,
+            t=term,
+            r=reward,
+            extra=info,
         )

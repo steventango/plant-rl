@@ -4,7 +4,6 @@ from environments.PlantGrowthChamber.PlantGrowthChamber import PlantGrowthChambe
 
 
 class PlantGrowthChamberDiscrete(PlantGrowthChamber):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         reference_spectrum = np.array([0.398, 0.762, 0.324, 0.000, 0.332, 0.606])

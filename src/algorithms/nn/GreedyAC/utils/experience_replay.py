@@ -20,8 +20,8 @@ class ExperienceReplay(ABC):
         stored in the replay buffer. All incoming data is assumed to be
         a numpy array.
     """
-    def __init__(self, capacity, seed, state_size, action_size,
-                 device=None):
+
+    def __init__(self, capacity, seed, state_size, action_size, device=None):
         """
         Constructor
 
@@ -156,11 +156,9 @@ class ExperienceReplay(ABC):
 
         # Get the indices for the batch
         if self.is_full:
-            indices = self.random.integers(low=0, high=len(self),
-                                           size=batch_size)
+            indices = self.random.integers(low=0, high=len(self), size=batch_size)
         else:
-            indices = self.random.integers(low=0, high=self.position,
-                                           size=batch_size)
+            indices = self.random.integers(low=0, high=self.position, size=batch_size)
 
         state = self.state_buffer[indices, :]
         action = self.action_buffer[indices, :]
@@ -192,8 +190,16 @@ class NumpyBuffer(ExperienceReplay):
     For an implementation that uses PyTorch tensors, see
     TorchExperienceReplay
     """
-    def __init__(self, capacity, seed, state_size, action_size,
-                 state_dtype=np.int32, action_dtype=np.int32):
+
+    def __init__(
+        self,
+        capacity,
+        seed,
+        state_size,
+        action_size,
+        state_dtype=np.int32,
+        action_dtype=np.int32,
+    ):
         """
         Constructor
 
@@ -213,12 +219,15 @@ class NumpyBuffer(ExperienceReplay):
         super().__init__(capacity, seed, state_size, action_size, None)
 
     def init_buffer(self):
-        self.state_buffer = np.zeros((self.capacity, *self.state_size),
-                                     dtype=self._state_dtype)
-        self.next_state_buffer = np.zeros((self.capacity, *self.state_size),
-                                          dtype=self._state_dtype)
-        self.action_buffer = np.zeros((self.capacity, self.action_size),
-                                      dtype=self._state_dtype)
+        self.state_buffer = np.zeros(
+            (self.capacity, *self.state_size), dtype=self._state_dtype
+        )
+        self.next_state_buffer = np.zeros(
+            (self.capacity, *self.state_size), dtype=self._state_dtype
+        )
+        self.action_buffer = np.zeros(
+            (self.capacity, self.action_size), dtype=self._state_dtype
+        )
         self.reward_buffer = np.zeros((self.capacity, 1))
         self.done_buffer = np.zeros((self.capacity, 1), dtype=bool)
 
@@ -233,6 +242,7 @@ class TorchBuffer(ExperienceReplay):
     device, as this is very time consuming. This class is basically a
     PyTorch efficient implementation of ExperienceReplay.
     """
+
     def __init__(self, capacity, seed, state_size, action_size, device):
         """
         Constructor
@@ -257,8 +267,7 @@ class TorchBuffer(ExperienceReplay):
         self.state_buffer = torch.FloatTensor(self.capacity, *self.state_size)
         self.state_buffer = self.state_buffer.to(self.device)
 
-        self.next_state_buffer = torch.FloatTensor(self.capacity,
-                                                   *self.state_size)
+        self.next_state_buffer = torch.FloatTensor(self.capacity, *self.state_size)
         self.next_state_buffer = self.next_state_buffer.to(self.device)
 
         self.action_buffer = torch.FloatTensor(self.capacity, self.action_size)

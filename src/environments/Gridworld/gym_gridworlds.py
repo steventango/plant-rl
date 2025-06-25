@@ -286,9 +286,9 @@ class Gridworld(gym.Env):
         self.random_action_prob = random_action_prob
         self.reward_noise_std = reward_noise_std
         self.nonzero_reward_noise_std = nonzero_reward_noise_std
-        assert (
-            observation_noise < 1.0 and observation_noise >= 0.0
-        ), "observation_noise must be in [0.0, 1.0)"
+        assert observation_noise < 1.0 and observation_noise >= 0.0, (
+            "observation_noise must be in [0.0, 1.0)"
+        )
         self.observation_noise = observation_noise
         self.distance_reward = distance_reward
 
@@ -377,9 +377,9 @@ class Gridworld(gym.Env):
             reward += self.np_random.normal() * self.nonzero_reward_noise_std
 
         if self.distance_reward:
-            closest_goal = np.abs(
-                np.argwhere(self.grid == GOOD) - self.agent_pos
-            ).sum(1).min()
+            closest_goal = (
+                np.abs(np.argwhere(self.grid == GOOD) - self.agent_pos).sum(1).min()
+            )
             reward -= closest_goal / (self.n_rows * self.n_cols)
 
         if self.grid[self.agent_pos] == QCKSND and self.np_random.random() > 0.1:
@@ -445,9 +445,9 @@ class Gridworld(gym.Env):
             elif mode == "rgb_array":
                 self.window_surface = pygame.Surface(self.window_size)
 
-        assert (
-            self.window_surface is not None
-        ), "Something went wrong with pygame. This should never happen."
+        assert self.window_surface is not None, (
+            "Something went wrong with pygame. This should never happen."
+        )
 
         if self.clock is None:
             self.clock = pygame.time.Clock()
@@ -508,7 +508,9 @@ class Gridworld(gym.Env):
                                 tuple(cs / grain for cs in t_size),
                             )
                             rnd_color = self.np_random.random(3) * 255
-                            rnd_color = [(rnd_color * (0.2989, 0.5870, 0.1140)).sum()] * 3  # grayscale
+                            rnd_color = [
+                                (rnd_color * (0.2989, 0.5870, 0.1140)).sum()
+                            ] * 3  # grayscale
                             pygame.draw.rect(self.window_surface, rnd_color, rect)
                     continue
 
@@ -575,7 +577,9 @@ class Gridworld(gym.Env):
                                     tuple(cs / grain for cs in t_size),
                                 )
                                 rnd_color = self.np_random.random(3) * 255
-                                rnd_color = [(rnd_color * (0.2989, 0.5870, 0.1140)).sum()] * 3  # grayscale
+                                rnd_color = [
+                                    (rnd_color * (0.2989, 0.5870, 0.1140)).sum()
+                                ] * 3  # grayscale
                                 pygame.draw.rect(self.window_surface, rnd_color, rect)
 
             # draw last action

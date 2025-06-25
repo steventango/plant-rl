@@ -13,7 +13,14 @@ from utils.checkpoint import checkpointable
 
 @checkpointable(("buffer", "steps", "updates"))
 class TCAgentReplay(TCAgent):
-    def __init__(self, observations: Tuple[int, ...], actions: int, params: Dict, collector: Collector, seed: int):
+    def __init__(
+        self,
+        observations: Tuple[int, ...],
+        actions: int,
+        params: Dict,
+        collector: Collector,
+        seed: int,
+    ):
         super().__init__(observations, actions, params, collector, seed)
 
         # Params for replay
@@ -39,7 +46,9 @@ class TCAgentReplay(TCAgent):
     # ----------------------
     # -- RLGlue interface --
     # ----------------------
-    def start(self, s: np.ndarray, extra: Dict[str, Any]) -> Tuple[np.ndarray, Dict[str, Any]]:
+    def start(
+        self, s: np.ndarray, extra: Dict[str, Any]
+    ) -> Tuple[np.ndarray, Dict[str, Any]]:
         self.buffer.flush()
 
         x = self.get_rep(s)

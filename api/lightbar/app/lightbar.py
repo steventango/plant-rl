@@ -9,7 +9,14 @@ from .zones import Zone
 class Lightbar:
     def __init__(self, zone: Zone):
         self.addresses = (zone.left, zone.right)
-        self.channels = ["blue", "cool_white", "warm_white", "orange_red", "red", "far_red"]
+        self.channels = [
+            "blue",
+            "cool_white",
+            "warm_white",
+            "orange_red",
+            "red",
+            "far_red",
+        ]
         self.i2c = self.get_i2c()
         self.action = None
         self.safe_action = None
@@ -77,6 +84,7 @@ class Lightbar:
 
     def get_i2c(self):
         from smbus2 import SMBus
+
         bus = SMBus(1)
         time.sleep(1)
         return bus

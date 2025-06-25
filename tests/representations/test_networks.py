@@ -2,12 +2,13 @@ import haiku as hk
 import jax.numpy as jnp
 from representations.networks import NetworkBuilder
 
+
 def one_layer_Relu():
     builder = NetworkBuilder(
         input_shape=(2,),
         params={
             "hidden": 32,
-            "type": 'OneLayerRelu',
+            "type": "OneLayerRelu",
         },
         seed=0,
     )
@@ -15,7 +16,7 @@ def one_layer_Relu():
     actions = 2
     feature_function = builder.getFeatureFunction()
 
-    q_function = builder.addHead(lambda: hk.Linear(actions, name='q'))
+    q_function = builder.addHead(lambda: hk.Linear(actions, name="q"))
     params = builder.getParams()
 
     x = jnp.zeros((1, 2))

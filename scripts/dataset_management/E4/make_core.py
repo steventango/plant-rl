@@ -17,7 +17,11 @@ df["time"] = df["time"].dt.tz_localize("America/Edmonton")
 # convert to UTC
 df["time"] = df["time"].dt.tz_convert("UTC")
 # %%
-threshold_datetime = pd.to_datetime("2025-02-24T102103").tz_localize("America/Edmonton").tz_convert("UTC")
+threshold_datetime = (
+    pd.to_datetime("2025-02-24T102103")
+    .tz_localize("America/Edmonton")
+    .tz_convert("UTC")
+)
 df = df[df["time"] >= threshold_datetime]
 
 # %%
@@ -34,12 +38,18 @@ df = df.drop(columns=["actions", "light_on"])
 # %%
 import numpy as np
 
-df["image_name"] = df["time"].dt.tz_convert("America/Edmonton").dt.strftime("%Y-%m-%dT%H%M%S") + ".jpg"
+df["image_name"] = (
+    df["time"].dt.tz_convert("America/Edmonton").dt.strftime("%Y-%m-%dT%H%M%S") + ".jpg"
+)
 
 # %%
 
 # split into two dataframes
-split_datetime = pd.to_datetime("2025-03-03T222605").tz_localize("America/Edmonton").tz_convert("UTC")
+split_datetime = (
+    pd.to_datetime("2025-03-03T222605")
+    .tz_localize("America/Edmonton")
+    .tz_convert("UTC")
+)
 df1 = df[df["time"] < split_datetime].copy()
 df1["frame"] = np.arange(len(df1))
 df2 = df[df["time"] >= split_datetime].copy()

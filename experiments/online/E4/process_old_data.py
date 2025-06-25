@@ -12,166 +12,38 @@ from environments.PlantGrowthChamber.zones import Rect, Tray, Zone
 from utils.metrics import iqm
 
 timeframes = [
-  {
-    "date": "2025-02-23",
-    "ontime": "09:01",
-    "offtime": "21:01"
-  },
-  {
-    "date": "2025-02-24",
-    "ontime": "09:01",
-    "offtime": "21:01"
-  },
-  {
-    "date": "2025-02-25",
-    "ontime": "09:01",
-    "offtime": "21:01"
-  },
-  {
-    "date": "2025-02-26",
-    "ontime": "09:01",
-    "offtime": "21:01"
-  },
-  {
-    "date": "2025-02-27",
-    "ontime": "09:01",
-    "offtime": "21:01"
-  },
-  {
-    "date": "2025-02-28",
-    "ontime": "09:01",
-    "offtime": "21:01"
-  },
-  {
-    "date": "2025-03-01",
-    "ontime": "13:01",
-    "offtime": "23:59"
-  },
-  {
-    "date": "2025-03-02",
-    "ontime": "00:00",
-    "offtime": "01:01"
-  },
-  {
-    "date": "2025-03-02",
-    "ontime": "13:01",
-    "offtime": "23:59"
-  },
-  {
-    "date": "2025-03-03",
-    "ontime": "00:00",
-    "offtime": "01:01"
-  },
-  {
-    "date": "2025-03-03",
-    "ontime": "13:01",
-    "offtime": "23:59"
-  },
-  {
-    "date": "2025-03-04",
-    "ontime": "00:00",
-    "offtime": "01:01"
-  },
-  {
-    "date": "2025-03-04",
-    "ontime": "13:01",
-    "offtime": "16:01"
-  },
-  {
-    "date": "2025-03-04",
-    "ontime": "18:01",
-    "offtime": "23:59"
-  },
-  {
-    "date": "2025-03-05",
-    "ontime": "00:00",
-    "offtime": "01:01"
-  },
-  {
-    "date": "2025-03-05",
-    "ontime": "13:01",
-    "offtime": "16:01"
-  },
-  {
-    "date": "2025-03-05",
-    "ontime": "18:01",
-    "offtime": "23:59"
-  },
-  {
-    "date": "2025-03-06",
-    "ontime": "00:00",
-    "offtime": "01:01"
-  },
-  {
-    "date": "2025-03-06",
-    "ontime": "13:01",
-    "offtime": "16:01"
-  },
-  {
-    "date": "2025-03-06",
-    "ontime": "18:01",
-    "offtime": "23:59"
-  },
-  {
-    "date": "2025-03-07",
-    "ontime": "00:00",
-    "offtime": "01:01"
-  },
-  {
-    "date": "2025-03-07",
-    "ontime": "13:01",
-    "offtime": "16:01"
-  },
-  {
-    "date": "2025-03-07",
-    "ontime": "18:01",
-    "offtime": "23:59"
-  },
-  {
-    "date": "2025-03-08",
-    "ontime": "00:00",
-    "offtime": "01:01"
-  },
-  {
-    "date": "2025-03-08",
-    "ontime": "13:01",
-    "offtime": "16:01"
-  },
-  {
-    "date": "2025-03-08",
-    "ontime": "18:01",
-    "offtime": "23:59"
-  },
-  {
-    "date": "2025-03-09",
-    "ontime": "00:00",
-    "offtime": "01:01"
-  },
-  {
-    "date": "2025-03-09",
-    "ontime": "14:01",
-    "offtime": "17:01"
-  },
-  {
-    "date": "2025-03-09",
-    "ontime": "19:01",
-    "offtime": "23:59"
-  },
-  {
-    "date": "2025-03-10",
-    "ontime": "00:00",
-    "offtime": "02:01"
-  },
-  {
-    "date": "2025-03-10",
-    "ontime": "14:01",
-    "offtime": "23:59"
-  },
-  {
-    "date": "2025-03-11",
-    "ontime": "00:00",
-    "offtime": "02:01"
-  }
+    {"date": "2025-02-23", "ontime": "09:01", "offtime": "21:01"},
+    {"date": "2025-02-24", "ontime": "09:01", "offtime": "21:01"},
+    {"date": "2025-02-25", "ontime": "09:01", "offtime": "21:01"},
+    {"date": "2025-02-26", "ontime": "09:01", "offtime": "21:01"},
+    {"date": "2025-02-27", "ontime": "09:01", "offtime": "21:01"},
+    {"date": "2025-02-28", "ontime": "09:01", "offtime": "21:01"},
+    {"date": "2025-03-01", "ontime": "13:01", "offtime": "23:59"},
+    {"date": "2025-03-02", "ontime": "00:00", "offtime": "01:01"},
+    {"date": "2025-03-02", "ontime": "13:01", "offtime": "23:59"},
+    {"date": "2025-03-03", "ontime": "00:00", "offtime": "01:01"},
+    {"date": "2025-03-03", "ontime": "13:01", "offtime": "23:59"},
+    {"date": "2025-03-04", "ontime": "00:00", "offtime": "01:01"},
+    {"date": "2025-03-04", "ontime": "13:01", "offtime": "16:01"},
+    {"date": "2025-03-04", "ontime": "18:01", "offtime": "23:59"},
+    {"date": "2025-03-05", "ontime": "00:00", "offtime": "01:01"},
+    {"date": "2025-03-05", "ontime": "13:01", "offtime": "16:01"},
+    {"date": "2025-03-05", "ontime": "18:01", "offtime": "23:59"},
+    {"date": "2025-03-06", "ontime": "00:00", "offtime": "01:01"},
+    {"date": "2025-03-06", "ontime": "13:01", "offtime": "16:01"},
+    {"date": "2025-03-06", "ontime": "18:01", "offtime": "23:59"},
+    {"date": "2025-03-07", "ontime": "00:00", "offtime": "01:01"},
+    {"date": "2025-03-07", "ontime": "13:01", "offtime": "16:01"},
+    {"date": "2025-03-07", "ontime": "18:01", "offtime": "23:59"},
+    {"date": "2025-03-08", "ontime": "00:00", "offtime": "01:01"},
+    {"date": "2025-03-08", "ontime": "13:01", "offtime": "16:01"},
+    {"date": "2025-03-08", "ontime": "18:01", "offtime": "23:59"},
+    {"date": "2025-03-09", "ontime": "00:00", "offtime": "01:01"},
+    {"date": "2025-03-09", "ontime": "14:01", "offtime": "17:01"},
+    {"date": "2025-03-09", "ontime": "19:01", "offtime": "23:59"},
+    {"date": "2025-03-10", "ontime": "00:00", "offtime": "02:01"},
+    {"date": "2025-03-10", "ontime": "14:01", "offtime": "23:59"},
+    {"date": "2025-03-11", "ontime": "00:00", "offtime": "02:01"},
 ]
 
 
@@ -199,8 +71,16 @@ def main():
     out_dir = Path("results") / zone_dir
     out_dir.mkdir(exist_ok=True, parents=True)
     paths = sorted(zone_dir.glob("*.png"))
-    paths = [path for path in paths if datetime.datetime.fromisoformat(path.stem).minute % 5 == 0]
-    paths = [path for path in paths if in_timeframe(datetime.datetime.fromisoformat(path.stem))]
+    paths = [
+        path
+        for path in paths
+        if datetime.datetime.fromisoformat(path.stem).minute % 5 == 0
+    ]
+    paths = [
+        path
+        for path in paths
+        if in_timeframe(datetime.datetime.fromisoformat(path.stem))
+    ]
 
     # Use process_map to parallelize the processing
     results = process_map(
@@ -224,8 +104,12 @@ def main():
 
 def in_timeframe(timestamp):
     for timeframe in timeframes:
-        ontime = datetime.datetime.fromisoformat(f"{timeframe['date']}T{timeframe['ontime']}")
-        offtime = datetime.datetime.fromisoformat(f"{timeframe['date']}T{timeframe['offtime']}")
+        ontime = datetime.datetime.fromisoformat(
+            f"{timeframe['date']}T{timeframe['ontime']}"
+        )
+        offtime = datetime.datetime.fromisoformat(
+            f"{timeframe['date']}T{timeframe['offtime']}"
+        )
         if ontime <= timestamp <= offtime:
             return True
     return False
@@ -240,7 +124,14 @@ def process_one_image(args):
     df["timestamp"] = timestamp
 
     avg = iqm(jnp.array(df["area"]), 0.05)
-    df = pd.concat([df, pd.DataFrame({"plant_id": ["iqm"], "area": [avg], "timestamp": [timestamp]})])
+    df = pd.concat(
+        [
+            df,
+            pd.DataFrame(
+                {"plant_id": ["iqm"], "area": [avg], "timestamp": [timestamp]}
+            ),
+        ]
+    )
     df.to_csv(out_dir / f"{path.stem}.csv", index=False)
     for key, value in debug_images.items():
         value.save(out_dir / f"{path.stem}_{key}.png")

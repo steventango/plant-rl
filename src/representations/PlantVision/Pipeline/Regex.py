@@ -15,7 +15,9 @@ class Regex(ABC):
 
 class DateRegex1(Regex):
     def __init__(self):
-        super().__init__(r"z\d*c\d*--(\d{4})-(\d{2})-(\d{2})--(\d{2})-(\d{2})-(\d{2})", "Date1")
+        super().__init__(
+            r"z\d*c\d*--(\d{4})-(\d{2})-(\d{2})--(\d{2})-(\d{2})-(\d{2})", "Date1"
+        )
         # z2c1--2022-04-14--12-00-01.png
 
     def getdate(self, input_string: str):
@@ -23,18 +25,22 @@ class DateRegex1(Regex):
         res = re.findall(self.pattern, input_string)
         # print(f"input: {input_string} res: {res}")
         if len(res) != 1:
-            return datetime(1,1,1,1,1,1)
+            return datetime(1, 1, 1, 1, 1, 1)
         year = int(res[0][0])
         month = int(res[0][1])
         day = int(res[0][2])
         hour = int(res[0][3])
         minute = int(res[0][4])
         second = int(res[0][5])
-        return datetime(year,month,day,hour,minute,second)
+        return datetime(year, month, day, hour, minute, second)
+
 
 class DateRegex2(Regex):
     def __init__(self):
-        super().__init__(r"zone\d{2}cam\d{2}-(\d{4})-(\d{2})-(\d{2})-(\d{2})-(\d{2})-(\d{2})", "Date1")
+        super().__init__(
+            r"zone\d{2}cam\d{2}-(\d{4})-(\d{2})-(\d{2})-(\d{2})-(\d{2})-(\d{2})",
+            "Date1",
+        )
         # zone01cam02-2024-02-05-17-40-01.png
 
     def getdate(self, input_string: str):
@@ -42,14 +48,14 @@ class DateRegex2(Regex):
         res = re.findall(self.pattern, input_string)
         # print(f"input: {input_string} res: {res}")
         if len(res) != 1:
-            return datetime(1,1,1,1,1,1)
+            return datetime(1, 1, 1, 1, 1, 1)
         year = int(res[0][0])
         month = int(res[0][1])
         day = int(res[0][2])
         hour = int(res[0][3])
         minute = int(res[0][4])
         second = int(res[0][5])
-        return datetime(year,month,day,hour,minute,second)
+        return datetime(year, month, day, hour, minute, second)
 
 
 class RegexBuilder:

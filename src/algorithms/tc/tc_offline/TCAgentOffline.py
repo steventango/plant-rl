@@ -12,7 +12,14 @@ from utils.checkpoint import checkpointable
 
 @checkpointable(("buffer", "steps", "updates"))
 class TCAgentOffline(TCAgent):
-    def __init__(self, observations: Tuple[int, ...], actions: int, params: Dict, collector: Collector, seed: int):
+    def __init__(
+        self,
+        observations: Tuple[int, ...],
+        actions: int,
+        params: Dict,
+        collector: Collector,
+        seed: int,
+    ):
         super().__init__(observations, actions, params, collector, seed)
 
         # Params for replay

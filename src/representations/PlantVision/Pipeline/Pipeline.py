@@ -106,7 +106,7 @@ def process_single_image(experiment: Experiment, path: Path, queue, outimdir: Pa
         row["plant_id"] = plant_num
         row["sample"] = label
         row["image_name"] = image_name
-        row["genotype"] = experiment.plant_rois.data[plant_num-1].genotype
+        row["genotype"] = experiment.plant_rois.data[plant_num - 1].genotype
 
         for variable in observations[sample]:
             # special cases for tuples

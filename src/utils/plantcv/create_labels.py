@@ -38,8 +38,9 @@ def create_labels(mask, rois=None, roi_type="partial"):
     # Use contours for labeling
     if rois is None:
         # label will work with any number of objects in the mask
-        labeled_mask, num_labels = label(mask, background=0,
-                                         return_num=True, connectivity=2)
+        labeled_mask, num_labels = label(
+            mask, background=0, return_num=True, connectivity=2
+        )
 
     # Use the rois for labeling
     else:
@@ -47,21 +48,23 @@ def create_labels(mask, rois=None, roi_type="partial"):
         labeled_mask = np.zeros(mask.shape[:2], dtype=np.int32)
         num_labels = len(rois.contours)
         for i, roi in enumerate(rois):
-            kept_cnt, _, mask = _roi_filter(img=mask, roi=roi,
-                                            obj=contours,
-                                            hierarchy=hierarchy,
-                                            roi_type=roi_type)
+            kept_cnt, _, mask = _roi_filter(
+                img=mask, roi=roi, obj=contours, hierarchy=hierarchy, roi_type=roi_type
+            )
 
             # Pixel intensity of (i+1) such that the first object has value
-            cv2.drawContours(labeled_mask, kept_cnt, -1, (i+1), -1)
+            cv2.drawContours(labeled_mask, kept_cnt, -1, (i + 1), -1)
 
     # Restore debug parameter
     params.debug = debug
     colorful = label2rgb(labeled_mask)
-    colorful2 = ((255*colorful).astype(np.uint8))
+    colorful2 = (255 * colorful).astype(np.uint8)
 
-    _debug(colorful2, filename=os.path.join(params.debug_outdir,
-                                            str(params.device) +
-                                            '_label_colored_mask.png'))
+    _debug(
+        colorful2,
+        filename=os.path.join(
+            params.debug_outdir, str(params.device) + "_label_colored_mask.png"
+        ),
+    )
 
     return labeled_mask, num_labels

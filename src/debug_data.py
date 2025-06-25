@@ -38,8 +38,8 @@ def get_zone_from_config(config):
 
 def clean_area(df):
     df["clean_area"] = df["area"].copy()
-    df["mean"] = 0.
-    df["var"] = 0.
+    df["mean"] = 0.0
+    df["var"] = 0.0
     for _plant_id, group in df.groupby("plant_id"):
         uemw = UEMW()
         for i, row in group.iterrows():
@@ -48,7 +48,7 @@ def clean_area(df):
             mean, var = uemw.compute()
             df.at[i, "mean"] = mean
             df.at[i, "var"] = var
-            std = var ** 0.5
+            std = var**0.5
             if row["area"] > mean + 2 * std or row["area"] < mean - 2 * std:
                 df.at[i, "clean_area"] = mean
             else:
@@ -71,7 +71,9 @@ def main():
         df["clean_area"] = clean_area(df)
 
         for area_col in ["area", "clean_area"]:
-            plot_path = dataset / "processed" / pipeline_version / "plots" / f"{area_col}.pdf"
+            plot_path = (
+                dataset / "processed" / pipeline_version / "plots" / f"{area_col}.pdf"
+            )
             plot_path.parent.mkdir(exist_ok=True, parents=True)
             # aggregate the data over frame, take average of area
             df_agg = (
@@ -85,7 +87,9 @@ def main():
                 .reset_index()
             )
             df_agg["area_diff"] = df_agg[area_col].diff()
-            df_agg["percent_diff"] = df_agg["area_diff"] / df_agg[area_col].shift(1) * 100
+            df_agg["percent_diff"] = (
+                df_agg["area_diff"] / df_agg[area_col].shift(1) * 100
+            )
 
             # Plot the data
             fig, (ax, ax2) = plt.subplots(2, 1, figsize=(20, 14), sharex=True)
@@ -98,7 +102,12 @@ def main():
             sns.despine(ax=ax)
 
             # Second subplot: plot percent_diff
-            ax2.plot(df_agg["frame"], df_agg["percent_diff"], label="percent_diff", color="tab:orange")
+            ax2.plot(
+                df_agg["frame"],
+                df_agg["percent_diff"],
+                label="percent_diff",
+                color="tab:orange",
+            )
             ax2.set_ylabel(f"{area_col} Diff")
             ax2.set_title("Area Diff Over Time")
             ax2.legend()
@@ -115,7 +124,9 @@ def main():
             # sort descending by percent_diff
             df_agg = df_agg.sort_values(by="percent_diff", ascending=False)
             for _i, row in df_agg.head(10).iterrows():
-                _, prev_row = next(df_agg[df_agg["frame"] == row["frame"] - 1].iterrows())
+                _, prev_row = next(
+                    df_agg[df_agg["frame"] == row["frame"] - 1].iterrows()
+                )
                 print(f"Jump detected at frame {row['frame']}!")
                 print(f"Area current: {row[area_col]}")
                 print(f"Area previous: {prev_row[area_col]}")
@@ -128,12 +139,30 @@ def main():
                 prev_image_path = dataset / "images" / prev_row["image_name"]
                 process_one_image(zone, out_dir_images, prev_image_path, 0)
 
-                prev_image_path = path_prefix / f"{prev_row['image_name'].replace('_right.jpg', '_shape_image.jpg')}"
-                image_path = path_prefix / f"{row['image_name'].replace('_right.jpg', '_shape_image.jpg')}"
-                prev_image_path2 = path_prefix / f"{prev_row['image_name'].replace('_right.jpg', 'masks2.jpg')}"
-                image_path2 = path_prefix / f"{row['image_name'].replace('_right.jpg', 'masks2.jpg')}"
-                prev_image_path3 = path_prefix / f"{prev_row['image_name'].replace('_right.jpg', 'boxes.jpg')}"
-                image_path3 = path_prefix / f"{row['image_name'].replace('_right.jpg', 'boxes.jpg')}"
+                prev_image_path = (
+                    path_prefix
+                    / f"{prev_row['image_name'].replace('_right.jpg', '_shape_image.jpg')}"
+                )
+                image_path = (
+                    path_prefix
+                    / f"{row['image_name'].replace('_right.jpg', '_shape_image.jpg')}"
+                )
+                prev_image_path2 = (
+                    path_prefix
+                    / f"{prev_row['image_name'].replace('_right.jpg', 'masks2.jpg')}"
+                )
+                image_path2 = (
+                    path_prefix
+                    / f"{row['image_name'].replace('_right.jpg', 'masks2.jpg')}"
+                )
+                prev_image_path3 = (
+                    path_prefix
+                    / f"{prev_row['image_name'].replace('_right.jpg', 'boxes.jpg')}"
+                )
+                image_path3 = (
+                    path_prefix
+                    / f"{row['image_name'].replace('_right.jpg', 'boxes.jpg')}"
+                )
 
                 img1 = Image.open(prev_image_path)
                 img2 = Image.open(image_path)
@@ -151,13 +180,23 @@ def main():
 
                 # draw a line between the two images
                 draw = ImageDraw.Draw(img)
-                draw.line((img1.width, 0, img1.width, img1.height), fill="black", width=5)
+                draw.line(
+                    (img1.width, 0, img1.width, img1.height), fill="black", width=5
+                )
                 # draw horizontal lines between the two images
-                draw.line((0, img1.height, img.width, img1.height), fill="black", width=5)
-                draw.line((0, 2 * img1.height, img.width, 2 * img1.height), fill="black", width=5)
+                draw.line(
+                    (0, img1.height, img.width, img1.height), fill="black", width=5
+                )
+                draw.line(
+                    (0, 2 * img1.height, img.width, 2 * img1.height),
+                    fill="black",
+                    width=5,
+                )
 
                 # save to debug folder
-                debug_path = dataset / "processed" / pipeline_version / "debug" / area_col
+                debug_path = (
+                    dataset / "processed" / pipeline_version / "debug" / area_col
+                )
                 debug_path.mkdir(exist_ok=True, parents=True)
                 debug_image_path = debug_path / f"jump_{row['frame']}.jpg"
                 img.save(debug_path / f"jump_{row['frame']}.jpg")

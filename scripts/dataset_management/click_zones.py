@@ -70,26 +70,40 @@ class TrayConfigApp:
         self.tray_dim_frame = tk.Frame(self.frame)
         self.tray_dim_frame.pack(side=tk.TOP, fill=tk.X, padx=10, pady=5)
 
-        tk.Label(self.tray_dim_frame, text="Tray Dimensions:").grid(row=0, column=0, sticky="w")
+        tk.Label(self.tray_dim_frame, text="Tray Dimensions:").grid(
+            row=0, column=0, sticky="w"
+        )
 
-        tk.Label(self.tray_dim_frame, text="Rows (n_tall):").grid(row=0, column=1, padx=5)
+        tk.Label(self.tray_dim_frame, text="Rows (n_tall):").grid(
+            row=0, column=1, padx=5
+        )
         self.n_tall_var = tk.StringVar(value=str(self.default_n_tall))
-        self.n_tall_entry = ttk.Spinbox(self.tray_dim_frame, from_=1, to=20, width=5, textvariable=self.n_tall_var)
+        self.n_tall_entry = ttk.Spinbox(
+            self.tray_dim_frame, from_=1, to=20, width=5, textvariable=self.n_tall_var
+        )
         self.n_tall_entry.grid(row=0, column=2)
 
-        tk.Label(self.tray_dim_frame, text="Columns (n_wide):").grid(row=0, column=3, padx=5)
+        tk.Label(self.tray_dim_frame, text="Columns (n_wide):").grid(
+            row=0, column=3, padx=5
+        )
         self.n_wide_var = tk.StringVar(value=str(self.default_n_wide))
-        self.n_wide_entry = ttk.Spinbox(self.tray_dim_frame, from_=1, to=20, width=5, textvariable=self.n_wide_var)
+        self.n_wide_entry = ttk.Spinbox(
+            self.tray_dim_frame, from_=1, to=20, width=5, textvariable=self.n_wide_var
+        )
         self.n_wide_entry.grid(row=0, column=4)
 
         # Add tray counter and editing status
         self.tray_count_frame = tk.Frame(self.tray_dim_frame)
         self.tray_count_frame.grid(row=0, column=5, padx=(20, 5), sticky="e")
 
-        self.tray_count_label = tk.Label(self.tray_count_frame, text="Trays: 0", font=("Arial", 10))
+        self.tray_count_label = tk.Label(
+            self.tray_count_frame, text="Trays: 0", font=("Arial", 10)
+        )
         self.tray_count_label.pack(side=tk.LEFT)
 
-        self.edit_status_label = tk.Label(self.tray_count_frame, text="", font=("Arial", 10, "italic"), fg="blue")
+        self.edit_status_label = tk.Label(
+            self.tray_count_frame, text="", font=("Arial", 10, "italic"), fg="blue"
+        )
         self.edit_status_label.pack(side=tk.RIGHT, padx=(10, 0))
 
         # Create canvas for the image
@@ -102,22 +116,32 @@ class TrayConfigApp:
 
         # Add cancel edit button
         self.cancel_edit_button = tk.Button(
-            self.button_frame, text="Cancel Edit", command=self.cancel_edit, state=tk.DISABLED
+            self.button_frame,
+            text="Cancel Edit",
+            command=self.cancel_edit,
+            state=tk.DISABLED,
         )
         self.cancel_edit_button.pack(side=tk.LEFT, padx=(10, 5), pady=10)
 
         # Add delete tray button
         self.delete_tray_button = tk.Button(
-            self.button_frame, text="Delete Tray", command=self.delete_selected_tray, state=tk.DISABLED
+            self.button_frame,
+            text="Delete Tray",
+            command=self.delete_selected_tray,
+            state=tk.DISABLED,
         )
         self.delete_tray_button.pack(side=tk.LEFT, padx=5, pady=10)
 
         # Add reset button
-        self.reset_button = tk.Button(self.button_frame, text="Reset Points", command=self.reset_points)
+        self.reset_button = tk.Button(
+            self.button_frame, text="Reset Points", command=self.reset_points
+        )
         self.reset_button.pack(side=tk.LEFT, padx=(5, 10), pady=10)
 
         # Add save and next button
-        self.save_button = tk.Button(self.button_frame, text="Save & Next Dataset", command=self.save_and_next)
+        self.save_button = tk.Button(
+            self.button_frame, text="Save & Next Dataset", command=self.save_and_next
+        )
         self.save_button.pack(side=tk.RIGHT, padx=10, pady=10, fill=tk.X, expand=True)
 
         # Add status bar for instructions
@@ -151,14 +175,19 @@ class TrayConfigApp:
 
         print(f"Found {len(self.dataset_dirs)} datasets")
         for idx, dataset in enumerate(self.dataset_dirs):
-            print(f"{idx+1}. {dataset}")
+            print(f"{idx + 1}. {dataset}")
 
     def select_point(self, event):
         """Handle mouse click to select a point"""
         if len(self.points) < 4:
             self.points.append((event.x, event.y))
             self.canvas.create_oval(
-                event.x - 3, event.y - 3, event.x + 3, event.y + 3, fill="red", tags="current_points"
+                event.x - 3,
+                event.y - 3,
+                event.x + 3,
+                event.y + 3,
+                fill="red",
+                tags="current_points",
             )
             print(f"Point {len(self.points)} selected at ({event.x}, {event.y})")
 
@@ -174,10 +203,14 @@ class TrayConfigApp:
         if len(self.points) < 4:
             self.status_bar.config(
                 text=f"Select point {len(self.points) + 1}/4: "
-                + ["top-left", "top-right", "bottom-left", "bottom-right"][len(self.points)]
+                + ["top-left", "top-right", "bottom-left", "bottom-right"][
+                    len(self.points)
+                ]
             )
         else:
-            self.status_bar.config(text="Tray added. Select 4 more points for another tray or save and continue.")
+            self.status_bar.config(
+                text="Tray added. Select 4 more points for another tray or save and continue."
+            )
 
     def reset_points(self):
         """Reset the current points selection"""
@@ -203,7 +236,9 @@ class TrayConfigApp:
         """Save the current tray configuration"""
         if len(self.points) == 4:
             # Scale points back to original image coordinates
-            scaled_points = [self.scale_point_to_original(point) for point in self.points]
+            scaled_points = [
+                self.scale_point_to_original(point) for point in self.points
+            ]
 
             # Get user-defined tray dimensions
             try:
@@ -212,11 +247,15 @@ class TrayConfigApp:
 
                 # Validate input
                 if n_tall < 1 or n_wide < 1:
-                    messagebox.showerror("Invalid Input", "Rows and columns must be positive integers")
+                    messagebox.showerror(
+                        "Invalid Input", "Rows and columns must be positive integers"
+                    )
                     return
 
             except ValueError:
-                messagebox.showerror("Invalid Input", "Please enter valid numbers for rows and columns")
+                messagebox.showerror(
+                    "Invalid Input", "Please enter valid numbers for rows and columns"
+                )
                 return
 
             tray_config = {
@@ -241,7 +280,9 @@ class TrayConfigApp:
                 self.canvas.delete(old_tag)
 
                 # Create new visualization
-                marker_id = self.visualize_tray(self.points, f"Tray {old_index + 1}: {n_tall}×{n_wide}")
+                marker_id = self.visualize_tray(
+                    self.points, f"Tray {old_index + 1}: {n_tall}×{n_wide}"
+                )
                 self.tray_markers[old_index] = marker_id
 
                 print(f"Tray {old_index + 1} updated with dimensions {n_tall}×{n_wide}")
@@ -256,7 +297,9 @@ class TrayConfigApp:
                 self.tray_configs.append(tray_config)
 
                 # Visualize the tray with a permanent marker
-                marker_id = self.visualize_tray(self.points, f"Tray {len(self.tray_configs)}: {n_tall}×{n_wide}")
+                marker_id = self.visualize_tray(
+                    self.points, f"Tray {len(self.tray_configs)}: {n_tall}×{n_wide}"
+                )
                 self.tray_markers.append(marker_id)
 
                 print(
@@ -305,7 +348,12 @@ class TrayConfigApp:
             center_y = sum(p[1] for p in points) / 4
 
             self.canvas.create_text(
-                center_x, center_y, text=label, fill="green", font=("Arial", 12, "bold"), tags=tag
+                center_x,
+                center_y,
+                text=label,
+                fill="green",
+                font=("Arial", 12, "bold"),
+                tags=tag,
             )
 
         return tag
@@ -323,26 +371,36 @@ class TrayConfigApp:
                 match = re.match(r"z(\d+)", zone_name)
                 if match:
                     zone_id = int(match.group(1))
-                    logger.info(f"Successfully extracted zone identifier {zone_id} using regex")
+                    logger.info(
+                        f"Successfully extracted zone identifier {zone_id} using regex"
+                    )
                     return zone_id
 
                 # Fallback to old method if regex doesn't match
                 if "c" in zone_name:
                     identifier_str = zone_name[1 : zone_name.find("c")]
                     zone_id = int(identifier_str)
-                    logger.info(f"Extracted zone identifier {zone_id} using 'c' delimiter method")
+                    logger.info(
+                        f"Extracted zone identifier {zone_id} using 'c' delimiter method"
+                    )
                     return zone_id
 
                 # If no 'c' found, try to extract numeric part after 'z'
                 numeric_part = "".join(c for c in zone_name[1:] if c.isdigit())
                 if numeric_part:
                     zone_id = int(numeric_part)
-                    logger.info(f"Extracted zone identifier {zone_id} using numeric extraction")
+                    logger.info(
+                        f"Extracted zone identifier {zone_id} using numeric extraction"
+                    )
                     return zone_id
 
-                logger.warning(f"Could not extract zone identifier from {zone_name} using any method")
+                logger.warning(
+                    f"Could not extract zone identifier from {zone_name} using any method"
+                )
             except ValueError as e:
-                logger.error(f"ValueError while parsing identifier from {zone_name}: {e}")
+                logger.error(
+                    f"ValueError while parsing identifier from {zone_name}: {e}"
+                )
 
         # Print a warning about using default zone
         logger.warning(f"Using default zone 1 for path {dataset_path}")
@@ -368,12 +426,14 @@ class TrayConfigApp:
                             self.scale_point_to_display(rect["bottom_left"]),
                             self.scale_point_to_display(rect["bottom_right"]),
                         ]
-                        label = f"Tray {i+1}: {tray['n_tall']}×{tray['n_wide']}"
+                        label = f"Tray {i + 1}: {tray['n_tall']}×{tray['n_wide']}"
                         marker_id = self.visualize_tray(display_points, label)
                         self.tray_markers.append(marker_id)
 
                     # Update tray count
-                    self.tray_count_label.config(text=f"Trays: {len(self.tray_configs)}")
+                    self.tray_count_label.config(
+                        text=f"Trays: {len(self.tray_configs)}"
+                    )
 
                     print(f"Loaded {len(self.tray_configs)} existing trays from config")
 
@@ -390,7 +450,8 @@ class TrayConfigApp:
                             # User chose to edit - clear existing trays to allow fresh selection
                             self.clear_all_trays()
                             messagebox.showinfo(
-                                "Edit Mode", "Existing trays have been cleared. Please select new tray positions."
+                                "Edit Mode",
+                                "Existing trays have been cleared. Please select new tray positions.",
                             )
             except Exception as e:
                 print(f"Error loading configuration: {e}")
@@ -423,7 +484,9 @@ class TrayConfigApp:
             zone_identifier = self.extract_zone_identifier(self.dataset_dir)
             logger.info(f"Saving configuration for zone {zone_identifier}")
 
-            config = {"zone": {"identifier": zone_identifier, "trays": self.tray_configs}}
+            config = {
+                "zone": {"identifier": zone_identifier, "trays": self.tray_configs}
+            }
 
             if UPDATE_CONFIG:
                 # Find and update existing config file in PlantGrowthChamber configs
@@ -433,7 +496,9 @@ class TrayConfigApp:
                 config_path = self.dataset_dir / "config.json"
                 with open(config_path, "w") as f:
                     json.dump(config, f, indent=4)
-                logger.info(f"Configuration saved to {config_path} with zone identifier: {zone_identifier}")
+                logger.info(
+                    f"Configuration saved to {config_path} with zone identifier: {zone_identifier}"
+                )
                 return True
         else:
             logger.warning("No trays to save.")
@@ -441,8 +506,12 @@ class TrayConfigApp:
 
     def find_config_file(self, zone_identifier):
         """Find the corresponding config file in PlantGrowthChamber configs directory"""
-        config_dir = Path("/workspaces/plant-rl/src/environments/PlantGrowthChamber/configs")
-        logger.info(f"Looking for config files for zone {zone_identifier} in {config_dir}")
+        config_dir = Path(
+            "/workspaces/plant-rl/src/environments/PlantGrowthChamber/configs"
+        )
+        logger.info(
+            f"Looking for config files for zone {zone_identifier} in {config_dir}"
+        )
 
         # Look for config files matching the zone identifier
         pattern = f"z{zone_identifier}*.json"
@@ -461,7 +530,9 @@ class TrayConfigApp:
     def update_existing_config(self, zone_identifier, new_config):
         """Update an existing config file with new tray configuration"""
         config_file = self.find_config_file(zone_identifier)
-        logger.info(f"Updating/creating config for zone {zone_identifier} at {config_file}")
+        logger.info(
+            f"Updating/creating config for zone {zone_identifier} at {config_file}"
+        )
 
         # Check if the config file exists
         if config_file.exists():
@@ -477,7 +548,9 @@ class TrayConfigApp:
                     logger.info("Adding missing 'zone' section to config")
 
                 existing_config["zone"]["trays"] = new_config["zone"]["trays"]
-                logger.info(f"Updated trays section with {len(new_config['zone']['trays'])} trays")
+                logger.info(
+                    f"Updated trays section with {len(new_config['zone']['trays'])} trays"
+                )
 
                 # Make sure the identifier is preserved/set
                 existing_config["zone"]["identifier"] = zone_identifier
@@ -495,7 +568,9 @@ class TrayConfigApp:
                 # Fallback: create a new file
                 with open(config_file, "w") as f:
                     json.dump(new_config, f, indent=4)
-                logger.info(f"Created new configuration file at {config_file} after error")
+                logger.info(
+                    f"Created new configuration file at {config_file} after error"
+                )
                 return True
         else:
             # File doesn't exist, create it
@@ -543,14 +618,17 @@ class TrayConfigApp:
         if self.points:
             # Points are selected but not added to a tray
             response = messagebox.askyesno(
-                "Unsaved Points", "You have selected points that haven't been added as a tray. Add them now?"
+                "Unsaved Points",
+                "You have selected points that haven't been added as a tray. Add them now?",
             )
             if response:
                 self.save_tray()
 
         # Save the configuration
         if self.save_current_config():
-            messagebox.showinfo("Success", f"Configuration saved for {self.dataset_dir}")
+            messagebox.showinfo(
+                "Success", f"Configuration saved for {self.dataset_dir}"
+            )
 
         # Load the next dataset
         self.load_next_dataset()
@@ -564,7 +642,9 @@ class TrayConfigApp:
             print(f"No images found in {images_dir}")
             # Show placeholder in the canvas
             self.canvas.delete("all")
-            self.canvas.create_text(200, 200, text=f"No images found in {self.dataset_dir}")
+            self.canvas.create_text(
+                200, 200, text=f"No images found in {self.dataset_dir}"
+            )
             return
 
         # Find an image near 10 AM
@@ -599,7 +679,9 @@ class TrayConfigApp:
                 return
 
             # Undistort the image
-            camera_matrix = np.array([[1800.0, 0.0, 1296.0], [0.0, 1800.0, 972.0], [0.0, 0.0, 1.0]])
+            camera_matrix = np.array(
+                [[1800.0, 0.0, 1296.0], [0.0, 1800.0, 972.0], [0.0, 0.0, 1.0]]
+            )
             dist_coeffs = np.array([0.0, 0.0, 0.0, 0.0])
 
             # Undistort
@@ -617,14 +699,18 @@ class TrayConfigApp:
             screen_width = self.root.winfo_screenwidth() - 300
             screen_height = self.root.winfo_screenheight() - 200
 
-            self.scale_factor = min(screen_width / self.original_width, screen_height / self.original_height)
+            self.scale_factor = min(
+                screen_width / self.original_width, screen_height / self.original_height
+            )
 
             # Resize the image
             new_width = int(self.original_width * self.scale_factor)
             new_height = int(self.original_height * self.scale_factor)
             resized_img = cv2.resize(img, (new_width, new_height))
 
-            print(f"Original image dimensions: {self.original_width}x{self.original_height}")
+            print(
+                f"Original image dimensions: {self.original_width}x{self.original_height}"
+            )
             print(f"Display dimensions: {new_width}x{new_height}")
             print(f"Scale factor: {self.scale_factor}")
 
@@ -666,7 +752,9 @@ class TrayConfigApp:
     def point_in_polygon(self, x, y, poly_coords):
         """Check if a point (x,y) is inside a polygon defined by coordinates"""
         # Convert flat list to pairs
-        vertices = [(poly_coords[i], poly_coords[i + 1]) for i in range(0, len(poly_coords), 2)]
+        vertices = [
+            (poly_coords[i], poly_coords[i + 1]) for i in range(0, len(poly_coords), 2)
+        ]
 
         # Ray casting algorithm
         inside = False
@@ -676,7 +764,11 @@ class TrayConfigApp:
             xj, yj = vertices[j]
 
             # Check if point is on edge
-            if (yi == y and xi == x) or (yi > y) != (yj > y) and (x < (xj - xi) * (y - yi) / (yj - yi) + xi):
+            if (
+                (yi == y and xi == x)
+                or (yi > y) != (yj > y)
+                and (x < (xj - xi) * (y - yi) / (yj - yi) + xi)
+            ):
                 inside = not inside
             j = i
 
@@ -718,11 +810,15 @@ class TrayConfigApp:
         # Draw the current points
         for point in self.points:
             x, y = point
-            self.canvas.create_oval(x - 3, y - 3, x + 3, y + 3, fill="red", tags="current_points")
+            self.canvas.create_oval(
+                x - 3, y - 3, x + 3, y + 3, fill="red", tags="current_points"
+            )
 
         # Update status bar and edit label
         tray_num = tray_index + 1
-        self.status_bar.config(text=f"Editing Tray {tray_num}. Click to set new corner points.")
+        self.status_bar.config(
+            text=f"Editing Tray {tray_num}. Click to set new corner points."
+        )
         self.edit_status_label.config(text=f"Editing Tray {tray_num}")
 
         print(f"Started editing tray {tray_num}")
@@ -798,7 +894,7 @@ class TrayConfigApp:
                 self.scale_point_to_display(rect["bottom_left"]),
                 self.scale_point_to_display(rect["bottom_right"]),
             ]
-            label = f"Tray {i+1}: {tray['n_tall']}×{tray['n_wide']}"
+            label = f"Tray {i + 1}: {tray['n_tall']}×{tray['n_wide']}"
             marker_id = self.visualize_tray(display_points, label)
             self.tray_markers.append(marker_id)
 

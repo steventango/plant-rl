@@ -1,20 +1,22 @@
-#%%
+# %%
 import numpy as np
 import pandas as pd
 
-df = pd.read_csv('area.csv')
-xs = df['xs'].values
-ys = df['ys'].values
+df = pd.read_csv("area.csv")
+xs = df["xs"].values
+ys = df["ys"].values
 
-#%%
+# %%
 import matplotlib.pyplot as plt
 
 
 # %%
 import sys
-sys.path.append('/workspaces/plant-rl/src')
+
+sys.path.append("/workspaces/plant-rl/src")
 
 from utils.metrics import UnbiasedExponentialMovingAverage as uema
+
 
 def calc_ema(xs, alpha):
     ema = uema(alpha=alpha)
@@ -26,20 +28,20 @@ def calc_ema(xs, alpha):
 
 
 # plot various EMA values
-plt.plot(xs, ys, label='raw')
+plt.plot(xs, ys, label="raw")
 
-for alpha in [.8, .06]:
-    plt.plot(xs, calc_ema(ys, alpha), label=f'alpha={alpha}')
+for alpha in [0.8, 0.06]:
+    plt.plot(xs, calc_ema(ys, alpha), label=f"alpha={alpha}")
 
-plt.xlabel('Day Time [Hours]')
-plt.ylabel('Area')
+plt.xlabel("Day Time [Hours]")
+plt.ylabel("Area")
 plt.legend()
 
 # %%
 # proposed reward function: difference between current and previous EMA
-plt.plot(xs, (calc_ema(ys, .2) - calc_ema(ys, .06)) / 150, label='difference')
-plt.xlabel('Day Time [Hours]')
-plt.ylabel('Reward')
+plt.plot(xs, (calc_ema(ys, 0.2) - calc_ema(ys, 0.06)) / 150, label="difference")
+plt.xlabel("Day Time [Hours]")
+plt.ylabel("Reward")
 plt.legend()
 
 # %%

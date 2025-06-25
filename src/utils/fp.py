@@ -1,6 +1,8 @@
 from typing import Any, Callable, Sequence
 
 F = Callable[[Any], Any]
+
+
 def pipe(fs: Sequence[F]) -> F:
     def sub(x):
         out = x

@@ -18,5 +18,6 @@ def main():
             new_path2 = output_dir2 / f"{timestamp}.png"
             shutil.copy(image_path, new_path2)
 
+
 if __name__ == "__main__":
     main()

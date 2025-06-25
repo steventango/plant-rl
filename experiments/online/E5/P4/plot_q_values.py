@@ -119,13 +119,17 @@ for action, ax in zip(range(num_actions), axs, strict=False):
         cbar=(action == num_actions - 1),  # Add colorbar only to the last subplot
         vmin=vmin,
         vmax=vmax,
-        cbar_ax=None if action < num_actions - 1 else fig.add_axes([0.92, 0.15, 0.02, 0.7]),
+        cbar_ax=None
+        if action < num_actions - 1
+        else fig.add_axes([0.92, 0.15, 0.02, 0.7]),
     )
     ax.set_title(f"Action {action} ({action_labels[action]})")
     ax.set_xlabel("Time (h)" if action == num_actions - 1 else "")
     ax.set_ylabel("Area")  # Area is now on the y-axis
     ax.set_xticks(np.arange(0, len(times), hour_interval))  # Set ticks every hour
-    ax.set_xticklabels([f"{int(t * 24)}" for t in times[::hour_interval]])  # Format as hours
+    ax.set_xticklabels(
+        [f"{int(t * 24)}" for t in times[::hour_interval]]
+    )  # Format as hours
     ax.set_yticks(np.arange(0, len(areas), 10))  # Set y ticks every 10 areas
     ax.set_yticklabels([f"{area:.1f}" for area in areas[::10]])  # Format as float
     ax.set_yticklabels(ax.get_yticklabels(), rotation=0)  # Rotate y ticks

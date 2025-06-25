@@ -29,11 +29,15 @@ class SAM2:
         # Build SAM2 Image Predictor
         self.sam2_predictor = SAM2ImagePredictor.from_pretrained(sam2_model)
 
-    def inference(self, image: Image, boxes: np.ndarray, multimask_output: bool = False):
+    def inference(
+        self, image: Image, boxes: np.ndarray, multimask_output: bool = False
+    ):
         # Setup image for SAM2 and predict masks
         with (
             torch.inference_mode(),
-            torch.autocast(device_type=self.device, dtype=torch.bfloat16) if self.device == "cuda" else nullcontext(),
+            torch.autocast(device_type=self.device, dtype=torch.bfloat16)
+            if self.device == "cuda"
+            else nullcontext(),
         ):
             self.sam2_predictor.set_image(np.array(image.convert("RGB")))
             masks, scores, logits = self.sam2_predictor.predict(

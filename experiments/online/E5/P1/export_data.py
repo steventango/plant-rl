@@ -39,5 +39,6 @@ def main():
 
     df.to_csv(f"{path}/data.csv", index=False)
 
+
 if __name__ == "__main__":
     main()

@@ -11,7 +11,12 @@ import seaborn as sns
 from PIL import Image
 
 from environments.PlantGrowthChamber.cv import process_image
-from environments.PlantGrowthChamber.zones import Rect, Tray, Zone, load_zone_from_config
+from environments.PlantGrowthChamber.zones import (
+    Rect,
+    Tray,
+    Zone,
+    load_zone_from_config,
+)
 from utils.metrics import iqm
 
 TEST_DIR = Path(__file__).parent.parent.parent / "test_data"
@@ -23,8 +28,10 @@ E7_TEST_DIR = TEST_DIR / "E7/P2"
 E8_TEST_DIR = TEST_DIR / "E8"
 
 skipif_github_actions = pytest.mark.skipif(
-    os.environ.get("GITHUB_ACTIONS") == "true", reason="Skip in GitHub Actions environment"
+    os.environ.get("GITHUB_ACTIONS") == "true",
+    reason="Skip in GitHub Actions environment",
 )
+
 
 def get_plant_area(test_dir: Path, zone: Zone):
     dfs = []
@@ -39,7 +46,14 @@ def get_plant_area(test_dir: Path, zone: Zone):
         df["intensity"] = path.stem
 
         avg = iqm(jnp.array(df["area"]), 0.05)
-        df = pd.concat([df, pd.DataFrame({"plant_id": ["iqm"], "area": [avg], "intensity": [path.stem]})])
+        df = pd.concat(
+            [
+                df,
+                pd.DataFrame(
+                    {"plant_id": ["iqm"], "area": [avg], "intensity": [path.stem]}
+                ),
+            ]
+        )
         df = df.reset_index(drop=True)
         dfs.append(df)
         df.to_csv(out_dir / f"{path.stem}.csv", index=False)
@@ -122,33 +136,33 @@ def test_process_E5_zone_1():
 @skipif_github_actions
 def test_process_E5_zone_2():
     zone = Zone(
-            identifier=2,
-            camera_left_url=None,
-            camera_right_url="http://mitacs-zone02-camera02.ccis.ualberta.ca:8080/observation",
-            lightbar_url="http://mitacs-zone2.ccis.ualberta.ca:8080/action",
-            trays=[
-                Tray(
-                    n_wide=6,
-                    n_tall=3,
-                    rect=Rect(
-                        top_left=(483, 279),
-                        top_right=(1752, 300),
-                        bottom_left=(471, 969),
-                        bottom_right=(1791, 909),
-                    ),
+        identifier=2,
+        camera_left_url=None,
+        camera_right_url="http://mitacs-zone02-camera02.ccis.ualberta.ca:8080/observation",
+        lightbar_url="http://mitacs-zone2.ccis.ualberta.ca:8080/action",
+        trays=[
+            Tray(
+                n_wide=6,
+                n_tall=3,
+                rect=Rect(
+                    top_left=(483, 279),
+                    top_right=(1752, 300),
+                    bottom_left=(471, 969),
+                    bottom_right=(1791, 909),
                 ),
-                Tray(
-                    n_wide=6,
-                    n_tall=3,
-                    rect=Rect(
-                        top_left=(498, 1068),
-                        top_right=(1806, 990),
-                        bottom_left=(585, 1722),
-                        bottom_right=(1812, 1572),
-                    ),
+            ),
+            Tray(
+                n_wide=6,
+                n_tall=3,
+                rect=Rect(
+                    top_left=(498, 1068),
+                    top_right=(1806, 990),
+                    bottom_left=(585, 1722),
+                    bottom_right=(1812, 1572),
                 ),
-            ],
-        )
+            ),
+        ],
+    )
     get_plant_area(E5_TEST_DIR, zone)
 
 

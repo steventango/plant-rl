@@ -9,6 +9,7 @@ class V(nn.Module):
     """
     Class V is an MLP for estimating the state value function `v`.
     """
+
     def __init__(self, num_inputs, hidden_dim, init, activation):
         """
         Constructor
@@ -68,8 +69,8 @@ class DiscreteQ(nn.Module):
     Class DiscreteQ implements an action value network with number of
     predicted action values equal to the number of available actions.
     """
-    def __init__(self, num_inputs, num_actions, hidden_dim, init,
-                 activation):
+
+    def __init__(self, num_inputs, num_actions, hidden_dim, init, activation):
         """
         Constructor
 
@@ -131,8 +132,8 @@ class Q(nn.Module):
     approximator. The action value is computed by concatenating the action to
     the state observation as the input to the neural network.
     """
-    def __init__(self, num_inputs, num_actions, hidden_dim, n_hidden, init,
-                 activation):
+
+    def __init__(self, num_inputs, num_actions, hidden_dim, n_hidden, init, activation):
         """
         Constructor
 
@@ -203,8 +204,8 @@ class DoubleQ(nn.Module):
     The action values are computed by concatenating the action to the state
     observation and using this as input to each neural network.
     """
-    def __init__(self, num_inputs, num_actions, hidden_dim, init,
-                 activation):
+
+    def __init__(self, num_inputs, num_actions, hidden_dim, init, activation):
         """
         Constructor
 

@@ -12,36 +12,50 @@ from representations.TileCoder import DenseTileCoder, TileCoderConfig
 from representations.RichTileCoder import RichTileCoder, RichTileCoderConfig
 from utils.checkpoint import checkpointable
 
-@checkpointable(('lag',))
+
+@checkpointable(("lag",))
 class TCAgent(BaseAgent):
-    def __init__(self, observations: Tuple[int, ...], actions: int, params: Dict, collector: Collector, seed: int):
+    def __init__(
+        self,
+        observations: Tuple[int, ...],
+        actions: int,
+        params: Dict,
+        collector: Collector,
+        seed: int,
+    ):
         super().__init__(observations, actions, params, collector, seed)
         self.lag = LagBuffer(self.n_step)
 
-        self.rep_params: Dict = params['representation']
+        self.rep_params: Dict = params["representation"]
 
-        if self.rep_params['which_tc'] == 'RichTileCoder':
-            self.tile_coder = RichTileCoder(RichTileCoderConfig(
-                tiles=self.rep_params['tiles'],
-                tilings=self.rep_params['tilings'],
-                dims=observations[0],
-                strategy=self.rep_params['strategy'],
-            ))
-        elif self.rep_params['which_tc'] == 'AndyTileCoder':
-            self.tile_coder = DenseTileCoder(TileCoderConfig(
-                tiles=self.rep_params['tiles'],
-                tilings=self.rep_params['tilings'],
-                dims=observations[0],
-            ))
+        if self.rep_params["which_tc"] == "RichTileCoder":
+            self.tile_coder = RichTileCoder(
+                RichTileCoderConfig(
+                    tiles=self.rep_params["tiles"],
+                    tilings=self.rep_params["tilings"],
+                    dims=observations[0],
+                    strategy=self.rep_params["strategy"],
+                )
+            )
+        elif self.rep_params["which_tc"] == "AndyTileCoder":
+            self.tile_coder = DenseTileCoder(
+                TileCoderConfig(
+                    tiles=self.rep_params["tiles"],
+                    tilings=self.rep_params["tilings"],
+                    dims=observations[0],
+                )
+            )
         else:
-            raise ValueError("Please specify which tile coder to use with param which_tc.")
+            raise ValueError(
+                "Please specify which tile coder to use with param which_tc."
+            )
 
         self.n_features = self.tile_coder.features()
         self.nonzero_features = self.tile_coder.nonzero_features()
 
-        self.alpha = params['alpha']
-        self.alpha0 = params['alpha']
-        self.alpha_decay = params.get('alpha_decay', False)
+        self.alpha = params["alpha"]
+        self.alpha0 = params["alpha"]
+        self.alpha_decay = params.get("alpha_decay", False)
 
     def get_rep(self, s):
         return self.tile_coder.encode(s)
@@ -50,12 +64,10 @@ class TCAgent(BaseAgent):
         return {}
 
     @abstractmethod
-    def policy(self, obs: np.ndarray) -> np.ndarray:
-        ...
+    def policy(self, obs: np.ndarray) -> np.ndarray: ...
 
     @abstractmethod
-    def update(self, x, a, xp, r, gamma):
-        ...
+    def update(self, x, a, xp, r, gamma): ...
 
     # ----------------------
     # -- RLGlue interface --
@@ -68,13 +80,15 @@ class TCAgent(BaseAgent):
         x = self.get_rep(s)
         pi = self.policy(x)
         a = sample(pi, rng=self.rng)
-        self.lag.add(Timestep(
-            x=x,
-            a=a,
-            r=None,
-            gamma=0,
-            terminal=False,
-        ))
+        self.lag.add(
+            Timestep(
+                x=x,
+                a=a,
+                r=None,
+                gamma=0,
+                terminal=False,
+            )
+        )
         return a, self.get_info()
 
     def step(self, r: float, sp: np.ndarray | None, extra: Dict[str, Any]):
@@ -88,7 +102,7 @@ class TCAgent(BaseAgent):
             a = sample(pi, rng=self.rng)
 
         # see if the problem specified a discount term
-        gamma = extra.get('gamma', 1.0)
+        gamma = extra.get("gamma", 1.0)
 
         interaction = Timestep(
             x=xp,

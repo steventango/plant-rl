@@ -3,9 +3,17 @@ from pathlib import Path
 import json
 import shutil
 from Regex import Regex, RegexBuilder
-from Undistortion import Undistortion, load_undistortion_from_dict, load_undistortion_from_file
+from Undistortion import (
+    Undistortion,
+    load_undistortion_from_dict,
+    load_undistortion_from_file,
+)
 from Roi import RoiList
-from HSVThreshold import HSVThreshold, load_threshold_from_dict, load_threshold_from_file
+from HSVThreshold import (
+    HSVThreshold,
+    load_threshold_from_dict,
+    load_threshold_from_file,
+)
 from TimeFrame import TimeFrameList
 from Experiment import Experiment
 from Pipeline import Pipeline
@@ -13,9 +21,7 @@ from Pipeline import Pipeline
 
 class ExperimentManager:
     def __init__(self, list_exps=False) -> None:
-        self.experiment_dir_path = Path(
-            Path.cwd() / "Experiments"
-        )
+        self.experiment_dir_path = Path(Path.cwd() / "Experiments")
 
         self.experiments = self.load_all_exp_titles()
         if list_exps:
@@ -26,7 +32,11 @@ class ExperimentManager:
     def get_exp_metadata(self, expid: str):
         with open(Path(self.experiment_dir_path) / expid / (expid + ".json"), "r") as f:
             data = json.load(f)
-            return {"title": data["title"], "description": data["description"], "filename_format": data["filename_format"]}
+            return {
+                "title": data["title"],
+                "description": data["description"],
+                "filename_format": data["filename_format"],
+            }
 
     # Creating / saving an experiment requires having all the required components
     def load_all_exp_titles(self):
@@ -45,7 +55,7 @@ class ExperimentManager:
         # given an experiment id, load the Experiment Object associated with it
         dirpath = self.experiment_dir_path / expid
 
-        with open(dirpath / (expid+".json"), "r") as f:
+        with open(dirpath / (expid + ".json"), "r") as f:
             metadata = json.load(f)
 
         # check if undistortion exists
@@ -62,7 +72,6 @@ class ExperimentManager:
         rois = RoiList()
         rois.load_from_file(dirpath / "rois.json")
 
-
         return Experiment(
             timeframe_list=tfl,
             name=metadata["title"],
@@ -72,7 +81,8 @@ class ExperimentManager:
             undistortion=undistortion,
             plant_hsv_threshold=threshold,
             plant_rois=rois,
-            ID=expid)
+            ID=expid,
+        )
 
     def create_experiment(
         self,
@@ -85,7 +95,6 @@ class ExperimentManager:
         threshold: dict,
         rois: list,
     ):
-
         if undistortion is not None:
             undistortion = load_undistortion_from_dict(undistortion)
 

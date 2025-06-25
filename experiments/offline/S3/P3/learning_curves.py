@@ -98,7 +98,9 @@ def main():
         all_xs = []
         all_ys = []
         for _alg, sub_df in split_over_column(df, col="algorithm"):
-            xs, ys = extract_learning_curves(sub_df, tuple(), metric=metric, interpolation=None)
+            xs, ys = extract_learning_curves(
+                sub_df, tuple(), metric=metric, interpolation=None
+            )
             x = xs[0]
             y = ys[0]
             y = np.stack(y)
@@ -113,10 +115,18 @@ def main():
             rows += 1
         f, axs = plt.subplots(rows, 1, squeeze=False, sharex=True)
         axs = axs.flatten()
-        x_plot = [(datetime.datetime.fromtimestamp(t) - datetime.datetime.fromtimestamp(x[0])).total_seconds() for t in x]
+        x_plot = [
+            (
+                datetime.datetime.fromtimestamp(t)
+                - datetime.datetime.fromtimestamp(x[0])
+            ).total_seconds()
+            for t in x
+        ]
         for j, (ax, yj) in enumerate(zip(axs, y.T, strict=False)):
             # Set the x-axis formatter to display timedelta
-            ax.xaxis.set_major_formatter(FuncFormatter(lambda x, _: str(datetime.timedelta(seconds=int(x)))))
+            ax.xaxis.set_major_formatter(
+                FuncFormatter(lambda x, _: str(datetime.timedelta(seconds=int(x))))
+            )
             # show tick every 3600 seconds
             ax.xaxis.set_major_locator(plt.MultipleLocator(3600))
             # Draw horizontal segments without vertical connectors
@@ -138,7 +148,9 @@ def main():
                 print(f"Return: {total_return:.2f}")
         if metric == "area":
             axs[-1].set_ylabel("IQM")
-            axs[-1].xaxis.set_major_formatter(FuncFormatter(lambda x, _: str(datetime.timedelta(seconds=int(x)))))
+            axs[-1].xaxis.set_major_formatter(
+                FuncFormatter(lambda x, _: str(datetime.timedelta(seconds=int(x))))
+            )
             ax.xaxis.set_major_locator(plt.MultipleLocator(3600))
             u = uema(alpha=0.1)
             stat = []
@@ -151,7 +163,12 @@ def main():
         axs[0].set_title(f"{metric.capitalize()}")
         axs[-1].set_xlabel("Time")
 
-        save(save_path=f"{path}/plots", plot_name=metric, save_type="jpg", height_ratio=0.1 * m)
+        save(
+            save_path=f"{path}/plots",
+            plot_name=metric,
+            save_type="jpg",
+            height_ratio=0.1 * m,
+        )
 
 
 if __name__ == "__main__":

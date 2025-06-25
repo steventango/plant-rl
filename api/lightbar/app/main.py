@@ -32,5 +32,7 @@ def update_action(action: Action, lightbar: Annotated[any, Depends(get_lightbar)
 def get_current_action(lightbar: Lightbar = Depends(get_lightbar)):
     return {
         "action": lightbar.action.tolist() if lightbar.action is not None else None,
-        "safe_action": lightbar.safe_action.tolist() if lightbar.safe_action is not None else None
+        "safe_action": lightbar.safe_action.tolist()
+        if lightbar.safe_action is not None
+        else None,
     }

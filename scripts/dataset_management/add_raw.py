@@ -32,7 +32,11 @@ for dataset_path in dataset_paths:
     # convert time to datetime
     df["time"] = pd.to_datetime(df["time"], format="%Y-%m-%d-%H-%M-%S")
     # convert from America/Edmonton to UTC
-    df["time"] = df["time"].dt.tz_localize("America/Edmonton", ambiguous=True).dt.tz_convert("UTC")
+    df["time"] = (
+        df["time"]
+        .dt.tz_localize("America/Edmonton", ambiguous=True)
+        .dt.tz_convert("UTC")
+    )
 
     # Save the new DataFrame to a CSV file
     df.to_csv(dataset_path / "raw.csv", index=False)

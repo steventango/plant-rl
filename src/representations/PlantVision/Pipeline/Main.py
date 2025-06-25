@@ -33,7 +33,22 @@ def create():
             "fill": "50",
             "invert": False,
         },
-        rois=[{"cx":378.2551181102362,"cy":461.1728481455563,"r":68.03149606299212,"number":0,"genotype":"genotype1"},{"cx":587.7921259842519,"cy":444.8481455563331,"r":68.03149606299212,"number":1,"genotype":"genotype2"}],
+        rois=[
+            {
+                "cx": 378.2551181102362,
+                "cy": 461.1728481455563,
+                "r": 68.03149606299212,
+                "number": 0,
+                "genotype": "genotype1",
+            },
+            {
+                "cx": 587.7921259842519,
+                "cy": 444.8481455563331,
+                "r": 68.03149606299212,
+                "number": 1,
+                "genotype": "genotype2",
+            },
+        ],
     )
     print(f"Created Experiment {experiment_id}")
 

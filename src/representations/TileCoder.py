@@ -1,5 +1,6 @@
 from PyFixedReps.TileCoder import TileCoder, TileCoderConfig
 
+
 class DenseTileCoder(TileCoder):
     def __init__(self, params: TileCoderConfig, rng=None):
         params.scale_output = False

@@ -2,6 +2,7 @@ import gymnasium
 from RlGlue.environment import BaseEnvironment
 import numpy as np
 
+
 class Gridworld(BaseEnvironment):
     def __init__(self):
         self.env = gymnasium.make("Gym-Gridworlds/Penalty-3x3-v0")

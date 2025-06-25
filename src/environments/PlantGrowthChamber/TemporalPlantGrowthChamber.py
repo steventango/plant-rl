@@ -4,7 +4,6 @@ from environments.PlantGrowthChamber.PlantGrowthChamber import PlantGrowthChambe
 
 
 class TemporalPlantGrowthChamber(PlantGrowthChamber):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

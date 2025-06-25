@@ -11,6 +11,7 @@ app = FastAPI()
 @cache
 def get_camera():
     from picamera import PiCamera
+
     camera = PiCamera()
     camera.resolution = (2592, 1944)
     time.sleep(2)

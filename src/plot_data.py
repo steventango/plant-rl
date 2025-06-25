@@ -41,7 +41,14 @@ def main():
             ax2.set_title("Action 0 Over Time")
             ax2.legend()
         else:
-            ax2.text(0.5, 0.5, "action.0 column not found", ha="center", va="center", transform=ax2.transAxes)
+            ax2.text(
+                0.5,
+                0.5,
+                "action.0 column not found",
+                ha="center",
+                va="center",
+                transform=ax2.transAxes,
+            )
         ax2.set_xlabel("Timestamp")
         ax2.tick_params(axis="x", rotation=45)
         sns.despine(ax=ax2)

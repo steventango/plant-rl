@@ -1,6 +1,7 @@
 import os
 import sys
-sys.path.append(os.getcwd() + '/src')
+
+sys.path.append(os.getcwd() + "/src")
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -8,7 +9,11 @@ from PyExpPlotting.matplot import save, setDefaultConference
 from PyExpUtils.results.Collection import ResultCollection
 
 from RlEvaluation.config import data_definition
-from RlEvaluation.temporal import TimeSummary, extract_learning_curves, curve_percentile_bootstrap_ci
+from RlEvaluation.temporal import (
+    TimeSummary,
+    extract_learning_curves,
+    curve_percentile_bootstrap_ci,
+)
 from RlEvaluation.statistics import Statistic
 from RlEvaluation.utils.pandas import split_over_column
 
@@ -17,11 +22,10 @@ import RlEvaluation.hypers as Hypers
 from experiment.ExperimentModel import ExperimentModel
 from experiment.tools import parseCmdLineArgs
 
-setDefaultConference('neurips')
+setDefaultConference("neurips")
 
-COLORS = {
-    'ESARSA':'red'
-}
+COLORS = {"ESARSA": "red"}
+
 
 def main():
     path, should_save, save_type = parseCmdLineArgs()
@@ -30,41 +34,45 @@ def main():
 
     data_definition(
         hyper_cols=results.get_hyperparameter_columns(),
-        seed_col='seed',
-        time_col='frame',
-        environment_col='environment',
-        algorithm_col='algorithm',
+        seed_col="seed",
+        time_col="frame",
+        environment_col="environment",
+        algorithm_col="algorithm",
         make_global=True,
     )
 
     df = results.combine(
-        folder_columns=(None, None, None, 'environment'),
-        file_col='algorithm',
+        folder_columns=(None, None, None, "environment"),
+        file_col="algorithm",
     )
 
     assert df is not None
 
     results.get_any_exp()
 
-    for env, env_df in split_over_column(df, col='environment'):
+    for env, env_df in split_over_column(df, col="environment"):
         f, ax = plt.subplots()
-        for alg, sub_df in split_over_column(env_df, col='algorithm'):
+        for alg, sub_df in split_over_column(env_df, col="algorithm"):
             report = Hypers.select_best_hypers(
                 sub_df,
-                metric='action_is_optimal',  # picking the hypers that chose action "1" most
+                metric="action_is_optimal",  # picking the hypers that chose action "1" most
                 prefer=Hypers.Preference.high,
                 time_summary=TimeSummary.sum,
                 statistic=Statistic.mean,
             )
 
-            print('-' * 25)
+            print("-" * 25)
             print(env, alg)
             Hypers.pretty_print(report)
 
-            xs_a, ys_a = extract_learning_curves(sub_df, report.best_configuration, metric='action_is_optimal', interpolation=None)
+            xs_a, ys_a = extract_learning_curves(
+                sub_df,
+                report.best_configuration,
+                metric="action_is_optimal",
+                interpolation=None,
+            )
             xs_a = np.asarray(xs_a)
             ys_a = np.asarray(ys_a)
-
 
             res = curve_percentile_bootstrap_ci(
                 rng=np.random.default_rng(0),
@@ -72,14 +80,26 @@ def main():
                 statistic=Statistic.mean,
             )
 
-            ax.plot(rescale_time(xs_a[0], 1), res.sample_stat, label=alg, color=COLORS[alg], linewidth=0.5)
-            ax.fill_between(rescale_time(xs_a[0], 1), res.ci[0], res.ci[1], color=COLORS[alg], alpha=0.2)
+            ax.plot(
+                rescale_time(xs_a[0], 1),
+                res.sample_stat,
+                label=alg,
+                color=COLORS[alg],
+                linewidth=0.5,
+            )
+            ax.fill_between(
+                rescale_time(xs_a[0], 1),
+                res.ci[0],
+                res.ci[1],
+                color=COLORS[alg],
+                alpha=0.2,
+            )
             ax.legend()
-            ax.set_title('Optimal action selected over 28 days')
-            ax.set_ylabel('action_is_optimal')
-            ax.set_xlabel('Day Time [Hours]')
+            ax.set_title("Optimal action selected over 28 days")
+            ax.set_ylabel("action_is_optimal")
+            ax.set_xlabel("Day Time [Hours]")
 
-            '''
+            """
             # Plot reward history averaged over 5 seeds
             xs, ys = extract_learning_curves(sub_df, report.best_configuration, metric='return', interpolation=None)
             xs = np.asarray(xs)
@@ -96,14 +116,15 @@ def main():
             ax[1].legend()
             ax[1].set_ylabel('Accumulated Reward')
             ax[0].set_xlabel('Day Time [Hours]')
-            '''
+            """
 
+            save(save_path=f"{path}/plots", plot_name=f"{alg}", save_type="jpg")
 
-            save(save_path=f'{path}/plots', plot_name=f'{alg}', save_type='jpg')
 
 def rescale_time(x, stride):
-    base_step = 10/60           # spreadsheet time step is 10 minutes
-    return x*base_step*stride   # x-values in units of hours
+    base_step = 10 / 60  # spreadsheet time step is 10 minutes
+    return x * base_step * stride  # x-values in units of hours
+
 
 if __name__ == "__main__":
     main()

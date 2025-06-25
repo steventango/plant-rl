@@ -20,9 +20,9 @@ class PiecewiseLinear:
         self.segments = []  # Will store (x_min, x_max, slope, intercept)
 
         # Create segments from consecutive points
-        for i in range(len(x_values)-1):
-            x_min, x_max = x_values[i], x_values[i+1]
-            y_min, y_max = y_values[i], y_values[i+1]
+        for i in range(len(x_values) - 1):
+            x_min, x_max = x_values[i], x_values[i + 1]
+            y_min, y_max = y_values[i], y_values[i + 1]
 
             # Calculate slope and intercept for this segment
             slope = (y_max - y_min) / (x_max - x_min)
@@ -74,7 +74,9 @@ class PiecewiseLinear:
             elif x_min > t0:
                 # Segment completely after t0 - shift right
                 new_intercept = intercept - slope * shift
-                new_segments.append((x_min + shift, x_max + shift, slope, new_intercept))
+                new_segments.append(
+                    (x_min + shift, x_max + shift, slope, new_intercept)
+                )
             else:
                 # Segment contains or touches t0
                 # Find value at t0
@@ -91,7 +93,9 @@ class PiecewiseLinear:
 
                 # Add shifted remainder if there is any
                 if x_max > t0:
-                    new_segments.append((t1, x_max + shift, slope, val_at_t0 - slope * t1))
+                    new_segments.append(
+                        (t1, x_max + shift, slope, val_at_t0 - slope * t1)
+                    )
 
         self.segments = new_segments
 
@@ -122,7 +126,13 @@ class PiecewiseLinear:
 
 
 @partial(jax.jit, static_argnums=(2))
-def fta(x: ArrayLike, eta: float = 2, tiles: int = 20, lower_bound: float = -20, upper_bound: float = 20) -> Array:
+def fta(
+    x: ArrayLike,
+    eta: float = 2,
+    tiles: int = 20,
+    lower_bound: float = -20,
+    upper_bound: float = 20,
+) -> Array:
     r"""Fuzzy Tiling Activation
 
     Computes the element-wise function:
@@ -153,9 +163,12 @@ def fta(x: ArrayLike, eta: float = 2, tiles: int = 20, lower_bound: float = -20,
     z = z.reshape(x.shape[0], -1)
     return z
 
+
 @jax.jit
 def fuzzy_indicator_function(x: ArrayLike, eta: float):
-    return jnp.greater(eta, x).astype(x.dtype) * x + jnp.greater_equal(x, eta).astype(x.dtype)
+    return jnp.greater(eta, x).astype(x.dtype) * x + jnp.greater_equal(x, eta).astype(
+        x.dtype
+    )
 
 
 def normalize(x, lower, upper):

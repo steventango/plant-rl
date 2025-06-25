@@ -4,6 +4,7 @@ import numpy as np
 
 from PyExpUtils.collection.Sampler import Sampler
 
+
 class WindowAverage(Sampler):
     def __init__(self, size: int):
         self.size = size
@@ -11,9 +12,9 @@ class WindowAverage(Sampler):
         self.n_inserts = 0
 
     def next(self, v: float):
-        self.window[self.n_inserts%self.size] = v
+        self.window[self.n_inserts % self.size] = v
         self.n_inserts += 1
-        return self.window[:min(self.n_inserts, self.size)].mean()
+        return self.window[: min(self.n_inserts, self.size)].mean()
 
     def next_eval(self, c: Callable[[], float]):
         v = c()

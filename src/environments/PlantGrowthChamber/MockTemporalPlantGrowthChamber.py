@@ -6,7 +6,8 @@ from environments.PlantGrowthChamber.TemporalPlantGrowthChamber import (
 )
 
 
-class MockTemporalPlantGrowthChamber(MockPlantGrowthChamber, TemporalPlantGrowthChamber):
-
+class MockTemporalPlantGrowthChamber(
+    MockPlantGrowthChamber, TemporalPlantGrowthChamber
+):
     def __init__(self, *args, **kwargs):
         MockPlantGrowthChamber.__init__(self, *args, **kwargs)

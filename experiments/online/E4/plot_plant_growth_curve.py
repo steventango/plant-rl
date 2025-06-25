@@ -15,6 +15,7 @@ times = []
 blue = []
 brightness = []
 
+
 def process_image(image):
     try:
         img = Image.open(image)
@@ -26,6 +27,7 @@ def process_image(image):
         return time, blue_value, brightness_value
     except Exception:
         return None
+
 
 # results = process_map(process_image, sorted(image_dir.glob("*.png")))
 
@@ -84,7 +86,7 @@ def process_image(image):
 # %%
 
 
-df = pd.read_csv(Path(__file__).parent  / "new_area_over_time.csv")
+df = pd.read_csv(Path(__file__).parent / "new_area_over_time.csv")
 df["timestamp"] = pd.to_datetime(df["timestamp"])
 df
 
@@ -118,7 +120,15 @@ def plot_segments(df, x_column, y_column, ax, color, label=None, gap_indices=Non
     """
     # If no gaps, plot as a single line
     if not gap_indices:
-        sns.lineplot(data=df, x=x_column, y=y_column, ax=ax, label=label, legend=False, color=color)
+        sns.lineplot(
+            data=df,
+            x=x_column,
+            y=y_column,
+            ax=ax,
+            label=label,
+            legend=False,
+            color=color,
+        )
     else:
         # Plot segments separately
         start_idx = 0
@@ -139,7 +149,15 @@ def plot_segments(df, x_column, y_column, ax, color, label=None, gap_indices=Non
         # Plot the final segment
         final_segment = df.loc[start_idx:]
         if not final_segment.empty:
-            sns.lineplot(data=final_segment, x=x_column, y=y_column, ax=ax, label=None, color=color, legend=False)
+            sns.lineplot(
+                data=final_segment,
+                x=x_column,
+                y=y_column,
+                ax=ax,
+                label=None,
+                color=color,
+                legend=False,
+            )
 
 
 # Create subplots with shared x-axis
@@ -148,7 +166,7 @@ ax = axs[1]
 # Sort DataFrame by timestamp to ensure proper ordering
 df = df.sort_values("timestamp")
 
-#%%
+# %%
 
 # Calculate time differences between consecutive points
 df["time_diff"] = df["timestamp"].diff()
@@ -157,7 +175,7 @@ df["time_diff"] = df["timestamp"].diff()
 threshold = pd.Timedelta(minutes=6)
 large_gaps = df["time_diff"] > threshold
 
-#%%
+# %%
 # Get the indices where large gaps occur
 gap_indices = df.index[large_gaps].tolist()
 
@@ -166,13 +184,17 @@ palette = sns.color_palette("hls", len(df.columns) - 2)
 for column in df.columns:
     if column in ["timestamp", "time_diff"]:
         continue
-    if column =="iqm":
+    if column == "iqm":
         color = "black"
     else:
         color = palette.pop(0)
-    plot_segments(df, "timestamp", column, ax, color, label=column, gap_indices=gap_indices)
+    plot_segments(
+        df, "timestamp", column, ax, color, label=column, gap_indices=gap_indices
+    )
 
-area_columns = [column for column in df.columns if column not in ["timestamp", "time_diff"]]
+area_columns = [
+    column for column in df.columns if column not in ["timestamp", "time_diff"]
+]
 ax.set_ylim(0, df[area_columns].quantile(0.999).max())
 ax.set_ylabel("Area (mm$^2$)")
 ax.set_title("Area Over Time")
@@ -180,7 +202,9 @@ ax.set_title("Area Over Time")
 # %%
 
 
-df2 = pd.read_csv(Path(__file__).parent.parent.parent.parent / "data/first_exp/z2cR.csv")
+df2 = pd.read_csv(
+    Path(__file__).parent.parent.parent.parent / "data/first_exp/z2cR.csv"
+)
 df2["time"] = pd.to_datetime(df2["time"])
 df2["light_on"] = df2["light_on"].astype(int)
 
@@ -201,7 +225,15 @@ large_gaps_df2 = df2["time_diff"] > threshold
 gap_indices_df2 = df2.index[large_gaps_df2].tolist()
 
 # Use plot_segments to plot light_on data
-plot_segments(df2, "time", "light_on", axs[0], color="blue", label="Light On", gap_indices=gap_indices_df2)
+plot_segments(
+    df2,
+    "time",
+    "light_on",
+    axs[0],
+    color="blue",
+    label="Light On",
+    gap_indices=gap_indices_df2,
+)
 axs[0].set_title("Policy")
 axs[0].set_ylabel("Action (Light On)")
 axs[0].set_ylim(-0.1, 1.1)  # For binary data, setting appropriate y-limits
@@ -226,7 +258,7 @@ for ax in axs:
     import matplotlib.dates as mdates
 
     ax.xaxis.set_minor_locator(
-        mdates.HourLocator(byhour=[1,2,9,13,14,16,17,18,19,21], interval=1)
+        mdates.HourLocator(byhour=[1, 2, 9, 13, 14, 16, 17, 18, 19, 21], interval=1)
     )
     ax.xaxis.set_minor_formatter(mdates.DateFormatter("%H"))
     ax.tick_params(axis="x", which="minor", labelrotation=90)

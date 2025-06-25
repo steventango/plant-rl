@@ -26,7 +26,9 @@ class OfflinePlantGrowthChamber:
         self.dataset_paths = sorted(Path(path) for path in kwargs["dataset_paths"])
         self.dataset_index = 0
         self.index = 0
-        self.daily_reward = kwargs.get("daily_reward", True)  # if true, use "percentage" overnight growth as reward
+        self.daily_reward = kwargs.get(
+            "daily_reward", True
+        )  # if true, use "percentage" overnight growth as reward
         self.reward_type = kwargs.get("reward_type", "max_mean")
         self.daily_morning_areas = {}
         self.daily_max_areas = {}
@@ -53,7 +55,9 @@ class OfflinePlantGrowthChamber:
         )
 
         # Remove time stamps before 9:30 and after 20:30, which are not relevant when twilight is used
-        df = df[(time(9, 30) <= df["time"].dt.time) & (df["time"].dt.time <= time(20, 31))]
+        df = df[
+            (time(9, 30) <= df["time"].dt.time) & (df["time"].dt.time <= time(20, 31))
+        ]
 
         # Remove incomplete days
         df = self.remove_incomplete_days(df, timestamps_per_day=67)
@@ -61,8 +65,12 @@ class OfflinePlantGrowthChamber:
         # Compute morning and max areas on each day
         local_dates = df["time"].dt.date
         for date_val, group in df.groupby(local_dates):
-            self.daily_morning_areas[date_val] = np.mean(group["mean_clean_area"][:5])  # morning areas
-            self.daily_max_areas[date_val] = np.mean(np.sort(group["mean_clean_area"])[-10:])  # max areas
+            self.daily_morning_areas[date_val] = np.mean(
+                group["mean_clean_area"][:5]
+            )  # morning areas
+            self.daily_max_areas[date_val] = np.mean(
+                np.sort(group["mean_clean_area"])[-10:]
+            )  # max areas
             self.daily_areas[date_val] = group["mean_clean_area"].values
 
         return df
@@ -100,7 +108,10 @@ class OfflinePlantGrowthChamber:
         if self.index == 0:
             return 0.0
         if self.daily_reward:
-            if self.dataset.iloc[self.index]["time"].date() == self.dataset.iloc[self.index - 1]["time"].date():
+            if (
+                self.dataset.iloc[self.index]["time"].date()
+                == self.dataset.iloc[self.index - 1]["time"].date()
+            ):
                 return 0.0
 
             today_local_date = self.dataset.iloc[self.index]["time"].date()
@@ -108,9 +119,15 @@ class OfflinePlantGrowthChamber:
 
             if self.reward_type == "max_mean":
                 today_areas = self.daily_areas.get(today_local_date, [])
-                today_area = np.mean(np.sort(today_areas)[-10:]) if len(today_areas) else 0
+                today_area = (
+                    np.mean(np.sort(today_areas)[-10:]) if len(today_areas) else 0
+                )
                 yesterday_areas = self.daily_areas.get(yesterday_local_date, [])
-                yesterday_area = np.mean(np.sort(yesterday_areas)[-10:]) if len(yesterday_areas) else 0
+                yesterday_area = (
+                    np.mean(np.sort(yesterday_areas)[-10:])
+                    if len(yesterday_areas)
+                    else 0
+                )
             elif self.reward_type == "max":
                 today_areas = self.daily_areas.get(today_local_date, [])
                 today_area = np.max(today_areas) if len(today_areas) else 0
@@ -157,7 +174,10 @@ class OfflinePlantGrowthChamber:
 
         # Compute next state
         self.index += 1
-        if self.dataset.iloc[self.index]["time"].date() != self.dataset.iloc[self.index - 1]["time"].date():
+        if (
+            self.dataset.iloc[self.index]["time"].date()
+            != self.dataset.iloc[self.index - 1]["time"].date()
+        ):
             self.dli = 0
         obs = self.get_observation()
 
@@ -169,7 +189,9 @@ class OfflinePlantGrowthChamber:
         info = {}
         if terminal:
             dataset_path = self.dataset_paths[self.dataset_index]
-            logger.info(f"Added {self.index} transitions from {dataset_path} to the replay buffer.")
+            logger.info(
+                f"Added {self.index} transitions from {dataset_path} to the replay buffer."
+            )
             self.dataset_index += 1
             if self.dataset_index >= len(self.dataset_paths):
                 info.update({"exhausted": True})
@@ -190,16 +212,17 @@ class OfflinePlantGrowthChamber:
 
 class OfflinePlantGrowthChamberTime(OfflinePlantGrowthChamber):
     def get_observation(self):
-        super_obs =super().get_observation()
+        super_obs = super().get_observation()
         obs = super_obs[[0, 1]]
         return obs
 
 
 class OfflinePlantGrowthChamberTimeDLI(OfflinePlantGrowthChamber):
     def get_observation(self):
-        super_obs =super().get_observation()
+        super_obs = super().get_observation()
         obs = super_obs[[0, 1]]
         return obs
+
 
 class OfflinePlantGrowthChamber_1hrStep(OfflinePlantGrowthChamber):
     def get_observation(self):
@@ -207,7 +230,9 @@ class OfflinePlantGrowthChamber_1hrStep(OfflinePlantGrowthChamber):
         return np.hstack([s[0], np.clip(normalize(self.dli, 0, 12), 0, 1), s[2], s[3]])
 
     def get_action(self):
-        agent_actions = (self.dataset.iloc[self.index : self.index + 6]["action.0"] > 0.3).astype(int)
+        agent_actions = (
+            self.dataset.iloc[self.index : self.index + 6]["action.0"] > 0.3
+        ).astype(int)
         average_action = agent_actions.sum()
         if average_action >= 4:
             return int(1)
@@ -220,7 +245,10 @@ class OfflinePlantGrowthChamber_1hrStep(OfflinePlantGrowthChamber):
 
         # Compute next state
         self.index += 6
-        if self.dataset.iloc[self.index]["time"].date() != self.dataset.iloc[self.index - 1]["time"].date():
+        if (
+            self.dataset.iloc[self.index]["time"].date()
+            != self.dataset.iloc[self.index - 1]["time"].date()
+        ):
             self.dli = 0
         obs = self.get_observation()
 
@@ -231,7 +259,9 @@ class OfflinePlantGrowthChamber_1hrStep(OfflinePlantGrowthChamber):
         terminal = self.index + 72 >= len(self.dataset)
         info = {}
         if terminal:
-            logger.info(f"Added {int(self.index/6)} transitions to the replay buffer.")
+            logger.info(
+                f"Added {int(self.index / 6)} transitions to the replay buffer."
+            )
             self.dataset_index += 1
             if self.dataset_index >= len(self.dataset_paths):
                 info.update({"exhausted": True})
@@ -247,7 +277,10 @@ class OfflinePlantGrowthChamber_1hrStep_MC(OfflinePlantGrowthChamber_1hrStep):
     def get_reward(self):
         today_local_date = self.dataset.iloc[self.index]["time"].date()
         today_max_area = self.daily_max_areas.get(today_local_date)
-        if self.dataset.iloc[self.index]["time"].date() == self.dataset.iloc[self.index - 1]["time"].date():
+        if (
+            self.dataset.iloc[self.index]["time"].date()
+            == self.dataset.iloc[self.index - 1]["time"].date()
+        ):
             tomorrow_local_date = today_local_date + timedelta(days=1)
             tomorrow_max_area = self.daily_max_areas.get(tomorrow_local_date)
             if self.daily_reward:
@@ -264,17 +297,26 @@ class OfflinePlantGrowthChamber_1hrStep_MC(OfflinePlantGrowthChamber_1hrStep):
 
         return reward
 
-class OfflinePlantGrowthChamber_1hrStep_MC_OpennessOnly(OfflinePlantGrowthChamber_1hrStep_MC):
+
+class OfflinePlantGrowthChamber_1hrStep_MC_OpennessOnly(
+    OfflinePlantGrowthChamber_1hrStep_MC
+):
     def get_observation(self):
         s = super().get_observation()
         return np.hstack([s[3], 0.0])
 
-class OfflinePlantGrowthChamber_1hrStep_MC_TimeOnly(OfflinePlantGrowthChamber_1hrStep_MC):
+
+class OfflinePlantGrowthChamber_1hrStep_MC_TimeOnly(
+    OfflinePlantGrowthChamber_1hrStep_MC
+):
     def get_observation(self):
         s = super().get_observation()
         return np.hstack([s[0], 0.0])
 
-class OfflinePlantGrowthChamber_1hrStep_MC_Area_Openness(OfflinePlantGrowthChamber_1hrStep_MC):
+
+class OfflinePlantGrowthChamber_1hrStep_MC_Area_Openness(
+    OfflinePlantGrowthChamber_1hrStep_MC
+):
     def get_observation(self):
         s = super().get_observation()
         return np.hstack([s[2], s[3]])

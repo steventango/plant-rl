@@ -18,7 +18,7 @@ class MountainCar(BaseProblem):
 
         # encode the observation ranges for this problem
         # useful for tile-coding
-        self.rep_params['input_ranges'] = [
+        self.rep_params["input_ranges"] = [
             [-1.2, 0.5],
             [-0.07, 0.07],
         ]
