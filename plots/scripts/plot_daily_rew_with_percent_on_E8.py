@@ -52,11 +52,11 @@ df["time"] = df["time"].apply(convert_to_edmonton_timezone)
 df["day"] = df["time"].dt.date
 
 # Create day_idx column for each agent group
-for agent, group in df.groupby("agent"):
+for _agent, group in df.groupby("agent"):
     # Sort by time to ensure correct day ordering
     sorted_group = group.sort_values("time")
     # Print unique times for each agent
-    # print(f"\nAgent: {agent}")
+    # print(f"\nAgent: {_agent}")
     # print(sorted_group['time'].dt.strftime('%H:%M').unique())
     # Get unique days and create a mapping to indices
     first_day = min(sorted_group["day"])
@@ -66,7 +66,7 @@ for agent, group in df.groupby("agent"):
     )
 
 # Normalize mean_clean_area
-for agent, group in df.groupby("agent"):
+for _agent, group in df.groupby("agent"):
     first_5_times = group.sort_values("time")["time"].unique()[
         4:12
     ]  # Get first 5 unique times

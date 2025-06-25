@@ -51,7 +51,7 @@ df["day"] = df["time"].dt.date
 
 # Normalize mean_clean_area by dividing by the first observed value for each agent
 
-for agent, group in df.groupby("agent"):
+for _agent, group in df.groupby("agent"):
     first_obs_mean = group.sort_values("time").iloc[0]["mean_clean_area"]
     df.loc[group.index, "mean_clean_area"] = group["mean_clean_area"] / first_obs_mean
 
