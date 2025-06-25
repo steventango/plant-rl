@@ -1,11 +1,11 @@
 {
-    "agent": "MotionTrackingRecipe",
+    "agent": "MotionTrackingController",
     "problem": "MotionTracking",
     "total_steps": 10100,
     "episode_cutoff": -1,
     "metaParameters": {
         "environment": {
-            "zone": 12,
+            "zone": "alliance-zone12",
             "timezone": "America/Edmonton"
         }
     }
