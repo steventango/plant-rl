@@ -6,11 +6,9 @@ import enum
 import matplotlib.pyplot as plt
 import numpy as np
 import RlEvaluation.hypers as Hypers
-import RlEvaluation.metrics as Metrics
-from PyExpPlotting.matplot import save, setDefaultConference, setFonts
+from PyExpPlotting.matplot import save, setDefaultConference
 from PyExpUtils.results.Collection import ResultCollection
 from RlEvaluation.config import data_definition
-from RlEvaluation.interpolation import compute_step_return
 from RlEvaluation.statistics import Statistic
 from RlEvaluation.temporal import (
     TimeSummary,

@@ -1,15 +1,12 @@
 #%%
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime
 import pytz
 
 import pandas as pd
 import matplotlib
 matplotlib.use('Agg')  # Prevent X server requirement (useful when running headless or via SSH)
 import matplotlib.pyplot as plt
-import matplotlib.lines as mlines
-import seaborn as sns
-from datetime import time
 
 ZONE_TO_AGENT_E7 = {
     "z1": "Constant Dim",
@@ -86,7 +83,7 @@ for agent, group in df.groupby('agent'):
 
     #%%
 
-# target_times = ['11:40', '11:50', '12:00', '12:10', '12:20']  # Target times 
+# target_times = ['11:40', '11:50', '12:00', '12:10', '12:20']  # Target times
 target_times = ['09:20', '09:30', '09:40', '09:50', '10:00']  # Target times for 12pm observations
 reward_data = []
 for agent, group in df.groupby('agent'):
@@ -134,7 +131,7 @@ for agent, group in df.groupby('agent'):
 returns = {}
 for (day_idx, agent), group in df.groupby(['day_idx', 'agent']):
     if day_idx in list(range(3, 13)):
-        reward = group['reward'].max()  # Get the reward for the last observation 
+        reward = group['reward'].max()  # Get the reward for the last observation
         if agent in returns:
             returns[agent] += reward
         else:

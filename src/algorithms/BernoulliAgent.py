@@ -4,7 +4,6 @@ import numpy as np
 from PyExpUtils.collection.Collector import Collector
 
 from algorithms.BaseAgent import BaseAgent
-from utils.policies import sample
 
 
 class BernoulliAgent(BaseAgent):

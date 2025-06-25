@@ -8,13 +8,10 @@ from PyExpPlotting.matplot import save, setDefaultConference
 from PyExpUtils.results.Collection import ResultCollection
 
 from RlEvaluation.config import data_definition
-from RlEvaluation.interpolation import compute_step_return
-from RlEvaluation.temporal import TimeSummary, extract_learning_curves, curve_percentile_bootstrap_ci
+from RlEvaluation.temporal import extract_learning_curves, curve_percentile_bootstrap_ci
 from RlEvaluation.statistics import Statistic
 from RlEvaluation.utils.pandas import split_over_column
 
-import RlEvaluation.hypers as Hypers
-import RlEvaluation.metrics as Metrics
 
 # from analysis.confidence_intervals import bootstrapCI
 from experiment.ExperimentModel import ExperimentModel
@@ -54,17 +51,17 @@ def main():
 
     for env, env_df in split_over_column(df, col='environment'):
         f, ax = plt.subplots()
-        for alg, alg_df in split_over_column(env_df, col='algorithm'):            
+        for alg, alg_df in split_over_column(env_df, col='algorithm'):
 
             # Pick the best learning rate
             lr2metric = {}
             for lr in alg_df['critic_lr'].unique():
                 xs, ys = extract_learning_curves(alg_df, (lr,), metric='return', interpolation=None)
                 assert len(xs) == 5   # check all 5 seeds are there
-                metric = [auc(t, r) for t, r in zip(xs, ys)]
+                metric = [auc(t, r) for t, r in zip(xs, ys, strict=False)]
                 lr2metric[lr] = np.mean(metric)
-            
-            best_lr = max(lr2metric, key=lr2metric.get) 
+
+            best_lr = max(lr2metric, key=lr2metric.get)
             xs, ys = extract_learning_curves(alg_df, (best_lr,), metric='return', interpolation=None)
 
             xs = np.asarray(xs)
@@ -79,7 +76,7 @@ def main():
             )
 
             ax.plot(xs[0], res.sample_stat, label=f'{alg}', color=COLORS[alg], linewidth=1)
-            
+
             for i in range(xs.shape[0]):
                 ax.plot(xs[i], ys[i], color=COLORS[alg], linewidth=0.5, alpha=0.2)
 

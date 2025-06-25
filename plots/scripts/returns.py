@@ -1,15 +1,12 @@
 #%%
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime
 import pytz
 
 import pandas as pd
 import matplotlib
 matplotlib.use('Agg')  # Prevent X server requirement (useful when running headless or via SSH)
 import matplotlib.pyplot as plt
-import matplotlib.lines as mlines
-import seaborn as sns
-from datetime import time
 
 ZONE_TO_AGENT_E7 = {
     "z1": "Constant Dim",
@@ -86,7 +83,7 @@ for agent, group in df.groupby('agent'):
 
     #%%
 
-# target_times = ['11:40', '11:50', '12:00', '12:10', '12:20']  # Target times 
+# target_times = ['11:40', '11:50', '12:00', '12:10', '12:20']  # Target times
 targets_12 = ['11:40', '11:50', '12:00', '12:10', '12:20']
 targets_9 = ['09:20', '09:30', '09:40', '09:50', '10:00']  # Target times for 12pm observations
 reward_data = []
@@ -109,13 +106,13 @@ for agent, group in df.groupby('agent'):
             print(f"Number of observations in current_12pm_obs: {len(current_12pm_obs)}")
             print(f"Number of observations in next_12pm_obs: {len(next_12pm_obs)}")
             has_12pm_obs = not current_12pm_obs.empty and not next_12pm_obs.empty
-            
+
             current_9am_obs = current_group[current_group['time'].dt.strftime('%H:%M').isin(targets_9)].drop_duplicates(subset=['time'])
             next_9am_obs = next_group[next_group['time'].dt.strftime('%H:%M').isin(targets_9)].drop_duplicates(subset=['time'])
             print(f"Number of observations in current_9am_obs: {len(current_9am_obs)}")
             print(f"Number of observations in next_9am_obs: {len(next_9am_obs)}")
             has_9am_obs = not current_9am_obs.empty and not next_9am_obs.empty
-            
+
             # Max 5 obs
             current_max_obs = current_group.drop_duplicates(subset=['time']).nlargest(5, 'mean_clean_area')
             next_max_obs = next_group.drop_duplicates(subset=['time']).nlargest(5, 'mean_clean_area')
@@ -130,19 +127,19 @@ for agent, group in df.groupby('agent'):
                 next_max = next_max_obs['mean_clean_area'].mean()
                 reward_max_raw = (next_max - current_max)
                 reward_max_pct = (next_max - current_max) / current_max
-                
+
                 current_12pm_mean = current_12pm_obs['mean_clean_area'].mean()
                 next_12pm_mean = next_12pm_obs['mean_clean_area'].mean()
                 reward_12_raw = (next_12pm_mean - current_12pm_mean)
                 reward_12_pct = (next_12pm_mean - current_12pm_mean) / current_12pm_mean
-                
+
                 current_9am_mean = current_9am_obs['mean_clean_area'].mean()
                 next_9am_mean = next_9am_obs['mean_clean_area'].mean()
                 reward_9_raw = (next_9am_mean - current_9am_mean)
                 reward_9_pct = (next_9am_mean - current_9am_mean) / current_9am_mean
-                
+
                 reward_data.append({'agent': agent, 'day': current_day, 'day_idx': day_idx, 'reward_max_raw': reward_max_raw, 'reward_12_raw': reward_12_raw, 'reward_9_raw': reward_9_raw, 'reward_max_pct': reward_max_pct, 'reward_12_pct': reward_12_pct, 'reward_9_pct': reward_9_pct})
-                    
+
                     # for rew in ['reward_max_raw', 'reward_12_raw', 'reward_9_raw', 'reward_max_pct', 'reward_12_pct', 'reward_9_pct']:
                     #         returns[agent][rew] = returns[agent].get(rew, 0) + rew
             else:
@@ -171,7 +168,7 @@ manual_colors = {
 fig, axes = plt.subplots(2, 3, figsize=(20, 12))
 axes = axes.ravel()  # Flatten axes array for easier iteration
 
-for idx, rew in enumerate(['reward_max_raw', 'reward_12_raw', 'reward_9_raw', 
+for idx, rew in enumerate(['reward_max_raw', 'reward_12_raw', 'reward_9_raw',
                           'reward_max_pct', 'reward_12_pct', 'reward_9_pct']):
     ax = axes[idx]
 

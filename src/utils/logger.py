@@ -31,7 +31,7 @@ def format_bounding_boxes(detections):
     class_id_to_label = {}
 
     if detections.xyxy is not None and len(detections.xyxy) > 0:
-        for i, (box, conf, class_id) in enumerate(zip(detections.xyxy, detections.confidence, detections.class_id)):
+        for i, (box, conf, class_id) in enumerate(zip(detections.xyxy, detections.confidence, detections.class_id, strict=False)):
             # Store class ID to label mapping
             class_id_to_label[int(class_id)] = str(class_id)
 
@@ -69,7 +69,7 @@ def format_masks(detections, class_id_to_label):
         if detections.mask.ndim == 3:  # (n, h, w)
             # Create a single mask where each pixel has the value of its class
             mask_data = np.empty(detections.mask.shape[1:], dtype=np.uint8)
-            for class_mask, class_id in zip(detections.mask, detections.class_id):
+            for class_mask, class_id in zip(detections.mask, detections.class_id, strict=False):
                 # Only update pixels that are part of this mask and weren't set by higher-confidence masks
                 mask_data = np.where(class_mask, min(class_id, 255), mask_data)
 

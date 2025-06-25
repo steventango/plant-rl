@@ -8,7 +8,6 @@ from PyExpPlotting.matplot import save, setDefaultConference
 from PyExpUtils.results.Collection import ResultCollection
 
 from RlEvaluation.config import data_definition
-from RlEvaluation.interpolation import compute_step_return
 from RlEvaluation.temporal import TimeSummary, extract_learning_curves, curve_percentile_bootstrap_ci
 from RlEvaluation.statistics import Statistic
 from RlEvaluation.utils.pandas import split_over_column
@@ -113,6 +112,6 @@ if __name__ == "__main__":
 
         save(
             save_path=f'{path}/plots',
-            plot_name=f'rep-nets'
+            plot_name='rep-nets'
         )
         plt.show()

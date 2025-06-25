@@ -7,7 +7,6 @@ from environments.PlantSimulator import PlantSimulator_OnlyTime
 from experiment.ExperimentModel import ExperimentModel
 from problems.BaseProblem import BaseProblem
 
-import logging
 
 class PlantSimulator(BaseProblem):
     def __init__(self, exp: ExperimentModel, idx: int, collector: Collector):

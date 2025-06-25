@@ -23,7 +23,7 @@ for img_path in images_paths:
         print(f"Invalid image: {os.path.basename(img_path)}, Error: {str(e)}")
 
 # Print summary
-print(f"\nSummary:")
+print("\nSummary:")
 print(f"Total images checked: {valid_count + len(invalid_images)}")
 print(f"Valid images: {valid_count}")
 print(f"Invalid images: {len(invalid_images)}")

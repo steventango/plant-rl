@@ -259,7 +259,7 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
     label_annotator = sv.LabelAnnotator(color_palette_custom)
     labels = [
         f"{'R' if class_id in reason_codes else ''}{class_id} {confidence:.2f}"
-        for class_id, confidence in zip(annotate_detections.class_id, annotate_detections.confidence)
+        for class_id, confidence in zip(annotate_detections.class_id, annotate_detections.confidence, strict=False)
     ]
     annotated_frame = label_annotator.annotate(scene=annotated_frame, detections=annotate_detections, labels=labels)
     debug_images["boxes"] = Image.fromarray(annotated_frame)
@@ -289,7 +289,7 @@ def process_image(image: np.ndarray, trays: list[Tray], debug_images: dict[str, 
     label_annotator = sv.LabelAnnotator(color_palette_custom)
     labels = [
         f"{'R' if class_id in reason_codes else ''}{class_id} {confidence:.2f}"
-        for class_id, confidence in zip(annotate_detections.class_id, annotate_detections.confidence)
+        for class_id, confidence in zip(annotate_detections.class_id, annotate_detections.confidence, strict=False)
     ]
     annotated_frame = label_annotator.annotate(scene=annotated_frame, detections=annotate_detections, labels=labels)
 
@@ -380,7 +380,7 @@ def infer_pot_positions(trays, debug_images, undistorted_image):
     label_annotator = sv.LabelAnnotator(color_palette_custom)
     labels = [
         f"{class_id} {confidence:.2f}"
-        for class_id, confidence in zip(annotate_detections.class_id, annotate_detections.confidence)
+        for class_id, confidence in zip(annotate_detections.class_id, annotate_detections.confidence, strict=False)
     ]
     annotated_frame = label_annotator.annotate(scene=annotated_frame, detections=annotate_detections, labels=labels)
     debug_images["pot_boxes"] = Image.fromarray(annotated_frame)

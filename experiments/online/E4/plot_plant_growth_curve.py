@@ -8,8 +8,6 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from PIL import Image
-from tqdm import tqdm
-from tqdm.contrib.concurrent import process_map
 
 image_dir = Path("data/first_exp/z2cR")
 
@@ -100,11 +98,9 @@ for column in df.columns:
 df = df.dropna()
 
 # %%
-import matplotlib.pyplot as plt
 
 # %%
 # plot all columns as lines onto the same plot
-import seaborn as sns
 
 
 def plot_segments(df, x_column, y_column, ax, color, label=None, gap_indices=None):

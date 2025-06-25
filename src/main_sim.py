@@ -1,7 +1,6 @@
 import os
 import sys
 
-import Box2D  # we need to import this first because cedar is stupid
 
 sys.path.append(os.getcwd())
 import argparse
@@ -14,10 +13,8 @@ from pathlib import Path
 import numpy as np
 import torch
 from PyExpUtils.collection.Collector import Collector
-from PyExpUtils.collection.Sampler import Identity, Ignore, MovingAverage, Subsample
-from PyExpUtils.collection.utils import Pipe
+from PyExpUtils.collection.Sampler import Identity, Ignore
 from PyExpUtils.results.sqlite import saveCollector
-from tqdm import tqdm
 
 import wandb
 from experiment import ExperimentModel
@@ -25,7 +22,6 @@ from problems.registry import getProblem
 from utils.checkpoint import Checkpoint
 from utils.logger import log
 from utils.preempt import TimeoutHandler
-from utils.window_avg import WindowAverage
 from utils.RlGlue.rl_glue import LoggingRlGlue
 
 # ------------------
@@ -137,7 +133,7 @@ for idx in indices:
         chk.maybe_save()
         interaction = glue.step()
         log(env, glue, wandb_run, interaction.o, interaction.a, interaction.extra, interaction.r)
-                
+
         collector.collect('reward', interaction.r)
         collector.collect('episode', chk['episode'])
         collector.collect('steps', glue.num_steps)

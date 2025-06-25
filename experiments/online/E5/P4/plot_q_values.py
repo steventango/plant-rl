@@ -2,7 +2,6 @@
 
 import lzma
 import pickle
-from itertools import product
 
 # checkpoints/results/online/E5/P4/ESARSA/0/chk.pkl.xz
 
@@ -17,7 +16,6 @@ weights = data["a"].w
 
 # plot weights
 
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
@@ -77,7 +75,6 @@ config = RichTileCoderConfig(
 tile_coder = RichTileCoder(config)
 
 times = np.linspace(0, 1, 24 * 12, endpoint=False)
-from datetime import timedelta
 
 # %%
 areas = np.linspace(0, 1, 100)
@@ -114,7 +111,7 @@ viridis[zero_position, :3] = [0.5, 0.5, 0.5]  # Set RGB values for gray
 custom_cmap = ListedColormap(viridis)
 
 # Create the heatmaps
-for action, ax in zip(range(num_actions), axs):
+for action, ax in zip(range(num_actions), axs, strict=False):
     sns.heatmap(
         Q[:, :, action].T,  # Transpose Q to swap axes
         ax=ax,

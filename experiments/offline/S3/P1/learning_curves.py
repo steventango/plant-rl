@@ -5,18 +5,9 @@ sys.path.append(os.getcwd() + "/src")
 
 import matplotlib.pyplot as plt
 import numpy as np
-import RlEvaluation.hypers as Hypers
-import RlEvaluation.metrics as Metrics
 from PyExpPlotting.matplot import save, setDefaultConference
 from PyExpUtils.results.Collection import ResultCollection
 from RlEvaluation.config import data_definition
-from RlEvaluation.interpolation import compute_step_return
-from RlEvaluation.statistics import Statistic
-from RlEvaluation.temporal import (
-    TimeSummary,
-    curve_percentile_bootstrap_ci,
-    extract_multiple_learning_curves,
-)
 from RlEvaluation.utils.pandas import split_over_column
 
 # from analysis.confidence_intervals import bootstrapCI
@@ -91,5 +82,5 @@ if __name__ == "__main__":
     ax.yaxis.set_label_coords(-0.2, 0.5)
 
     ax.legend()
-    save(save_path=f"{path}/plots", plot_name=f"ESARSA(lambda) with replacing traces")
+    save(save_path=f"{path}/plots", plot_name="ESARSA(lambda) with replacing traces")
     plt.clf()

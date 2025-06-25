@@ -8,7 +8,6 @@ from PyExpPlotting.matplot import save, setDefaultConference
 from PyExpUtils.results.Collection import ResultCollection
 
 from RlEvaluation.config import data_definition
-from RlEvaluation.interpolation import compute_step_return
 from RlEvaluation.temporal import TimeSummary, extract_learning_curves, curve_percentile_bootstrap_ci
 from RlEvaluation.statistics import Statistic
 from RlEvaluation.utils.pandas import split_over_column
@@ -50,7 +49,7 @@ if __name__ == "__main__":
         for alg, sub_df in split_over_column(env_df, col='algorithm'):
             if len(sub_df) == 0: continue
 
-            f, ax = plt.subplots()            
+            f, ax = plt.subplots()
             COLORS = ['r', 'g', 'b']
             for alpha_id in range(3):  # Loop through N best alpha values
 
@@ -61,7 +60,7 @@ if __name__ == "__main__":
                     time_summary=TimeSummary.sum,
                     statistic=Statistic.mean,
                 )
-                
+
                 xs, ys = extract_learning_curves(
                     sub_df,
                     report.best_configuration,
@@ -83,7 +82,7 @@ if __name__ == "__main__":
                 )
 
                 # Delete rows in dataframe corresponding to the previous best alpha
-                current_best_alpha = dict(zip(report.config_params, report.best_configuration)).get('optimizer.alpha')
+                current_best_alpha = dict(zip(report.config_params, report.best_configuration, strict=False)).get('optimizer.alpha')
                 sub_df = sub_df[sub_df['optimizer.alpha'] != current_best_alpha]
 
                 # Plot

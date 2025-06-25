@@ -1,16 +1,12 @@
 #%%
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime
 import pytz
 
 import pandas as pd
 import matplotlib
 matplotlib.use('Agg')  # Prevent X server requirement (useful when running headless or via SSH)
-import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
-import matplotlib.lines as mlines
-import seaborn as sns
-from datetime import time
 
 ZONE_TO_AGENT_E7 = {
     "z1": "Constant Dim",
@@ -42,7 +38,7 @@ for dataset in datasets:
     df["agent"] = ZONE_TO_AGENT_E8[zone]  # convert zone to agent name
     df = df[["time", "agent_action", "mean_clean_area", "agent"]]  # keep only needed columns
     dfs.append(df)
-    
+
 datasets = []
 for p in ['P2', 'P3', 'P4']:
     paths = Path("/data/online/E7").joinpath(p).glob("**/z*")
@@ -93,7 +89,7 @@ for agent, group in df.groupby('agent'):
     first_5_times = group[group['time'].dt.strftime('%H:%M').isin(['11:40', '11:50', '12:00', '12:10', '12:20'])].sort_values('time')['time'].unique()[:5]
     #print(f"Agent: {agent}, First times: {first_5_times}")
     first_obs_values = [group[group['time'] == t]['mean_clean_area'].iloc[0] for t in first_5_times]  # Get corresponding values
-    for t in list(zip(first_5_times, first_obs_values)):
+    for t in list(zip(first_5_times, first_obs_values, strict=False)):
         print(f"Agent: {agent}, Time: {t[0]}, Value: {t[1]}")
     first_obs_mean = sum(first_obs_values) / len(first_obs_values)  # Calculate mean of those values
     df.loc[group.index, 'mean_clean_area'] = group['mean_clean_area']
@@ -162,7 +158,7 @@ for _, row in new_day_rows.iterrows():
     #     horizontalalignment='right'
     # )
 
-    
+
 
 # noon_rows = plot_data[plot_data['time'].dt.strftime('%H:%M') == '12:00'].drop_duplicates(subset=['time', 'agent'])
 
@@ -182,8 +178,8 @@ for _, row in new_day_rows.iterrows():
 #         horizontalalignment='left'
 #     )
 
-    
+
 plt.legend(title='Agent', loc='upper left', fontsize=10)
 
-plt.savefig(f"plots/outputs/bern_comps.png", dpi=300)
+plt.savefig("plots/outputs/bern_comps.png", dpi=300)
 

@@ -8,7 +8,7 @@ from problems.BaseProblem import BaseProblem
 class SimplePlantSimulator(BaseProblem):
     def __init__(self, exp: ExperimentModel, idx: int, collector: Collector):
         super().__init__(exp, idx, collector)
-        if 'type' not in self.env_params: 
+        if 'type' not in self.env_params:
             self.env = DefaultEnv(**self.env_params)
             self.actions = 2
             self.observations = (3,)

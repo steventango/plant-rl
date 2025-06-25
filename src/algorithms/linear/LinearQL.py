@@ -1,4 +1,4 @@
-from typing import Any, Dict, Tuple
+from typing import Dict, Tuple
 
 import numpy as np
 from PyExpUtils.collection.Collector import Collector
@@ -17,16 +17,16 @@ class LinearQL(BaseAgent):
         self.curr_state = None
         self.curr_action = None
         self.decay_eps_frac = params.get('decay_eps_frac', False) # Fraction of total env steps at which we stop decaying epsilon, if false then there is no decay
-        
+
         # create initial weights, set to 0
         self.w = np.zeros((actions, self.observations[0]), dtype=np.float64)
-    
+
     def get_egreedy_action(self, s):
         qs = np.dot(self.w, s)
         probs = egreedy_probabilities(qs, self.actions, self.epsilon)
         a = sample(probs, rng=self.rng)
         return a
-    
+
     def update(self, r, s_next):
         next_q = np.dot(self.w, s_next).max()
         delta = r + self.gamma*next_q - np.dot(self.w[self.curr_action], self.curr_state)
@@ -48,7 +48,7 @@ class LinearQL(BaseAgent):
             self.epsilon = max(self.epsilon - 0.1 / (self.params['exp_len'] * self.decay_eps_frac), 0) # Problem needs to have this param set in main using stride info from env
 
         return a
-        
+
 
     def end(self, r: float, extra):
         self.update(r, np.zeros(self.observations[0]))

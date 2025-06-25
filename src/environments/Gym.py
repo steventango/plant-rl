@@ -1,6 +1,5 @@
 from typing import Optional
 import gymnasium
-from gymnasium.spaces import Box
 from RlGlue.environment import BaseEnvironment
 import numpy as np
 

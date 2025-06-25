@@ -41,7 +41,7 @@ class Lightbar:
         return duty_cycle
 
     def set_bar_pwn(self, channel: int, duty_cycles: np.ndarray):
-        for address, duty_cycle in zip(self.addresses, duty_cycles):
+        for address, duty_cycle in zip(self.addresses, duty_cycles, strict=False):
             self.set_half_bar_pwm(address, channel, duty_cycle)
 
     def set_half_bar_pwm(self, address: int, channel: int, duty_cycle: int):

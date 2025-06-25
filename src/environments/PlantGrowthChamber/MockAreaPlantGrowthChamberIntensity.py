@@ -1,4 +1,3 @@
-import numpy as np
 
 from environments.PlantGrowthChamber.MockPlantGrowthChamber import MockPlantGrowthChamber
 from environments.PlantGrowthChamber.AreaPlantGrowthChamber import AreaPlantGrowthChamber

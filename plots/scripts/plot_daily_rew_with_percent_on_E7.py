@@ -1,12 +1,10 @@
 #%%
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime
 import pytz
 
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
-from datetime import time
 
 
 ZONE_TO_AGENT = {
@@ -172,7 +170,7 @@ ax.set_title('Daily Change in Area by Agent with Proportion(Action == 1)', fonts
 
 # Clean up duplicate legend entries
 handles, labels = ax.get_legend_handles_labels()
-by_label = dict(zip(labels, handles))
+by_label = dict(zip(labels, handles, strict=False))
 ax.legend(by_label.values(), by_label.keys(), title='Agent', fontsize=60, title_fontsize=20)
 
 plt.tight_layout()
@@ -200,7 +198,7 @@ if num_days > 0:
         day_data = plot_df[plot_df['day'] == day]
 
         # Black line for all dots of the day
-        ax.plot(day_data['percent_action_1'], day_data['reward'], 
+        ax.plot(day_data['percent_action_1'], day_data['reward'],
                 linestyle='-', linewidth=1, color='black', alpha=1.0)
 
         # Dots per agent

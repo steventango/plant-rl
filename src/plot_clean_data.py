@@ -3,7 +3,6 @@ from pathlib import Path
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
 
@@ -62,7 +61,7 @@ def main():
         # Individual plant subplots
         # sort plant_ids by final area
         plant_ids = sorted(plant_ids, key=lambda x: df[df["plant_id"] == x]["area"].iloc[-1], reverse=True)
-        for ax, plant_id in zip(axes[1:], plant_ids):
+        for ax, plant_id in zip(axes[1:], plant_ids, strict=False):
             plant_df = df[df["plant_id"] == plant_id]
             ax.plot(plant_df["time"], plant_df["mean"], label="Mean", color="tab:orange", linestyle="--")
             ax.plot(plant_df["time"], plant_df["area"], label=f"Plant {plant_id} Area", alpha=0.5)

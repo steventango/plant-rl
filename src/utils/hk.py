@@ -1,9 +1,8 @@
 import jax
 import haiku as hk
-import jax.numpy as jnp
 import utils.chex as cxu
 
-from typing import Callable, Dict, Optional, Sequence
+from typing import Callable, Dict, Sequence
 
 Init = hk.initializers.Initializer
 Layer = Callable[[jax.Array], jax.Array]

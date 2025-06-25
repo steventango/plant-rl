@@ -3,10 +3,8 @@ import sys
 
 sys.path.append(os.getcwd() + "/src")
 import numpy as np
-import pandas as pd
 from PyExpUtils.results.Collection import ResultCollection
 from RlEvaluation.config import data_definition
-from RlEvaluation.utils.pandas import split_over_column
 
 from experiment.ExperimentModel import ExperimentModel
 from experiment.tools import parseCmdLineArgs

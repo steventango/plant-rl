@@ -2,29 +2,20 @@ import os
 import sys
 
 sys.path.append(os.getcwd() + "/src")
-import enum
-from typing import Any, List, Sequence, Tuple
+from typing import Any, List, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import RlEvaluation.backend.statistics as bs
-import RlEvaluation.backend.temporal as bt
-import RlEvaluation.hypers as Hypers
 from utils.metrics import UnbiasedExponentialMovingAverage as uema
-from PyExpPlotting.matplot import save, setDefaultConference, setFonts
-from PyExpUtils.results.Collection import ResultCollection
+from PyExpPlotting.matplot import save, setDefaultConference
 from RlEvaluation.config import DataDefinition, data_definition, maybe_global
 from RlEvaluation.interpolation import Interpolation, compute_step_return
-from RlEvaluation.statistics import Statistic
 from RlEvaluation.temporal import (
-    TimeSummary,
-    curve_percentile_bootstrap_ci,
     extract_learning_curves,
 )
 from RlEvaluation.utils.pandas import split_over_column, subset_df
 
-from experiment.ExperimentModel import ExperimentModel
 from experiment.tools import parseCmdLineArgs
 
 setDefaultConference("neurips")
@@ -37,7 +28,7 @@ def maybe_convert_to_array(x):
         return x
     try:
         x = eval(x)
-    except Exception as e:
+    except Exception:
         print(f"Error converting to array: {x}")
         return None
     if isinstance(x, bytes):
@@ -113,7 +104,7 @@ def main():
             f, axs = plt.subplots(m, 1, squeeze=False, sharex=True)
             axs = axs.flatten()
             total_days = int(np.max(x) * 5 / 60 / 24)
-            for j, (ax, yj) in enumerate(zip(axs, y.T)):
+            for j, (ax, yj) in enumerate(zip(axs, y.T, strict=False)):
                 x_plot = rescale_time(x, 1)
                 # Draw horizontal segments without vertical connectors
                 for i in range(len(x_plot) - 1):

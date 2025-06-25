@@ -33,7 +33,6 @@ states.shape, actions.shape
 #%%
 # plot weights
 
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
@@ -44,7 +43,6 @@ from matplotlib.colors import ListedColormap
 
 # %%
 import sys
-import os
 sys.path.append("/workspaces/plant-rl")
 from src.representations.RichTileCoder import RichTileCoder, RichTileCoderConfig
 
@@ -76,7 +74,7 @@ for i, area in enumerate(areas):
 num_actions = np.unique(actions).shape[0]
 N = np.zeros((len(times), len(areas), num_actions))
 
-for state, action in zip(states, actions):
+for state, action in zip(states, actions, strict=False):
     indices = tile_coder.get_indices(state)
     for index in indices:
         if index not in inverse_mapping:
@@ -110,7 +108,7 @@ viridis[zero_position, :3] = [0.5, 0.5, 0.5]  # Set RGB values for gray
 custom_cmap = ListedColormap(viridis)
 
 # Create the heatmaps
-for action, ax in zip(range(num_actions), axs):
+for action, ax in zip(range(num_actions), axs, strict=False):
     sns.heatmap(
         N[:, :, action].T,  # Transpose Q to swap axes
         ax=ax,
@@ -145,7 +143,7 @@ sns.heatmap(
     vmin=vmin,
     vmax=vmax,
 )
-ax.set_title(f"ESARSA(λ) N(s)")
+ax.set_title("ESARSA(λ) N(s)")
 ax.set_xlabel("Time (h)")
 ax.set_ylabel("Area")  # Area is now on the y-axis
 ax.set_xticks(np.arange(0, len(times), hour_interval))  # Set ticks every hour
@@ -179,7 +177,7 @@ for i, state in enumerate(states):
     # Update the previous points
     previous_closest_time = closest_time
     previous_closest_area = closest_area
-ax.set_title(f"ESARSA(λ) N(s)")
+ax.set_title("ESARSA(λ) N(s)")
 ax.set_xlabel("Time (h)")
 ax.set_ylabel("Area")  # Area is now on the y-axis
 ax.set_xticks(np.arange(0, len(times), hour_interval))  # Set ticks every hour

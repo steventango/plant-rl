@@ -13,7 +13,8 @@ timestamp, plant 0 (WT), plant 1 (phyA), ..., plant 47 (phot1/2)
 
 update: feb 22 2024 I now start counting plants at 1
 """
-import csv, sys
+import csv
+import sys
 
 
 def calculate_num_plants(csv_file):
@@ -25,7 +26,7 @@ def calculate_num_plants(csv_file):
         for row in reader:
             try:
                 plant_id = int(row[plant_id_index])
-            except Exception as e:
+            except Exception:
                 continue
             if plant_id > num_plants:
                 num_plants = plant_id
@@ -51,7 +52,7 @@ def csv_x_over_time(csv_file, trait):
                     outfile_contents[timestamp] = [""] * NUM_PLANTS
                 plant_id = int(row[plant_id_index])-1
                 genotype = row[genotype_index]
-            except Exception as e:
+            except Exception:
                 continue
 
             genotype_map[plant_id] = genotype

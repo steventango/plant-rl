@@ -4,17 +4,15 @@ sys.path.append(os.getcwd() + '/src')
 
 import numpy as np
 import matplotlib.pyplot as plt
-from PyExpPlotting.matplot import save, setDefaultConference, setFonts
+from PyExpPlotting.matplot import save, setDefaultConference
 from PyExpUtils.results.Collection import ResultCollection
 
 from RlEvaluation.config import data_definition
-from RlEvaluation.interpolation import compute_step_return
 from RlEvaluation.temporal import TimeSummary, extract_learning_curves, curve_percentile_bootstrap_ci
 from RlEvaluation.statistics import Statistic
 from RlEvaluation.utils.pandas import split_over_column
 
 import RlEvaluation.hypers as Hypers
-import RlEvaluation.metrics as Metrics
 
 from experiment.ExperimentModel import ExperimentModel
 from experiment.tools import parseCmdLineArgs
@@ -47,7 +45,7 @@ def main():
     )
 
     assert df is not None
-    
+
     exp = results.get_any_exp()
 
     for env, env_df in split_over_column(df, col='environment'):
@@ -64,12 +62,12 @@ def main():
             print('-' * 25)
             print(env, alg)
             Hypers.pretty_print(report)
-            
+
             # Plot action history averaged over 5 seeds
             xs_a, ys_a = extract_learning_curves(sub_df, report.best_configuration, metric='action', interpolation=None)
             xs_a = np.asarray(xs_a)
             ys_a = np.asarray(ys_a)
-            
+
             res = curve_percentile_bootstrap_ci(
                 rng=np.random.default_rng(0),
                 y=ys_a,
@@ -82,7 +80,7 @@ def main():
             ax[0].set_title('Learning curves over 12 hours')
             ax[0].set_ylabel('Action')
             ax[0].set_xlabel('Day Time [Hours]')
-            
+
             # Plot reward history averaged over 5 seeds
             xs, ys = extract_learning_curves(sub_df, report.best_configuration, metric='return', interpolation=None)
             xs = np.asarray(xs)
@@ -93,7 +91,7 @@ def main():
                 y=ys,
                 statistic=Statistic.mean,
             )
-            
+
             ax[1].plot(rescale_time(xs[0],1), res.sample_stat, label=alg, color=COLORS[alg], linewidth=0.5)
             ax[1].fill_between(rescale_time(xs[0], 1), res.ci[0], res.ci[1], color=COLORS[alg], alpha=0.2)
             ax[1].legend()

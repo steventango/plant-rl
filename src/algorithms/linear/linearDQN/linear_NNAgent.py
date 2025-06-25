@@ -58,7 +58,7 @@ class LinearNNAgent(BaseAgent):
         self.batch_size = params['batch']
         self.update_freq = params.get('update_freq', 1)
         self.updates_per_step = params.get('updates_per_step', 1)
-        
+
 
         self.buffer = build_buffer(
             buffer_type=params['buffer_type'],

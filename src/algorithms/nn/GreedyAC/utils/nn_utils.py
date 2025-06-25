@@ -1,7 +1,6 @@
 # Import modules
 import torch
 import torch.nn as nn
-import numpy as np
 
 
 def weights_init_(layer, init="kaiming", activation="relu"):
@@ -61,7 +60,7 @@ def soft_update(target, source, tau):
     """
     with torch.no_grad():
         for target_param, param in zip(target.parameters(),
-                                       source.parameters()):
+                                       source.parameters(), strict=False):
             # Use in-place operations mul_ and add_ to avoid
             # copying tensor data
             target_param.data.mul_(1.0 - tau)
@@ -81,7 +80,7 @@ def hard_update(target, source):
     """
     with torch.no_grad():
         for target_param, param in zip(target.parameters(),
-                                       source.parameters()):
+                                       source.parameters(), strict=False):
             target_param.data.copy_(param.data)
 
 

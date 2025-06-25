@@ -8,13 +8,10 @@ from PyExpPlotting.matplot import save, setDefaultConference
 from PyExpUtils.results.Collection import ResultCollection
 
 from RlEvaluation.config import data_definition
-from RlEvaluation.interpolation import compute_step_return
-from RlEvaluation.temporal import TimeSummary, extract_learning_curves, curve_percentile_bootstrap_ci
+from RlEvaluation.temporal import extract_learning_curves, curve_percentile_bootstrap_ci
 from RlEvaluation.statistics import Statistic
 from RlEvaluation.utils.pandas import split_over_column
 
-import RlEvaluation.hypers as Hypers
-import RlEvaluation.metrics as Metrics
 from experiment.ExperimentModel import ExperimentModel
 from experiment.tools import parseCmdLineArgs
 
@@ -77,17 +74,17 @@ def main():
 
     for env, env_df in split_over_column(df, col='environment'):
         f, ax = plt.subplots()
-        for alg, alg_df in split_over_column(env_df, col='algorithm'):            
+        for alg, alg_df in split_over_column(env_df, col='algorithm'):
 
             # Pick the best learning rate by AUC
             lr2metric = {}
             for lr in alg_df['critic_lr'].unique():
                 xs, ys = extract_learning_curves(alg_df, (lr,), metric='return', interpolation=None)
                 assert len(xs) == 5, 'Some seeds are missing.'
-                metric = [auc(t, r) for t, r in zip(xs, ys)]
+                metric = [auc(t, r) for t, r in zip(xs, ys, strict=False)]
                 lr2metric[lr] = np.mean(metric)
-            
-            best_lr = max(lr2metric, key=lr2metric.get) 
+
+            best_lr = max(lr2metric, key=lr2metric.get)
             print(f'Best critic_lr for {alg} = {best_lr}')
             xs, ys = extract_learning_curves(alg_df, (best_lr,), metric='return', interpolation=None)
 
@@ -106,8 +103,8 @@ def main():
             ax.fill_between(rescale_time(xs[0], STRIDE[alg]), rescale_return(res.ci[0], MIN_RETURN[alg], MAX_RETURN[alg]), rescale_return(res.ci[1], MIN_RETURN[alg], MAX_RETURN[alg]), color=COLORS[alg], alpha=0.2)
 
         ax.plot(np.linspace(0, 5000, 100), np.ones(100), 'k--', linewidth=0.5, label='light-on')
-        ax.set_ylim(0.35, 1.02) 
-        ax.set_xlim(0, 5000) 
+        ax.set_ylim(0.35, 1.02)
+        ax.set_xlim(0, 5000)
         ax.legend()
         ax.set_title('GAC\'s Learning Curves in PlantSimulator (32 plants, reward=area change/0.08)')
         ax.set_ylabel('Normalized Episodic Return [light-off policy: 0, light-on policy: 1]')

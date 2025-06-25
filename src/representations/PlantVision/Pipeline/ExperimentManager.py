@@ -49,7 +49,7 @@ class ExperimentManager:
             metadata = json.load(f)
 
         # check if undistortion exists
-            
+
         tfl = TimeFrameList()
         tfl.load_from_file(dirpath / "timeframe.json")
 
@@ -61,7 +61,7 @@ class ExperimentManager:
         threshold = load_threshold_from_file(dirpath / "threshold.json")
         rois = RoiList()
         rois.load_from_file(dirpath / "rois.json")
-        
+
 
         return Experiment(
             timeframe_list=tfl,

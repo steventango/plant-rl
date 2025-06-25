@@ -28,14 +28,14 @@ class CleanPlantSimulator(BaseEnvironment):
 
         self.steps_per_day = 72
         self.total_steps = 72*14
-        
+
         self.steps = 0
         self.dli = 0
         self.current_morning_size = 1
 
         self.gamma = 1.0
 
-        self.daily_reward = kwargs.get("daily_reward", True) 
+        self.daily_reward = kwargs.get("daily_reward", True)
 
     def get_observation(self):
         area = self.current_morning_size + self.daily_area_curve(self.steps % self.steps_per_day)
@@ -48,21 +48,21 @@ class CleanPlantSimulator(BaseEnvironment):
                                  self.normalize(daily_light_integral, 0, self.steps_per_day),
                                  self.normalize(area, 0.5, 14),
                                  self.normalize(openness, 0.97, 1.15)])
-        
+
         return observation
 
     def get_reward(self, percent_overnight_growth):
-        if self.daily_reward: 
+        if self.daily_reward:
             return self.normalize(percent_overnight_growth, 0, 0.2)
-        else: 
+        else:
             return self.normalize(self.current_morning_size * percent_overnight_growth, 0, 2)
-    
+
     def get_light_amount(self, action):
         if action == 1:
             return 1.0
-        else:   
+        else:
             return 0.5
-    
+
     def start(self):
         self.steps = 0
         self.current_morning_size = 1
@@ -75,15 +75,15 @@ class CleanPlantSimulator(BaseEnvironment):
     def step(self, action):
         self.steps += 1
         self.dli += self.get_light_amount(action)
-        
+
         if self.steps % self.steps_per_day == 0:    # if transitioning overnight
             percent_overnight_growth = 0.2 * self.normalize(self.dli, 0, self.steps_per_day)
             self.reward = self.get_reward(percent_overnight_growth)
             self.current_morning_size += self.current_morning_size * percent_overnight_growth
             self.dli = 0
-        else: 
+        else:
             self.reward = 0
- 
+
         self.current_state = self.get_observation()
 
         if self.steps == self.total_steps:
@@ -96,7 +96,7 @@ class CleanPlantSimulator(BaseEnvironment):
 
     def normalize(self, x, l, u):
         return (x - l) / (u - l)
-    
+
     def daily_area_curve(self, x):
         """
         Model the daily area curve by a Gaussian curve. 

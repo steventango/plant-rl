@@ -40,8 +40,8 @@ class TestBernoulliAgent:
 
             # Assert that empirical probability is close to the expected probability
             np.testing.assert_allclose(
-                empirical_p, 
-                p, 
+                empirical_p,
+                p,
                 atol=tolerance,
                 err_msg=f"Expected p={p}, got empirical p={empirical_p} after {n_samples} samples"
             )
@@ -57,7 +57,7 @@ class TestBernoulliAgent:
         )
 
         assert agent.p == 0.5, "Default probability should be 0.5"
-    
+
     def test_actions_constraint(self):
         """Test that the agent raises an assertion error if actions != 2"""
         # Should work with 2 actions

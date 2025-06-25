@@ -1,6 +1,5 @@
 from typing import Optional
 import gymnasium
-from gymnasium.spaces import Box
 from RlGlue.environment import BaseEnvironment
 import numpy as np
 
@@ -16,7 +15,7 @@ class CliffWalking(BaseEnvironment):
         sp, r, t, _, info = self.env.step(a)
 
         return (r, self.one_hot_state(sp), t, {})
-    
+
     def one_hot_state(self, state):
         one_hot = np.zeros(self.env.observation_space.n, dtype=np.float64)
         one_hot[state] = 1

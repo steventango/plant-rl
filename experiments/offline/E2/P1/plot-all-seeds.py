@@ -8,13 +8,10 @@ from PyExpPlotting.matplot import save, setDefaultConference
 from PyExpUtils.results.Collection import ResultCollection
 
 from RlEvaluation.config import data_definition
-from RlEvaluation.interpolation import compute_step_return
-from RlEvaluation.temporal import TimeSummary, extract_learning_curves, curve_percentile_bootstrap_ci
+from RlEvaluation.temporal import extract_learning_curves, curve_percentile_bootstrap_ci
 from RlEvaluation.statistics import Statistic
 from RlEvaluation.utils.pandas import split_over_column
 
-import RlEvaluation.hypers as Hypers
-import RlEvaluation.metrics as Metrics
 
 # from analysis.confidence_intervals import bootstrapCI
 from experiment.ExperimentModel import ExperimentModel
@@ -50,7 +47,7 @@ def main():
     exp = results.get_any_exp()
 
     for env, env_df in split_over_column(df, col='environment'):
-        for alg, alg_df in split_over_column(env_df, col='algorithm'):            
+        for alg, alg_df in split_over_column(env_df, col='algorithm'):
             print(alg)
 
             # Pick the best learning rate
@@ -60,10 +57,10 @@ def main():
                     for hidden_dim in alg_df['hidden_dim'].unique():
                         xs, ys = extract_learning_curves(alg_df, (lr, actor_lr, hidden_dim), metric='return', interpolation=None)
                         print(len(xs))
-                        metric = [auc(t, r) for t, r in zip(xs, ys)]
+                        metric = [auc(t, r) for t, r in zip(xs, ys, strict=False)]
                         lr2metric[(lr, actor_lr, hidden_dim)] = np.mean(metric)
-            
-            best_lr = max(lr2metric, key=lr2metric.get) 
+
+            best_lr = max(lr2metric, key=lr2metric.get)
             xs, ys = extract_learning_curves(alg_df, best_lr, metric='return', interpolation=None)
 
             xs = np.asarray(xs)
@@ -76,7 +73,7 @@ def main():
                 y=ys,
                 statistic=Statistic.mean,
             )
-            
+
             f, ax = plt.subplots()
             for i in range(xs.shape[0]):
                 ax.plot(xs[i]*10, ys[i], label=f'{alg},seed{i}', linewidth=0.5)

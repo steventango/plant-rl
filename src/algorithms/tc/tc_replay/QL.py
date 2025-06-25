@@ -48,15 +48,15 @@ class QL(TCAgentReplay):
         # only update every `update_freq` steps
         if self.steps % self.update_freq != 0:
             return
-        
+
         # wait till batch size samples have been collected
         if self.buffer.size() <= self.batch_size:
             return
-        
+
         self.updates += 1
 
         batch = self.buffer.sample(self.batch_size)
         _update(self.w, batch.x, batch.a, batch.xp, batch.r, batch.gamma, self.alpha)
-        
+
         self.buffer.update_batch(batch)
 

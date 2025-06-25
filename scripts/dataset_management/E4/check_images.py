@@ -1,7 +1,6 @@
 import concurrent.futures
 import hashlib
 import logging
-import os
 from pathlib import Path
 
 from tqdm import tqdm

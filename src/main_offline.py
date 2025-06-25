@@ -17,10 +17,8 @@ import numpy as np
 import seaborn as sns
 import torch
 from PyExpUtils.collection.Collector import Collector
-from PyExpUtils.collection.Sampler import Identity, Ignore, MovingAverage, Subsample
-from PyExpUtils.collection.utils import Pipe
+from PyExpUtils.collection.Sampler import Identity, Ignore
 from PyExpUtils.results.sqlite import saveCollector
-from tqdm import tqdm
 
 import wandb
 from experiment import ExperimentModel
@@ -30,7 +28,6 @@ from utils.logger import expand
 from utils.plotting import get_Q, plot_q, plot_q_diff  # Added import
 from utils.preempt import TimeoutHandler
 from utils.RlGlue.rl_glue import LoggingRlGlue
-from utils.window_avg import WindowAverage
 
 # ------------------
 # -- Command Args --

@@ -1,5 +1,5 @@
 import shutil
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 image_dir = Path("data/first_exp/z2cR")

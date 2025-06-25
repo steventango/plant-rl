@@ -92,7 +92,7 @@ class BatchGroundingDinoProcessor(GroundingDinoProcessor):
 
         results = []
         for idx, (scores, boxes, probs, threshold, text_threshold) in enumerate(
-            zip(batch_scores, batch_boxes, batch_probs, thresholds, text_thresholds)
+            zip(batch_scores, batch_boxes, batch_probs, thresholds, text_thresholds, strict=False)
         ):
             keep = scores > threshold
             scores = scores[keep]

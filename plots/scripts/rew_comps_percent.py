@@ -1,15 +1,12 @@
 #%%
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime
 import pytz
 
 import pandas as pd
 import matplotlib
 matplotlib.use('Agg')  # Prevent X server requirement (useful when running headless or via SSH)
 import matplotlib.pyplot as plt
-import matplotlib.lines as mlines
-import seaborn as sns
-from datetime import time
 
 ZONE_TO_AGENT_E7 = {
     "z1": "Constant Dim",
@@ -41,7 +38,7 @@ for dataset in datasets:
     df["agent"] = ZONE_TO_AGENT_E8[zone]  # convert zone to agent name
     df = df[["time", "agent_action", "mean_clean_area", "agent"]]  # keep only needed columns
     dfs.append(df)
-    
+
 datasets = []
 for p in ['P2', 'P3', 'P4']:
     paths = Path("/data/online/E7").joinpath(p).glob("**/z*")
@@ -111,7 +108,7 @@ for agent, group in df.groupby('agent'):
         # Check if the days are consecutive
         if (next_day - current_day).days == 1:
             print(f"Found consecutive days: {current_day} and {next_day}")
-            
+
             # Max 5 obs
             current_max_obs = current_group.drop_duplicates(subset=['time']).nlargest(5, 'mean_clean_area')
             next_max_obs = next_group.drop_duplicates(subset=['time']).nlargest(5, 'mean_clean_area')
@@ -120,35 +117,35 @@ for agent, group in df.groupby('agent'):
             print(f"Next day max observations at times {next_max_obs['time'].dt.strftime('%H:%M').values}:")
             print(f"Values: {next_max_obs['mean_clean_area'].values}")
             has_max_obs = not current_max_obs.empty and not next_max_obs.empty
-            
+
             # Average of 5 obs centered around 12pm
             current_12pm_obs = current_group[current_group['time'].dt.strftime('%H:%M').isin(target_times)].drop_duplicates(subset=['time'])
             next_12pm_obs = next_group[next_group['time'].dt.strftime('%H:%M').isin(target_times)].drop_duplicates(subset=['time'])
             print(f"Number of observations in current_12pm_obs: {len(current_12pm_obs)}")
             print(f"Number of observations in next_12pm_obs: {len(next_12pm_obs)}")
             has_12pm_obs = not current_12pm_obs.empty and not next_12pm_obs.empty
-            
+
             # 9am obs
             current_9am_obs = current_group[current_group['time'].dt.strftime('%H:%M').isin(["09:20"])].drop_duplicates(subset=['time'])
             next_9am_obs = next_group[next_group['time'].dt.strftime('%H:%M').isin(["09:20"])].drop_duplicates(subset=['time'])
             print(f"Number of observations in current_9am_obs: {len(current_9am_obs)}")
             print(f"Number of observations in next_9am_obs: {len(next_9am_obs)}")
             has_9am_obs = not current_9am_obs.empty and not next_9am_obs.empty
-            
+
             # Ensure both days have observations
             if has_max_obs and has_12pm_obs and has_9am_obs:
                 current_max = current_max_obs['mean_clean_area'].mean()
                 next_max = next_max_obs['mean_clean_area'].mean()
                 reward_max = (next_max - current_max) / current_max
-                
+
                 current_12pm_mean = current_12pm_obs['mean_clean_area'].mean()
                 next_12pm_mean = next_12pm_obs['mean_clean_area'].mean()
                 reward_12_avg = (next_12pm_mean - current_12pm_mean) / current_12pm_mean
-                
+
                 current_9am = current_9am_obs.iloc[0]['mean_clean_area']
                 next_9am = next_9am_obs.iloc[0]['mean_clean_area']
                 reward_9 = (next_9am - current_9am) / current_9am
-                
+
                 reward_data.append({'agent': agent, 'day': current_day, 'reward_max': reward_max, 'reward_12_avg': reward_12_avg, 'reward_9': reward_9})
             else:
                 print(f"Skipping agent {agent} for days {current_day} and {next_day} due to missing observations.")
@@ -158,7 +155,7 @@ reward_df = pd.DataFrame(reward_data)
 # Initialize reward column as float to avoid dtype mismatch
 
 df['reward_max'] = 0.0  # Initialize reward column to 0.0
-df['reward_12_avg'] = 0.0 
+df['reward_12_avg'] = 0.0
 df['reward_9'] = 0.0
 
 #%%
@@ -201,7 +198,7 @@ titles = ['Rew = ∆ avg of max 5 areas', 'Rew = ∆ avg of 5 areas centered aro
 agents = plot_df['agent'].unique()  # Get the unique agents
 
 # Loop through each reward column and create a subplot
-for ax, reward_col, title in zip(axes, reward_columns, titles):
+for ax, reward_col, title in zip(axes, reward_columns, titles, strict=False):
     for agent in agents:
         agent_data = plot_df[plot_df['agent'] == agent]
         ax.plot(agent_data['day_idx'], agent_data[reward_col], label=agent, marker='o')
@@ -233,7 +230,7 @@ fig, axes = plt.subplots(rows, cols, figsize=(18, 4 * rows))
 axes = axes.flatten()
 
 # Loop through each reward column and create a subplot
-for ax, agent in zip(axes, agents):
+for ax, agent in zip(axes, agents, strict=False):
     agent_data = plot_df[plot_df['agent'] == agent]
     for reward in reward_columns:
         ax.plot(agent_data['day_idx'], agent_data[reward], label=reward, marker='o')

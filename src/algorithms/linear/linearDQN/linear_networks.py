@@ -1,11 +1,10 @@
 import numpy as np
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Optional, Tuple
 
 import jax
 import jax.numpy as jnp
 import haiku as hk
 
-import utils.hk as hku
 
 ModuleBuilder = Callable[[], Callable[[jax.Array | np.ndarray], jax.Array]]
 
@@ -28,7 +27,7 @@ class LinearNetworkBuilder:
     def getParams(self):
         self._retrieved_params = True
         return self._params
-    
+
     '''
     def getFeatureFunction(self):
         def _inner(params: Any, x: jax.Array | np.ndarray):

@@ -76,7 +76,7 @@ class LinearDynamicBatchDQN(LinearNNAgent):
 
         for _ in range(self.updates_per_step):
 
-            # Sample min(batch_size, buffer_size) transitions so that we can do still do updates 
+            # Sample min(batch_size, buffer_size) transitions so that we can do still do updates
             # before collecting batch_size samples when batch_size is large
             batch = self.buffer.sample(min(self.buffer.size(), self.batch_size))
             weights = self.buffer.isr_weights(batch.eid)
@@ -94,7 +94,7 @@ class LinearDynamicBatchDQN(LinearNNAgent):
 
             if self.updates % self.target_refresh == 0:
                 self.state.target_params = self.state.params
-            
+
     # -------------
     # -- Updates --
     # -------------

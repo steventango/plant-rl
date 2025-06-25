@@ -62,4 +62,4 @@ def generate_policy(filename, interval = 10):
 
 
 if __name__ == "__main__":
-    generate_policy(f"bernoulli6.xlsx")
+    generate_policy("bernoulli6.xlsx")

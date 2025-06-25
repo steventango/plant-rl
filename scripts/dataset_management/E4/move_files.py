@@ -1,7 +1,5 @@
-import datetime
 import os
 import shutil
-from pathlib import Path
 
 # Define source and destination directories
 source_dir = "/data/online/E4/P0.1/z2/images"

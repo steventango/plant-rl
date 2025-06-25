@@ -1,7 +1,6 @@
 import base64
 import io
 import os
-import traceback
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import nullcontext
 

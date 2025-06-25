@@ -43,7 +43,7 @@ def plot_q_diff(daytime_observation_space, area_observation_space, Q_diff):
         norm=norm
     )
 
-    ax_q_diff.set_title(f"Q(s, a=1) - Q(s, a=0)")
+    ax_q_diff.set_title("Q(s, a=1) - Q(s, a=0)")
     ax_q_diff.set_xlabel("s[0]")
     hour_interval = 6
     ax_q_diff.set_xticks(np.arange(0, len(daytime_observation_space), hour_interval))
@@ -75,7 +75,7 @@ def plot_q_diff(daytime_observation_space, area_observation_space, Q_diff):
         cbar=True,
         cbar_kws={"ticks": [-1, 1]}, # Ticks for the policy colorbar
     )
-    ax_policy.set_title(rf"Policy")
+    ax_policy.set_title(r"Policy")
     ax_policy.set_xlabel("s[0]")
     ax_policy.set_xticks(np.arange(0, len(daytime_observation_space), hour_interval))
     ax_policy.set_xticklabels(

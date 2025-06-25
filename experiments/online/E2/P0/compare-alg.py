@@ -8,13 +8,11 @@ from PyExpPlotting.matplot import save, setDefaultConference
 from PyExpUtils.results.Collection import ResultCollection
 
 from RlEvaluation.config import data_definition
-from RlEvaluation.interpolation import compute_step_return
 from RlEvaluation.temporal import TimeSummary, extract_learning_curves, curve_percentile_bootstrap_ci
 from RlEvaluation.statistics import Statistic
 from RlEvaluation.utils.pandas import split_over_column
 
 import RlEvaluation.hypers as Hypers
-import RlEvaluation.metrics as Metrics
 
 # from analysis.confidence_intervals import bootstrapCI
 from experiment.ExperimentModel import ExperimentModel
@@ -104,7 +102,7 @@ if __name__ == "__main__":
 
             ax.plot(xs[0], res.sample_stat, label=alg, color=COLORS[alg], linewidth=1)
 
-            for x, y in zip(xs, ys):
+            for x, y in zip(xs, ys, strict=False):
                 ax.plot(x, y, color=COLORS[alg], linewidth=0.5, alpha=0.2)
 
         ax.set_xlim(0, exp.total_steps)
@@ -128,5 +126,5 @@ if __name__ == "__main__":
 
         save(
             save_path=f'{path}/plots',
-            plot_name=f'algs'
+            plot_name='algs'
         )

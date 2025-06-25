@@ -49,7 +49,7 @@ class RoiList:
             print("ERROR", e)
             return False
         return True
-    
+
     def load_from_list(self, l: list) -> bool:
         try:
             for rd in l:

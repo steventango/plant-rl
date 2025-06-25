@@ -24,13 +24,13 @@ class TimeFrame:
 
     def __str__(self) -> str:
         return f"TimeFrame: {str(self.datetime1)} --> {str(self.datetime2)}"
-    
+
     def get_date(self):
         return str(self.datetime1.date())
-    
+
     def get_time1(self):
         return str(self.datetime1.time()).removesuffix(":00")
-    
+
     def get_time2(self):
         return str(self.datetime2.time()).removesuffix(":00")
 
@@ -53,7 +53,7 @@ class TimeFrameList:
             print("ERROR", e)
             return False
         return True
-    
+
     def load_from_list(self, l: list) -> bool:
         try:
             for tfd in l:
@@ -73,7 +73,7 @@ class TimeFrameList:
             if tf.time_in_frame(daytime):
                 return True
         return False
-    
+
     def save_to_file(self, dirpath: Path):
         json_l = []
         for tf in self.data:

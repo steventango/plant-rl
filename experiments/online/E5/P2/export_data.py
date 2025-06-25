@@ -2,7 +2,6 @@ import os
 import sys
 
 sys.path.append(os.getcwd() + "/src")
-import numpy as np
 from PyExpPlotting.matplot import setDefaultConference
 from PyExpUtils.results.Collection import ResultCollection
 from RlEvaluation.config import data_definition

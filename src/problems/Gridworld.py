@@ -1,4 +1,3 @@
-import numpy as np
 from environments.Gridworld.Gridworld import Gridworld as Env
 from PyExpUtils.collection.Collector import Collector
 from experiment.ExperimentModel import ExperimentModel
@@ -12,8 +11,8 @@ class Gridworld(BaseProblem):
 
         self.observations = (self.env.env.observation_space.n,)
         self.gamma = 0.99
-        
-        
+
+
         self.rep_params['input_ranges'] = [
             [0,1],
             [0,1],

@@ -8,13 +8,10 @@ from PyExpPlotting.matplot import save, setDefaultConference
 from PyExpUtils.results.Collection import ResultCollection
 
 from RlEvaluation.config import data_definition
-from RlEvaluation.interpolation import compute_step_return
-from RlEvaluation.temporal import TimeSummary, extract_learning_curves, curve_percentile_bootstrap_ci
+from RlEvaluation.temporal import extract_learning_curves, curve_percentile_bootstrap_ci
 from RlEvaluation.statistics import Statistic
 from RlEvaluation.utils.pandas import split_over_column
 
-import RlEvaluation.hypers as Hypers
-import RlEvaluation.metrics as Metrics
 from experiment.ExperimentModel import ExperimentModel
 from experiment.tools import parseCmdLineArgs
 
@@ -75,7 +72,7 @@ def main():
                     y=ys,
                     statistic=Statistic.mean,
                 )
-                
+
                 '''
                 f, ax = plt.subplots(2, 1, figsize=(10, 8))
 
@@ -159,7 +156,7 @@ def main():
 
             plt.close(f_all)
 
-    
+
 
 
 def rescale_time(x, stride):

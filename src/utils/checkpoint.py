@@ -114,8 +114,8 @@ class Checkpointable(Protocol):
 C = TypeVar('C', bound=Type[Checkpointable])
 def checkpointable(props: Sequence[str]):
     def _inner(c: C) -> C:
-        o_getter = getattr(c, '__getstate__')
-        o_setter = getattr(c, '__setstate__')
+        o_getter = c.__getstate__
+        o_setter = c.__setstate__
 
         def setter(self, state):
             if o_setter is not None:
@@ -132,8 +132,8 @@ def checkpointable(props: Sequence[str]):
             out2 = {}
             if o_getter is not None:
                 out2 = o_getter(self)
-            elif getattr(c.__bases__[0], '__getstate__'):
-                _getter = getattr(c.__bases__[0], '__getstate__')
+            elif c.__bases__[0].__getstate__:
+                _getter = c.__bases__[0].__getstate__
                 out2 = _getter(self)
 
             out2 |= out

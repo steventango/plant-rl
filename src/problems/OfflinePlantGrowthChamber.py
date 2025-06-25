@@ -45,4 +45,4 @@ class OfflinePlantGrowthChamber(BaseProblem):
             self.env = OfflinePlantGrowthChamberTimeDLI(**self.env_params)
             self.observations = (2,)
         else:
-            raise ValueError(f"Env type invalid.")
+            raise ValueError("Env type invalid.")

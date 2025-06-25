@@ -264,7 +264,7 @@ class OfflinePlantGrowthChamber_1hrStep_MC(OfflinePlantGrowthChamber_1hrStep):
 
         return reward
 
-class OfflinePlantGrowthChamber_1hrStep_MC_OpennessOnly(OfflinePlantGrowthChamber_1hrStep_MC):   
+class OfflinePlantGrowthChamber_1hrStep_MC_OpennessOnly(OfflinePlantGrowthChamber_1hrStep_MC):
     def get_observation(self):
         s = super().get_observation()
         return np.hstack([s[3], 0.0])
@@ -273,8 +273,8 @@ class OfflinePlantGrowthChamber_1hrStep_MC_TimeOnly(OfflinePlantGrowthChamber_1h
     def get_observation(self):
         s = super().get_observation()
         return np.hstack([s[0], 0.0])
-    
-class OfflinePlantGrowthChamber_1hrStep_MC_Area_Openness(OfflinePlantGrowthChamber_1hrStep_MC):   
+
+class OfflinePlantGrowthChamber_1hrStep_MC_Area_Openness(OfflinePlantGrowthChamber_1hrStep_MC):
     def get_observation(self):
         s = super().get_observation()
         return np.hstack([s[2], s[3]])

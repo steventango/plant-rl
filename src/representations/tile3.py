@@ -31,7 +31,7 @@ basehash = hash
 class IHT:
     "Structure to handle collisions"
     def __init__(self, sizeval):
-        self.size = sizeval                        
+        self.size = sizeval
         self.overfullCount = 0
         self.dictionary = {}
 
@@ -44,10 +44,10 @@ class IHT:
 
     def count (self):
         return len(self.dictionary)
-    
+
     def fullp (self):
         return len(self.dictionary) >= self.size
-    
+
     def getindex (self, obj, readonly=False):
         d = self.dictionary
         if obj in d: return d[obj]
@@ -67,7 +67,7 @@ def hashcoords(coordinates, m, readonly=False):
     if type(m)==int: return basehash(tuple(coordinates)) % m
     if m==None: return coordinates
 
-from math import floor, log
+from math import floor
 from itertools import zip_longest
 
 def tiles (ihtORsize, numtilings, floats, ints=[], readonly=False):

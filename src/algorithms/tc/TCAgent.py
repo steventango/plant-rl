@@ -34,7 +34,7 @@ class TCAgent(BaseAgent):
                 dims=observations[0],
             ))
         else:
-            raise ValueError(f"Please specify which tile coder to use with param which_tc.")
+            raise ValueError("Please specify which tile coder to use with param which_tc.")
 
         self.n_features = self.tile_coder.features()
         self.nonzero_features = self.tile_coder.nonzero_features()

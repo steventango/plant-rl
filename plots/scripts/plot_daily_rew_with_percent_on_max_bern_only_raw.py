@@ -1,15 +1,12 @@
 #%%
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime
 import pytz
 
 import pandas as pd
 import matplotlib
 matplotlib.use('Agg')  # Prevent X server requirement (useful when running headless or via SSH)
 import matplotlib.pyplot as plt
-import matplotlib.lines as mlines
-import seaborn as sns
-from datetime import time
 
 ZONE_TO_AGENT_E7 = {
     "z1": "Constant Dim",
@@ -41,7 +38,7 @@ for dataset in datasets:
     df["agent"] = ZONE_TO_AGENT_E8[zone]  # convert zone to agent name
     df = df[["time", "agent_action", "mean_clean_area", "agent"]]  # keep only needed columns
     dfs.append(df)
-    
+
 # datasets = []
 # for p in ['P2', 'P3', 'P4']:
 #     paths = Path("/data/online/E7").joinpath(p).glob("**/z[12]*")
@@ -206,12 +203,12 @@ if num_days > 0:
     for i, day in enumerate(unique_days):
         ax = axes[i]
         day_data = plot_df[plot_df['day_idx'] == day]
-        
+
         ax.set_xlim(0.5, 1)
         ax.set_ylim(global_ymin, global_ymax)  # Set global y-axis limits
 
         # Add a black line connecting all dots for the day
-        ax.plot(day_data['percent_action_1'], day_data['reward'], 
+        ax.plot(day_data['percent_action_1'], day_data['reward'],
             linestyle='-',        # Solid line
             linewidth=1,          # Thicker line for connecting all dots
             color='black',        # Neutral color for the connecting line
@@ -220,7 +217,7 @@ if num_days > 0:
         # Plot solid dots for each data point, colored by agent
         for agent in agents:
             agent_data = day_data[day_data['agent'] == agent]
-            ax.scatter(agent_data['percent_action_1'], agent_data['reward'], 
+            ax.scatter(agent_data['percent_action_1'], agent_data['reward'],
                     color=manual_colors.get(agent, 'gray'),  # Use manual color
                     s=70,                                     # Size of the dots
                     edgecolor='none',                         # Solid dots without edge
@@ -237,7 +234,7 @@ for j in range(i + 1, len(axes)):
 
 
 handles, labels = axes[i].get_legend_handles_labels()
-by_label = dict(zip(labels, handles))
+by_label = dict(zip(labels, handles, strict=False))
 
 # Add global legend to top right (outside)
 fig.legend(by_label.values(), by_label.keys(),
@@ -245,7 +242,7 @@ fig.legend(by_label.values(), by_label.keys(),
         loc='upper right', bbox_to_anchor=(1.0, 1.0))
 
 plt.tight_layout(rect=[0, 0, 0.85, 0.97])
-fig.suptitle(f"Percent Bright vs 24 hr change in raw area (avg of 5 largest obs throughout day)", fontsize=18)
-plt.savefig(f"plots/outputs/grid_line_plots_bern_only_max.png", dpi=300)
+fig.suptitle("Percent Bright vs 24 hr change in raw area (avg of 5 largest obs throughout day)", fontsize=18)
+plt.savefig("plots/outputs/grid_line_plots_bern_only_max.png", dpi=300)
 
 # %%

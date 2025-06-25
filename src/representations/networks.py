@@ -93,10 +93,10 @@ def buildFeatureNetwork(inputs: Tuple, params: Dict[str, Any], rng: Any):
             layers = [
                 hk.Linear(hidden, name='linear'),
                 lambda x: fta(
-                    x, 
-                    eta=eta, 
-                    tiles=params.get('fta_tiles', 20), 
-                    lower_bound = -10*eta, 
+                    x,
+                    eta=eta,
+                    tiles=params.get('fta_tiles', 20),
+                    lower_bound = -10*eta,
                     upper_bound = 10*eta,
                     ),
                 hk.Flatten(name='phi'),

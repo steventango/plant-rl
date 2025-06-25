@@ -2,7 +2,6 @@ import json
 import logging
 import os
 import tkinter as tk
-from datetime import datetime
 from itertools import chain
 from pathlib import Path
 from tkinter import messagebox, ttk
@@ -585,7 +584,7 @@ class TrayConfigApp:
                     if diff < min_diff:
                         min_diff = diff
                         best_image = image_file
-            except Exception as e:
+            except Exception:
                 continue
 
         if best_image is None and image_files:
@@ -606,7 +605,7 @@ class TrayConfigApp:
             # Undistort
             undistorted_img = cv2.undistort(img, camera_matrix, dist_coeffs)
 
-            print(f"Image undistorted successfully")
+            print("Image undistorted successfully")
 
             # Convert to RGB for display
             img = cv2.cvtColor(undistorted_img, cv2.COLOR_BGR2RGB)

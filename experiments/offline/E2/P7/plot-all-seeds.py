@@ -8,13 +8,10 @@ from PyExpPlotting.matplot import save, setDefaultConference
 from PyExpUtils.results.Collection import ResultCollection
 
 from RlEvaluation.config import data_definition
-from RlEvaluation.interpolation import compute_step_return
-from RlEvaluation.temporal import TimeSummary, extract_learning_curves, curve_percentile_bootstrap_ci
+from RlEvaluation.temporal import extract_learning_curves, curve_percentile_bootstrap_ci
 from RlEvaluation.statistics import Statistic
 from RlEvaluation.utils.pandas import split_over_column
 
-import RlEvaluation.hypers as Hypers
-import RlEvaluation.metrics as Metrics
 from experiment.ExperimentModel import ExperimentModel
 from experiment.tools import parseCmdLineArgs
 
@@ -79,18 +76,18 @@ def main():
 
     for env, env_df in split_over_column(df, col='environment'):
         f, ax = plt.subplots()
-        for alg, alg_df in split_over_column(env_df, col='algorithm'):     
-            if alg == THIS_AGENT_ONLY:       
+        for alg, alg_df in split_over_column(env_df, col='algorithm'):
+            if alg == THIS_AGENT_ONLY:
 
                 # Pick the best learning rate by AUC
                 lr2metric = {}
                 for lr in alg_df['critic_lr'].unique():
                     xs, ys = extract_learning_curves(alg_df, (lr,), metric='return', interpolation=None)
-                    assert len(xs) == 5  
-                    metric = [auc(t, r) for t, r in zip(xs, ys)]
+                    assert len(xs) == 5
+                    metric = [auc(t, r) for t, r in zip(xs, ys, strict=False)]
                     lr2metric[lr] = np.mean(metric)
-                
-                best_lr = max(lr2metric, key=lr2metric.get) 
+
+                best_lr = max(lr2metric, key=lr2metric.get)
                 xs, ys = extract_learning_curves(alg_df, (best_lr,), metric='return', interpolation=None)
 
                 xs = np.asarray(xs)
@@ -105,11 +102,11 @@ def main():
                 )
 
                 ax.plot(rescale_time(xs[0], STRIDE[alg]), rescale_return(res.sample_stat, MIN_RETURN[alg], MAX_RETURN[alg]), label=f'time step={10*STRIDE[alg]}min', color=COLORS[alg], linewidth=1)
-                
+
                 for i in range(xs.shape[0]):
                     ax.plot(rescale_time(xs[0], STRIDE[alg]), rescale_return(ys[i], MIN_RETURN[alg], MAX_RETURN[alg]), color=COLORS[alg], linewidth=0.5, alpha=0.2)
-                
-        ax.set_xlim(0, 5000) 
+
+        ax.set_xlim(0, 5000)
         ax.legend()
         ax.set_title('GAC\'s Learning Curves in PlantSimulator')
         ax.set_ylabel('Normalized Episodic Return [light-off policy: 0, light-on policy: 1]')

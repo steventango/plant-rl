@@ -77,7 +77,7 @@ class ESARSA(TCAgent):
 
     def update(self, x, a, xp, r, gamma):
         self.steps += 1
-        
+
         if xp is None:
             xp = np.zeros_like(x)
             pi = np.zeros(self.actions)
@@ -97,13 +97,13 @@ class ESARSA(TCAgent):
         })
 
         # (Optional) at the end of each episode, decay step size linearly
-        if self.alpha_decay: 
+        if self.alpha_decay:
             self.alpha = self.get_step_size()
 
     def get_info(self):
         return self.info
-    
-    def get_step_size(self):  # linear decay with minimum 
+
+    def get_step_size(self):  # linear decay with minimum
         min_alpha = 0.01
         horizon = 5e4
         return max(min_alpha, self.alpha0 * (1 - self.steps / horizon))

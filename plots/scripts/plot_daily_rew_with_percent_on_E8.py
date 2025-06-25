@@ -1,12 +1,10 @@
 #%%
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime
 import pytz
 
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
-from datetime import time
 
 ZONE_TO_AGENT_E8 = {
     "z2": "90% Bright",
@@ -63,7 +61,7 @@ for agent, group in df.groupby('agent'):
 
 # Normalize mean_clean_area
 for agent, group in df.groupby('agent'):
-    first_5_times = group.sort_values('time')['time'].unique()[4:12]  # Get first 5 unique times 
+    first_5_times = group.sort_values('time')['time'].unique()[4:12]  # Get first 5 unique times
     first_obs_values = [group[group['time'] == t]['mean_clean_area'].iloc[0] for t in first_5_times]  # Get corresponding values
     first_obs_mean = sum(first_obs_values) / len(first_obs_values)  # Calculate mean of those values
     df.loc[group.index, 'mean_clean_area'] = group['mean_clean_area'] / first_obs_mean
@@ -166,7 +164,7 @@ for target_str in ["09:20", "09:30", "09:40", "09:50", "10:00"]:
             day_data = plot_df[plot_df['day'] == day]
             ax.set_xlim(0, 1)
             # Add a black line connecting all dots for the day
-            ax.plot(day_data['percent_action_1'], day_data['reward'], 
+            ax.plot(day_data['percent_action_1'], day_data['reward'],
                 linestyle='-',        # Solid line
                 linewidth=1,          # Thicker line for connecting all dots
                 color='black',        # Neutral color for the connecting line
@@ -175,7 +173,7 @@ for target_str in ["09:20", "09:30", "09:40", "09:50", "10:00"]:
             # Plot solid dots for each data point, colored by agent
             for agent in agents:
                 agent_data = day_data[day_data['agent'] == agent]
-                ax.scatter(agent_data['percent_action_1'], agent_data['reward'], 
+                ax.scatter(agent_data['percent_action_1'], agent_data['reward'],
                         color=colors[list(agents).index(agent)],  # Color by agent
                         s=70,                                     # Size of the dots
                         edgecolor='none',                         # Solid dots without edge
@@ -191,7 +189,7 @@ for target_str in ["09:20", "09:30", "09:40", "09:50", "10:00"]:
         fig.delaxes(axes[j])
 
     handles, labels = axes[i].get_legend_handles_labels()
-    by_label = dict(zip(labels, handles))
+    by_label = dict(zip(labels, handles, strict=False))
 
     # Add global legend to top right (outside)
     fig.legend(by_label.values(), by_label.keys(),

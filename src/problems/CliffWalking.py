@@ -1,4 +1,3 @@
-import numpy as np
 from environments.CliffWalking import CliffWalking as Env
 from PyExpUtils.collection.Collector import Collector
 from experiment.ExperimentModel import ExperimentModel

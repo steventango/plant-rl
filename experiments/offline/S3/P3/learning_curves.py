@@ -3,28 +3,19 @@ import sys
 
 sys.path.append(os.getcwd() + "/src")
 import datetime
-import enum
-from typing import Any, List, Sequence, Tuple
+from typing import Any, List, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import RlEvaluation.backend.statistics as bs
-import RlEvaluation.backend.temporal as bt
-import RlEvaluation.hypers as Hypers
-from PyExpPlotting.matplot import save, setDefaultConference, setFonts
-from PyExpUtils.results.Collection import ResultCollection
+from PyExpPlotting.matplot import save, setDefaultConference
 from RlEvaluation.config import DataDefinition, data_definition, maybe_global
 from RlEvaluation.interpolation import Interpolation, compute_step_return
-from RlEvaluation.statistics import Statistic
 from RlEvaluation.temporal import (
-    TimeSummary,
-    curve_percentile_bootstrap_ci,
     extract_learning_curves,
 )
 from RlEvaluation.utils.pandas import split_over_column, subset_df
 from matplotlib.ticker import FuncFormatter
-from experiment.ExperimentModel import ExperimentModel
 from experiment.tools import parseCmdLineArgs
 from utils.metrics import UnbiasedExponentialMovingAverage as uema
 from utils.metrics import iqm
@@ -123,7 +114,7 @@ def main():
         f, axs = plt.subplots(rows, 1, squeeze=False, sharex=True)
         axs = axs.flatten()
         x_plot = [(datetime.datetime.fromtimestamp(t) - datetime.datetime.fromtimestamp(x[0])).total_seconds() for t in x]
-        for j, (ax, yj) in enumerate(zip(axs, y.T)):
+        for j, (ax, yj) in enumerate(zip(axs, y.T, strict=False)):
             # Set the x-axis formatter to display timedelta
             ax.xaxis.set_major_formatter(FuncFormatter(lambda x, _: str(datetime.timedelta(seconds=int(x)))))
             # show tick every 3600 seconds

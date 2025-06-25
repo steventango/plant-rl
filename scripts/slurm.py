@@ -3,7 +3,6 @@ import os
 sys.path.append(os.getcwd() + '/src')
 
 import math
-import time
 import argparse
 import dataclasses
 import PyExpUtils.runner.Slurm as Slurm
@@ -93,7 +92,7 @@ for path in missing:
         # generate the gnu-parallel command for dispatching to many CPUs across server nodes
         parallel = Slurm.buildParallel(runner, l, sub)
 
-        # generate the bash script 
+        # generate the bash script
         script = getJobScript(parallel)
 
         if cmdline.debug:
@@ -104,14 +103,14 @@ for path in missing:
         script_name = f'slurm_scripts/job_{min(l)}-{max(l)}.sh'
         with open(script_name, 'w') as f:
             f.write(script)
-        os.chmod(script_name, 0o755) 
+        os.chmod(script_name, 0o755)
 
         submit_all += f"sbatch {Slurm.to_cmdline_flags(sub)} {script_name}\n"
-        submit_all += "sleep 2\n" 
+        submit_all += "sleep 2\n"
 
 with open('slurm_scripts/submit_all.sh', 'w') as f:
     f.write(submit_all)
-os.chmod('slurm_scripts/submit_all.sh', 0o755)  
+os.chmod('slurm_scripts/submit_all.sh', 0o755)
 
 print("\nTo submit all jobs, run:")
 print("./slurm_scripts/submit_all.sh")

@@ -15,7 +15,7 @@ for dataset_path in dataset_paths:
     df = pd.read_csv(core_path)
     # check if the image_name file exists on disk
     df["image_exists"] = df["image_name"].apply(lambda x: os.path.exists(os.path.join(dataset_path, "images", x)))
-    for image_name, exists in zip(df["image_name"], df["image_exists"]):
+    for image_name, exists in zip(df["image_name"], df["image_exists"], strict=False):
         if not exists:
             print(f"Image {image_name} does not exist in {dataset_path}/images")
 
