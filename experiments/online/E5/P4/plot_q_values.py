@@ -1,4 +1,4 @@
-# %%
+# %%  # type: ignore
 
 import lzma
 import pickle
@@ -67,11 +67,11 @@ print(f"Number of Zeros in weights: {zero_count}")
 #       "wrap_time": true
 #     }
 
-config = RichTileCoderConfig(
+config = RichTileCoderConfig(  # type: ignore
     tiles=4,
     tilings=32,
     dims=2,
-    wrap_time=True,
+    wrap_time=True,  # type: ignore
 )
 
 tile_coder = RichTileCoder(config)
@@ -105,7 +105,7 @@ vmax = Q.max()
 hour_interval = 12
 
 # Create a modified viridis colormap with gray for zero
-viridis = plt.cm.viridis(np.linspace(0, 1, 256))
+viridis = plt.cm.viridis(np.linspace(0, 1, 256))  # type: ignore
 # from vmax and vmin find the position of zero in the colormap
 zero_position = int((0 - vmin) / (vmax - vmin) * 255)
 
@@ -113,7 +113,7 @@ viridis[zero_position, :3] = [0.5, 0.5, 0.5]  # Set RGB values for gray
 custom_cmap = ListedColormap(viridis)
 
 # Create the heatmaps
-for action, ax in zip(range(num_actions), axs, strict=False):
+for action, ax in zip(range(num_actions), axs, strict=False):  # type: ignore
     sns.heatmap(
         Q[:, :, action].T,  # Transpose Q to swap axes
         ax=ax,
@@ -123,7 +123,7 @@ for action, ax in zip(range(num_actions), axs, strict=False):
         vmax=vmax,
         cbar_ax=None
         if action < num_actions - 1
-        else fig.add_axes([0.92, 0.15, 0.02, 0.7]),
+        else fig.add_axes([0.92, 0.15, 0.02, 0.7]),  # type: ignore
     )
     ax.set_title(f"Action {action} ({action_labels[action]})")
     ax.set_xlabel("Time (h)" if action == num_actions - 1 else "")
@@ -138,7 +138,7 @@ for action, ax in zip(range(num_actions), axs, strict=False):
     ax.invert_yaxis()  # Invert the y-axis
 
 fig.suptitle("ESARSA(λ) Q-values", fontsize=16)
-plt.tight_layout(rect=[0, 0, 0.9, 1])  # Adjust layout to fit colorbar
+plt.tight_layout(rect=[0, 0, 0.9, 1])  # Adjust layout to fit colorbar  # type: ignore
 plt.show()
 
 # %%

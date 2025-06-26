@@ -1,4 +1,4 @@
-from environments.PlantGrowthChamber.AreaPlantGrowthChamber import (
+from environments.PlantGrowthChamber.AreaPlantGrowthChamber import (  # type: ignore
     AreaPlantGrowthChamber,
 )
 from environments.PlantGrowthChamber.MockPlantGrowthChamber import (
@@ -9,7 +9,7 @@ from environments.PlantGrowthChamber.PlantGrowthChamberIntensity import (
 )
 
 
-class MockAreaPlantGrowthChamberIntensity(
+class MockAreaPlantGrowthChamberIntensity(  # type: ignore
     MockPlantGrowthChamber, AreaPlantGrowthChamber, PlantGrowthChamberIntensity
 ):
     def __init__(self, *args, **kwargs):

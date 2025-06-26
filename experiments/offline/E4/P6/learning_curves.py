@@ -1,4 +1,4 @@
-import os
+import os  # type: ignore
 import sys
 
 sys.path.append(os.getcwd() + "/src")
@@ -61,14 +61,14 @@ def main():
 
     for env, env_df in split_over_column(df, col="environment"):
         f, ax = plt.subplots(5, 1)
-        for alg, alg_df in split_over_column(env_df, col="algorithm"):
+        for alg, alg_df in split_over_column(env_df, col="algorithm"):  # type: ignore
             sub_df = alg_df
             # sub_df = alg_df[(alg_df['alpha']==0.1)]
             report = Hypers.select_best_hypers(
-                sub_df,
+                sub_df,  # type: ignore
                 metric="reward",
                 prefer=Hypers.Preference.high,
-                time_summary=TimeSummary.last_n_percent_sum,
+                time_summary=TimeSummary.last_n_percent_sum,  # type: ignore
                 statistic=Statistic.mean,
             )
 
@@ -77,7 +77,10 @@ def main():
             Hypers.pretty_print(report)
 
             xs_a, ys_a = extract_learning_curves(
-                sub_df, report.best_configuration, metric="action", interpolation=None
+                sub_df,
+                report.best_configuration,
+                metric="action",
+                interpolation=None,  # type: ignore
             )
             xs_a = np.asarray(xs_a)
             ys_a = np.asarray(ys_a)
@@ -104,7 +107,7 @@ def main():
             ax[0].set_title(f"Learning curves over {total_days} days")
             ax[4].set_xlabel("Day Time [Hours]")
 
-        save(save_path=f"{path}/plots", plot_name=f"{alg}", save_type="jpg")
+        save(save_path=f"{path}/plots", plot_name=f"{alg}", save_type="jpg")  # type: ignore
 
 
 def rescale_time(x, stride):

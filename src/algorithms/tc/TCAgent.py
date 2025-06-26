@@ -72,7 +72,7 @@ class TCAgent(BaseAgent):
     # ----------------------
     # -- RLGlue interface --
     # ----------------------
-    def start(self, s: np.ndarray, extra: Dict[str, Any] | None = None):
+    def start(self, s: np.ndarray, extra: Dict[str, Any] | None = None):  # type: ignore
         if extra is None:
             extra = {}
         self.lag.flush()
@@ -91,7 +91,7 @@ class TCAgent(BaseAgent):
         )
         return a, self.get_info()
 
-    def step(self, r: float, sp: np.ndarray | None, extra: Dict[str, Any]):
+    def step(self, r: float, sp: np.ndarray | None, extra: Dict[str, Any]):  # type: ignore
         a = -1
 
         # sample next action
@@ -123,7 +123,7 @@ class TCAgent(BaseAgent):
 
         return a, self.get_info()
 
-    def end(self, r: float, extra: Dict[str, Any]):
+    def end(self, r: float, extra: Dict[str, Any]):  # type: ignore
         interaction = Timestep(
             x=None,
             a=-1,

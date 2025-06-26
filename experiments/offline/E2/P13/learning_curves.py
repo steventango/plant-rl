@@ -1,4 +1,4 @@
-import os
+import os  # type: ignore
 import sys
 
 sys.path.append(os.getcwd() + "/src")
@@ -64,17 +64,17 @@ def main():
     results.get_any_exp()
 
     for _env, env_df in split_over_column(df, col="environment"):
-        for alg, alg_df in split_over_column(env_df, col="algorithm"):
+        for alg, alg_df in split_over_column(env_df, col="algorithm"):  # type: ignore
             if alg == PLOT_THIS:
                 f, ax = plt.subplots(2, 1)
 
                 # Pick the best hypers by total reward over 14 days (1 episode)
                 hyper2metric = {}
-                for clr in alg_df["critic_lr"].unique():
-                    for alr in alg_df["actor_lr_scale"].unique():
-                        for tau in alg_df["tau"].unique():
+                for clr in alg_df["critic_lr"].unique():  # type: ignore
+                    for alr in alg_df["actor_lr_scale"].unique():  # type: ignore
+                        for tau in alg_df["tau"].unique():  # type: ignore
                             xs, ys = extract_learning_curves(
-                                alg_df,
+                                alg_df,  # type: ignore
                                 (clr, alr, tau),
                                 metric="return",
                                 interpolation=None,
@@ -83,12 +83,15 @@ def main():
                             metric = [r[-1] for r in ys]
                             hyper2metric[(clr, alr, tau)] = np.mean(metric)
 
-                best_hyper = max(hyper2metric, key=hyper2metric.get)
+                best_hyper = max(hyper2metric, key=hyper2metric.get)  # type: ignore
                 print(f"Best hypers for {alg} = {best_hyper}")
 
                 # Plot reward history averaged over 5 seeds
                 xs, ys = extract_learning_curves(
-                    alg_df, best_hyper, metric="return", interpolation=None
+                    alg_df,
+                    best_hyper,
+                    metric="return",
+                    interpolation=None,  # type: ignore
                 )
                 xs = np.asarray(xs)
                 ys = np.asarray(ys)
@@ -119,7 +122,10 @@ def main():
 
                 # Plot action history averaged over 5 seeds
                 xs_a, ys_a = extract_learning_curves(
-                    alg_df, best_hyper, metric="action", interpolation=None
+                    alg_df,
+                    best_hyper,
+                    metric="action",
+                    interpolation=None,  # type: ignore
                 )
                 xs_a = np.asarray(xs_a)
                 ys_a = np.asarray(ys_a)

@@ -1,4 +1,4 @@
-# %%
+# %%  # type: ignore
 import sys
 
 import matplotlib.pyplot as plt
@@ -27,10 +27,10 @@ def calc_ema(xs, alpha):
 
 
 # plot various EMA values
-plt.plot(xs, ys, label="raw")
+plt.plot(xs, ys, label="raw")  # type: ignore
 
 for alpha in [0.8, 0.06]:
-    plt.plot(xs, calc_ema(ys, alpha), label=f"alpha={alpha}")
+    plt.plot(xs, calc_ema(ys, alpha), label=f"alpha={alpha}")  # type: ignore
 
 plt.xlabel("Day Time [Hours]")
 plt.ylabel("Area")
@@ -38,7 +38,7 @@ plt.legend()
 
 # %%
 # proposed reward function: difference between current and previous EMA
-plt.plot(xs, (calc_ema(ys, 0.2) - calc_ema(ys, 0.06)) / 150, label="difference")
+plt.plot(xs, (calc_ema(ys, 0.2) - calc_ema(ys, 0.06)) / 150, label="difference")  # type: ignore
 plt.xlabel("Day Time [Hours]")
 plt.ylabel("Reward")
 plt.legend()

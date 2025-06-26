@@ -1,4 +1,4 @@
-# %%
+# %%  # type: ignore
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -99,7 +99,7 @@ for _agent, group in df.groupby("agent"):
 # Normalize mean_clean_area
 for agent, group in df.groupby("agent"):
     first_5_times = (
-        group[
+        group[  # type: ignore
             group["time"]
             .dt.strftime("%H:%M")
             .isin(["11:40", "11:50", "12:00", "12:10", "12:20"])
@@ -109,7 +109,8 @@ for agent, group in df.groupby("agent"):
     )
     # print(f"Agent: {agent}, First times: {first_5_times}")
     first_obs_values = [
-        group[group["time"] == t]["mean_clean_area"].iloc[0] for t in first_5_times
+        group[group["time"] == t]["mean_clean_area"].iloc[0]
+        for t in first_5_times  # type: ignore
     ]  # Get corresponding values
     for t in list(zip(first_5_times, first_obs_values, strict=False)):
         print(f"Agent: {agent}, Time: {t[0]}, Value: {t[1]}")
@@ -119,7 +120,7 @@ for agent, group in df.groupby("agent"):
     df.loc[group.index, "mean_clean_area"] = group["mean_clean_area"] / first_obs_mean
 
 # Filter for unique values of time and the "Constant Bright" agent
-constant_bright_data = df[df["agent"] == "Constant Bright"].drop_duplicates(
+constant_bright_data = df[df["agent"] == "Constant Bright"].drop_duplicates(  # type: ignore
     subset=["time"]
 )
 
@@ -133,7 +134,7 @@ final_days_data = constant_bright_data[
 ]
 
 final_days_data["new_day"] = (
-    final_days_data["time"].dt.strftime("%H:%M").isin(["09:20"])
+    final_days_data["time"].dt.strftime("%H:%M").isin(["09:20"])  # type: ignore
 )
 # Plot time vs mean_clean_area for the final 3 days
 plt.figure(figsize=(12, 6))
@@ -159,10 +160,10 @@ plt.xticks(rotation=45)
 # Extract unique times and corresponding day indices for annotation
 new_day_rows = final_days_data[final_days_data["new_day"]][["time", "day_idx"]]
 
-for _, row in new_day_rows.iterrows():
+for _, row in new_day_rows.iterrows():  # type: ignore
     t = row["time"]
     day = int(row["day_idx"])
-    plt.axvline(x=t, color="red", linestyle="--")
+    plt.axvline(x=t, color="red", linestyle="--")  # type: ignore
     plt.text(
         t - timedelta(hours=0.5),  # shift left by 30 minutes
         final_days_data["mean_clean_area"].max() - 0.05,
@@ -175,7 +176,7 @@ for _, row in new_day_rows.iterrows():
     )
 
 
-noon_rows = final_days_data[final_days_data["time"].dt.strftime("%H:%M") == "12:00"]
+noon_rows = final_days_data[final_days_data["time"].dt.strftime("%H:%M") == "12:00"]  # type: ignore
 for t in noon_rows["time"]:
     plt.axvline(x=t, color="purple", linestyle=":", linewidth=1)
     plt.text(

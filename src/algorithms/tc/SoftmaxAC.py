@@ -56,10 +56,10 @@ class SoftmaxAC(TCAgent):
         self.tau = params["tau"]
 
         # create initial weights
-        self.w = np.zeros((self.rep.features()), dtype=np.float32)
-        self.theta = np.zeros((actions, self.rep.features()), dtype=np.float32)
+        self.w = np.zeros((self.rep.features()), dtype=np.float32)  # type: ignore
+        self.theta = np.zeros((actions, self.rep.features()), dtype=np.float32)  # type: ignore
 
-    def policy(self, x: np.ndarray):
+    def policy(self, x: np.ndarray):  # type: ignore
         logits = compute_logits(self.theta, x)
         return softmax(logits, self.tau)
 

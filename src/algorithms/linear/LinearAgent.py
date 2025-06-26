@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import abstractmethod  # type: ignore
 from typing import Any, Dict, Tuple
 
 import numpy as np
@@ -34,7 +34,7 @@ class LinearAgent(BaseAgent):
     # ----------------------
     # -- RLGlue interface --
     # ----------------------
-    def start(self, s: np.ndarray, extra: Dict[str, Any]) -> Tuple[int, Dict[str, Any]]:
+    def start(self, s: np.ndarray, extra: Dict[str, Any]) -> Tuple[int, Dict[str, Any]]:  # type: ignore
         self.lag.flush()
 
         x = s  # Uses unprocessed features from env
@@ -51,7 +51,7 @@ class LinearAgent(BaseAgent):
         )
         return a, self.info
 
-    def step(self, r: float, sp: np.ndarray | None, extra: Dict[str, Any]):
+    def step(self, r: float, sp: np.ndarray | None, extra: Dict[str, Any]):  # type: ignore
         a = -1
 
         # sample next action
@@ -83,7 +83,7 @@ class LinearAgent(BaseAgent):
 
         return a, self.info
 
-    def end(self, r: float, extra: Dict[str, Any]):
+    def end(self, r: float, extra: Dict[str, Any]):  # type: ignore
         interaction = Timestep(
             x=None,
             a=-1,

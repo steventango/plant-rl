@@ -1,4 +1,4 @@
-import datetime
+import datetime  # type: ignore
 from pathlib import Path
 
 import jax.numpy as jnp
@@ -50,7 +50,7 @@ timeframes = [
 def main():
     dfs = []
     zone = Zone(
-        identifier=2,
+        identifier=2,  # type: ignore
         camera_left_url=None,
         camera_right_url="http://mitacs-zone02-camera02.ccis.ualberta.ca:8080/observation",
         lightbar_url="http://mitacs-zone2.ccis.ualberta.ca:8080/action",

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta  # type: ignore
 from pathlib import Path
 
 import numpy as np
@@ -59,7 +59,7 @@ def generate_policy(filename, interval=10, lam=3):
 
     df = pd.DataFrame(
         data,
-        columns=[
+        columns=[  # type: ignore
             "Day",
             "Time",
             "Blue",

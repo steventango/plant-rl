@@ -1,4 +1,4 @@
-import os
+import os  # type: ignore
 import sys
 
 sys.path.append(os.getcwd() + "/src")
@@ -65,10 +65,11 @@ if __name__ == "__main__":
         best_scores = []
         # TODO: make colors and font size consistent
         for alpha_val, sub_df in sorted(
-            split_over_column(lambda_df, col="alpha"), key=lambda x: x[0]
+            split_over_column(lambda_df, col="alpha"),
+            key=lambda x: x[0],  # type: ignore
         ):
             sub_df = sub_df[sub_df["episode"] < 50]
-            print(sub_df["return"].count())
+            print(sub_df["return"].count())  # type: ignore
             score = -np.nanmean(sub_df["return"])
             print(lambda_val, alpha_val, f"{score:.2f}")
             best_scores.append(score)

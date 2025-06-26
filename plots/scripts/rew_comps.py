@@ -1,4 +1,4 @@
-# %%
+# %%  # type: ignore
 from datetime import datetime
 from pathlib import Path
 
@@ -98,7 +98,7 @@ for _agent, group in df.groupby("agent"):
 # Normalize mean_clean_area
 for agent, group in df.groupby("agent"):
     first_5_times = (
-        group[
+        group[  # type: ignore
             group["time"]
             .dt.strftime("%H:%M")
             .isin(["11:40", "11:50", "12:00", "12:10", "12:20"])
@@ -108,7 +108,8 @@ for agent, group in df.groupby("agent"):
     )
     # print(f"Agent: {agent}, First times: {first_5_times}")
     first_obs_values = [
-        group[group["time"] == t]["mean_clean_area"].iloc[0] for t in first_5_times
+        group[group["time"] == t]["mean_clean_area"].iloc[0]
+        for t in first_5_times  # type: ignore
     ]  # Get corresponding values
     for t in list(zip(first_5_times, first_obs_values, strict=False)):
         print(f"Agent: {agent}, Time: {t[0]}, Value: {t[1]}")
@@ -137,7 +138,7 @@ for agent, group in df.groupby("agent"):
             f"Processing agent: {agent}, current day: {current_day}, next day: {next_day}"
         )
         # Check if the days are consecutive
-        if (next_day - current_day).days == 1:
+        if (next_day - current_day).days == 1:  # type: ignore
             print(f"Found consecutive days: {current_day} and {next_day}")
 
             # Max 5 obs
@@ -158,10 +159,10 @@ for agent, group in df.groupby("agent"):
             has_max_obs = not current_max_obs.empty and not next_max_obs.empty
 
             # Average of 5 obs centered around 12pm
-            current_12pm_obs = current_group[
+            current_12pm_obs = current_group[  # type: ignore
                 current_group["time"].dt.strftime("%H:%M").isin(target_times)
             ].drop_duplicates(subset=["time"])
-            next_12pm_obs = next_group[
+            next_12pm_obs = next_group[  # type: ignore
                 next_group["time"].dt.strftime("%H:%M").isin(target_times)
             ].drop_duplicates(subset=["time"])
             print(
@@ -171,10 +172,10 @@ for agent, group in df.groupby("agent"):
             has_12pm_obs = not current_12pm_obs.empty and not next_12pm_obs.empty
 
             # 9am obs
-            current_9am_obs = current_group[
+            current_9am_obs = current_group[  # type: ignore
                 current_group["time"].dt.strftime("%H:%M").isin(["09:20"])
             ].drop_duplicates(subset=["time"])
-            next_9am_obs = next_group[
+            next_9am_obs = next_group[  # type: ignore
                 next_group["time"].dt.strftime("%H:%M").isin(["09:20"])
             ].drop_duplicates(subset=["time"])
             print(f"Number of observations in current_9am_obs: {len(current_9am_obs)}")
@@ -237,7 +238,7 @@ for agent, group in df.groupby("agent"):
 # %%
 # Group data by day and calculate reward and percentage of agent_action == 1
 plot_data = []
-for (day, agent), group in df.groupby(["day", "agent"]):
+for (day, agent), group in df.groupby(["day", "agent"]):  # type: ignore
     reward_max = group[
         "reward_max"
     ].max()  # Get the reward for the last observation of the day
@@ -293,7 +294,9 @@ for ax, reward_col, title in zip(axes, reward_columns, titles, strict=False):
 # Add a title above all subplots
 fig.suptitle("Reward Comparison (normalized)", fontsize=16, fontweight="bold")
 
-plt.tight_layout(rect=[0, 0, 1, 0.95])  # Adjust layout to make space for the title
+plt.tight_layout(
+    rect=[0, 0, 1, 0.95]
+)  # Adjust layout to make space for the title  # type: ignore
 plt.savefig("plots/outputs/reward_comparison_by_type.png", dpi=300)
 
 # Calculate global y-axis limits for the second figure
@@ -331,5 +334,7 @@ for j in range(len(agents), len(axes)):
 # Add a title above all subplots
 fig.suptitle("Reward Comparison by Agent (normalized)", fontsize=16, fontweight="bold")
 
-plt.tight_layout(rect=[0, 0, 1, 0.95])  # Adjust layout to make space for the title
+plt.tight_layout(
+    rect=[0, 0, 1, 0.95]
+)  # Adjust layout to make space for the title  # type: ignore
 plt.savefig("plots/outputs/reward_comparison_by_agent.png", dpi=300)

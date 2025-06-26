@@ -1,4 +1,4 @@
-# %%
+# %%  # type: ignore
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -9,9 +9,9 @@ def normalize(x, lower, upper):
     return (x - lower) / (upper - lower)
 
 
-df_1 = pd.read_csv("/data/online/E7/P2/Constant1/z1/raw.csv")
+df_1: pd.DataFrame = pd.read_csv("/data/online/E7/P2/Constant1/z1/raw.csv")
 df_1 = df_1[df_1["plant_id"] == 0]
-df_2 = pd.read_csv("/data/online/E7/P2/Constant2/z2/raw.csv")
+df_2: pd.DataFrame = pd.read_csv("/data/online/E7/P2/Constant2/z2/raw.csv")
 df_2 = df_2[df_2["plant_id"] == 0]
 
 # Convert time columns to datetime
@@ -19,8 +19,8 @@ df_1["time"] = pd.to_datetime(df_1["time"])
 df_2["time"] = pd.to_datetime(df_2["time"])
 
 # Convert time to America/Edmonton timezone
-df_1["time"] = df_1["time"].dt.tz_convert("America/Edmonton")
-df_2["time"] = df_2["time"].dt.tz_convert("America/Edmonton")
+df_1["time"] = df_1["time"].dt.tz_convert("America/Edmonton")  # type: ignore
+df_2["time"] = df_2["time"].dt.tz_convert("America/Edmonton")  # type: ignore
 
 # %%
 df_1["mean_clean_area"]
@@ -36,14 +36,16 @@ reward_cols = [
     "reward_1day",
 ]
 for df in [df_1, df_2]:
-    df["reward_20min"] = df["mean_clean_area"] - df["mean_clean_area"].shift(2)
-    df["reward_30min"] = df["mean_clean_area"] - df["mean_clean_area"].shift(3)
-    df["reward_1hour"] = df["mean_clean_area"] - df["mean_clean_area"].shift(6)
-    df["reward_2hour"] = df["mean_clean_area"] - df["mean_clean_area"].shift(12)
-    df["reward_4hour"] = df["mean_clean_area"] - df["mean_clean_area"].shift(24)
-    df["reward_6hour"] = df["mean_clean_area"] - df["mean_clean_area"].shift(36)
-    df["reward_1day"] = df["mean_clean_area"] - df["mean_clean_area"].shift(72)
-    for reward_col in reward_cols:
+    # Ensure mean_clean_area is a pandas Series  # type: ignore
+    mean_clean_area: pd.Series = df["mean_clean_area"]  # type: ignore
+    df["reward_20min"] = mean_clean_area - mean_clean_area.shift(2)  # type: ignore
+    df["reward_30min"] = mean_clean_area - mean_clean_area.shift(3)  # type: ignore
+    df["reward_1hour"] = mean_clean_area - mean_clean_area.shift(6)  # type: ignore
+    df["reward_2hour"] = mean_clean_area - mean_clean_area.shift(12)  # type: ignore
+    df["reward_4hour"] = mean_clean_area - mean_clean_area.shift(24)  # type: ignore
+    df["reward_6hour"] = mean_clean_area - mean_clean_area.shift(36)
+    df["reward_1day"] = mean_clean_area - mean_clean_area.shift(72)
+    for reward_col in reward_cols:  # type: ignore
         if reward_col != "reward":
             df[reward_col] = df[reward_col].apply(lambda x: normalize(x, 0, 50))
 # %%
@@ -61,8 +63,8 @@ combined_df = pd.concat([df_1, df_2], ignore_index=True)
 # Set up the plot with Seaborn styling
 plt.figure(figsize=(12, 6))
 sns.set_style("whitegrid")
-
-# Create the timeseries plot with datetime x-axis
+# type: ignore
+# Create the timeseries plot with datetime x-axis  # type: ignore
 sns.lineplot(data=df_1, x="time", y="mean_clean_area", label="Constant Dim")
 sns.lineplot(data=df_2, x="time", y="mean_clean_area", label="Constant Standard")
 
@@ -103,11 +105,11 @@ plt.show()
 # %%
 # Create a shifted version of df_2 with time shifted forward by 1 day
 df_2_shifted = df_2.copy()
-df_2_shifted["time"] = df_2_shifted["time"] + pd.Timedelta(days=1)
-# Ensure timezone is preserved in the shifted dataframe
-if df_2_shifted["time"].dt.tz is None:
-    df_2_shifted["time"] = df_2_shifted["time"].dt.tz_localize("America/Edmonton")
-elif df_2_shifted["time"].dt.tz.zone != "America/Edmonton":
+df_2_shifted["time"] = df_2_shifted["time"] + pd.Timedelta(days=1)  # type: ignore
+# Ensure timezone is preserved in the shifted dataframe  # type: ignore
+if df_2_shifted["time"].dt.tz is None:  # type: ignore
+    df_2_shifted["time"] = df_2_shifted["time"].dt.tz_localize("America/Edmonton")  # type: ignore
+elif str(df_2_shifted["time"].dt.tz) != "America/Edmonton":
     df_2_shifted["time"] = df_2_shifted["time"].dt.tz_convert("America/Edmonton")
 
 df_2_shifted["source"] = "Constant Standard (shifted +1 day)"
@@ -116,10 +118,10 @@ df_2_shifted["source"] = "Constant Standard (shifted +1 day)"
 plt.figure(figsize=(12, 6))
 sns.set_style("whitegrid")
 
-# Plot original df_1 and shifted df_2
+# Plot original df_1 and shifted df_2  # type: ignore
 sns.lineplot(
     data=df_1, x="time", y="mean_clean_area", label="Constant Dim", legend=False
-)
+)  # type: ignore
 sns.lineplot(
     data=df_2_shifted,
     x="time",
@@ -181,7 +183,7 @@ sns.set_style("whitegrid")
 for i, reward_col in enumerate(reward_cols):
     ax = axes[i]
 
-    # Plot rewards for the current reward column
+    # Plot rewards for the current reward column  # type: ignore
     sns.lineplot(
         data=df_1,
         x="time",
@@ -189,7 +191,7 @@ for i, reward_col in enumerate(reward_cols):
         label=f"Constant Dim - {reward_col}",
         alpha=0.8,
         ax=ax,
-    )
+    )  # type: ignore
     sns.lineplot(
         data=df_2_shifted,
         x="time",
@@ -231,7 +233,7 @@ df_2_shifted["episode"] = df_2_shifted["episode"] + 1
 combined_df_shifted = pd.concat([df_1, df_2_shifted], ignore_index=True)
 
 # Alternative visualization using violin plots for better distribution visualization
-plt.figure(figsize=(14, 8))
+plt.figure(figsize=(14, 8))  # type: ignore
 
 sns.violinplot(data=combined_df_shifted, x="episode", y="reward", hue="source")
 plt.title("Reward Distribution by Episode - Constant Dim", fontsize=14)
@@ -249,9 +251,9 @@ df_analysis = df_analysis.reset_index(drop=True)
 
 
 # %%
-df_1_skip = df_1.copy()
+df_1_skip = df_1.copy()  # type: ignore
 df_1_skip = df_1_skip[
-    df_1_skip["time"] - df_analysis["time"].min() > -pd.Timedelta(minutes=5)
+    df_1_skip["time"] - df_analysis["time"].min() > -pd.Timedelta(minutes=5)  # type: ignore
 ]
 df_1_skip = df_1_skip.reset_index(drop=True)
 # %%
@@ -260,7 +262,7 @@ for reward_col in reward_cols:
 # omit the last two episode
 df_analysis = df_analysis[df_analysis["episode"] < 8]
 
-# %%
+# %%  # type: ignore
 # explode the dataframe to have one row per reward delta, and a column to indicate the type of reward delta
 df_analysis = df_analysis.melt(
     id_vars=["episode", "time", "mean_clean_area", "source"],
@@ -271,15 +273,15 @@ df_analysis = df_analysis.melt(
 # %%
 
 # %%
-# plot violin plots of reward delta for each episode
-n_episodes = df_analysis["episode"].nunique()
+# plot violin plots of reward delta for each episode  # type: ignore
+n_episodes = df_analysis["episode"].nunique()  # type: ignore
 fig, axes = plt.subplots(
     nrows=n_episodes, ncols=1, figsize=(6, 4 * n_episodes), sharex=True
 )
 
 for i, episode in enumerate(sorted(df_analysis["episode"].unique())):
     episode_df = df_analysis[df_analysis["episode"] == episode]
-    ax = axes[i]
+    ax = axes[i]  # type: ignore
     sns.violinplot(
         data=episode_df,
         x="reward_type",

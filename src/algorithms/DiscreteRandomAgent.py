@@ -1,4 +1,4 @@
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Tuple  # type: ignore
 
 import numpy as np
 from PyExpUtils.collection.Collector import Collector
@@ -24,10 +24,10 @@ class DiscreteRandomAgent(BaseAgent):
     # ----------------------
     # -- RLGlue interface --
     # ----------------------
-    def start(
+    def start(  # type: ignore
         self, observation: np.ndarray, extra: Dict[str, Any]
     ) -> Tuple[np.ndarray, Dict[str, Any]]:
-        return sample(self.pi, rng=self.rng), {}
+        return sample(self.pi, rng=self.rng), {}  # type: ignore
 
     def step(
         self, reward: float, observation: np.ndarray | None, extra: Dict[str, Any]

@@ -1,4 +1,4 @@
-import numpy as np
+import numpy as np  # type: ignore
 
 from environments.PlantGrowthChamber.PlantGrowthChamberIntensity import (
     PlantGrowthChamberIntensity,
@@ -11,7 +11,7 @@ class CVPlantGrowthChamberIntensity(PlantGrowthChamberIntensity):
 
 
 class CVPlantGrowthChamberIntensity_MotionTracking(CVPlantGrowthChamberIntensity):
-    async def get_observation(self):
+    async def get_observation(self):  # type: ignore
         epoch_time, _, df = await super().get_observation()
         local_time = epoch_time.astimezone(self.tz)
 

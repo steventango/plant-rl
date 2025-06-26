@@ -1,4 +1,4 @@
-import logging
+import logging  # type: ignore
 from collections import defaultdict
 from math import tanh
 from typing import Any, Dict, Tuple
@@ -45,7 +45,7 @@ class MotionTrackingController(BaseAgent):
         openness = self.openness_trace.compute().item()
         return self.moonlight + max(0, self.c1 * tanh(self.c2 * openness))
 
-    def start(self, observation: np.ndarray, extra: Dict[str, Any]):
+    def start(self, observation: np.ndarray, extra: Dict[str, Any]):  # type: ignore
         self.env_local_time = observation[0]
         mean_area = observation[1]
         self.mean_clean_areas[self.env_local_time.replace(second=0, microsecond=0)] = (

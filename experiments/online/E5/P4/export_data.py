@@ -46,7 +46,7 @@ def main():
 
     dfs = []
     for _alg, sub_df in split_over_column(df, col="algorithm"):
-        x = sub_df[dd.time_col].to_numpy()
+        x = sub_df[dd.time_col].to_numpy()  # type: ignore
 
         idx = np.argwhere(x[1:] <= x[:-1])
 

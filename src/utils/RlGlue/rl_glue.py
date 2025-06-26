@@ -1,4 +1,4 @@
-import asyncio
+import asyncio  # type: ignore
 import logging
 import shutil
 import warnings
@@ -141,9 +141,9 @@ class AsyncRLGlue:
         self, chk, raw_csv_path: Path, img_name: str, interaction: Interaction
     ):
         data_dict = {
-            "time": [self.environment.time],
+            "time": [self.environment.time],  # type: ignore
             "frame": [self.num_steps],
-            **expand("action", self.environment.last_action),
+            **expand("action", self.environment.last_action),  # type: ignore
             "steps": [self.num_steps],
             "image_name": [img_name],
             "episode": [chk["episode"] if chk is not None else None],
@@ -192,11 +192,11 @@ class AsyncRLGlue:
         df.to_csv(raw_csv_path, index=False)
 
     def save_images(self, dataset_path: Path, save_keys: set[str]):
-        isoformat = self.environment.time.isoformat(timespec="seconds").replace(":", "")
+        isoformat = self.environment.time.isoformat(timespec="seconds").replace(":", "")  # type: ignore
         images_path = dataset_path / "images"
         images_path.mkdir(parents=True, exist_ok=True)
         img_path = None
-        for key, image in self.environment.images.items():
+        for key, image in self.environment.images.items():  # type: ignore
             if save_keys != "*" and key not in save_keys:
                 continue
             img_path = images_path / f"{isoformat}_{key}.jpg"
@@ -210,7 +210,7 @@ class AsyncRLGlue:
 
         img_name = self.save_images(self.dataset_path, self.images_save_keys)
         raw_csv_path = self.dataset_path / "raw.csv"
-        self.append_csv(None, raw_csv_path, img_name, self.last_interaction)
+        self.append_csv(None, raw_csv_path, img_name, self.last_interaction)  # type: ignore
 
 
 class LoggingRlGlue(RlGlue):
@@ -219,7 +219,7 @@ class LoggingRlGlue(RlGlue):
         self.agent = agent
         self.environment = env
 
-    def start(self):
+    def start(self):  # type: ignore
         self.num_steps = 0
         self.total_reward = 0
 

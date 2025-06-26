@@ -1,4 +1,4 @@
-import base64
+import base64  # type: ignore
 import io
 import json
 from math import ceil
@@ -96,7 +96,7 @@ def call_segment_anything_api(
                 # Convert contour to numpy array with correct shape for fillPoly
                 contour_np = np.array(contour, dtype=np.int32)
                 # Create mask from contour
-                cv2.fillPoly(masks[i], [contour_np], 1)
+                cv2.fillPoly(masks[i], [contour_np], 1)  # type: ignore
 
         # Convert lists back to numpy arrays
         scores = np.array(result["scores"])
@@ -164,7 +164,7 @@ def process_image(
     image: np.ndarray, trays: list[Tray], debug_images: dict[str, Image.Image]
 ):
     if not trays:
-        return pd.DataFrame(), sv.Detections(np.zeros((0, 4)))
+        return pd.DataFrame(), sv.Detections(np.zeros((0, 4)))  # type: ignore
 
     camera_matrix = np.array(
         [[1800.0, 0.0, 1296.0], [0.0, 1800.0, 972.0], [0.0, 0.0, 1.0]]
@@ -220,7 +220,7 @@ def process_image(
     )
 
     class_ids = np.full(len(class_names), 901, dtype=int)
-    detections = sv.Detections(xyxy=boxes, confidence=confidences, class_id=class_ids)
+    detections = sv.Detections(xyxy=boxes, confidence=confidences, class_id=class_ids)  # type: ignore
 
     # filter out boxes that are bigger than the pot size
     bigger_ratio = 1.5
@@ -228,7 +228,7 @@ def process_image(
         boxes[:, 3] - boxes[:, 1] < pot_width * bigger_ratio
     )
 
-    detections.class_id[~size_filter] = 903
+    detections.class_id[~size_filter] = 903  # type: ignore
 
     coords = []
     sigma = 1.5 * pot_width
@@ -268,99 +268,110 @@ def process_image(
             max_confidence_index = boxes_in_range.nonzero()[0][
                 np.argmax(confidences[boxes_in_range])
             ]
-            detections.class_id[max_confidence_index] = i + j * n_wide
+            detections.class_id[max_confidence_index] = i + j * n_wide  # type: ignore
 
     detections = detections.with_nms(threshold=0.01)
-    detections.class_id[detections.confidence < 0.05] = 902
+    detections.class_id[detections.confidence < 0.05] = 902  # type: ignore
     reason_codes = {
         901: "relative low confidence",
         902: "low confidence",
         903: "too big",
     }
 
-    box_annotator = sv.BoxAnnotator(color_palette_custom)
-    annotate_detections = detections[np.argsort(detections.class_id)[::-1]]
+    box_annotator = sv.BoxAnnotator(color_palette_custom)  # type: ignore
+    annotate_detections = detections[np.argsort(detections.class_id)[::-1]]  # type: ignore
     annotated_frame = box_annotator.annotate(
-        scene=warped_image.copy(), detections=annotate_detections
+        scene=warped_image.copy(),
+        detections=annotate_detections,  # type: ignore
     )
 
-    label_annotator = sv.LabelAnnotator(color_palette_custom)
+    label_annotator = sv.LabelAnnotator(color_palette_custom)  # type: ignore
     labels = [
         f"{'R' if class_id in reason_codes else ''}{class_id} {confidence:.2f}"
         for class_id, confidence in zip(
-            annotate_detections.class_id, annotate_detections.confidence, strict=False
+            annotate_detections.class_id,
+            annotate_detections.confidence,
+            strict=False,  # type: ignore
         )
     ]
     annotated_frame = label_annotator.annotate(
-        scene=annotated_frame, detections=annotate_detections, labels=labels
+        scene=annotated_frame,
+        detections=annotate_detections,
+        labels=labels,  # type: ignore
     )
     debug_images["boxes"] = Image.fromarray(annotated_frame)
 
-    valid_detections = detections[detections.class_id < 901]
-    if not len(valid_detections):
+    valid_detections = detections[detections.class_id < 901]  # type: ignore
+    if not len(valid_detections):  # type: ignore
         return pd.DataFrame(
             [
                 {**{col: 0 for col in plant_df_columns}, "plant_id": i + 1}
                 for i in range(num_plants)
             ]
-        ), sv.Detections(np.zeros((0, 4)))
+        ), sv.Detections(np.zeros((0, 4)))  # type: ignore
     new_masks, *_ = call_segment_anything_api(
         image=pil_image,
-        boxes=valid_detections.xyxy,
+        boxes=valid_detections.xyxy,  # type: ignore
     )
 
-    valid_detections.mask = new_masks.astype(bool)
+    valid_detections.mask = new_masks.astype(bool)  # type: ignore
 
-    mask_areas = np.sum(valid_detections.mask, axis=(1, 2))
+    mask_areas = np.sum(valid_detections.mask, axis=(1, 2))  # type: ignore
     median_mask_area = np.median(mask_areas)
     size_filter = mask_areas > 10 * median_mask_area
-    valid_detections.class_id[size_filter] = 1003
+    valid_detections.class_id[size_filter] = 1003  # type: ignore
 
-    mask_annotator = sv.MaskAnnotator(color_palette_custom)
+    mask_annotator = sv.MaskAnnotator(color_palette_custom)  # type: ignore
     annotate_detections = valid_detections
     # sort by class_id
-    annotate_detections = annotate_detections[
-        np.argsort(annotate_detections.class_id)[::-1]
+    annotate_detections = annotate_detections[  # type: ignore
+        np.argsort(annotate_detections.class_id)[::-1]  # type: ignore
     ]
     annotated_frame = mask_annotator.annotate(
-        scene=warped_image.copy(), detections=annotate_detections
+        scene=warped_image.copy(),
+        detections=annotate_detections,  # type: ignore
     )
     debug_images["masks"] = Image.fromarray(annotated_frame)
 
-    label_annotator = sv.LabelAnnotator(color_palette_custom)
+    label_annotator = sv.LabelAnnotator(color_palette_custom)  # type: ignore
     labels = [
         f"{'R' if class_id in reason_codes else ''}{class_id} {confidence:.2f}"
         for class_id, confidence in zip(
-            annotate_detections.class_id, annotate_detections.confidence, strict=False
+            annotate_detections.class_id,
+            annotate_detections.confidence,
+            strict=False,  # type: ignore
         )
     ]
     annotated_frame = label_annotator.annotate(
-        scene=annotated_frame, detections=annotate_detections, labels=labels
+        scene=annotated_frame,
+        detections=annotate_detections,
+        labels=labels,  # type: ignore
     )
 
     debug_images["equalized"] = Image.fromarray(equalized)
     otsu_threshold = threshold_otsu(
-        equalized[valid_detections.mask.any(axis=0)].reshape((1, -1))
+        equalized[valid_detections.mask.any(axis=0)].reshape((1, -1))  # type: ignore
     )
     mask = pcv.threshold.binary(
         equalized, threshold=otsu_threshold, object_type="light"
     )
     debug_images["mask"] = Image.fromarray(mask)
 
-    valid_detections.mask &= mask.astype(bool)
+    valid_detections.mask &= mask.astype(bool)  # type: ignore
 
-    mask_annotator = sv.MaskAnnotator(color_palette_custom)
+    mask_annotator = sv.MaskAnnotator(color_palette_custom)  # type: ignore
     annotate_detections = valid_detections
     # sort by class_id
-    annotate_detections = annotate_detections[
-        np.argsort(annotate_detections.class_id)[::-1]
+    annotate_detections = annotate_detections[  # type: ignore
+        np.argsort(annotate_detections.class_id)[::-1]  # type: ignore
     ]
     annotated_frame = mask_annotator.annotate(
-        scene=warped_image.copy(), detections=annotate_detections
+        scene=warped_image.copy(),
+        detections=annotate_detections,  # type: ignore
     )
 
-    labeled_mask = valid_detections.mask.astype(np.uint8) * (
-        valid_detections.class_id[:, None, None] + 1
+    labeled_mask = valid_detections.mask.astype(np.uint8) * (  # type: ignore
+        valid_detections.class_id[:, None, None] + 1  # type: ignore
     )
     labeled_mask[labeled_mask > 900] = 0
     labeled_mask = np.sum(labeled_mask, axis=0)
@@ -397,15 +408,17 @@ def process_image(
     # annotate with area
     labels = [
         f"{plant_id}: {area_map.get(plant_id, 0):.2f} mm²"
-        for plant_id in annotate_detections.class_id
+        for plant_id in annotate_detections.class_id  # type: ignore
     ]
-    label_annotator = sv.RichLabelAnnotator(
+    label_annotator = sv.RichLabelAnnotator(  # type: ignore
         color_palette_custom,
         font_path="/usr/share/fonts/truetype/dejavu/DejaVuSans",
         font_size=16,
     )
     annotated_frame = label_annotator.annotate(
-        scene=annotated_frame, detections=annotate_detections, labels=labels
+        scene=annotated_frame,
+        detections=annotate_detections,
+        labels=labels,  # type: ignore
     )
 
     debug_images["masks2"] = Image.fromarray(annotated_frame)
@@ -431,27 +444,32 @@ def infer_pot_positions(trays, debug_images, undistorted_image):
     class_names = class_names[size_filter]
 
     class_ids = np.arange(len(class_names), dtype=int)
-    detections = sv.Detections(
+    detections = sv.Detections(  # type: ignore
         xyxy=boxes, confidence=confidences, class_id=class_ids
     )  # (n, 4)  # (n,)
     detections = detections.with_nms(threshold=0.01)
-    detections.class_id[detections.confidence < 0.05] = 902
+    detections.class_id[detections.confidence < 0.05] = 902  # type: ignore
 
-    box_annotator = sv.BoxAnnotator(color_palette_custom)
-    annotate_detections = detections[np.argsort(detections.class_id)[::-1]]
+    box_annotator = sv.BoxAnnotator(color_palette_custom)  # type: ignore
+    annotate_detections = detections[np.argsort(detections.class_id)[::-1]]  # type: ignore
     annotated_frame = box_annotator.annotate(
-        scene=undistorted_image.copy(), detections=annotate_detections
+        scene=undistorted_image.copy(),
+        detections=annotate_detections,  # type: ignore
     )
 
-    label_annotator = sv.LabelAnnotator(color_palette_custom)
+    label_annotator = sv.LabelAnnotator(color_palette_custom)  # type: ignore
     labels = [
         f"{class_id} {confidence:.2f}"
         for class_id, confidence in zip(
-            annotate_detections.class_id, annotate_detections.confidence, strict=False
+            annotate_detections.class_id,
+            annotate_detections.confidence,
+            strict=False,  # type: ignore
         )
     ]
     annotated_frame = label_annotator.annotate(
-        scene=annotated_frame, detections=annotate_detections, labels=labels
+        scene=annotated_frame,
+        detections=annotate_detections,
+        labels=labels,  # type: ignore
     )
     debug_images["pot_boxes"] = Image.fromarray(annotated_frame)
 

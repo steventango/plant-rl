@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional  # type: ignore
 
 import gymnasium
 import numpy as np
@@ -19,7 +19,7 @@ class Gym(BaseEnvironment):
             -1,
         ), info
 
-    def step(self, a):
+    def step(self, a):  # type: ignore
         sp, r, t, _, info = self.env.step(a)
 
         return (

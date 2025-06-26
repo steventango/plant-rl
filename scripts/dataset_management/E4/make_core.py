@@ -31,16 +31,16 @@ light_on_action_map = {
     False: [0, 0, 0, 0, 0, 0],
     True: [0.199, 0.381, 0.162, 0, 0.166, 0.303],
 }
-df["actions"] = df["light_on"].map(light_on_action_map)
+df["actions"] = df["light_on"].map(light_on_action_map)  # type: ignore
 for i in range(6):
-    df[f"action.{i}"] = df["actions"].apply(lambda x: x[i])
+    df[f"action.{i}"] = df["actions"].apply(lambda x: x[i])  # type: ignore
 df = df.drop(columns=["actions", "light_on"])
 
 # %%
 
 
 df["image_name"] = (
-    df["time"].dt.tz_convert("America/Edmonton").dt.strftime("%Y-%m-%dT%H%M%S") + ".jpg"
+    df["time"].dt.tz_convert("America/Edmonton").dt.strftime("%Y-%m-%dT%H%M%S") + ".jpg"  # type: ignore
 )
 
 # %%
@@ -58,8 +58,8 @@ df2["frame"] = np.arange(len(df2))
 
 
 # save df1 and df2 to csv
-df1.to_csv("/data/online/E4/P0.2/z2/core.csv", index=False)
+df1.to_csv("/data/online/E4/P0.2/z2/core.csv", index=False)  # type: ignore
 
-df2.to_csv("/data/online/E4/P1/z2/core.csv", index=False)
+df2.to_csv("/data/online/E4/P1/z2/core.csv", index=False)  # type: ignore
 
 # %%

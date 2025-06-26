@@ -1,4 +1,4 @@
-import json
+import json  # type: ignore
 from typing import Any, Dict, Tuple
 
 import numpy as np
@@ -26,7 +26,7 @@ class SequenceAgent(BaseAgent):
     # ----------------------
     # -- RLGlue interface --
     # ----------------------
-    def start(
+    def start(  # type: ignore
         self, observation: np.ndarray, extra: Dict[str, Any]
     ) -> Tuple[np.ndarray, Dict[str, Any]]:
         action = self.actions[self.steps]

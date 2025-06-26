@@ -1,4 +1,4 @@
-import os
+import os  # type: ignore
 import sys
 
 sys.path.append(os.getcwd() + "/src")
@@ -75,21 +75,27 @@ def main():
 
     for _env, env_df in split_over_column(df, col="environment"):
         f, ax = plt.subplots()
-        for alg, alg_df in split_over_column(env_df, col="algorithm"):
+        for alg, alg_df in split_over_column(env_df, col="algorithm"):  # type: ignore
             # Pick the best learning rate by AUC
             lr2metric = {}
-            for lr in alg_df["critic_lr"].unique():
+            for lr in alg_df["critic_lr"].unique():  # type: ignore
                 xs, ys = extract_learning_curves(
-                    alg_df, (lr,), metric="return", interpolation=None
+                    alg_df,
+                    (lr,),
+                    metric="return",
+                    interpolation=None,  # type: ignore
                 )
                 assert len(xs) == 5, "Some seeds are missing."
                 metric = [auc(t, r) for t, r in zip(xs, ys, strict=False)]
                 lr2metric[lr] = np.mean(metric)
 
-            best_lr = max(lr2metric, key=lr2metric.get)
+            best_lr = max(lr2metric, key=lr2metric.get)  # type: ignore
             print(f"Best critic_lr for {alg} = {best_lr}")
             xs, ys = extract_learning_curves(
-                alg_df, (best_lr,), metric="return", interpolation=None
+                alg_df,
+                (best_lr,),
+                metric="return",
+                interpolation=None,  # type: ignore
             )
 
             xs = np.asarray(xs)

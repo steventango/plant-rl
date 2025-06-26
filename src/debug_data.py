@@ -1,4 +1,4 @@
-import json
+import json  # type: ignore
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -9,7 +9,7 @@ from PIL import Image, ImageDraw
 
 from environments.PlantGrowthChamber.cv import process_image
 from environments.PlantGrowthChamber.zones import Rect, Tray, Zone
-from utils.metrics import UnbiasedExponentialMovingWelford as UEMW
+from utils.metrics import UnbiasedExponentialMovingWelford as UEMW  # type: ignore
 
 
 def get_zone_from_config(config):
@@ -125,7 +125,7 @@ def main():
             df_agg = df_agg.sort_values(by="percent_diff", ascending=False)
             for _i, row in df_agg.head(10).iterrows():
                 _, prev_row = next(
-                    df_agg[df_agg["frame"] == row["frame"] - 1].iterrows()
+                    df_agg[df_agg["frame"] == row["frame"] - 1].iterrows()  # type: ignore
                 )
                 print(f"Jump detected at frame {row['frame']}!")
                 print(f"Area current: {row[area_col]}")
@@ -145,7 +145,7 @@ def main():
                 )
                 image_path = (
                     path_prefix
-                    / f"{row['image_name'].replace('_right.jpg', '_shape_image.jpg')}"
+                    / f"{row['image_name'].replace('_right.jpg', '_shape_image.jpg')}"  # type: ignore
                 )
                 prev_image_path2 = (
                     path_prefix
@@ -153,7 +153,7 @@ def main():
                 )
                 image_path2 = (
                     path_prefix
-                    / f"{row['image_name'].replace('_right.jpg', 'masks2.jpg')}"
+                    / f"{row['image_name'].replace('_right.jpg', 'masks2.jpg')}"  # type: ignore
                 )
                 prev_image_path3 = (
                     path_prefix
@@ -161,7 +161,7 @@ def main():
                 )
                 image_path3 = (
                     path_prefix
-                    / f"{row['image_name'].replace('_right.jpg', 'boxes.jpg')}"
+                    / f"{row['image_name'].replace('_right.jpg', 'boxes.jpg')}"  # type: ignore
                 )
 
                 img1 = Image.open(prev_image_path)

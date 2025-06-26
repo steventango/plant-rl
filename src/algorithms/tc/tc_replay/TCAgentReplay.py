@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import abstractmethod  # type: ignore
 from typing import Any, Dict, Tuple
 
 import numpy as np
@@ -46,7 +46,7 @@ class TCAgentReplay(TCAgent):
     # ----------------------
     # -- RLGlue interface --
     # ----------------------
-    def start(
+    def start(  # type: ignore
         self, s: np.ndarray, extra: Dict[str, Any]
     ) -> Tuple[np.ndarray, Dict[str, Any]]:
         self.buffer.flush()
@@ -63,7 +63,7 @@ class TCAgentReplay(TCAgent):
                 terminal=False,
             )
         )
-        return a, self.get_info()
+        return a, self.get_info()  # type: ignore
 
     def step(self, r: float, sp: np.ndarray | None, extra: Dict[str, Any]):
         a = -1

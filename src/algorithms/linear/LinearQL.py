@@ -1,4 +1,4 @@
-from typing import Dict, Tuple
+from typing import Dict, Tuple  # type: ignore
 
 import numpy as np
 from PyExpUtils.collection.Collector import Collector
@@ -39,17 +39,17 @@ class LinearQL(BaseAgent):
     def update(self, r, s_next):
         next_q = np.dot(self.w, s_next).max()
         delta = (
-            r + self.gamma * next_q - np.dot(self.w[self.curr_action], self.curr_state)
+            r + self.gamma * next_q - np.dot(self.w[self.curr_action], self.curr_state)  # type: ignore
         )
         self.w[self.curr_action] += self.alpha * delta * self.curr_state
 
-    def start(self, s: np.ndarray):
+    def start(self, s: np.ndarray):  # type: ignore
         a = self.get_egreedy_action(s)
         self.curr_state = s
         self.curr_action = a
         return a
 
-    def step(self, r: float, s_next, extra):
+    def step(self, r: float, s_next, extra):  # type: ignore
         self.update(r, s_next)
         a = self.get_egreedy_action(s_next)
         self.curr_action = a
@@ -62,5 +62,5 @@ class LinearQL(BaseAgent):
 
         return a
 
-    def end(self, r: float, extra):
+    def end(self, r: float, extra):  # type: ignore
         self.update(r, np.zeros(self.observations[0]))

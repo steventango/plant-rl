@@ -1,4 +1,4 @@
-import numpy as np
+import numpy as np  # type: ignore
 
 from representations.RichTileCoder import RichTileCoder, RichTileCoderConfig
 from representations.TileCoder import DenseTileCoder, TileCoderConfig
@@ -48,7 +48,7 @@ class TestRichTileCoder:
         indices1 = self.tile_coder.get_indices(point1)
         indices2 = self.tile_coder.get_indices(point2)
 
-        assert sorted(indices1) == sorted(indices2), (
+        assert sorted(indices1) == sorted(indices2), (  # type: ignore
             f"Close x-values should map to same tiles, but got {indices1} and {indices2}"
         )
 
@@ -67,7 +67,7 @@ class TestRichTileCoder:
         indices1 = self.tile_coder.get_indices(point1)
         indices2 = self.tile_coder.get_indices(point2)
 
-        assert sorted(indices1) == sorted(indices2), (
+        assert sorted(indices1) == sorted(indices2), (  # type: ignore
             f"Close y-values should map to same tiles, but got {indices1} and {indices2}"
         )
 

@@ -1,4 +1,4 @@
-from functools import partial
+from functools import partial  # type: ignore
 from typing import Dict, Tuple
 
 import haiku as hk
@@ -36,12 +36,12 @@ class EQRC(NNAgent):
     def _build_heads(self, builder: NetworkBuilder) -> None:
         zero_init = hk.initializers.Constant(0)
         self.q = builder.addHead(
-            lambda: hku.DuelingHeads(
+            lambda: hku.DuelingHeads(  # type: ignore
                 self.actions, name="q", w_init=zero_init, b_init=zero_init
             )
         )
         self.h = builder.addHead(
-            lambda: hku.DuelingHeads(
+            lambda: hku.DuelingHeads(  # type: ignore
                 self.actions, name="h", w_init=zero_init, b_init=zero_init
             ),
             grad=False,
@@ -50,7 +50,7 @@ class EQRC(NNAgent):
     # jit'ed internal value function approximator
     # considerable speedup, especially for larger networks (note: haiku networks are not jit'ed by default)
     @partial(jax.jit, static_argnums=0)
-    def _values(self, state: AgentState, x: jax.Array):
+    def _values(self, state: AgentState, x: jax.Array):  # type: ignore
         phi = self.phi(state.params, x).out
         return self.q(state.params, phi)
 
@@ -74,7 +74,7 @@ class EQRC(NNAgent):
         self.buffer.update_batch(batch, priorities=priorities)
 
         for k, v in metrics.items():
-            self.collector.collect(k, np.mean(v).item())
+            self.collector.collect(k, np.mean(v).item())  # type: ignore
 
     # -------------
     # -- Updates --
@@ -93,7 +93,7 @@ class EQRC(NNAgent):
         decay = tree_map(
             lambda h, dh: dh - self.stepsize * self.beta * h,
             params["h"],
-            updates["h"],
+            updates["h"],  # type: ignore
         )
 
         updates |= {"h": decay}

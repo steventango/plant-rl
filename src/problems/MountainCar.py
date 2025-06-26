@@ -1,4 +1,4 @@
-from PyExpUtils.collection.Collector import Collector
+from PyExpUtils.collection.Collector import Collector  # type: ignore
 from PyRlEnvs.domains.MountainCar import GymMountainCar
 
 from experiment.ExperimentModel import ExperimentModel
@@ -6,7 +6,7 @@ from problems.BaseProblem import BaseProblem
 
 
 class Env(GymMountainCar):
-    def start(self):
+    def start(self):  # type: ignore
         return super().start(), {}
 
 

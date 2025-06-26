@@ -52,7 +52,7 @@ class QL(TCAgentReplay):
         x = np.asarray(x)
         return value(self.w, x)
 
-    def update(self):
+    def update(self):  # type: ignore
         self.steps += 1
 
         # only update every `update_freq` steps

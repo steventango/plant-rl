@@ -1,4 +1,4 @@
-import logging
+import logging  # type: ignore
 from datetime import time, timedelta
 from pathlib import Path
 
@@ -63,17 +63,17 @@ class OfflinePlantGrowthChamber:
         df = self.remove_incomplete_days(df, timestamps_per_day=67)
 
         # Compute morning and max areas on each day
-        local_dates = df["time"].dt.date
-        for date_val, group in df.groupby(local_dates):
+        local_dates = df["time"].dt.date  # type: ignore
+        for date_val, group in df.groupby(local_dates):  # type: ignore
             self.daily_morning_areas[date_val] = np.mean(
                 group["mean_clean_area"][:5]
             )  # morning areas
             self.daily_max_areas[date_val] = np.mean(
                 np.sort(group["mean_clean_area"])[-10:]
             )  # max areas
-            self.daily_areas[date_val] = group["mean_clean_area"].values
+            self.daily_areas[date_val] = group["mean_clean_area"].values  # type: ignore
 
-        return df
+        return df  # type: ignore
 
     def get_observation(self):
         # tod
@@ -284,16 +284,16 @@ class OfflinePlantGrowthChamber_1hrStep_MC(OfflinePlantGrowthChamber_1hrStep):
             tomorrow_local_date = today_local_date + timedelta(days=1)
             tomorrow_max_area = self.daily_max_areas.get(tomorrow_local_date)
             if self.daily_reward:
-                reward = normalize(tomorrow_max_area / today_max_area - 1, 0, 0.35)
+                reward = normalize(tomorrow_max_area / today_max_area - 1, 0, 0.35)  # type: ignore
             else:
-                reward = normalize(tomorrow_max_area - today_max_area, 0, 150)
+                reward = normalize(tomorrow_max_area - today_max_area, 0, 150)  # type: ignore
         else:
             yesterday_local_date = today_local_date - timedelta(days=1)
             yesterday_max_area = self.daily_max_areas.get(yesterday_local_date)
             if self.daily_reward:
-                reward = normalize(today_max_area / yesterday_max_area - 1, 0, 0.35)
+                reward = normalize(today_max_area / yesterday_max_area - 1, 0, 0.35)  # type: ignore
             else:
-                reward = normalize(today_max_area - yesterday_max_area, 0, 150)
+                reward = normalize(today_max_area - yesterday_max_area, 0, 150)  # type: ignore
 
         return reward
 

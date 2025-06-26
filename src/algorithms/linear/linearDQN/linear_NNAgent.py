@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import abstractmethod  # type: ignore
 from typing import Any, Dict, Tuple
 
 import jax
@@ -125,7 +125,7 @@ class LinearNNAgent(BaseAgent):
     # ----------------------
     # -- RLGlue interface --
     # ----------------------
-    def start(self, x: np.ndarray):
+    def start(self, x: np.ndarray):  # type: ignore
         self.buffer.flush()
         x = np.asarray(x)
         pi = self.policy(x)
@@ -141,7 +141,7 @@ class LinearNNAgent(BaseAgent):
         )
         return a
 
-    def step(self, r: float, xp: np.ndarray | None, extra: Dict[str, Any]):
+    def step(self, r: float, xp: np.ndarray | None, extra: Dict[str, Any]):  # type: ignore
         a = -1
 
         # sample next action
@@ -170,7 +170,7 @@ class LinearNNAgent(BaseAgent):
         self.update()
         return a
 
-    def end(self, r: float, extra: Dict[str, Any]):
+    def end(self, r: float, extra: Dict[str, Any]):  # type: ignore
         # possibly process the reward
         if self.reward_clip > 0:
             r = np.clip(r, -self.reward_clip, self.reward_clip)

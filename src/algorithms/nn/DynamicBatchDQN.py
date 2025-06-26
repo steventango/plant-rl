@@ -62,7 +62,7 @@ class DynamicBatchDQN(NNAgent):
 
     # internal compiled version of the value function
     @partial(jax.jit, static_argnums=0)
-    def _values(self, state: AgentState, x: jax.Array):
+    def _values(self, state: AgentState, x: jax.Array):  # type: ignore
         phi = self.phi(state.params, x).out
         return self.q(state.params, phi)
 
@@ -94,7 +94,7 @@ class DynamicBatchDQN(NNAgent):
             self.buffer.update_batch(batch, priorities=priorities)
 
             for k, v in metrics.items():
-                self.collector.collect(k, np.mean(v).item())
+                self.collector.collect(k, np.mean(v).item())  # type: ignore
 
             self.updates += 1
 

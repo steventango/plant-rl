@@ -1,4 +1,4 @@
-import os
+import os  # type: ignore
 import sys
 
 sys.path.append(os.getcwd() + "/src")
@@ -47,16 +47,16 @@ def main():
     exp = results.get_any_exp()
 
     for _env, env_df in split_over_column(df, col="environment"):
-        for alg, alg_df in split_over_column(env_df, col="algorithm"):
+        for alg, alg_df in split_over_column(env_df, col="algorithm"):  # type: ignore
             print(alg)
 
             # Pick the best learning rate
             lr2metric = {}
-            for lr in alg_df["critic_lr"].unique():
-                for actor_lr in alg_df["actor_lr_scale"].unique():
-                    for hidden_dim in alg_df["hidden_dim"].unique():
+            for lr in alg_df["critic_lr"].unique():  # type: ignore
+                for actor_lr in alg_df["actor_lr_scale"].unique():  # type: ignore
+                    for hidden_dim in alg_df["hidden_dim"].unique():  # type: ignore
                         xs, ys = extract_learning_curves(
-                            alg_df,
+                            alg_df,  # type: ignore
                             (lr, actor_lr, hidden_dim),
                             metric="return",
                             interpolation=None,
@@ -65,9 +65,12 @@ def main():
                         metric = [auc(t, r) for t, r in zip(xs, ys, strict=False)]
                         lr2metric[(lr, actor_lr, hidden_dim)] = np.mean(metric)
 
-            best_lr = max(lr2metric, key=lr2metric.get)
+            best_lr = max(lr2metric, key=lr2metric.get)  # type: ignore
             xs, ys = extract_learning_curves(
-                alg_df, best_lr, metric="return", interpolation=None
+                alg_df,
+                best_lr,
+                metric="return",
+                interpolation=None,  # type: ignore
             )
 
             xs = np.asarray(xs)

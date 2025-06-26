@@ -195,7 +195,7 @@ for column in df.columns:
 area_columns = [
     column for column in df.columns if column not in ["timestamp", "time_diff"]
 ]
-ax.set_ylim(0, df[area_columns].quantile(0.999).max())
+ax.set_ylim(0, df[area_columns].quantile(0.999).max())  # type: ignore
 ax.set_ylabel("Area (mm$^2$)")
 ax.set_title("Area Over Time")
 # plt.legend()
@@ -252,7 +252,7 @@ fig.autofmt_xdate()
 # add major grid lines for every day
 for ax in axs:
     ax.xaxis.grid(True, which="major")
-    ax.xaxis.set_major_locator(plt.MultipleLocator(1))
+    ax.xaxis.set_major_locator(plt.MultipleLocator(1))  # type: ignore
 
     ax.xaxis.grid(True, which="minor")
     import matplotlib.dates as mdates

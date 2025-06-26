@@ -1,4 +1,4 @@
-import datetime
+import datetime  # type: ignore
 import logging
 import os
 from math import floor
@@ -63,7 +63,7 @@ class SimplePlantSimulator(BaseEnvironment):
                     [
                         self.actual_areas[i](self.all_steps)
                         * self.projection_factors[i][self.day_steps]
-                        for i in range(self.num_plants)
+                        for i in range(self.num_plants)  # type: ignore
                     ]
                 )
             )
@@ -182,7 +182,7 @@ class SimplePlantSimulator(BaseEnvironment):
     ):  # Approximate the actual leaf sizes and the projection factor throughout the day
         PWL = []
         PF = []
-        for _ in range(self.num_plants):
+        for _ in range(self.num_plants):  # type: ignore
             ep_data = self.data[:, _]
             observed_area = np.reshape(
                 ep_data, (-1, self.steps_per_day)
@@ -249,7 +249,7 @@ class SimplePlantSimulator(BaseEnvironment):
         ]
 
         # Number of time steps per day
-        timestamps_per_day = df["time"].dt.date.value_counts() / self.num_plants
+        timestamps_per_day = df["time"].dt.date.value_counts() / self.num_plants  # type: ignore
         if timestamps_per_day.nunique() != 1:
             raise ValueError(
                 f"Inconsistent timestamps per day: {timestamps_per_day.to_dict()}"
@@ -257,11 +257,11 @@ class SimplePlantSimulator(BaseEnvironment):
         steps_per_day = int(timestamps_per_day.iloc[0])
 
         # Number of time steps per night
-        first_date = df["time"].dt.date.min()
-        second_date = df[df["time"].dt.date > first_date]["time"].dt.date.min()
+        first_date = df["time"].dt.date.min()  # type: ignore
+        second_date = df[df["time"].dt.date > first_date]["time"].dt.date.min()  # type: ignore
         night_duration = (
-            df[df["time"].dt.date == second_date]["time"].min()
-            - df[df["time"].dt.date == first_date]["time"].max()
+            df[df["time"].dt.date == second_date]["time"].min()  # type: ignore
+            - df[df["time"].dt.date == first_date]["time"].max()  # type: ignore
         )
         steps_per_night = int(
             (int(night_duration.total_seconds() / 60) / time_increment) - 1
@@ -269,13 +269,13 @@ class SimplePlantSimulator(BaseEnvironment):
 
         # The second when the first day starts
         first_second = (
-            pd.to_datetime(df["time"].iloc[0]).time().hour * 3600
-            + pd.to_datetime(df["time"].iloc[0]).time().minute * 60
+            pd.to_datetime(df["time"].iloc[0]).time().hour * 3600  # type: ignore
+            + pd.to_datetime(df["time"].iloc[0]).time().minute * 60  # type: ignore
         )
 
         # Observed areas of plants (in unit of pixels)
-        plant_area_data = df["clean_area"].to_numpy()
-        plant_area_data = np.reshape(plant_area_data, (-1, self.num_plants))
+        plant_area_data = df["clean_area"].to_numpy()  # type: ignore
+        plant_area_data = np.reshape(plant_area_data, (-1, self.num_plants))  # type: ignore
 
         return (
             plant_area_data,

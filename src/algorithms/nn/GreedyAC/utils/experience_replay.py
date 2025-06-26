@@ -114,11 +114,11 @@ class ExperienceReplay(ABC):
         next_state = self.cast(next_state)
         done = self.cast(done)
 
-        self.state_buffer[self.position] = state
-        self.action_buffer[self.position] = action
-        self.reward_buffer[self.position] = reward
-        self.next_state_buffer[self.position] = next_state
-        self.done_buffer[self.position] = done
+        self.state_buffer[self.position] = state  # type: ignore
+        self.action_buffer[self.position] = action  # type: ignore
+        self.reward_buffer[self.position] = reward  # type: ignore
+        self.next_state_buffer[self.position] = next_state  # type: ignore
+        self.done_buffer[self.position] = done  # type: ignore
 
         if self.position >= self.capacity - 1:
             self.is_full = True
@@ -157,11 +157,11 @@ class ExperienceReplay(ABC):
         else:
             indices = self.random.integers(low=0, high=self.position, size=batch_size)
 
-        state = self.state_buffer[indices, :]
-        action = self.action_buffer[indices, :]
-        reward = self.reward_buffer[indices]
-        next_state = self.next_state_buffer[indices, :]
-        done = self.done_buffer[indices]
+        state = self.state_buffer[indices, :]  # type: ignore
+        action = self.action_buffer[indices, :]  # type: ignore
+        reward = self.reward_buffer[indices]  # type: ignore
+        next_state = self.next_state_buffer[indices, :]  # type: ignore
+        done = self.done_buffer[indices]  # type: ignore
 
         return state, action, reward, next_state, done
 

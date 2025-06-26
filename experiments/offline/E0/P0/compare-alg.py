@@ -1,4 +1,4 @@
-import os
+import os  # type: ignore
 import sys
 
 sys.path.append(os.getcwd() + "/src")
@@ -65,12 +65,12 @@ if __name__ == "__main__":
 
     for env, env_df in split_over_column(df, col="environment"):
         f, ax = plt.subplots()
-        for alg, sub_df in split_over_column(env_df, col="algorithm"):
+        for alg, sub_df in split_over_column(env_df, col="algorithm"):  # type: ignore
             if len(sub_df) == 0:
                 continue
 
             report = Hypers.select_best_hypers(
-                sub_df,
+                sub_df,  # type: ignore
                 metric="step_weighted_return",
                 prefer=Hypers.Preference.high,
                 time_summary=TimeSummary.sum,
@@ -82,7 +82,7 @@ if __name__ == "__main__":
             Hypers.pretty_print(report)
 
             xs, ys = extract_learning_curves(
-                sub_df,
+                sub_df,  # type: ignore
                 report.best_configuration,
                 metric="return",
                 interpolation=None,

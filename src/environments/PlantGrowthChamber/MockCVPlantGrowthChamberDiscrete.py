@@ -1,4 +1,4 @@
-from environments.PlantGrowthChamber.CVPlantGrowthChamber import CVPlantGrowthChamber
+from environments.PlantGrowthChamber.CVPlantGrowthChamber import CVPlantGrowthChamber  # type: ignore
 from environments.PlantGrowthChamber.MockPlantGrowthChamber import (
     MockPlantGrowthChamber,
 )
@@ -7,7 +7,7 @@ from environments.PlantGrowthChamber.PlantGrowthChamberDiscrete import (
 )
 
 
-class MockCVPlantGrowthChamberDiscrete(
+class MockCVPlantGrowthChamberDiscrete(  # type: ignore
     MockPlantGrowthChamber, CVPlantGrowthChamber, PlantGrowthChamberDiscrete
 ):
     def __init__(self, *args, **kwargs):

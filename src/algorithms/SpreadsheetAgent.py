@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime  # type: ignore
 from typing import Any, Dict, Tuple
 from zoneinfo import ZoneInfo
 
@@ -37,7 +37,7 @@ class SpreadsheetAgent(BaseAgent):
     # ----------------------
     # -- RLGlue interface --
     # ----------------------
-    def start(
+    def start(  # type: ignore
         self, observation: np.ndarray, extra: Dict[str, Any]
     ) -> Tuple[np.ndarray, Dict[str, Any]]:
         utc_time = observation[0]
@@ -46,7 +46,7 @@ class SpreadsheetAgent(BaseAgent):
     def step(
         self, reward: float, observation: np.ndarray | None, extra: Dict[str, Any]
     ):
-        utc_time = observation[0]
+        utc_time = observation[0]  # type: ignore
         return self.get_action(utc_time), {}
 
     def end(self, reward: float, extra: Dict[str, Any]):
@@ -63,7 +63,7 @@ class SpreadsheetAgent(BaseAgent):
         else:
             second_point = self.df[self.df["datetime"] > clock_time].iloc[0]
             second_index = self.df[self.df["datetime"] > clock_time].index[0]
-            first_point = self.df.iloc[second_index - 1]
+            first_point = self.df.iloc[second_index - 1]  # type: ignore
 
         first_datetime = first_point["datetime"]
         second_datetime = second_point["datetime"]

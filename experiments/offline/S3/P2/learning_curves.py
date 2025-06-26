@@ -1,4 +1,4 @@
-import os
+import os  # type: ignore
 import sys
 
 sys.path.append(os.getcwd() + "/src")
@@ -50,9 +50,9 @@ def extract_learning_curves(
     xs: List[np.ndarray] = []
     ys: List[np.ndarray] = []
     for _, group in groups:
-        non_na = group[group[metric].notna()]
-        x = non_na[dd.time_col].to_numpy()
-        y = non_na[metric].to_numpy()
+        non_na = group[group[metric].notna()]  # type: ignore
+        x = non_na[dd.time_col].to_numpy()  # type: ignore
+        y = non_na[metric].to_numpy()  # type: ignore
 
         idx = np.argwhere(x[1:] <= x[:-1])
 
@@ -66,8 +66,8 @@ def extract_learning_curves(
         xs.append(x)
         ys.append(y)
 
-    xs = np.stack(xs)
-    ys = np.stack(ys)
+    xs = np.stack(xs)  # type: ignore
+    ys = np.stack(ys)  # type: ignore
 
     return xs, ys
 
@@ -93,11 +93,14 @@ def main():
             print(metric, alg)
 
             xs, ys = extract_learning_curves(
-                sub_df, tuple(), metric=metric, interpolation=None
+                sub_df,
+                tuple(),
+                metric=metric,
+                interpolation=None,  # type: ignore
             )
             x = xs[0]
             y = ys[0]
-            y = np.stack(y)
+            y = np.stack(y)  # type: ignore
             if y.ndim == 1:
                 y = y[:, np.newaxis]
             m = y.shape[1]

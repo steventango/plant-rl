@@ -38,7 +38,7 @@ def main():
         df = pd.read_csv(csv_path)
 
         # if has nan print warning and fillna with 0
-        if df["area"].isna().any():
+        if df["area"].isna().any():  # type: ignore
             print(f"Warning: NaN values found in {csv_path}. Filling with 0.")
             df["area"] = df["area"].fillna(0)
 

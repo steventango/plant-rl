@@ -1,4 +1,4 @@
-import os
+import os  # type: ignore
 import sys
 
 sys.path.append(os.getcwd() + "/src")
@@ -58,15 +58,15 @@ def main():
     results.get_any_exp()
 
     for env, env_df in split_over_column(df, col="environment"):
-        for alg, alg_df in split_over_column(env_df, col="algorithm"):
+        for alg, alg_df in split_over_column(env_df, col="algorithm"):  # type: ignore
             if alg == THIS_AGENT:
                 sub_df = alg_df
                 # sub_df = alg_df[(alg_df['w0']==W0) & (alg_df['epsilon']==EP)]
                 report = Hypers.select_best_hypers(
-                    sub_df,
+                    sub_df,  # type: ignore
                     metric="reward",
                     prefer=Hypers.Preference.high,
-                    time_summary=TimeSummary.last_n_percent_sum,
+                    time_summary=TimeSummary.last_n_percent_sum,  # type: ignore
                     statistic=Statistic.mean,
                 )
 
@@ -75,7 +75,7 @@ def main():
                 Hypers.pretty_print(report)
 
                 xs, ys = extract_learning_curves(
-                    sub_df,
+                    sub_df,  # type: ignore
                     report.best_configuration,
                     metric="return",
                     interpolation=None,

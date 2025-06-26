@@ -1,4 +1,4 @@
-import os
+import os  # type: ignore
 import sys
 
 sys.path.append(os.getcwd() + "/src")
@@ -48,27 +48,33 @@ def main():
     results.get_any_exp()
 
     for _env, env_df in split_over_column(df, col="environment"):
-        for stride, stride_df in split_over_column(env_df, col="environment.stride"):
+        for stride, stride_df in split_over_column(env_df, col="environment.stride"):  # type: ignore
             f_all, ax_all = plt.subplots()
 
-            for alg, alg_df in split_over_column(stride_df, col="algorithm"):
+            for alg, alg_df in split_over_column(stride_df, col="algorithm"):  # type: ignore
                 print(alg)
 
                 hyper2metric = {}
-                for alpha in alg_df["alpha"].unique():
-                    for n_step in alg_df["n_step"].unique():
+                for alpha in alg_df["alpha"].unique():  # type: ignore
+                    for n_step in alg_df["n_step"].unique():  # type: ignore
                         xs, ys = extract_learning_curves(
-                            alg_df, (alpha, n_step), metric="return", interpolation=None
+                            alg_df,
+                            (alpha, n_step),
+                            metric="return",
+                            interpolation=None,  # type: ignore
                         )
                         metric = [r[-1] for r in ys]
                         hyper2metric[(alpha, n_step)] = np.mean(metric)
 
-                best_hyper = max(hyper2metric, key=hyper2metric.get)
+                best_hyper = max(hyper2metric, key=hyper2metric.get)  # type: ignore
                 print(f"Best hypers for {alg} = {best_hyper}")
 
                 # Reward Plot
                 xs, ys = extract_learning_curves(
-                    alg_df, best_hyper, metric="return", interpolation=None
+                    alg_df,
+                    best_hyper,
+                    metric="return",
+                    interpolation=None,  # type: ignore
                 )
                 xs = np.asarray(xs)
                 ys = np.asarray(ys)
@@ -124,7 +130,10 @@ def main():
 
                 # Action Plot
                 xs_a, ys_a = extract_learning_curves(
-                    alg_df, best_hyper, metric="action", interpolation=None
+                    alg_df,
+                    best_hyper,
+                    metric="action",
+                    interpolation=None,  # type: ignore
                 )
                 xs_a = np.asarray(xs_a)
                 ys_a = np.asarray(ys_a)

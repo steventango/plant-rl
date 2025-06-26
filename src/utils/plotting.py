@@ -1,4 +1,4 @@
-import matplotlib.colors as mcolors
+import matplotlib.colors as mcolors  # type: ignore
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
@@ -109,7 +109,7 @@ def plot_q(daytime_observation_space, area_observation_space, Q):
     vmin = Q.min()
     vmax = Q.max()
 
-    for i, ax in enumerate(axs):
+    for i, ax in enumerate(axs):  # type: ignore
         # Create the heatmap
         sns.heatmap(
             Q[:, :, i].T,

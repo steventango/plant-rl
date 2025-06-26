@@ -98,7 +98,7 @@ for _agent, group in df.groupby("agent"):
 # Normalize mean_clean_area
 for agent, group in df.groupby("agent"):
     first_5_times = (
-        group[
+        group[  # type: ignore
             group["time"]
             .dt.strftime("%H:%M")
             .isin(["11:40", "11:50", "12:00", "12:10", "12:20"])
@@ -108,7 +108,8 @@ for agent, group in df.groupby("agent"):
     )
     # print(f"Agent: {agent}, First times: {first_5_times}")
     first_obs_values = [
-        group[group["time"] == t]["mean_clean_area"].iloc[0] for t in first_5_times
+        group[group["time"] == t]["mean_clean_area"].iloc[0]
+        for t in first_5_times  # type: ignore
     ]  # Get corresponding values
     for t in list(zip(first_5_times, first_obs_values, strict=False)):
         print(f"Agent: {agent}, Time: {t[0]}, Value: {t[1]}")
@@ -118,7 +119,7 @@ for agent, group in df.groupby("agent"):
     df.loc[group.index, "mean_clean_area"] = group["mean_clean_area"]
 
 # Filter for unique values of time and the "Constant Bright" agent
-plot_data = df[
+plot_data = df[  # type: ignore
     df["agent"].isin(
         ["Bernoulli p=0.65", "Bernoulli p=0.70", "Bernoulli p=0.85", "Bernoulli p=0.90"]
     )
@@ -164,20 +165,20 @@ plt.title("Time vs Raw Area", fontsize=14)
 plt.xlabel("Time", fontsize=12)
 plt.ylabel("Raw Area", fontsize=12)
 plt.xlabel("Time Since Start (hours)", fontsize=12)
-plt.gca().xaxis.set_major_locator(plt.MultipleLocator(24))
+plt.gca().xaxis.set_major_locator(plt.MultipleLocator(24))  # type: ignore
 plt.gca().xaxis.set_major_formatter(
-    plt.FuncFormatter(lambda x, _: f"day {int(x) // 24}")
+    plt.FuncFormatter(lambda x, _: f"day {int(x) // 24}")  # type: ignore
 )
 plt.xticks(rotation=45)
 
 new_day_rows = plot_data[plot_data["new_day"]][
     ["time", "agent", "day_idx"]
-].drop_duplicates()
+].drop_duplicates()  # type: ignore
 
 for _, row in new_day_rows.iterrows():
     agent = row["agent"]
     start_time = plot_data[plot_data["agent"] == agent]["time"].min()
-    rel_t = (row["time"] - start_time).total_seconds() / 3600
+    rel_t = (row["time"] - start_time).total_seconds() / 3600  # type: ignore
     day = int(row["day_idx"])
     plt.axvline(x=rel_t, color="red", linestyle="--")
     # plt.text(

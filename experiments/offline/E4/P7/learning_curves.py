@@ -1,4 +1,4 @@
-import os
+import os  # type: ignore
 import sys
 
 sys.path.append(os.getcwd() + "/src")
@@ -60,14 +60,14 @@ def main():
 
     for env, env_df in split_over_column(df, col="environment"):
         f, ax = plt.subplots(5, 1)
-        for alg, alg_df in split_over_column(env_df, col="algorithm"):
+        for alg, alg_df in split_over_column(env_df, col="algorithm"):  # type: ignore
             sub_df = alg_df
             sub_df = alg_df[(alg_df["w0"] == W0) & (alg_df["epsilon"] == EP)]
             report = Hypers.select_best_hypers(
-                sub_df,
+                sub_df,  # type: ignore
                 metric="reward",
                 prefer=Hypers.Preference.high,
-                time_summary=TimeSummary.last_n_percent_sum,
+                time_summary=TimeSummary.last_n_percent_sum,  # type: ignore
                 statistic=Statistic.mean,
             )
 
@@ -76,16 +76,28 @@ def main():
             Hypers.pretty_print(report)
 
             xs_w0, ys_w0 = extract_learning_curves(
-                sub_df, report.best_configuration, metric="weight0", interpolation=None
+                sub_df,
+                report.best_configuration,
+                metric="weight0",
+                interpolation=None,  # type: ignore
             )
             xs_w1, ys_w1 = extract_learning_curves(
-                sub_df, report.best_configuration, metric="weight1", interpolation=None
+                sub_df,
+                report.best_configuration,
+                metric="weight1",
+                interpolation=None,  # type: ignore
             )
             xs_w2, ys_w2 = extract_learning_curves(
-                sub_df, report.best_configuration, metric="weight2", interpolation=None
+                sub_df,
+                report.best_configuration,
+                metric="weight2",
+                interpolation=None,  # type: ignore
             )
             xs_w3, ys_w3 = extract_learning_curves(
-                sub_df, report.best_configuration, metric="weight3", interpolation=None
+                sub_df,
+                report.best_configuration,
+                metric="weight3",
+                interpolation=None,  # type: ignore
             )
 
             for i in range(5):
@@ -112,7 +124,7 @@ def main():
 
         save(
             save_path=f"{path}/plots",
-            plot_name=f"{alg}-w0={W0}-ep={EP}",
+            plot_name=f"{alg}-w0={W0}-ep={EP}",  # type: ignore
             save_type="jpg",
         )
 

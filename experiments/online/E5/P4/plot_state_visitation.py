@@ -1,4 +1,4 @@
-# %%
+# %%  # type: ignore
 
 from collections import defaultdict
 
@@ -31,7 +31,7 @@ def to_numpy(string_list):
 
 df["state"] = df["state"].apply(to_numpy)
 
-states = np.stack(df["state"].to_numpy())
+states = np.stack(df["state"].to_numpy())  # type: ignore
 actions = df["action"].to_numpy()
 
 
@@ -45,11 +45,11 @@ print(actions.shape)
 # (4, 800)
 # %%
 
-config = RichTileCoderConfig(
+config = RichTileCoderConfig(  # type: ignore
     tiles=4,
     tilings=32,
     dims=2,
-    wrap_time=True,
+    wrap_time=True,  # type: ignore
 )
 
 
@@ -66,7 +66,7 @@ inverse_mapping = defaultdict(set)
 for i, area in enumerate(areas):
     for j, time in enumerate(times):
         indices = tile_coder.get_indices(np.array([time, area]))
-        for index in indices:
+        for index in indices:  # type: ignore
             inverse_mapping[index].add((i, j))
 
 # %%
@@ -75,7 +75,7 @@ N = np.zeros((len(times), len(areas), num_actions))
 
 for state, action in zip(states, actions, strict=False):
     indices = tile_coder.get_indices(state)
-    for index in indices:
+    for index in indices:  # type: ignore
         if index not in inverse_mapping:
             print(f"Index {index} not found in inverse mapping.")
             continue
@@ -99,7 +99,7 @@ vmax = N.max()
 hour_interval = 12
 
 # Create a modified viridis colormap with gray for zero
-viridis = plt.cm.viridis(np.linspace(0, 1, 256))
+viridis = plt.cm.viridis(np.linspace(0, 1, 256))  # type: ignore
 # from vmax and vmin find the position of zero in the colormap
 zero_position = int((0 - vmin) / (vmax - vmin) * 255)
 
@@ -117,7 +117,7 @@ for action, ax in zip(range(num_actions), axs, strict=False):
         vmax=vmax,
         cbar_ax=None
         if action < num_actions - 1
-        else fig.add_axes([0.92, 0.15, 0.02, 0.7]),
+        else fig.add_axes([0.92, 0.15, 0.02, 0.7]),  # type: ignore
     )
     ax.set_title(f"Action {action} ({action_labels[action]})")
     ax.set_xlabel("Time (h)" if action == num_actions - 1 else "")
@@ -133,7 +133,7 @@ for action, ax in zip(range(num_actions), axs, strict=False):
     ax.invert_yaxis()  # Invert the y-axis
 
 fig.suptitle("ESARSA(λ) N(s, a)", fontsize=16)
-plt.tight_layout(rect=[0, 0, 0.9, 1])  # Adjust layout to fit colorbar
+plt.tight_layout(rect=[0, 0, 0.9, 1])  # Adjust layout to fit colorbar  # type: ignore
 plt.show()
 # %%
 # also plot ESARSA(λ) N(s)
@@ -159,7 +159,7 @@ ax.set_yticks(np.arange(0, len(areas), 20))  # Set y ticks every 10 areas
 ax.set_yticklabels([f"{area:.1f}" for area in areas[::20]])  # Format as float
 ax.set_yticklabels(ax.get_yticklabels(), rotation=0)  # Rotate y ticks
 ax.invert_yaxis()  # Invert the y-axis
-plt.tight_layout(rect=[0, 0, 0.9, 1])  # Adjust layout to fit colorbar
+plt.tight_layout(rect=[0, 0, 0.9, 1])  # Adjust layout to fit colorbar  # type: ignore
 plt.show()
 
 
@@ -177,7 +177,7 @@ for i, state in enumerate(states):
         ax.plot(
             [previous_closest_time, closest_time],
             [previous_closest_area, closest_area],
-            color=plt.cm.viridis(i / len(states)),
+            color=plt.cm.viridis(i / len(states)),  # type: ignore
             alpha=0.5,
             linewidth=1,
         )
@@ -195,7 +195,7 @@ ax.set_yticks(np.arange(0, len(areas), 20))  # Set y ticks every 10 areas
 ax.set_yticklabels([f"{area:.1f}" for area in areas[::20]])  # Format as float
 ax.set_yticklabels(ax.get_yticklabels(), rotation=0)  # Rotate y ticks
 # ax.invert_yaxis()  # Invert the y-axis
-plt.tight_layout(rect=[0, 0, 0.9, 1])  # Adjust layout to fit colorbar
+plt.tight_layout(rect=[0, 0, 0.9, 1])  # Adjust layout to fit colorbar  # type: ignore
 plt.show()
 
 

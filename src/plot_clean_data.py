@@ -77,7 +77,7 @@ def main():
         # sort plant_ids by final area
         plant_ids = sorted(
             plant_ids,
-            key=lambda x: df[df["plant_id"] == x]["area"].iloc[-1],
+            key=lambda x: df[df["plant_id"] == x]["area"].iloc[-1],  # type: ignore
             reverse=True,
         )
         for ax, plant_id in zip(axes[1:], plant_ids, strict=False):

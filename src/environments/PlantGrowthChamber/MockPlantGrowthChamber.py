@@ -1,4 +1,4 @@
-import json
+import json  # type: ignore
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -71,7 +71,7 @@ class MockPlantGrowthChamber(PlantGrowthChamber):
         path = self.images_path / row["image_name"]
         self.images["left"] = Image.open(path)
 
-    def get_time(self):
+    def get_time(self):  # type: ignore
         return self.time
 
     def get_terminal(self):

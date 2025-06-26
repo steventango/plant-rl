@@ -1,4 +1,4 @@
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Tuple  # type: ignore
 
 import numpy as np
 from PyExpUtils.collection.Collector import Collector
@@ -28,7 +28,7 @@ class BernoulliAgent(BaseAgent):
     # ----------------------
     # -- RLGlue interface --
     # ----------------------
-    def start(
+    def start(  # type: ignore
         self, observation: np.ndarray, extra: Dict[str, Any]
     ) -> Tuple[np.ndarray, Dict[str, Any]]:
         return self.sample_action(), {}

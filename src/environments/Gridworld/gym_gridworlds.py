@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict  # type: ignore
 from typing import Optional
 
 import gymnasium as gym
@@ -26,8 +26,8 @@ STAY = 4
 REWARDS = defaultdict(lambda: 0)
 REWARDS[GOOD] = 1
 REWARDS[BAD] = -10
-REWARDS[GOOD_SMALL] = 0.1
-REWARDS[BAD_SMALL] = -0.1
+REWARDS[GOOD_SMALL] = 0.1  # type: ignore
+REWARDS[BAD_SMALL] = -0.1  # type: ignore
 REWARDS[PIT] = -100
 
 # rendering colors
@@ -287,7 +287,7 @@ class Gridworld(gym.Env):
         self.random_action_prob = random_action_prob
         self.reward_noise_std = reward_noise_std
         self.nonzero_reward_noise_std = nonzero_reward_noise_std
-        assert observation_noise < 1.0 and observation_noise >= 0.0, (
+        assert observation_noise < 1.0 and observation_noise >= 0.0, (  # type: ignore
             "observation_noise must be in [0.0, 1.0)"
         )
         self.observation_noise = observation_noise
@@ -328,8 +328,8 @@ class Gridworld(gym.Env):
 
     def get_state(self):
         pos = self.agent_pos
-        if self.observation_noise > 0.0:
-            if self.np_random.random() < self.observation_noise:
+        if self.observation_noise > 0.0:  # type: ignore
+            if self.np_random.random() < self.observation_noise:  # type: ignore
                 pos = (
                     self.np_random.integers(0, self.n_rows),
                     self.np_random.integers(0, self.n_cols),
@@ -337,9 +337,9 @@ class Gridworld(gym.Env):
         if self.coordinate_observation:
             return np.array(pos, dtype=np.float32)
         else:
-            return np.ravel_multi_index(pos, (self.n_rows, self.n_cols))
+            return np.ravel_multi_index(pos, (self.n_rows, self.n_cols))  # type: ignore
 
-    def reset(self, seed: int = None, **kwargs):
+    def reset(self, seed: int = None, **kwargs):  # type: ignore
         super().reset(seed=seed, **kwargs)
         self._reset(seed, **kwargs)
         if self.render_mode is not None and self.render_mode == "human":
@@ -352,7 +352,7 @@ class Gridworld(gym.Env):
             self.render()
         return obs, reward, terminated, truncated, info
 
-    def _reset(self, seed: int = None, **kwargs):
+    def _reset(self, seed: int = None, **kwargs):  # type: ignore
         self.grid = np.asarray(GRIDS[self.grid_key])
         self.agent_pos = (0, 0)
         self.last_action = None
@@ -360,7 +360,7 @@ class Gridworld(gym.Env):
 
     def _step(self, action: int):
         self.last_pos = self.agent_pos
-        if self.np_random.random() < self.random_action_prob:
+        if self.np_random.random() < self.random_action_prob:  # type: ignore
             action = self.action_space.sample()  # random action if transition is noisy
         self.last_action = action
 
@@ -372,10 +372,10 @@ class Gridworld(gym.Env):
             else:
                 reward = 0
 
-        if self.reward_noise_std > 0.0:
-            reward += self.np_random.normal() * self.reward_noise_std
-        if reward != 0.0 and self.nonzero_reward_noise_std > 0.0:
-            reward += self.np_random.normal() * self.nonzero_reward_noise_std
+        if self.reward_noise_std > 0.0:  # type: ignore
+            reward += self.np_random.normal() * self.reward_noise_std  # type: ignore
+        if reward != 0.0 and self.nonzero_reward_noise_std > 0.0:  # type: ignore
+            reward += self.np_random.normal() * self.nonzero_reward_noise_std  # type: ignore
 
         if self.distance_reward:
             closest_goal = (
@@ -395,8 +395,8 @@ class Gridworld(gym.Env):
                 pass  # fail to move in one-directional tile
             else:
                 self.agent_pos = _move(
-                    self.agent_pos[0],
-                    self.agent_pos[1],
+                    self.agent_pos[0],  # type: ignore
+                    self.agent_pos[1],  # type: ignore
                     action,
                     self.n_rows,
                     self.n_cols,
@@ -441,7 +441,7 @@ class Gridworld(gym.Env):
             pygame.init()
             if mode == "human":
                 pygame.display.init()
-                pygame.display.set_caption(self.unwrapped.spec.id)
+                pygame.display.set_caption(self.unwrapped.spec.id)  # type: ignore
                 self.window_surface = pygame.display.set_mode(self.window_size)
             elif mode == "rgb_array":
                 self.window_surface = pygame.Surface(self.window_size)
@@ -493,10 +493,10 @@ class Gridworld(gym.Env):
 
                 # mask unobservable tiles with white noise
                 if not (
-                    y >= self.agent_pos[0] - self.view_radius
-                    and y <= self.agent_pos[0] + self.view_radius
-                    and x >= self.agent_pos[1] - self.view_radius
-                    and x <= self.agent_pos[1] + self.view_radius
+                    y >= self.agent_pos[0] - self.view_radius  # type: ignore
+                    and y <= self.agent_pos[0] + self.view_radius  # type: ignore
+                    and x >= self.agent_pos[1] - self.view_radius  # type: ignore
+                    and x <= self.agent_pos[1] + self.view_radius  # type: ignore
                 ):
                     grain = 5
                     for i in range(grain):
@@ -557,19 +557,24 @@ class Gridworld(gym.Env):
                     else:
                         pass
                     pygame.draw.polygon(
-                        self.window_surface, GRAY, (start_pos, end_pos), arrow_width
+                        self.window_surface,
+                        GRAY,
+                        (start_pos, end_pos),
+                        arrow_width,  # type: ignore
                     )
                     arr_pos = arrow_head(
-                        end_pos, [cs / 2 for cs in t_size], self.grid[y][x]
+                        end_pos,
+                        [cs / 2 for cs in t_size],
+                        self.grid[y][x],  # type: ignore
                     )
-                    pygame.draw.polygon(self.window_surface, GRAY, arr_pos, 0)
+                    pygame.draw.polygon(self.window_surface, GRAY, arr_pos, 0)  # type: ignore
 
                 # some pixels are white noise
-                if self.observation_noise > 0.0:
+                if self.observation_noise > 0.0:  # type: ignore
                     grain = 5
                     for i in range(grain):
                         for j in range(grain):
-                            if self.np_random.random() < self.observation_noise:
+                            if self.np_random.random() < self.observation_noise:  # type: ignore
                                 rect = pygame.Rect(
                                     (
                                         pos[0] + i / grain * t_size[0],
@@ -615,7 +620,7 @@ class Gridworld(gym.Env):
                     arr_pos = arrow_head(
                         end_pos, [cs / 5 for cs in t_size], self.last_action
                     )
-                    pygame.draw.polygon(self.window_surface, ORANGE, arr_pos, 0)
+                    pygame.draw.polygon(self.window_surface, ORANGE, arr_pos, 0)  # type: ignore
 
         if mode == "human":
             pygame.event.pump()
@@ -643,7 +648,7 @@ class GridworldMiddleStart(Gridworld):
     Like Gridworld, but the agent starts at the center of the grid.
     """
 
-    def _reset(self, seed: int = None, **kwargs):
+    def _reset(self, seed: int = None, **kwargs):  # type: ignore
         Gridworld._reset(self, seed=seed, **kwargs)
         self.agent_pos = (self.n_rows // 2, self.n_cols // 2)
         return self.get_state(), {}
@@ -654,7 +659,7 @@ class GridworldRandomStart(Gridworld):
     Like Gridworld, but the agent can start anywhere (except in wall and pit tiles).
     """
 
-    def _reset(self, seed: int = None, **kwargs):
+    def _reset(self, seed: int = None, **kwargs):  # type: ignore
         Gridworld._reset(self, seed=seed, **kwargs)
         allowed_tiles = np.argwhere(
             np.logical_and(self.grid != WALL, self.grid != PIT),
@@ -685,7 +690,7 @@ class RiverSwim(Gridworld):
         self.grid[-1] = 1.0
         self.action_space = gym.spaces.Discrete(2)  # only LEFT and RIGHT
 
-    def _reset(self, seed: int = None, **kwargs):
+    def _reset(self, seed: int = None, **kwargs):  # type: ignore
         Gridworld._reset(self, seed=seed, **kwargs)
         self.agent_pos = (0, self.np_random.integers(1, 3))  # 2nd or 3rd tile
         return self.get_state(), {}

@@ -1,4 +1,4 @@
-import os
+import os  # type: ignore
 import sys
 
 sys.path.append(os.getcwd() + "/src")
@@ -50,10 +50,10 @@ def main():
 
     for env, env_df in split_over_column(df, col="environment"):
         f, ax = plt.subplots(2, 1)
-        for alg, sub_df in split_over_column(env_df, col="algorithm"):
+        for alg, sub_df in split_over_column(env_df, col="algorithm"):  # type: ignore
             print(sub_df.columns)
             report = Hypers.select_best_hypers(
-                sub_df,
+                sub_df,  # type: ignore
                 metric="action_is_optimal",  # picking the hypers that chose the best action most frequently
                 prefer=Hypers.Preference.high,
                 time_summary=TimeSummary.sum,
@@ -66,7 +66,7 @@ def main():
 
             # Plot action history averaged over 5 seeds
             xs_a, ys_a = extract_learning_curves(
-                sub_df,
+                sub_df,  # type: ignore
                 report.best_configuration,
                 metric="action_is_optimal",
                 interpolation=None,
@@ -101,7 +101,10 @@ def main():
 
             # Plot reward history averaged over 5 seeds
             xs, ys = extract_learning_curves(
-                sub_df, report.best_configuration, metric="reward", interpolation=None
+                sub_df,
+                report.best_configuration,
+                metric="reward",
+                interpolation=None,  # type: ignore
             )
             xs = np.asarray(xs)
             ys = np.asarray(ys)
@@ -130,7 +133,7 @@ def main():
             ax[1].set_ylabel("Accumulated Reward")
             ax[0].set_xlabel("Day Time [Hours]")
 
-        save(save_path=f"{path}/plots", plot_name=f"{alg}", save_type="jpg")
+        save(save_path=f"{path}/plots", plot_name=f"{alg}", save_type="jpg")  # type: ignore
 
 
 def rescale_time(x, stride):

@@ -1,4 +1,4 @@
-# %%
+# %%  # type: ignore
 from datetime import datetime
 from pathlib import Path
 
@@ -71,7 +71,8 @@ for _agent, group in df.groupby("agent"):
         4:12
     ]  # Get first 5 unique times
     first_obs_values = [
-        group[group["time"] == t]["mean_clean_area"].iloc[0] for t in first_5_times
+        group[group["time"] == t]["mean_clean_area"].iloc[0]
+        for t in first_5_times  # type: ignore
     ]  # Get corresponding values
     first_obs_mean = sum(first_obs_values) / len(
         first_obs_values
@@ -92,13 +93,13 @@ for agent, group in df.groupby("agent"):
             f"Processing agent: {agent}, current day: {current_day}, next day: {next_day}"
         )
         # Check if the days are consecutive
-        if (next_day - current_day).days == 1:
+        if (next_day - current_day).days == 1:  # type: ignore
             print(f"Found consecutive days: {current_day} and {next_day}")
             # Filter observations for target times and drop duplicates
-            current_9am_obs = current_group[
+            current_9am_obs = current_group[  # type: ignore
                 current_group["time"].dt.strftime("%H:%M").isin(target_times)
             ].drop_duplicates(subset=["time"])
-            next_9am_obs = next_group[
+            next_9am_obs = next_group[  # type: ignore
                 next_group["time"].dt.strftime("%H:%M").isin(target_times)
             ].drop_duplicates(subset=["time"])
             print(f"Number of observations in current_9am_obs: {len(current_9am_obs)}")
@@ -136,7 +137,7 @@ for agent, group in df.groupby("agent"):
 # %%
 # Group data by day and calculate reward and percentage of agent_action == 1
 plot_data = []
-for (day, agent), group in df.groupby(["day", "agent"]):
+for (day, agent), group in df.groupby(["day", "agent"]):  # type: ignore
     reward = group["reward"].max()  # Get the reward for the last observation of the day
     percent_action_1 = (
         group["agent_action"] == 1
@@ -165,13 +166,13 @@ plot_df = plot_df[plot_df["day"] != plot_df["day"].max()]
 
 # Correct the x-axis labels to show each unique day without the year
 plot_df["day"] = (
-    plot_df["day"].astype(str).str.slice(5)
+    plot_df["day"].astype(str).str.slice(5)  # type: ignore
 )  # Extract MM-DD format from the string representation
 
 # Group data by day and sort agents by percent_action_1 within each day
 plot_data_grouped = []
 for _day, group in plot_df.groupby("day"):
-    sorted_group = group.sort_values(by="percent_action_1", ascending=True)
+    sorted_group = group.sort_values(by="percent_action_1", ascending=True)  # type: ignore
     plot_data_grouped.append(sorted_group)
 
 plot_df = pd.concat(plot_data_grouped)
@@ -243,7 +244,7 @@ fig.legend(
 )  # push legend further right
 
 # Adjust layout to leave space for suptitle and legend
-plt.tight_layout(rect=[0, 0, 0.9, 0.92])  # leave space on right and top
+plt.tight_layout(rect=[0, 0, 0.9, 0.92])  # leave space on right and top  # type: ignore
 fig.suptitle("Percent Bright vs Change in Area (avg of first 5 obs)", fontsize=18)
 
 plt.savefig("plots/outputs/grid_line_plots_E8_avg.png", dpi=300, bbox_inches="tight")

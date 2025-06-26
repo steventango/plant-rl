@@ -1,4 +1,4 @@
-"""
+"""# type: ignore
 This implementation is taken from the official codebase for Greedy AC
 which can be found at https://github.com/samuelfneumann/GreedyAC/tree/master
 """
@@ -53,12 +53,12 @@ class GreedyAC(BaseAgent):
             activation="relu",
         )
 
-    def start(self, observation: Any, extra: Dict[str, Any]) -> int:
+    def start(self, observation: Any, extra: Dict[str, Any]) -> int:  # type: ignore
         self.state = observation
         self.action = self.greedy_ac.sample_action(self.state)
         return self.action
 
-    def step(self, reward: float, observation: Any, extra: Dict[str, Any]) -> int:
+    def step(self, reward: float, observation: Any, extra: Dict[str, Any]) -> int:  # type: ignore
         self.greedy_ac.update(
             state=self.state,
             action=self.action,

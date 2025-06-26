@@ -1,4 +1,4 @@
-import os
+import os  # type: ignore
 import sys
 
 sys.path.append(os.getcwd() + "/src")
@@ -52,13 +52,14 @@ def main():
 
     for env, env_df in split_over_column(df, col="environment"):
         for _last_day, filter_df in split_over_column(
-            env_df, col="environment.last_day"
+            env_df,
+            col="environment.last_day",  # type: ignore
         ):
             for metric in ["reward", "action"]:
                 f, ax = plt.subplots(5, 1)
-                for alg, sub_df in split_over_column(filter_df, col="algorithm"):
+                for alg, sub_df in split_over_column(filter_df, col="algorithm"):  # type: ignore
                     report = Hypers.select_best_hypers(
-                        sub_df,
+                        sub_df,  # type: ignore
                         metric="return",
                         prefer=Hypers.Preference.high,
                         time_summary=TimeSummary.sum,
@@ -70,7 +71,7 @@ def main():
                     Hypers.pretty_print(report)
 
                     xs_a, ys_a = extract_learning_curves(
-                        sub_df,
+                        sub_df,  # type: ignore
                         report.best_configuration,
                         metric=metric,
                         interpolation=None,

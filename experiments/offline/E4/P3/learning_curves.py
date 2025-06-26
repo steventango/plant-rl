@@ -1,4 +1,4 @@
-import os
+import os  # type: ignore
 import sys
 
 sys.path.append(os.getcwd() + "/src")
@@ -65,7 +65,7 @@ def main():
 
     for env, env_df in split_over_column(df, col="environment"):
         f, ax = plt.subplots(5, 1)
-        for alg, alg_df in split_over_column(env_df, col="algorithm"):
+        for alg, alg_df in split_over_column(env_df, col="algorithm"):  # type: ignore
             sub_df = alg_df
             sub_df = alg_df[
                 (alg_df["environment.reward_freq"] == freq)
@@ -76,11 +76,11 @@ def main():
 
             # sub_df = alg_df[(alg_df['environment.reward_freq']==freq)]
             report = Hypers.select_best_hypers(
-                sub_df,
+                sub_df,  # type: ignore
                 metric="action_is_optimal",
                 # metric='return',
                 prefer=Hypers.Preference.high,
-                time_summary=TimeSummary.last_n_percent_sum,
+                time_summary=TimeSummary.last_n_percent_sum,  # type: ignore
                 # time_summary=TimeSummary.sum,
                 statistic=Statistic.mean,
             )
@@ -90,7 +90,10 @@ def main():
             Hypers.pretty_print(report)
 
             xs_a, ys_a = extract_learning_curves(
-                sub_df, report.best_configuration, metric="action", interpolation=None
+                sub_df,
+                report.best_configuration,
+                metric="action",
+                interpolation=None,  # type: ignore
             )
             xs_a = np.asarray(xs_a)
             ys_a = np.asarray(ys_a)
@@ -126,7 +129,7 @@ def main():
 
         save(
             save_path=f"{path}/plots",
-            plot_name=f"{alg}-freq-{freq}-alpha0.1-ep0.1-la0",
+            plot_name=f"{alg}-freq-{freq}-alpha0.1-ep0.1-la0",  # type: ignore
             save_type="jpg",
         )
 

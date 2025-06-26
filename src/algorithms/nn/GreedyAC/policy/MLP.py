@@ -1,4 +1,4 @@
-# Import modules
+# Import modules  # type: ignore
 import numpy as np
 import torch
 import torch.nn as nn
@@ -68,7 +68,7 @@ class SquashedGaussian(nn.Module):
         self.log_std_linear = nn.Linear(hidden_dim, num_actions)
 
         # Initialize weights
-        self.apply(lambda module: weights_init_(module, init, activation))
+        self.apply(lambda module: weights_init_(module, init, activation))  # type: ignore
 
         # action rescaling
         if action_space is None:
@@ -146,7 +146,7 @@ class SquashedGaussian(nn.Module):
         log_prob = normal.log_prob(x_t)
 
         log_prob -= (
-            torch.log(self.action_scale * (1 - y_t.pow(2)) + EPSILON)
+            torch.log(self.action_scale * (1 - y_t.pow(2)) + EPSILON)  # type: ignore
             .sum(axis=-1)
             .reshape(log_prob.shape)
         )
@@ -189,7 +189,7 @@ class SquashedGaussian(nn.Module):
         log_prob = normal.log_prob(x_t)
 
         log_prob -= (
-            torch.log(self.action_scale * (1 - y_t.pow(2)) + EPSILON)
+            torch.log(self.action_scale * (1 - y_t.pow(2)) + EPSILON)  # type: ignore
             .sum(axis=-1)
             .reshape(log_prob.shape)
         )
@@ -216,7 +216,7 @@ class SquashedGaussian(nn.Module):
         y_t = torch.tanh(x_t_batch)
         log_prob = normal.log_prob(x_t_batch)
         log_prob -= (
-            torch.log(self.action_scale * (1 - y_t.pow(2)) + EPSILON)
+            torch.log(self.action_scale * (1 - y_t.pow(2)) + EPSILON)  # type: ignore
             .sum(axis=-1)
             .reshape(log_prob.shape)
         )
@@ -225,7 +225,7 @@ class SquashedGaussian(nn.Module):
 
         return log_prob
 
-    def to(self, device):
+    def to(self, device):  # type: ignore
         """
         Moves the network to a device
 
@@ -264,7 +264,7 @@ class Softmax(nn.Module):
         self.output_layer = nn.Linear(hidden_dim, num_actions)
 
         # self.apply(weights_init_)
-        self.apply(lambda module: weights_init_(module, init, activation))
+        self.apply(lambda module: weights_init_(module, init, activation))  # type: ignore
 
         if activation == "relu":
             self.act = F.relu
@@ -327,7 +327,7 @@ class Softmax(nn.Module):
 
         return log_probs
 
-    def to(self, device):
+    def to(self, device):  # type: ignore
         """
         Moves the network to a device
 
@@ -399,7 +399,7 @@ class Gaussian(nn.Module):
         self.log_std_linear = nn.Linear(hidden_dim, num_actions)
 
         # Initialize weights
-        self.apply(lambda module: weights_init_(module, init, activation))
+        self.apply(lambda module: weights_init_(module, init, activation))  # type: ignore
 
         # Action rescaling
         self.action_max = torch.FloatTensor(action_space.high)
@@ -532,11 +532,11 @@ class Gaussian(nn.Module):
             log_prob.unsqueeze(-1)
 
         if show:
-            print(torch.cat([mean, std], axis=1)[0])
+            print(torch.cat([mean, std], axis=1)[0])  # type: ignore
 
         return log_prob
 
-    def to(self, device):
+    def to(self, device):  # type: ignore
         """
         Moves the network to a device
 

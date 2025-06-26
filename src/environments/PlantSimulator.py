@@ -222,7 +222,7 @@ class PlantSimulator(BaseEnvironment):
         # Optionally set a larger time step than the one given in plant data
         assert (
             self.steps_per_day % self.stride
-            == 0 & self.steps_per_night % self.stride
+            == 0 & self.steps_per_night % self.stride  # type: ignore
             == 0
         ), (
             f"stride must be a divisor of steps_per_day={self.steps_per_day} and of steps_per_night={self.steps_per_night}."
@@ -232,7 +232,7 @@ class PlantSimulator(BaseEnvironment):
         self.steps_per_day /= self.stride
         self.steps_per_night /= self.stride
         self.interval *= self.stride
-        terminal_step = int(terminal_step / self.stride)
+        terminal_step = int(terminal_step / self.stride)  # type: ignore
 
         return PWL, PF, terminal_step
 

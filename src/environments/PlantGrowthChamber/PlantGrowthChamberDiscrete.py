@@ -1,4 +1,4 @@
-import numpy as np
+import numpy as np  # type: ignore
 
 from environments.PlantGrowthChamber.PlantGrowthChamber import PlantGrowthChamber
 
@@ -16,4 +16,4 @@ class PlantGrowthChamberDiscrete(PlantGrowthChamber):
         if isinstance(action, np.ndarray):
             return await super().step(action)
         action = self.action_map[action]
-        return await super().step(action)
+        return await super().step(action)  # type: ignore

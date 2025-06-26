@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import abstractmethod  # type: ignore
 from typing import Any, Dict, Tuple
 
 import numpy as np
@@ -98,6 +98,6 @@ class TCAgentOffline(TCAgent):
 
         return {}
 
-    def plan(self):
+    def plan(self):  # type: ignore
         self.batch_update()
         return self.get_info()

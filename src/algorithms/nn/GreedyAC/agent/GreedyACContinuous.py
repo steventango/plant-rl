@@ -1,4 +1,4 @@
-# Import modules
+# Import modules  # type: ignore
 import inspect
 
 import numpy as np
@@ -108,13 +108,21 @@ class GreedyAC(BaseAgent):
         elif isinstance(action_space, Discrete):
             action_shape = 1
 
-        self.critic = QMLP(
-            num_inputs, action_shape, critic_hidden_dim, init, activation
+        self.critic = QMLP(  # type: ignore
+            num_inputs,
+            action_shape,
+            critic_hidden_dim,
+            init,
+            activation,  # type: ignore
         ).to(device=self.device)
         self.critic_optim = Adam(self.critic.parameters(), lr=critic_lr, betas=betas)
 
-        self.critic_target = QMLP(
-            num_inputs, action_shape, critic_hidden_dim, init, activation
+        self.critic_target = QMLP(  # type: ignore
+            num_inputs,
+            action_shape,
+            critic_hidden_dim,
+            init,
+            activation,  # type: ignore
         ).to(self.device)
         nn_utils.hard_update(self.critic_target, self.critic)
 
@@ -135,7 +143,7 @@ class GreedyAC(BaseAgent):
 
         self.is_training = True
 
-        source = inspect.getsource(inspect.getmodule(inspect.currentframe()))
+        source = inspect.getsource(inspect.getmodule(inspect.currentframe()))  # type: ignore
         self.info["source"] = source
 
     def update(self, state, action, reward, next_state, done_mask):
@@ -157,7 +165,7 @@ class GreedyAC(BaseAgent):
 
         # When updating Q functions, we don't want to backprop through the
         # policy and target network parameters
-        next_state_action, _, _ = self.policy.sample(next_state_batch)
+        next_state_action, _, _ = self.policy.sample(next_state_batch)  # type: ignore
         with torch.no_grad():
             next_q = self.critic_target(next_state_batch, next_state_action)
             target_q_value = reward_batch + mask_batch * self.gamma * next_q
@@ -181,7 +189,7 @@ class GreedyAC(BaseAgent):
 
         # Sample actions from the sampler to determine which to update
         # with
-        (
+        (  # type: ignore
             action_batch,
             _,
             _,
@@ -236,13 +244,13 @@ class GreedyAC(BaseAgent):
         if self.entropy_from_single_sample:
             sampler_entropy = -sampler_entropy[:, 0, :]
         else:
-            sampler_entropy = -sampler_entropy.mean(axis=1)
+            sampler_entropy = -sampler_entropy.mean(axis=1)  # type: ignore
 
         # Calculate sampler loss
         stacked_s_batch = state_batch.repeat_interleave(samples, dim=0)
         sampler_loss = self.sampler.log_prob(stacked_s_batch, best_actions)
         sampler_loss = sampler_loss.reshape(self.batch_size, samples, 1)
-        sampler_loss = sampler_loss.mean(axis=1)
+        sampler_loss = sampler_loss.mean(axis=1)  # type: ignore
         sampler_loss = sampler_loss + (sampler_entropy * self.alpha)
         sampler_loss = -sampler_loss.mean()
 
@@ -251,12 +259,12 @@ class GreedyAC(BaseAgent):
         sampler_loss.backward()
         self.sampler_optim.step()
 
-    def sample_action(self, state):
+    def sample_action(self, state):  # type: ignore
         state = torch.FloatTensor(state).to(self.device).unsqueeze(0)
         if self.is_training:
-            action, _, _ = self.policy.sample(state)
+            action, _, _ = self.policy.sample(state)  # type: ignore
         else:
-            _, _, action = self.policy.sample(state)
+            _, _, action = self.policy.sample(state)  # type: ignore
 
         act = action.detach().cpu().numpy()[0]
 

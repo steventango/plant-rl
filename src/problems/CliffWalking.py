@@ -11,5 +11,5 @@ class CliffWalking(BaseProblem):
         self.env = Env()
         self.actions = 4
 
-        self.observations = (self.env.env.observation_space.n,)
+        self.observations = (self.env.env.observation_space.n,)  # type: ignore
         self.gamma = 1

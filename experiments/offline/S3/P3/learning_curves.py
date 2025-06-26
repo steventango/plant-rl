@@ -1,4 +1,4 @@
-import os
+import os  # type: ignore
 import sys
 
 sys.path.append(os.getcwd() + "/src")
@@ -52,9 +52,9 @@ def extract_learning_curves(
     xs: List[np.ndarray] = []
     ys: List[np.ndarray] = []
     for _, group in groups:
-        non_na = group[group[metric].notna()]
-        x = non_na[dd.time_col].to_numpy()
-        y = non_na[metric].to_numpy()
+        non_na = group[group[metric].notna()]  # type: ignore
+        x = non_na[dd.time_col].to_numpy()  # type: ignore
+        y = non_na[metric].to_numpy()  # type: ignore
 
         idx = np.argwhere(x[1:] <= x[:-1])
 
@@ -68,8 +68,8 @@ def extract_learning_curves(
         xs.append(x)
         ys.append(y)
 
-    xs = np.stack(xs)
-    ys = np.stack(ys)
+    xs = np.stack(xs)  # type: ignore
+    ys = np.stack(ys)  # type: ignore
 
     return xs, ys
 
@@ -97,11 +97,14 @@ def main():
         all_ys = []
         for _alg, sub_df in split_over_column(df, col="algorithm"):
             xs, ys = extract_learning_curves(
-                sub_df, tuple(), metric=metric, interpolation=None
+                sub_df,
+                tuple(),
+                metric=metric,
+                interpolation=None,  # type: ignore
             )
             x = xs[0]
             y = ys[0]
-            y = np.stack(y)
+            y = np.stack(y)  # type: ignore
             if y.ndim == 1:
                 y = y[:, np.newaxis]
             all_xs.append(x)
@@ -116,9 +119,9 @@ def main():
         x_plot = [
             (
                 datetime.datetime.fromtimestamp(t)
-                - datetime.datetime.fromtimestamp(x[0])
+                - datetime.datetime.fromtimestamp(x[0])  # type: ignore
             ).total_seconds()
-            for t in x
+            for t in x  # type: ignore
         ]
         for j, (ax, yj) in enumerate(zip(axs, y.T, strict=False)):
             # Set the x-axis formatter to display timedelta
@@ -126,7 +129,7 @@ def main():
                 FuncFormatter(lambda x, _: str(datetime.timedelta(seconds=int(x))))
             )
             # show tick every 3600 seconds
-            ax.xaxis.set_major_locator(plt.MultipleLocator(3600))
+            ax.xaxis.set_major_locator(plt.MultipleLocator(3600))  # type: ignore
             # Draw horizontal segments without vertical connectors
             for i in range(len(x_plot) - 1):
                 ax.hlines(y=yj[i], xmin=x_plot[i], xmax=x_plot[i + 1], color="C0")
@@ -141,7 +144,7 @@ def main():
                 ax.plot(x_plot, stat, color="C1", label="UEMA")
             if metric == "reward":
                 ax.axhline(y=0, color="k", linestyle="--", linewidth=0.5)
-                _, returns = compute_step_return(x, yj, len(x))
+                _, returns = compute_step_return(x, yj, len(x))  # type: ignore
                 total_return = np.sum(returns)
                 print(f"Return: {total_return:.2f}")
         if metric == "area":
@@ -149,7 +152,7 @@ def main():
             axs[-1].xaxis.set_major_formatter(
                 FuncFormatter(lambda x, _: str(datetime.timedelta(seconds=int(x))))
             )
-            ax.xaxis.set_major_locator(plt.MultipleLocator(3600))
+            ax.xaxis.set_major_locator(plt.MultipleLocator(3600))  # type: ignore
             u = uema(alpha=0.1)
             stat = []
             for y_i in y:

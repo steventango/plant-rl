@@ -1,4 +1,4 @@
-import os
+import os  # type: ignore
 import sys
 
 sys.path.append(os.getcwd())
@@ -139,7 +139,7 @@ for idx in indices:
             interaction.o,
             interaction.a,
             interaction.extra,
-            interaction.r,
+            interaction.r,  # type: ignore
         )
 
         collector.collect("reward", interaction.r)

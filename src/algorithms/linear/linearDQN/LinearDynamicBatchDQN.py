@@ -1,4 +1,4 @@
-from functools import partial
+from functools import partial  # type: ignore
 from typing import Any, Dict, Tuple
 
 import chex
@@ -62,7 +62,7 @@ class LinearDynamicBatchDQN(LinearNNAgent):
 
     # internal compiled version of the value function
     @partial(jax.jit, static_argnums=0)
-    def _values(self, state: AgentState, x: jax.Array):
+    def _values(self, state: AgentState, x: jax.Array):  # type: ignore
         # phi = self.phi(state.params, x).out
         # return self.q(state.params, phi)
         return self.q(state.params, x)
@@ -95,7 +95,7 @@ class LinearDynamicBatchDQN(LinearNNAgent):
             self.buffer.update_batch(batch, priorities=priorities)
 
             for k, v in metrics.items():
-                self.collector.collect(k, np.mean(v).item())
+                self.collector.collect(k, np.mean(v).item())  # type: ignore
 
             self.updates += 1
 
@@ -127,8 +127,8 @@ class LinearDynamicBatchDQN(LinearNNAgent):
         # phi = self.phi(params, batch.x).out
         # phi_p = self.phi(target, batch.xp).out
 
-        qs = self.q(params, batch.x)
-        qsp = self.q(target, batch.xp)
+        qs = self.q(params, batch.x)  # type: ignore
+        qsp = self.q(target, batch.xp)  # type: ignore
 
         batch_loss = jax.vmap(q_loss, in_axes=0)
         losses, metrics = batch_loss(qs, batch.a, batch.r, batch.gamma, qsp)

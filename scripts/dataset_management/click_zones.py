@@ -408,7 +408,7 @@ class TrayConfigApp:
 
     def load_existing_config(self):
         """Load existing configuration if available"""
-        config_path = self.dataset_dir / "config.json"
+        config_path = self.dataset_dir / "config.json"  # type: ignore
         if config_path.exists():
             try:
                 with open(config_path, "r") as f:
@@ -635,7 +635,7 @@ class TrayConfigApp:
 
     def load_image(self):
         """Find and load an image around 10 AM from the current dataset"""
-        images_dir = self.dataset_dir / "images"
+        images_dir = self.dataset_dir / "images"  # type: ignore
         image_files = sorted(list(images_dir.glob("*.jpg")), reverse=True)
 
         if not image_files:

@@ -110,13 +110,13 @@ for agent, group in df.groupby("agent"):
             f"Processing agent: {agent}, current day: {current_day}, next day: {next_day}"
         )
         # Check if the days are consecutive
-        if (next_day - current_day).days == 1:
+        if (next_day - current_day).days == 1:  # type: ignore
             print(f"Found consecutive days: {current_day} and {next_day}")
             # Filter observations for target times and drop duplicates
-            current_9am_obs = current_group[
+            current_9am_obs = current_group[  # type: ignore
                 current_group["time"].dt.strftime("%H:%M").isin(target_times)
             ].drop_duplicates(subset=["time"])
-            next_9am_obs = next_group[
+            next_9am_obs = next_group[  # type: ignore
                 next_group["time"].dt.strftime("%H:%M").isin(target_times)
             ].drop_duplicates(subset=["time"])
             print(f"Number of observations in current_9am_obs: {len(current_9am_obs)}")

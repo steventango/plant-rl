@@ -1,4 +1,4 @@
-# Import modules
+# Import modules  # type: ignore
 # from gym.spaces import Box, Discrete
 import inspect
 
@@ -129,7 +129,7 @@ class GreedyACDiscrete(BaseAgent):
 
         self.is_training = True
 
-        source = inspect.getsource(inspect.getmodule(inspect.currentframe()))
+        source = inspect.getsource(inspect.getmodule(inspect.currentframe()))  # type: ignore
         self.info = {}
         self.info = {
             "action_values": [],

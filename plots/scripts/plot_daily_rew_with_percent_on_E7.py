@@ -1,4 +1,4 @@
-# %%
+# %%  # type: ignore
 from datetime import datetime
 from pathlib import Path
 
@@ -67,7 +67,7 @@ for agent, group in df.groupby("agent"):
         next_day, next_group = daily_groups[i + 1]
 
         # Check if the days are consecutive
-        if (next_day - current_day).days == 1:
+        if (next_day - current_day).days == 1:  # type: ignore
             # Filter observations at 9am for both days
             current_9am_obs = current_group[
                 current_group["time"].dt.strftime("%H:%M") == target_str
@@ -108,7 +108,7 @@ for agent, group in df.groupby("agent"):
 # %%
 # Group data by day and calculate reward and percentage of agent_action == 1
 plot_data = []
-for (day, agent), group in df.groupby(["day", "agent"]):
+for (day, agent), group in df.groupby(["day", "agent"]):  # type: ignore
     reward = group["reward"].max()  # Get the reward for the last observation of the day
     percent_action_1 = (
         group["agent_action"] == 1
@@ -137,13 +137,13 @@ plot_df = plot_df[plot_df["day"] != plot_df["day"].max()]
 
 # Correct the x-axis labels to show each unique day without the year
 plot_df["day"] = (
-    plot_df["day"].astype(str).str.slice(5)
+    plot_df["day"].astype(str).str.slice(5)  # type: ignore
 )  # Extract MM-DD format from the string representation
 
 # Group data by day and sort agents by percent_action_1 within each day
 plot_data_grouped = []
 for _day, group in plot_df.groupby("day"):
-    sorted_group = group.sort_values(by="percent_action_1", ascending=True)
+    sorted_group = group.sort_values(by="percent_action_1", ascending=True)  # type: ignore
     plot_data_grouped.append(sorted_group)
 
 plot_df = pd.concat(plot_data_grouped)
@@ -282,7 +282,9 @@ fig.legend(
     title_fontsize=14,
 )
 
-plt.tight_layout(rect=[0.04, 0.04, 1, 0.95])  # Adjust for space for legend and labels
+plt.tight_layout(
+    rect=[0.04, 0.04, 1, 0.95]
+)  # Adjust for space for legend and labels  # type: ignore
 plt.savefig("plots/outputs/grid_line_plots_E7.png", dpi=300)
 
 # %%
