@@ -1,7 +1,10 @@
 import asyncio
+import json
 import os
 import shutil
 import sys
+
+from environments.PlantGrowthChamber.zones import serialize_zone
 
 sys.path.append(os.getcwd())
 import argparse
@@ -134,7 +137,11 @@ async def main():
         env.glue = glue
         chk.initial_value("episode", 0)
 
-        config = {**problem.params, "context": str(agent_path)}
+        config = {
+            **problem.params,
+            "context": str(agent_path),
+            "zone": serialize_zone(env.zone),
+        }
 
         if args.deploy:
             run_id = args.exp.replace("/", "-").removesuffix(".json")
@@ -161,6 +168,13 @@ async def main():
                 ),  # So wandb alerts when data dir is near full
             ),
         )
+
+        # save config to dataset
+        if not dataset_path.exists():
+            dataset_path.mkdir(parents=True, exist_ok=True)
+        config_path = dataset_path / "config.json"
+        with open(config_path, "w") as f:
+            json.dump(config, f, indent=4)
 
         try:
             # Run the experiment
