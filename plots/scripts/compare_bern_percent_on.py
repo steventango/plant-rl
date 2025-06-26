@@ -1,14 +1,13 @@
+from datetime import datetime
 from pathlib import Path
-from datetime import datetime, timedelta
+
+import matplotlib
+import pandas as pd
 import pytz
 
-import pandas as pd
-import matplotlib
-matplotlib.use('Agg')  # Prevent X server requirement (useful when running headless or via SSH)
-import matplotlib.pyplot as plt
-import matplotlib.lines as mlines
-import seaborn as sns
-from datetime import time
+matplotlib.use(
+    "Agg"
+)  # Prevent X server requirement (useful when running headless or via SSH)
 
 ZONE_TO_AGENT_E7 = {
     "z1": "Constant Dim",
@@ -16,7 +15,7 @@ ZONE_TO_AGENT_E7 = {
     "z3": "Bandit",
     "z6": "Contextual Bandit",
     "z8": "ESARSA_alpha=0.1",
-    "z9": "ESARSA_alpha=0.25"
+    "z9": "ESARSA_alpha=0.25",
 }
 
 ZONE_TO_AGENT_E8 = {
@@ -30,7 +29,7 @@ ZONE_TO_AGENT_E8 = {
 dfs = []
 
 datasets = []
-for p in ['P1']:
+for p in ["P1"]:
     paths = Path("/data/online/E8").joinpath(p).glob("Bernoulli*/z*")
     datasets.extend(sorted(paths))
 for dataset in datasets:
@@ -38,10 +37,13 @@ for dataset in datasets:
     df = pd.read_csv(csv_path)
     zone = dataset.name  # gets last directory name (e.g., 'z1', 'z2', etc.)
     df["agent"] = ZONE_TO_AGENT_E8[zone]  # convert zone to agent name
-    df = df[["time", "agent_action", "mean_clean_area", "agent"]]  # keep only needed columns
+    df = df[
+        ["time", "agent_action", "mean_clean_area", "agent"]
+    ]  # keep only needed columns
     dfs.append(df)
 
 df = pd.concat(dfs, ignore_index=True)
+
 
 # Convert time column to America/Edmonton timezone
 # Update the function to handle fractional seconds and timezone information
@@ -52,25 +54,28 @@ def convert_to_edmonton_timezone(utc_time):
         utc_dt = utc_time
     if utc_dt.tzinfo is None:
         utc_dt = pytz.utc.localize(utc_dt)
-    edmonton_tz = pytz.timezone('America/Edmonton')
+    edmonton_tz = pytz.timezone("America/Edmonton")
     return utc_dt.astimezone(edmonton_tz)
 
-df['time'] = df['time'].apply(convert_to_edmonton_timezone)
+
+df["time"] = df["time"].apply(convert_to_edmonton_timezone)
 
 # Extract day from time column based on America/Edmonton timezone
-df['day'] = df['time'].dt.date
+df["day"] = df["time"].dt.date
 
 # Create day_idx column for each agent group
-for agent, group in df.groupby('agent'):
+for _agent, group in df.groupby("agent"):
     # Sort by time to ensure correct day ordering
-    sorted_group = group.sort_values('time')
+    sorted_group = group.sort_values("time")
     # Print unique times for each agent
-    #print(f"\nAgent: {agent}")
-    #print(sorted_group['time'].dt.strftime('%H:%M').unique())
+    # print(f"\nAgent: {_agent}")
+    # print(sorted_group['time'].dt.strftime('%H:%M').unique())
     # Get unique days and create a mapping to indices
-    first_day = min(sorted_group['day'])
+    first_day = min(sorted_group["day"])
     # Calculate day_idx as the number of days since the first day
-    df.loc[sorted_group.index, 'day_idx'] = (sorted_group['day'] - first_day).apply(lambda x: x.days)
+    df.loc[sorted_group.index, "day_idx"] = (sorted_group["day"] - first_day).apply(
+        lambda x: x.days
+    )
 
 
 # # Normalize mean_clean_area
@@ -83,59 +88,75 @@ for agent, group in df.groupby('agent'):
 #     first_obs_mean = sum(first_obs_values) / len(first_obs_values)  # Calculate mean of those values
 #     df.loc[group.index, 'mean_clean_area'] = group['mean_clean_area'] / first_obs_mean
 
-    #%%
+# %%
 
-# target_times = ['11:40', '11:50', '12:00', '12:10', '12:20']  # Target times 
-target_times = ['09:20', '09:30', '09:40', '09:50', '10:00']  # Target times for 12pm observations
+# target_times = ['11:40', '11:50', '12:00', '12:10', '12:20']  # Target times
+target_times = [
+    "09:20",
+    "09:30",
+    "09:40",
+    "09:50",
+    "10:00",
+]  # Target times for 12pm observations
 reward_data = []
-for agent, group in df.groupby('agent'):
-    group = group.sort_values('time')
-    daily_groups = list(group.groupby('day'))  # Convert to list for indexing
+for agent, group in df.groupby("agent"):
+    group = group.sort_values("time")
+    daily_groups = list(group.groupby("day"))  # Convert to list for indexing
 
     for i in range(len(daily_groups) - 1):  # Iterate up to the second last day
         current_day, current_group = daily_groups[i]
         next_day, next_group = daily_groups[i + 1]
-        print(f"Processing agent: {agent}, current day: {current_day}, next day: {next_day}")
+        print(
+            f"Processing agent: {agent}, current day: {current_day}, next day: {next_day}"
+        )
         # Check if the days are consecutive
-        if (next_day - current_day).days == 1:
+        if (next_day - current_day).days == 1:  # type: ignore
             print(f"Found consecutive days: {current_day} and {next_day}")
             # Filter observations for target times and drop duplicates
-            current_9am_obs = current_group[current_group['time'].dt.strftime('%H:%M').isin(target_times)].drop_duplicates(subset=['time'])
-            next_9am_obs = next_group[next_group['time'].dt.strftime('%H:%M').isin(target_times)].drop_duplicates(subset=['time'])
+            current_9am_obs = current_group[  # type: ignore
+                current_group["time"].dt.strftime("%H:%M").isin(target_times)
+            ].drop_duplicates(subset=["time"])
+            next_9am_obs = next_group[  # type: ignore
+                next_group["time"].dt.strftime("%H:%M").isin(target_times)
+            ].drop_duplicates(subset=["time"])
             print(f"Number of observations in current_9am_obs: {len(current_9am_obs)}")
             print(f"Number of observations in next_9am_obs: {len(next_9am_obs)}")
 
             # Ensure both days have observations at 12pm
             if not current_9am_obs.empty and not next_9am_obs.empty:
-                current_9am_mean = current_9am_obs['mean_clean_area'].mean()
-                next_9am_mean = next_9am_obs['mean_clean_area'].mean()
+                current_9am_mean = current_9am_obs["mean_clean_area"].mean()
+                next_9am_mean = next_9am_obs["mean_clean_area"].mean()
 
-                diff = (next_9am_mean - current_9am_mean)
-                reward_data.append({'agent': agent, 'day': current_day, 'reward': diff})
+                diff = next_9am_mean - current_9am_mean
+                reward_data.append({"agent": agent, "day": current_day, "reward": diff})
 
 reward_df = pd.DataFrame(reward_data)
 # Initialize reward column as float to avoid dtype mismatch
-df['reward'] = 0.0  # Initialize reward column to 0.0
+df["reward"] = 0.0  # Initialize reward column to 0.0
 
 
-#%%
+# %%
 # Set reward to 0 for all entries except the last of the day for each agent
-for agent, group in df.groupby('agent'):
-    #print(agent)
-    daily_groups = group.groupby('day')
+for agent, group in df.groupby("agent"):
+    # print(agent)
+    daily_groups = group.groupby("day")
     for day, daily_group in daily_groups:
-        last_obs_index = daily_group.index[-1]  # Get index of the last observation of the day
-        reward_row = reward_df.loc[(reward_df['agent'] == agent) & (reward_df['day'] == day)]
+        last_obs_index = daily_group.index[
+            -1
+        ]  # Get index of the last observation of the day
+        reward_row = reward_df.loc[
+            (reward_df["agent"] == agent) & (reward_df["day"] == day)
+        ]
         if not reward_row.empty:  # Check if reward_row is not empty
-            df.loc[last_obs_index, 'reward'] = reward_row['reward'].values[0]
+            df.loc[last_obs_index, "reward"] = reward_row["reward"].values[0]
 
-#%%
-for agent, group in df.groupby('agent'):
-    percent_action_1 = (group['agent_action'] == 1).mean()
+# %%
+for agent, group in df.groupby("agent"):
+    percent_action_1 = (group["agent_action"] == 1).mean()
     print(f"Agent: {agent}, Percent action 1: {percent_action_1:.2%}")
 
 print("\nPercent action 1 for unique times per agent:")
-for agent, group in df.groupby('agent'):
-    unique_group = group.drop_duplicates(subset='time')  # Keep only one row per time
-    percent_action_1 = (unique_group['agent_action'] == 1).mean()
+for agent, group in df.groupby("agent"):
+    unique_group = group.drop_duplicates(subset="time")  # Keep only one row per time
+    percent_action_1 = (unique_group["agent_action"] == 1).mean()
     print(f"Agent: {agent}, Percent action 1: {percent_action_1:.2%}")

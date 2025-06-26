@@ -1,6 +1,8 @@
 from PyExpUtils.collection.Collector import Collector
 
-from environments.PlantGrowthChamber.CVPlantGrowthChamberDiscrete import CVPlantGrowthChamberDiscrete as Env
+from environments.PlantGrowthChamber.CVPlantGrowthChamberDiscrete import (
+    CVPlantGrowthChamberDiscrete as Env,
+)
 from experiment.ExperimentModel import ExperimentModel
 from problems.BaseAsyncProblem import BaseAsyncProblem
 

@@ -1,8 +1,14 @@
-# %%
+# %%  # type: ignore
 
 import lzma
 import pickle
-from itertools import product
+
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+from matplotlib.colors import ListedColormap
+
+from representations.RichTileCoder import RichTileCoder, RichTileCoderConfig
 
 # checkpoints/results/online/E5/P4/ESARSA/0/chk.pkl.xz
 
@@ -17,11 +23,6 @@ weights = data["a"].w
 
 # plot weights
 
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import numpy as np
-import seaborn as sns
-from matplotlib.colors import ListedColormap
 
 # (4, 800)
 
@@ -58,7 +59,6 @@ print(f"Number of Zeros in weights: {zero_count}")
 
 # %%
 # map indices back to original features
-from src.representations.RichTileCoder import RichTileCoder, RichTileCoderConfig
 
 # "representation": {
 #       "tiles": 4,
@@ -67,17 +67,16 @@ from src.representations.RichTileCoder import RichTileCoder, RichTileCoderConfig
 #       "wrap_time": true
 #     }
 
-config = RichTileCoderConfig(
+config = RichTileCoderConfig(  # type: ignore
     tiles=4,
     tilings=32,
     dims=2,
-    wrap_time=True,
+    wrap_time=True,  # type: ignore
 )
 
 tile_coder = RichTileCoder(config)
 
 times = np.linspace(0, 1, 24 * 12, endpoint=False)
-from datetime import timedelta
 
 # %%
 areas = np.linspace(0, 1, 100)
@@ -106,7 +105,7 @@ vmax = Q.max()
 hour_interval = 12
 
 # Create a modified viridis colormap with gray for zero
-viridis = plt.cm.viridis(np.linspace(0, 1, 256))
+viridis = plt.cm.viridis(np.linspace(0, 1, 256))  # type: ignore
 # from vmax and vmin find the position of zero in the colormap
 zero_position = int((0 - vmin) / (vmax - vmin) * 255)
 
@@ -114,7 +113,7 @@ viridis[zero_position, :3] = [0.5, 0.5, 0.5]  # Set RGB values for gray
 custom_cmap = ListedColormap(viridis)
 
 # Create the heatmaps
-for action, ax in zip(range(num_actions), axs):
+for action, ax in zip(range(num_actions), axs, strict=False):  # type: ignore
     sns.heatmap(
         Q[:, :, action].T,  # Transpose Q to swap axes
         ax=ax,
@@ -122,20 +121,24 @@ for action, ax in zip(range(num_actions), axs):
         cbar=(action == num_actions - 1),  # Add colorbar only to the last subplot
         vmin=vmin,
         vmax=vmax,
-        cbar_ax=None if action < num_actions - 1 else fig.add_axes([0.92, 0.15, 0.02, 0.7]),
+        cbar_ax=None
+        if action < num_actions - 1
+        else fig.add_axes([0.92, 0.15, 0.02, 0.7]),  # type: ignore
     )
     ax.set_title(f"Action {action} ({action_labels[action]})")
     ax.set_xlabel("Time (h)" if action == num_actions - 1 else "")
     ax.set_ylabel("Area")  # Area is now on the y-axis
     ax.set_xticks(np.arange(0, len(times), hour_interval))  # Set ticks every hour
-    ax.set_xticklabels([f"{int(t * 24)}" for t in times[::hour_interval]])  # Format as hours
+    ax.set_xticklabels(
+        [f"{int(t * 24)}" for t in times[::hour_interval]]
+    )  # Format as hours
     ax.set_yticks(np.arange(0, len(areas), 10))  # Set y ticks every 10 areas
     ax.set_yticklabels([f"{area:.1f}" for area in areas[::10]])  # Format as float
     ax.set_yticklabels(ax.get_yticklabels(), rotation=0)  # Rotate y ticks
     ax.invert_yaxis()  # Invert the y-axis
 
 fig.suptitle("ESARSA(λ) Q-values", fontsize=16)
-plt.tight_layout(rect=[0, 0, 0.9, 1])  # Adjust layout to fit colorbar
+plt.tight_layout(rect=[0, 0, 0.9, 1])  # Adjust layout to fit colorbar  # type: ignore
 plt.show()
 
 # %%

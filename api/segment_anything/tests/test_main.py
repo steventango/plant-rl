@@ -86,12 +86,16 @@ class TestSegmentAnything:
 
         # Create detections object with the masks
         detections = sv.Detections(
-            xyxy=np.array([[0, 0, image.shape[1], image.shape[0]]]),  # dummy bounding box
+            xyxy=np.array(
+                [[0, 0, image.shape[1], image.shape[0]]]
+            ),  # dummy bounding box
             mask=np.array([mask_canvas > 0]),
         )
 
         # Annotate image with masks
-        annotated_image = mask_annotator.annotate(scene=image.copy(), detections=detections)
+        annotated_image = mask_annotator.annotate(
+            scene=image.copy(), detections=detections
+        )
 
         # Save the result
         base_name = Path(image_path).stem

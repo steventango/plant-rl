@@ -1,7 +1,8 @@
 # Import modules
+from abc import ABC, abstractmethod
+
 import numpy as np
 import torch
-from abc import ABC, abstractmethod
 
 
 # Class definitions
@@ -20,8 +21,8 @@ class ExperienceReplay(ABC):
         stored in the replay buffer. All incoming data is assumed to be
         a numpy array.
     """
-    def __init__(self, capacity, seed, state_size, action_size,
-                 device=None):
+
+    def __init__(self, capacity, seed, state_size, action_size, device=None):
         """
         Constructor
 
@@ -113,20 +114,16 @@ class ExperienceReplay(ABC):
         next_state = self.cast(next_state)
         done = self.cast(done)
 
-        self.state_buffer[self.position] = state
-        self.action_buffer[self.position] = action
-        self.reward_buffer[self.position] = reward
-        self.next_state_buffer[self.position] = next_state
-        self.done_buffer[self.position] = done
+        self.state_buffer[self.position] = state  # type: ignore
+        self.action_buffer[self.position] = action  # type: ignore
+        self.reward_buffer[self.position] = reward  # type: ignore
+        self.next_state_buffer[self.position] = next_state  # type: ignore
+        self.done_buffer[self.position] = done  # type: ignore
 
         if self.position >= self.capacity - 1:
             self.is_full = True
         self.position = (self.position + 1) % self.capacity
         self._sampleable = False
-
-    @property
-    def sampleable(self):
-        return self._sampleable
 
     def is_sampleable(self, batch_size):
         if self.position < batch_size and not self.sampleable:
@@ -156,17 +153,15 @@ class ExperienceReplay(ABC):
 
         # Get the indices for the batch
         if self.is_full:
-            indices = self.random.integers(low=0, high=len(self),
-                                           size=batch_size)
+            indices = self.random.integers(low=0, high=len(self), size=batch_size)
         else:
-            indices = self.random.integers(low=0, high=self.position,
-                                           size=batch_size)
+            indices = self.random.integers(low=0, high=self.position, size=batch_size)
 
-        state = self.state_buffer[indices, :]
-        action = self.action_buffer[indices, :]
-        reward = self.reward_buffer[indices]
-        next_state = self.next_state_buffer[indices, :]
-        done = self.done_buffer[indices]
+        state = self.state_buffer[indices, :]  # type: ignore
+        action = self.action_buffer[indices, :]  # type: ignore
+        reward = self.reward_buffer[indices]  # type: ignore
+        next_state = self.next_state_buffer[indices, :]  # type: ignore
+        done = self.done_buffer[indices]  # type: ignore
 
         return state, action, reward, next_state, done
 
@@ -192,8 +187,16 @@ class NumpyBuffer(ExperienceReplay):
     For an implementation that uses PyTorch tensors, see
     TorchExperienceReplay
     """
-    def __init__(self, capacity, seed, state_size, action_size,
-                 state_dtype=np.int32, action_dtype=np.int32):
+
+    def __init__(
+        self,
+        capacity,
+        seed,
+        state_size,
+        action_size,
+        state_dtype=np.int32,
+        action_dtype=np.int32,
+    ):
         """
         Constructor
 
@@ -213,12 +216,15 @@ class NumpyBuffer(ExperienceReplay):
         super().__init__(capacity, seed, state_size, action_size, None)
 
     def init_buffer(self):
-        self.state_buffer = np.zeros((self.capacity, *self.state_size),
-                                     dtype=self._state_dtype)
-        self.next_state_buffer = np.zeros((self.capacity, *self.state_size),
-                                          dtype=self._state_dtype)
-        self.action_buffer = np.zeros((self.capacity, self.action_size),
-                                      dtype=self._state_dtype)
+        self.state_buffer = np.zeros(
+            (self.capacity, *self.state_size), dtype=self._state_dtype
+        )
+        self.next_state_buffer = np.zeros(
+            (self.capacity, *self.state_size), dtype=self._state_dtype
+        )
+        self.action_buffer = np.zeros(
+            (self.capacity, self.action_size), dtype=self._state_dtype
+        )
         self.reward_buffer = np.zeros((self.capacity, 1))
         self.done_buffer = np.zeros((self.capacity, 1), dtype=bool)
 
@@ -233,6 +239,7 @@ class TorchBuffer(ExperienceReplay):
     device, as this is very time consuming. This class is basically a
     PyTorch efficient implementation of ExperienceReplay.
     """
+
     def __init__(self, capacity, seed, state_size, action_size, device):
         """
         Constructor
@@ -257,8 +264,7 @@ class TorchBuffer(ExperienceReplay):
         self.state_buffer = torch.FloatTensor(self.capacity, *self.state_size)
         self.state_buffer = self.state_buffer.to(self.device)
 
-        self.next_state_buffer = torch.FloatTensor(self.capacity,
-                                                   *self.state_size)
+        self.next_state_buffer = torch.FloatTensor(self.capacity, *self.state_size)
         self.next_state_buffer = self.next_state_buffer.to(self.device)
 
         self.action_buffer = torch.FloatTensor(self.capacity, self.action_size)

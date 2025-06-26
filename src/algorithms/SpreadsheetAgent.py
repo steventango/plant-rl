@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime  # type: ignore
 from typing import Any, Dict, Tuple
 from zoneinfo import ZoneInfo
 
@@ -14,13 +14,20 @@ def linear_interpolation(first, second, completed):
 
 
 class SpreadsheetAgent(BaseAgent):
-    def __init__(self, observations: Tuple[int, ...], actions: int, params: Dict, collector: Collector, seed: int):
+    def __init__(
+        self,
+        observations: Tuple[int, ...],
+        actions: int,
+        params: Dict,
+        collector: Collector | None,
+        seed: int,
+    ):
         super().__init__(observations, actions, params, collector, seed)
         self.df = pd.read_excel(self.params["filepath"])
         self.compatibility_mode = self.params.get("compatibility_mode", False)
-        self.df["datetime"] = self.df["Day"] * 86400 + pd.to_datetime(self.df["Time"], format="%H:%M:%S").apply(
-            lambda x: x.hour * 3600 + x.minute * 60 + x.second
-        )
+        self.df["datetime"] = self.df["Day"] * 86400 + pd.to_datetime(
+            self.df["Time"], format="%H:%M:%S"
+        ).apply(lambda x: x.hour * 3600 + x.minute * 60 + x.second)
         tz = ZoneInfo(self.params.get("timezone", "Etc/UTC"))
         dt = datetime.now(tz)
         offset = dt.utcoffset()
@@ -30,12 +37,16 @@ class SpreadsheetAgent(BaseAgent):
     # ----------------------
     # -- RLGlue interface --
     # ----------------------
-    def start(self, observation: np.ndarray, extra: Dict[str, Any]) -> Tuple[np.ndarray, Dict[str, Any]]:
+    def start(  # type: ignore
+        self, observation: np.ndarray, extra: Dict[str, Any]
+    ) -> Tuple[np.ndarray, Dict[str, Any]]:
         utc_time = observation[0]
         return self.get_action(utc_time), {}
 
-    def step(self, reward: float, observation: np.ndarray | None, extra: Dict[str, Any]):
-        utc_time = observation[0]
+    def step(
+        self, reward: float, observation: np.ndarray | None, extra: Dict[str, Any]
+    ):
+        utc_time = observation[0]  # type: ignore
         return self.get_action(utc_time), {}
 
     def end(self, reward: float, extra: Dict[str, Any]):
@@ -52,7 +63,7 @@ class SpreadsheetAgent(BaseAgent):
         else:
             second_point = self.df[self.df["datetime"] > clock_time].iloc[0]
             second_index = self.df[self.df["datetime"] > clock_time].index[0]
-            first_point = self.df.iloc[second_index - 1]
+            first_point = self.df.iloc[second_index - 1]  # type: ignore
 
         first_datetime = first_point["datetime"]
         second_datetime = second_point["datetime"]
@@ -63,9 +74,13 @@ class SpreadsheetAgent(BaseAgent):
         if clock_time < first_datetime:
             clock_time += cycle_length
 
-        region_completed = (clock_time - first_datetime) / (second_datetime - first_datetime)
+        region_completed = (clock_time - first_datetime) / (
+            second_datetime - first_datetime
+        )
 
-        light_scaling_factor = linear_interpolation(first_point["Scaling"], second_point["Scaling"], region_completed)
+        light_scaling_factor = linear_interpolation(
+            first_point["Scaling"], second_point["Scaling"], region_completed
+        )
 
         first_color = np.array(
             [

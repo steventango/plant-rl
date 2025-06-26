@@ -89,11 +89,18 @@ class TestGroundingDino:
         label_annotator = sv.LabelAnnotator()
 
         # Create labels
-        labels = [f"{text_labels[i]} {confidence[i]:.2f}" for i, class_id in enumerate(class_ids)]
+        labels = [
+            f"{text_labels[i]} {confidence[i]:.2f}"
+            for i, class_id in enumerate(class_ids)
+        ]
 
         # Annotate image
-        annotated_image = box_annotator.annotate(scene=image.copy(), detections=detections_obj)
-        annotated_image = label_annotator.annotate(scene=annotated_image, detections=detections_obj, labels=labels)
+        annotated_image = box_annotator.annotate(
+            scene=image.copy(), detections=detections_obj
+        )
+        annotated_image = label_annotator.annotate(
+            scene=annotated_image, detections=detections_obj, labels=labels
+        )
 
         base_name = Path(image_path).stem
         results_dir = TEST_DIR / "results"
@@ -131,8 +138,21 @@ class TestGroundingDino:
         assert result is not None, "API request failed"
 
         boxes, scores, text_labels = self.extract_detection_info(result)
-        assert np.allclose(boxes, [[199.7177734375, 46.13459777832031, 499.15631103515625, 374.36907958984375]], atol=1e-5), "Boxes do not match within tolerance"
-        assert scores == pytest.approx([0.3760952651500702], rel=1e-3), "Scores do not match within tolerance"
+        assert np.allclose(
+            boxes,
+            [
+                [
+                    199.7177734375,
+                    46.13459777832031,
+                    499.15631103515625,
+                    374.36907958984375,
+                ]
+            ],
+            atol=1e-5,
+        ), "Boxes do not match within tolerance"
+        assert scores == pytest.approx([0.3760952651500702], rel=1e-3), (
+            "Scores do not match within tolerance"
+        )
         assert text_labels == ["cat"], "Text labels do not match"
 
         self.visualize_detections(sample_image_path, result)

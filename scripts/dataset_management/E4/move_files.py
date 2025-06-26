@@ -1,7 +1,5 @@
-import datetime
 import os
 import shutil
-from pathlib import Path
 
 # Define source and destination directories
 source_dir = "/data/online/E4/P0.1/z2/images"
@@ -32,5 +30,7 @@ for filename in files_to_move:
         print(f"Moved: {filename}")
 
 # Print summary
-print(f"\nOperation complete: {moved_count} files moved from {source_dir} to {destination_dir}")
+print(
+    f"\nOperation complete: {moved_count} files moved from {source_dir} to {destination_dir}"
+)
 print(f"Files moved had filenames >= {threshold_filename}")

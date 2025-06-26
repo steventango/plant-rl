@@ -23,7 +23,9 @@ def test_observation():
     response = client.get("/observation")
     assert response.status_code == 200
     assert response.headers["content-type"] == "image/jpeg"
-    assert response.headers["content-disposition"] == 'inline; filename="observation.jpg"'
+    assert (
+        response.headers["content-disposition"] == 'inline; filename="observation.jpg"'
+    )
 
     image = Image.open(io.BytesIO(response.content))
     array = np.array(image)

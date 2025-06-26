@@ -1,30 +1,19 @@
-import os
+import os  # type: ignore
 import sys
 
 sys.path.append(os.getcwd() + "/src")
 import datetime
-import enum
-from typing import Any, List, Sequence, Tuple
+from typing import Any, List, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import RlEvaluation.backend.statistics as bs
-import RlEvaluation.backend.temporal as bt
-import RlEvaluation.hypers as Hypers
-from PyExpPlotting.matplot import save, setDefaultConference, setFonts
-from PyExpUtils.results.Collection import ResultCollection
+from matplotlib.ticker import FuncFormatter
+from PyExpPlotting.matplot import save, setDefaultConference
 from RlEvaluation.config import DataDefinition, data_definition, maybe_global
 from RlEvaluation.interpolation import Interpolation, compute_step_return
-from RlEvaluation.statistics import Statistic
-from RlEvaluation.temporal import (
-    TimeSummary,
-    curve_percentile_bootstrap_ci,
-    extract_learning_curves,
-)
 from RlEvaluation.utils.pandas import split_over_column, subset_df
-from matplotlib.ticker import FuncFormatter
-from experiment.ExperimentModel import ExperimentModel
+
 from experiment.tools import parseCmdLineArgs
 from utils.metrics import UnbiasedExponentialMovingAverage as uema
 from utils.metrics import iqm
@@ -63,9 +52,9 @@ def extract_learning_curves(
     xs: List[np.ndarray] = []
     ys: List[np.ndarray] = []
     for _, group in groups:
-        non_na = group[group[metric].notna()]
-        x = non_na[dd.time_col].to_numpy()
-        y = non_na[metric].to_numpy()
+        non_na = group[group[metric].notna()]  # type: ignore
+        x = non_na[dd.time_col].to_numpy()  # type: ignore
+        y = non_na[metric].to_numpy()  # type: ignore
 
         idx = np.argwhere(x[1:] <= x[:-1])
 
@@ -79,8 +68,8 @@ def extract_learning_curves(
         xs.append(x)
         ys.append(y)
 
-    xs = np.stack(xs)
-    ys = np.stack(ys)
+    xs = np.stack(xs)  # type: ignore
+    ys = np.stack(ys)  # type: ignore
 
     return xs, ys
 
@@ -106,11 +95,16 @@ def main():
 
         all_xs = []
         all_ys = []
-        for alg, sub_df in split_over_column(df, col="algorithm"):
-            xs, ys = extract_learning_curves(sub_df, tuple(), metric=metric, interpolation=None)
+        for _alg, sub_df in split_over_column(df, col="algorithm"):
+            xs, ys = extract_learning_curves(
+                sub_df,  # type: ignore
+                tuple(),
+                metric=metric,
+                interpolation=None,  # type: ignore
+            )
             x = xs[0]
             y = ys[0]
-            y = np.stack(y)
+            y = np.stack(y)  # type: ignore
             if y.ndim == 1:
                 y = y[:, np.newaxis]
             all_xs.append(x)
@@ -122,12 +116,20 @@ def main():
             rows += 1
         f, axs = plt.subplots(rows, 1, squeeze=False, sharex=True)
         axs = axs.flatten()
-        x_plot = [(datetime.datetime.fromtimestamp(t) - datetime.datetime.fromtimestamp(x[0])).total_seconds() for t in x]
-        for j, (ax, yj) in enumerate(zip(axs, y.T)):
+        x_plot = [
+            (
+                datetime.datetime.fromtimestamp(t)
+                - datetime.datetime.fromtimestamp(x[0])  # type: ignore
+            ).total_seconds()
+            for t in x  # type: ignore
+        ]
+        for j, (ax, yj) in enumerate(zip(axs, y.T, strict=False)):
             # Set the x-axis formatter to display timedelta
-            ax.xaxis.set_major_formatter(FuncFormatter(lambda x, _: str(datetime.timedelta(seconds=int(x)))))
+            ax.xaxis.set_major_formatter(
+                FuncFormatter(lambda x, _: str(datetime.timedelta(seconds=int(x))))
+            )
             # show tick every 3600 seconds
-            ax.xaxis.set_major_locator(plt.MultipleLocator(3600))
+            ax.xaxis.set_major_locator(plt.MultipleLocator(3600))  # type: ignore
             # Draw horizontal segments without vertical connectors
             for i in range(len(x_plot) - 1):
                 ax.hlines(y=yj[i], xmin=x_plot[i], xmax=x_plot[i + 1], color="C0")
@@ -142,13 +144,15 @@ def main():
                 ax.plot(x_plot, stat, color="C1", label="UEMA")
             if metric == "reward":
                 ax.axhline(y=0, color="k", linestyle="--", linewidth=0.5)
-                _, returns = compute_step_return(x, yj, len(x))
+                _, returns = compute_step_return(x, yj, len(x))  # type: ignore
                 total_return = np.sum(returns)
                 print(f"Return: {total_return:.2f}")
         if metric == "area":
             axs[-1].set_ylabel("IQM")
-            axs[-1].xaxis.set_major_formatter(FuncFormatter(lambda x, _: str(datetime.timedelta(seconds=int(x)))))
-            ax.xaxis.set_major_locator(plt.MultipleLocator(3600))
+            axs[-1].xaxis.set_major_formatter(
+                FuncFormatter(lambda x, _: str(datetime.timedelta(seconds=int(x))))
+            )
+            ax.xaxis.set_major_locator(plt.MultipleLocator(3600))  # type: ignore
             u = uema(alpha=0.1)
             stat = []
             for y_i in y:
@@ -160,7 +164,12 @@ def main():
         axs[0].set_title(f"{metric.capitalize()}")
         axs[-1].set_xlabel("Time")
 
-        save(save_path=f"{path}/plots", plot_name=metric, save_type="jpg", height_ratio=0.1 * m)
+        save(
+            save_path=f"{path}/plots",
+            plot_name=metric,
+            save_type="jpg",
+            height_ratio=0.1 * m,
+        )
 
 
 if __name__ == "__main__":

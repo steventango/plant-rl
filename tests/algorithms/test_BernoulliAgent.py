@@ -29,7 +29,7 @@ class TestBernoulliAgent:
                 actions=2,
                 params={"p": p},
                 collector=MagicMock(),
-                seed=42
+                seed=42,
             )
 
             # Sample actions multiple times
@@ -40,44 +40,32 @@ class TestBernoulliAgent:
 
             # Assert that empirical probability is close to the expected probability
             np.testing.assert_allclose(
-                empirical_p, 
-                p, 
+                empirical_p,
+                p,
                 atol=tolerance,
-                err_msg=f"Expected p={p}, got empirical p={empirical_p} after {n_samples} samples"
+                err_msg=f"Expected p={p}, got empirical p={empirical_p} after {n_samples} samples",
             )
 
     def test_default_probability(self):
         """Test that the default probability is 0.5 if not specified"""
         agent = BernoulliAgent(
-            observations=(1,),
-            actions=2,
-            params={},
-            collector=MagicMock(),
-            seed=42
+            observations=(1,), actions=2, params={}, collector=MagicMock(), seed=42
         )
 
         assert agent.p == 0.5, "Default probability should be 0.5"
-    
+
     def test_actions_constraint(self):
         """Test that the agent raises an assertion error if actions != 2"""
         # Should work with 2 actions
         BernoulliAgent(
-            observations=(1,),
-            actions=2,
-            params={},
-            collector=MagicMock(),
-            seed=42
+            observations=(1,), actions=2, params={}, collector=MagicMock(), seed=42
         )
 
         # Should raise AssertionError with actions != 2
         try:
             BernoulliAgent(
-                observations=(1,),
-                actions=3,
-                params={},
-                collector=MagicMock(),
-                seed=42
+                observations=(1,), actions=3, params={}, collector=MagicMock(), seed=42
             )
-            assert False, "Should have raised an AssertionError"
+            raise Exception("Should have raised an AssertionError")
         except AssertionError:
             pass

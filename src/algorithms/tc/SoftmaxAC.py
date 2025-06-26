@@ -1,13 +1,14 @@
-import numpy as np
-
-from numba import njit
 from typing import Dict, Tuple
-from utils.checkpoint import checkpointable
+
+import numpy as np
+from numba import njit
 from PyExpUtils.collection.Collector import Collector
 
 from algorithms.tc.TCAgent import TCAgent
+from utils.checkpoint import checkpointable
 
-#TODO Note this will break with new updates to TCAgent and DenseTileCoder, which outputs binary vectors
+
+# TODO Note this will break with new updates to TCAgent and DenseTileCoder, which outputs binary vectors
 @njit(cache=True)
 def _update(w, theta, x, a, n_a, xp, r, pi, gamma, alpha):
     v = w[x].sum()
@@ -24,9 +25,11 @@ def _update(w, theta, x, a, n_a, xp, r, pi, gamma, alpha):
 
     return delta
 
+
 @njit(cache=True)
 def compute_logits(theta, x):
     return theta.T[x].sum(axis=0)
+
 
 @njit(cache=True)
 def softmax(logits: np.ndarray, tau: float):
@@ -35,22 +38,30 @@ def softmax(logits: np.ndarray, tau: float):
     den = num.sum()
     return num / den
 
-@checkpointable(('w', 'theta'))
+
+@checkpointable(("w", "theta"))
 class SoftmaxAC(TCAgent):
-    def __init__(self, observations: Tuple, actions: int, params: Dict, collector: Collector, seed: int):
+    def __init__(
+        self,
+        observations: Tuple,
+        actions: int,
+        params: Dict,
+        collector: Collector,
+        seed: int,
+    ):
         super().__init__(observations, actions, params, collector, seed)
 
         # define parameter contract
-        self.alpha = params['alpha']
-        self.tau = params['tau']
+        self.alpha = params["alpha"]
+        self.tau = params["tau"]
 
         # create initial weights
-        self.w = np.zeros((self.rep.features()), dtype=np.float32)
-        self.theta = np.zeros((actions, self.rep.features()), dtype=np.float32)
+        self.w = np.zeros((self.rep.features()), dtype=np.float32)  # type: ignore
+        self.theta = np.zeros((actions, self.rep.features()), dtype=np.float32)  # type: ignore
 
-    def policy(self, x: np.ndarray):
-        l = compute_logits(self.theta, x)
-        return softmax(l, self.tau)
+    def policy(self, x: np.ndarray):  # type: ignore
+        logits = compute_logits(self.theta, x)
+        return softmax(logits, self.tau)
 
     def update(self, x, a, xp, r, gamma):
         if xp is None:

@@ -1,6 +1,8 @@
 from PyExpUtils.collection.Collector import Collector
 
-from environments.PlantGrowthChamber.PlantGrowthChamberIntensity import PlantGrowthChamberIntensity as Env
+from environments.PlantGrowthChamber.PlantGrowthChamberIntensity import (
+    PlantGrowthChamberIntensity as Env,
+)
 from experiment.ExperimentModel import ExperimentModel
 from problems.BaseAsyncProblem import BaseAsyncProblem
 

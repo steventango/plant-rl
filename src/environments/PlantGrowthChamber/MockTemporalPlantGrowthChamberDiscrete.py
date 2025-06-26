@@ -1,4 +1,4 @@
-from environments.PlantGrowthChamber.MockPlantGrowthChamber import (
+from environments.PlantGrowthChamber.MockPlantGrowthChamber import (  # type: ignore
     MockPlantGrowthChamber,
 )
 from environments.PlantGrowthChamber.PlantGrowthChamberDiscrete import (
@@ -9,8 +9,9 @@ from environments.PlantGrowthChamber.TemporalPlantGrowthChamber import (
 )
 
 
-class MockTemporalPlantGrowthChamberDiscrete(MockPlantGrowthChamber, PlantGrowthChamberDiscrete, TemporalPlantGrowthChamber):
-
+class MockTemporalPlantGrowthChamberDiscrete(  # type: ignore
+    MockPlantGrowthChamber, PlantGrowthChamberDiscrete, TemporalPlantGrowthChamber
+):
     def __init__(self, *args, **kwargs):
         MockPlantGrowthChamber.__init__(self, *args, **kwargs)
         PlantGrowthChamberDiscrete.__init__(self, *args, **kwargs)

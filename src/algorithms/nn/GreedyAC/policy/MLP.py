@@ -1,12 +1,11 @@
-# Import modules
-import torch
-import time
+# Import modules  # type: ignore
 import numpy as np
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.distributions import Normal, Independent
-from ..utils.nn_utils import weights_init_
+from torch.distributions import Independent, Normal
 
+from ..utils.nn_utils import weights_init_
 
 # Global variables
 EPSILON = 1e-6
@@ -17,8 +16,17 @@ class SquashedGaussian(nn.Module):
     Class SquashedGaussian implements a policy following a squashed
     Gaussian distribution in each state, parameterized by an MLP.
     """
-    def __init__(self, num_inputs, num_actions, hidden_dim, activation,
-                 action_space=None, clip_stddev=1000, init=None):
+
+    def __init__(
+        self,
+        num_inputs,
+        num_actions,
+        hidden_dim,
+        activation,
+        action_space=None,
+        clip_stddev=1000,
+        init=None,
+    ):
         """
         Constructor
 
@@ -60,17 +68,19 @@ class SquashedGaussian(nn.Module):
         self.log_std_linear = nn.Linear(hidden_dim, num_actions)
 
         # Initialize weights
-        self.apply(lambda module: weights_init_(module, init, activation))
+        self.apply(lambda module: weights_init_(module, init, activation))  # type: ignore
 
         # action rescaling
         if action_space is None:
-            self.action_scale = torch.tensor(1.)
-            self.action_bias = torch.tensor(0.)
+            self.action_scale = torch.tensor(1.0)
+            self.action_bias = torch.tensor(0.0)
         else:
             self.action_scale = torch.FloatTensor(
-                (action_space.high - action_space.low) / 2.)
+                (action_space.high - action_space.low) / 2.0
+            )
             self.action_bias = torch.FloatTensor(
-                (action_space.high + action_space.low) / 2.)
+                (action_space.high + action_space.low) / 2.0
+            )
 
         if activation == "relu":
             self.act = F.relu
@@ -102,8 +112,9 @@ class SquashedGaussian(nn.Module):
         log_std = self.log_std_linear(x)
 
         if self.clip_stddev:
-            log_std = torch.clamp(log_std, min=-self.clip_std_threshold,
-                                  max=self.clip_std_threshold)
+            log_std = torch.clamp(
+                log_std, min=-self.clip_std_threshold, max=self.clip_std_threshold
+            )
         return mean, log_std
 
     def sample(self, state, num_samples=1):
@@ -134,8 +145,11 @@ class SquashedGaussian(nn.Module):
         action = y_t * self.action_scale + self.action_bias
         log_prob = normal.log_prob(x_t)
 
-        log_prob -= torch.log(self.action_scale * (1 - y_t.pow(2)) +
-                              EPSILON).sum(axis=-1).reshape(log_prob.shape)
+        log_prob -= (
+            torch.log(self.action_scale * (1 - y_t.pow(2)) + EPSILON)  # type: ignore
+            .sum(axis=-1)
+            .reshape(log_prob.shape)
+        )
         if self.num_actions > 1:
             log_prob = log_prob.unsqueeze(-1)
 
@@ -174,8 +188,11 @@ class SquashedGaussian(nn.Module):
         action = y_t * self.action_scale + self.action_bias
         log_prob = normal.log_prob(x_t)
 
-        log_prob -= torch.log(self.action_scale * (1 - y_t.pow(2)) +
-                              EPSILON).sum(axis=-1).reshape(log_prob.shape)
+        log_prob -= (
+            torch.log(self.action_scale * (1 - y_t.pow(2)) + EPSILON)  # type: ignore
+            .sum(axis=-1)
+            .reshape(log_prob.shape)
+        )
         if self.num_actions > 1:
             log_prob = log_prob.unsqueeze(-1)
 
@@ -198,14 +215,17 @@ class SquashedGaussian(nn.Module):
 
         y_t = torch.tanh(x_t_batch)
         log_prob = normal.log_prob(x_t_batch)
-        log_prob -= torch.log(self.action_scale * (1 - y_t.pow(2)) +
-                              EPSILON).sum(axis=-1).reshape(log_prob.shape)
+        log_prob -= (
+            torch.log(self.action_scale * (1 - y_t.pow(2)) + EPSILON)  # type: ignore
+            .sum(axis=-1)
+            .reshape(log_prob.shape)
+        )
         if self.num_actions > 1:
             log_prob = log_prob.unsqueeze(-1)
 
         return log_prob
 
-    def to(self, device):
+    def to(self, device):  # type: ignore
         """
         Moves the network to a device
 
@@ -229,8 +249,10 @@ class Softmax(nn.Module):
     Softmax implements a softmax policy in each state, parameterized
     using an MLP to predict logits.
     """
-    def __init__(self, num_inputs, num_actions, hidden_dim, n_hidden, activation,
-                 init=None):
+
+    def __init__(
+        self, num_inputs, num_actions, hidden_dim, n_hidden, activation, init=None
+    ):
         super(Softmax, self).__init__()
 
         self.num_actions = num_actions
@@ -242,7 +264,7 @@ class Softmax(nn.Module):
         self.output_layer = nn.Linear(hidden_dim, num_actions)
 
         # self.apply(weights_init_)
-        self.apply(lambda module: weights_init_(module, init, activation))
+        self.apply(lambda module: weights_init_(module, init, activation))  # type: ignore
 
         if activation == "relu":
             self.act = F.relu
@@ -265,8 +287,9 @@ class Softmax(nn.Module):
     def sample(self, state, num_samples=1):
         logits = self.forward(state)
 
-        if len(logits.shape) != 1 and (len(logits.shape) != 2 and 1 not in
-           logits.shape):
+        if len(logits.shape) != 1 and (
+            len(logits.shape) != 2 and 1 not in logits.shape
+        ):
             shape = logits.shape
             raise ValueError(f"expected a vector of logits, got shape {shape}")
 
@@ -304,7 +327,7 @@ class Softmax(nn.Module):
 
         return log_probs
 
-    def to(self, device):
+    def to(self, device):  # type: ignore
         """
         Moves the network to a device
 
@@ -327,8 +350,17 @@ class Gaussian(nn.Module):
     in each state, parameterized as an MLP. The predicted mean is scaled to be
     within `(action_min, action_max)` using a `tanh` activation.
     """
-    def __init__(self, num_inputs, num_actions, hidden_dim, activation,
-                 action_space, clip_stddev=1000, init=None):
+
+    def __init__(
+        self,
+        num_inputs,
+        num_actions,
+        hidden_dim,
+        activation,
+        action_space,
+        clip_stddev=1000,
+        init=None,
+    ):
         """
         Constructor
 
@@ -367,7 +399,7 @@ class Gaussian(nn.Module):
         self.log_std_linear = nn.Linear(hidden_dim, num_actions)
 
         # Initialize weights
-        self.apply(lambda module: weights_init_(module, init, activation))
+        self.apply(lambda module: weights_init_(module, init, activation))  # type: ignore
 
         # Action rescaling
         self.action_max = torch.FloatTensor(action_space.high)
@@ -400,14 +432,16 @@ class Gaussian(nn.Module):
         x = self.act(self.linear2(x))
 
         mean = torch.tanh(self.mean_linear(x))
-        mean = ((mean + 1) / 2) * (self.action_max - self.action_min) + \
-            self.action_min  # ∈ [action_min, action_max]
+        mean = ((mean + 1) / 2) * (
+            self.action_max - self.action_min
+        ) + self.action_min  # ∈ [action_min, action_max]
         log_std = self.log_std_linear(x)
 
         # Works better with std dev clipping to ±1000
         if self.clip_stddev:
-            log_std = torch.clamp(log_std, min=-self.clip_std_threshold,
-                                  max=self.clip_std_threshold)
+            log_std = torch.clamp(
+                log_std, min=-self.clip_std_threshold, max=self.clip_std_threshold
+            )
         return mean, log_std
 
     def rsample(self, state, num_samples=1):
@@ -498,11 +532,11 @@ class Gaussian(nn.Module):
             log_prob.unsqueeze(-1)
 
         if show:
-            print(torch.cat([mean, std], axis=1)[0])
+            print(torch.cat([mean, std], axis=1)[0])  # type: ignore
 
         return log_prob
 
-    def to(self, device):
+    def to(self, device):  # type: ignore
         """
         Moves the network to a device
 

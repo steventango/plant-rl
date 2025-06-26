@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import abstractmethod  # type: ignore
 from typing import Any, Dict, Tuple
 
 import numpy as np
@@ -13,7 +13,14 @@ from utils.checkpoint import checkpointable
 
 @checkpointable(("buffer", "steps", "updates"))
 class TCAgentReplay(TCAgent):
-    def __init__(self, observations: Tuple[int, ...], actions: int, params: Dict, collector: Collector, seed: int):
+    def __init__(
+        self,
+        observations: Tuple[int, ...],
+        actions: int,
+        params: Dict,
+        collector: Collector,
+        seed: int,
+    ):
         super().__init__(observations, actions, params, collector, seed)
 
         # Params for replay
@@ -39,7 +46,9 @@ class TCAgentReplay(TCAgent):
     # ----------------------
     # -- RLGlue interface --
     # ----------------------
-    def start(self, s: np.ndarray, extra: Dict[str, Any]) -> Tuple[np.ndarray, Dict[str, Any]]:
+    def start(  # type: ignore
+        self, s: np.ndarray, extra: Dict[str, Any]
+    ) -> Tuple[np.ndarray, Dict[str, Any]]:
         self.buffer.flush()
 
         x = self.get_rep(s)
@@ -54,7 +63,7 @@ class TCAgentReplay(TCAgent):
                 terminal=False,
             )
         )
-        return a, self.get_info()
+        return a, self.get_info()  # type: ignore
 
     def step(self, r: float, sp: np.ndarray | None, extra: Dict[str, Any]):
         a = -1

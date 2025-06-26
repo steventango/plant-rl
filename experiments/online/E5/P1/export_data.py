@@ -2,7 +2,6 @@ import os
 import sys
 
 sys.path.append(os.getcwd() + "/src")
-import numpy as np
 from PyExpPlotting.matplot import setDefaultConference
 from PyExpUtils.results.Collection import ResultCollection
 from RlEvaluation.config import data_definition
@@ -39,6 +38,7 @@ def main():
     assert df is not None
 
     df.to_csv(f"{path}/data.csv", index=False)
+
 
 if __name__ == "__main__":
     main()

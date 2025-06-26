@@ -1,8 +1,8 @@
-from typing import Callable
+from typing import Callable  # type: ignore
 
 import numpy as np
-
 from PyExpUtils.collection.Sampler import Sampler
+
 
 class WindowAverage(Sampler):
     def __init__(self, size: int):
@@ -11,15 +11,15 @@ class WindowAverage(Sampler):
         self.n_inserts = 0
 
     def next(self, v: float):
-        self.window[self.n_inserts%self.size] = v
+        self.window[self.n_inserts % self.size] = v
         self.n_inserts += 1
-        return self.window[:min(self.n_inserts, self.size)].mean()
+        return self.window[: min(self.n_inserts, self.size)].mean()
 
-    def next_eval(self, c: Callable[[], float]):
+    def next_eval(self, c: Callable[[], float]):  # type: ignore
         v = c()
         return self.next(v)
 
-    def repeat(self, v: float, times: int):
+    def repeat(self, v: float, times: int):  # type: ignore
         for _ in range(times):
             self.next(v)
 

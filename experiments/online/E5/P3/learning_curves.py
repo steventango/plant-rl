@@ -1,31 +1,19 @@
-import os
+import os  # type: ignore
 import sys
 
 sys.path.append(os.getcwd() + "/src")
-import enum
-from typing import Any, List, Sequence, Tuple
+from typing import Any, List, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import RlEvaluation.backend.statistics as bs
-import RlEvaluation.backend.temporal as bt
-import RlEvaluation.hypers as Hypers
-from utils.metrics import UnbiasedExponentialMovingAverage as uema
-from PyExpPlotting.matplot import save, setDefaultConference, setFonts
-from PyExpUtils.results.Collection import ResultCollection
+from PyExpPlotting.matplot import save, setDefaultConference
 from RlEvaluation.config import DataDefinition, data_definition, maybe_global
 from RlEvaluation.interpolation import Interpolation, compute_step_return
-from RlEvaluation.statistics import Statistic
-from RlEvaluation.temporal import (
-    TimeSummary,
-    curve_percentile_bootstrap_ci,
-    extract_learning_curves,
-)
 from RlEvaluation.utils.pandas import split_over_column, subset_df
 
-from experiment.ExperimentModel import ExperimentModel
 from experiment.tools import parseCmdLineArgs
+from utils.metrics import UnbiasedExponentialMovingAverage as uema
 
 setDefaultConference("neurips")
 
@@ -37,7 +25,7 @@ def maybe_convert_to_array(x):
         return x
     try:
         x = eval(x)
-    except Exception as e:
+    except Exception:
         print(f"Error converting to array: {x}")
         return None
     if isinstance(x, bytes):
@@ -61,15 +49,15 @@ def extract_learning_curves(
     xs: List[np.ndarray] = []
     ys: List[np.ndarray] = []
     for _, group in groups:
-        non_na = group[group[metric].notna()]
-        x = non_na[dd.time_col].to_numpy()
-        y = non_na[metric].to_numpy()
+        non_na = group[group[metric].notna()]  # type: ignore
+        x = non_na[dd.time_col].to_numpy()  # type: ignore
+        y = non_na[metric].to_numpy()  # type: ignore
 
         idx = np.argwhere(x[1:] <= x[:-1])
 
         if idx.size > 0:
-            x = x[idx[-1][0] + 1:]
-            y = y[idx[-1][0] + 1:]
+            x = x[idx[-1][0] + 1 :]
+            y = y[idx[-1][0] + 1 :]
 
         if interpolation is not None:
             x, y = interpolation(x, y)
@@ -77,8 +65,8 @@ def extract_learning_curves(
         xs.append(x)
         ys.append(y)
 
-    xs = np.stack(xs)
-    ys = np.stack(ys)
+    xs = np.stack(xs)  # type: ignore
+    ys = np.stack(ys)  # type: ignore
 
     return xs, ys
 
@@ -88,37 +76,46 @@ def main():
 
     data_definition(
         hyper_cols=[],
-        seed_col='seed',
-        time_col='frame',
-        environment_col='environment',
-        algorithm_col='algorithm',
+        seed_col="seed",
+        time_col="frame",
+        environment_col="environment",
+        algorithm_col="algorithm",
         make_global=True,
     )
 
     df = pd.read_csv(f"{path}/data.csv")
 
     for metric in ["area", "state", "action", "reward"]:
-        df[metric] = df[metric].apply(maybe_convert_to_array)
+        df[metric] = df[metric].apply(maybe_convert_to_array)  # type: ignore
         for alg, sub_df in split_over_column(df, col="algorithm"):
             print("-" * 25)
             print(metric, alg)
 
-            xs, ys = extract_learning_curves(sub_df, tuple(), metric=metric, interpolation=None)
+            xs, ys = extract_learning_curves(
+                sub_df,  # type: ignore
+                tuple(),
+                metric=metric,
+                interpolation=None,  # type: ignore
+            )
             x = xs[0]
             y = ys[0]
-            y = np.stack(y)
+            y = np.stack(y)  # type: ignore
             if y.ndim == 1:
                 y = y[:, np.newaxis]
             m = y.shape[1]
             f, axs = plt.subplots(m, 1, squeeze=False, sharex=True)
             axs = axs.flatten()
             total_days = int(np.max(x) * 5 / 60 / 24)
-            for j, (ax, yj) in enumerate(zip(axs, y.T)):
+            for j, (ax, yj) in enumerate(zip(axs, y.T, strict=False)):
                 x_plot = rescale_time(x, 1)
                 # Draw horizontal segments without vertical connectors
                 for i in range(len(x_plot) - 1):
                     ax.hlines(
-                        y=yj[i], xmin=x_plot[i], xmax=x_plot[i + 1], color="C0", label=f"{alg}" if i == 0 else None
+                        y=yj[i],
+                        xmin=x_plot[i],
+                        xmax=x_plot[i + 1],
+                        color="C0",
+                        label=f"{alg}" if i == 0 else None,
                     )
                 ax.set_ylabel(metric + f"[{j}]" if m > 1 else metric)
                 for k in range(total_days + 1):
@@ -138,7 +135,12 @@ def main():
             axs[0].set_title(f"{metric.capitalize()}")
             axs[-1].set_xlabel("Time [Hours]")
 
-            save(save_path=f"{path}/plots", plot_name=f"{alg}_{metric}", save_type="jpg", height_ratio=0.2 * m)
+            save(
+                save_path=f"{path}/plots",
+                plot_name=f"{alg}_{metric}",
+                save_type="jpg",
+                height_ratio=0.2 * m,
+            )
 
 
 def rescale_time(x, stride):

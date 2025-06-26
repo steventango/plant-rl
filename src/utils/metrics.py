@@ -28,7 +28,9 @@ class UnbiasedExponentialMovingAverage:
       Array(nan, dtype=float32)
     """
 
-    def __init__(self, shape: tp.Union[int, tp.Sequence[int]] = 1, alpha: float = 0.001) -> None:
+    def __init__(
+        self, shape: tp.Union[int, tp.Sequence[int]] = 1, alpha: float = 0.001
+    ) -> None:
         """Initialize the UnbiasedExponentialMovingAverage with the given shape and smoothing factor.
 
         Args:
@@ -37,8 +39,8 @@ class UnbiasedExponentialMovingAverage:
         """
         self.alpha = alpha
         self.shape = shape
-        self.reset() 
-        self.default = 0.0   # or jnp.nan
+        self.reset()
+        self.default = 0.0  # or jnp.nan
 
     def reset(self) -> None:
         """Reset this ``UnbiasedExponentialMovingAverage``."""
@@ -60,7 +62,12 @@ class UnbiasedExponentialMovingAverage:
 
     def compute(self) -> jax.Array:
         """Compute and return the unbiased exponential moving average."""
-        return self.total if self.count_trace > 0 else jnp.full(self.shape, self.default, dtype=jnp.float32)
+        return (
+            self.total
+            if self.count_trace > 0
+            else jnp.full(self.shape, self.default, dtype=jnp.float32)
+        )
+
 
 def iqm(a: jax.Array, q: float) -> float:
     """
@@ -68,6 +75,6 @@ def iqm(a: jax.Array, q: float) -> float:
     a (ArrayLike) – N-dimensional array input.
     q (float) – floating-point values between 0.0 and 1.0.
     """
-    l, u = jnp.quantile(a, jnp.array([q, 1 - q]))
-    b = a[(a >= l) & (a <= u)]
+    lower, upper = jnp.quantile(a, jnp.array([q, 1 - q]))
+    b = a[(a >= lower) & (a <= upper)]
     return jnp.mean(b).item() if b.size > 0 else jnp.nan

@@ -22,7 +22,6 @@ TWELVE = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], dtype=np.float64)
 tz = ZoneInfo("America/Edmonton")
 
 
-
 def test_get_one_hot_time_observation_zero():
     local_time = datetime(2025, 5, 7, 9, 0, 0, tzinfo=tz)
     observation = get_one_hot_time_observation(local_time)

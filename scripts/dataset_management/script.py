@@ -20,6 +20,7 @@ def delete_png_file(png_file: Path) -> None:
         png_file.unlink()
         # print(f"Deleted {png_file}")
 
+
 def main() -> None:
     """Convert all png files recursively in the current directory to jpg."""
     # Get all png files in the current directory and subdirectories

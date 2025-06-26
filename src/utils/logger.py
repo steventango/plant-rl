@@ -31,7 +31,14 @@ def format_bounding_boxes(detections):
     class_id_to_label = {}
 
     if detections.xyxy is not None and len(detections.xyxy) > 0:
-        for i, (box, conf, class_id) in enumerate(zip(detections.xyxy, detections.confidence, detections.class_id)):
+        for _i, (box, conf, class_id) in enumerate(
+            zip(
+                detections.xyxy,
+                detections.confidence,
+                detections.class_id,
+                strict=False,
+            )
+        ):
             # Store class ID to label mapping
             class_id_to_label[int(class_id)] = str(class_id)
 
@@ -65,15 +72,24 @@ def format_masks(detections, class_id_to_label):
     """
     masks_dict = {}
 
-    if hasattr(detections, "mask") and detections.mask is not None and detections.mask.shape[0] > 0:
+    if (
+        hasattr(detections, "mask")
+        and detections.mask is not None
+        and detections.mask.shape[0] > 0
+    ):
         if detections.mask.ndim == 3:  # (n, h, w)
             # Create a single mask where each pixel has the value of its class
             mask_data = np.empty(detections.mask.shape[1:], dtype=np.uint8)
-            for class_mask, class_id in zip(detections.mask, detections.class_id):
+            for class_mask, class_id in zip(
+                detections.mask, detections.class_id, strict=False
+            ):
                 # Only update pixels that are part of this mask and weren't set by higher-confidence masks
                 mask_data = np.where(class_mask, min(class_id, 255), mask_data)
 
-            masks_dict["predictions"] = {"mask_data": mask_data, "class_labels": class_id_to_label}
+            masks_dict["predictions"] = {
+                "mask_data": mask_data,
+                "class_labels": class_id_to_label,
+            }
 
     return masks_dict
 
@@ -93,14 +109,35 @@ def create_annotated_image(image_data, box_data, class_id_to_label, masks_dict):
     if box_data or masks_dict:
         return wandb.Image(
             image_data,
-            boxes=({"predictions": {"box_data": box_data, "class_labels": class_id_to_label}} if box_data else None),
+            boxes=(
+                {
+                    "predictions": {
+                        "box_data": box_data,
+                        "class_labels": class_id_to_label,
+                    }
+                }
+                if box_data
+                else None
+            ),
             masks=masks_dict if masks_dict else None,
             file_type="jpg",
         )
     return wandb.Image(image_data, file_type="jpg")
 
 
-def log(env, glue, wandb_run, s, a, info, is_mock_env: bool = False, r=None, t=None, episodic_return=None, episode=None):
+def log(
+    env,
+    glue,
+    wandb_run,
+    s,
+    a,
+    info,
+    is_mock_env: bool = False,
+    r=None,
+    t=None,
+    episodic_return=None,
+    episode=None,
+):
     expanded_info = {}
     for key, value in info.items():
         if isinstance(value, pd.DataFrame):
@@ -133,11 +170,17 @@ def log(env, glue, wandb_run, s, a, info, is_mock_env: bool = False, r=None, t=N
                 masks_dict = format_masks(detections, class_id_to_label)
 
                 # Get the image data to be annotated
-                image_data = env.images.get("warped", env.image) if hasattr(env, "images") else env.image
+                image_data = (
+                    env.images.get("warped", env.image)
+                    if hasattr(env, "images")
+                    else env.image
+                )
 
                 # Create annotated image
                 if box_data or masks_dict:
-                    data["image"] = create_annotated_image(image_data, box_data, class_id_to_label, masks_dict)
+                    data["image"] = create_annotated_image(
+                        image_data, box_data, class_id_to_label, masks_dict
+                    )
 
     if r is not None:
         data["reward"] = r

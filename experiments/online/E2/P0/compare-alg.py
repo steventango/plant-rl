@@ -1,20 +1,21 @@
-import os
+import os  # type: ignore
 import sys
-sys.path.append(os.getcwd() + '/src')
 
-import numpy as np
+sys.path.append(os.getcwd() + "/src")
+
 import matplotlib.pyplot as plt
+import numpy as np
+import RlEvaluation.hypers as Hypers
 from PyExpPlotting.matplot import save, setDefaultConference
 from PyExpUtils.results.Collection import ResultCollection
-
 from RlEvaluation.config import data_definition
-from RlEvaluation.interpolation import compute_step_return
-from RlEvaluation.temporal import TimeSummary, extract_learning_curves, curve_percentile_bootstrap_ci
 from RlEvaluation.statistics import Statistic
+from RlEvaluation.temporal import (
+    TimeSummary,
+    curve_percentile_bootstrap_ci,
+    extract_learning_curves,
+)
 from RlEvaluation.utils.pandas import split_over_column
-
-import RlEvaluation.hypers as Hypers
-import RlEvaluation.metrics as Metrics
 
 # from analysis.confidence_intervals import bootstrapCI
 from experiment.ExperimentModel import ExperimentModel
@@ -22,13 +23,13 @@ from experiment.tools import parseCmdLineArgs
 
 # makes sure figures are right size for the paper/column widths
 # also sets fonts to be right size when saving
-setDefaultConference('jmlr')
+setDefaultConference("jmlr")
 
 COLORS = {
-    'Random': 'red',
-    'GAC': 'green',
-    'GACP': 'blue',
-    'Constant': 'black',
+    "Random": "red",
+    "GAC": "green",
+    "GACP": "blue",
+    "Constant": "black",
 }
 
 if __name__ == "__main__":
@@ -36,14 +37,13 @@ if __name__ == "__main__":
 
     results = ResultCollection.fromExperiments(Model=ExperimentModel)
     hyper_cols = results.get_hyperparameter_columns()
-    hyper_cols.remove('action')
+    hyper_cols.remove("action")
     data_definition(
         hyper_cols=hyper_cols,
-        seed_col='seed',
-        time_col='frame',
-        environment_col='environment',
-        algorithm_col='algorithm',
-
+        seed_col="seed",
+        time_col="frame",
+        environment_col="environment",
+        algorithm_col="algorithm",
         # makes this data definition globally accessible
         # so we don't need to supply it to all API calls
         make_global=True,
@@ -53,42 +53,42 @@ if __name__ == "__main__":
         # converts path like "experiments/example/MountainCar"
         # into a new column "environment" with value "MountainCar"
         # None means to ignore a path part
-        folder_columns=(None, None, None, 'environment'),
-
+        folder_columns=(None, None, None, "environment"),
         # and creates a new column named "algorithm"
         # whose value is the name of an experiment file, minus extension.
         # For instance, ESARSA.json becomes ESARSA
-        file_col='algorithm',
+        file_col="algorithm",
     )
 
     assert df is not None
 
     exp = results.get_any_exp()
 
-    for env, env_df in split_over_column(df, col='environment'):
+    for env, env_df in split_over_column(df, col="environment"):
         f, ax = plt.subplots()
-        for alg, sub_df in split_over_column(env_df, col='algorithm'):
+        for alg, sub_df in split_over_column(env_df, col="algorithm"):  # type: ignore
             print(alg)
-            if len(sub_df) == 0: continue
+            if len(sub_df) == 0:
+                continue
 
             report = Hypers.select_best_hypers(
-                sub_df,
-                metric='reward',
+                sub_df,  # type: ignore
+                metric="reward",
                 prefer=Hypers.Preference.high,
                 time_summary=TimeSummary.sum,
                 statistic=Statistic.mean,
             )
 
-            print('-' * 25)
+            print("-" * 25)
             print(env, alg)
             Hypers.pretty_print(report)
 
             xs, ys = extract_learning_curves(
-                    sub_df,
-                    report.best_configuration,
-                    metric='reward',
-                    interpolation=None,
-                )
+                sub_df,  # type: ignore
+                report.best_configuration,
+                metric="reward",
+                interpolation=None,
+            )
 
             xs = np.asarray(xs)
             ys = np.asarray(ys)
@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
             ax.plot(xs[0], res.sample_stat, label=alg, color=COLORS[alg], linewidth=1)
 
-            for x, y in zip(xs, ys):
+            for x, y in zip(xs, ys, strict=False):
                 ax.plot(x, y, color=COLORS[alg], linewidth=0.5, alpha=0.2)
 
         ax.set_xlim(0, exp.total_steps)
@@ -117,16 +117,13 @@ if __name__ == "__main__":
         ax.set_xticklabels(major_ticks)
 
         # Style minor ticks (optional)
-        ax.tick_params(axis='x', which='minor', length=4, color='gray')
+        ax.tick_params(axis="x", which="minor", length=4, color="gray")
         ax.legend()
-        ax.set_title('PlantGrowthChamber')
-        ax.set_ylabel('Reward')
-        ax.set_xlabel('Step (minute)')
+        ax.set_title("PlantGrowthChamber")
+        ax.set_ylabel("Reward")
+        ax.set_xlabel("Step (minute)")
 
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
 
-        save(
-            save_path=f'{path}/plots',
-            plot_name=f'algs'
-        )
+        save(save_path=f"{path}/plots", plot_name="algs")

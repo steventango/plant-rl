@@ -21,8 +21,12 @@ def main():
 
 
 def generate_image_stack(image_path):
-    boxes_path = image_path.parent / (image_path.name.replace("_shape_image.jpg", "_boxes.jpg"))
-    masks2_path = image_path.parent / (image_path.name.replace("_shape_image.jpg", "_masks2.jpg"))
+    boxes_path = image_path.parent / (
+        image_path.name.replace("_shape_image.jpg", "_boxes.jpg")
+    )
+    masks2_path = image_path.parent / (
+        image_path.name.replace("_shape_image.jpg", "_masks2.jpg")
+    )
 
     images = []
     for path in [boxes_path, masks2_path, image_path]:
@@ -43,7 +47,9 @@ def generate_image_stack(image_path):
     draw.text((center_x, 36), isoformat, fill="white", font=font)
 
     # save stacked image
-    stacked_image_path = image_path.parent / (image_path.name.replace("_shape_image.jpg", "_stacked.jpg"))
+    stacked_image_path = image_path.parent / (
+        image_path.name.replace("_shape_image.jpg", "_stacked.jpg")
+    )
     stacked_image.save(stacked_image_path)
 
 

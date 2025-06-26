@@ -3,10 +3,8 @@ import sys
 
 sys.path.append(os.getcwd() + "/src")
 import numpy as np
-import pandas as pd
 from PyExpUtils.results.Collection import ResultCollection
 from RlEvaluation.config import data_definition
-from RlEvaluation.utils.pandas import split_over_column
 
 from experiment.ExperimentModel import ExperimentModel
 from experiment.tools import parseCmdLineArgs
@@ -25,7 +23,7 @@ def main():
 
     results = ResultCollection.fromExperiments(Model=ExperimentModel)
 
-    dd = data_definition(
+    data_definition(
         hyper_cols=results.get_hyperparameter_columns(),
         seed_col="seed",
         time_col="frame",
@@ -42,7 +40,7 @@ def main():
     assert df is not None
 
     for metric in ["area", "state", "action", "reward"]:
-        df[metric] = df[metric].apply(maybe_convert_to_array)
+        df[metric] = df[metric].apply(maybe_convert_to_array)  # type: ignore
 
     df.to_csv(f"{path}/data.csv", index=False)
 

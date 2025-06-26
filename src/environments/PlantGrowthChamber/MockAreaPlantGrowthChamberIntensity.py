@@ -1,11 +1,16 @@
-import numpy as np
+from environments.PlantGrowthChamber.AreaPlantGrowthChamber import (  # type: ignore
+    AreaPlantGrowthChamber,
+)
+from environments.PlantGrowthChamber.MockPlantGrowthChamber import (
+    MockPlantGrowthChamber,
+)
+from environments.PlantGrowthChamber.PlantGrowthChamberIntensity import (
+    PlantGrowthChamberIntensity,
+)
 
-from environments.PlantGrowthChamber.MockPlantGrowthChamber import MockPlantGrowthChamber
-from environments.PlantGrowthChamber.AreaPlantGrowthChamber import AreaPlantGrowthChamber
-from environments.PlantGrowthChamber.PlantGrowthChamberIntensity import PlantGrowthChamberIntensity
 
-
-class MockAreaPlantGrowthChamberIntensity(MockPlantGrowthChamber, AreaPlantGrowthChamber, PlantGrowthChamberIntensity):
-
+class MockAreaPlantGrowthChamberIntensity(  # type: ignore
+    MockPlantGrowthChamber, AreaPlantGrowthChamber, PlantGrowthChamberIntensity
+):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

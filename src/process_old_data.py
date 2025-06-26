@@ -1,11 +1,9 @@
-import datetime
 import json
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from PIL import Image
-from tqdm import tqdm
 from tqdm.contrib.concurrent import process_map
 
 from environments.PlantGrowthChamber.cv import process_image
@@ -71,7 +69,14 @@ def main():
 
         if raw_df.empty:
             # if raw_df is empty, just save new_df
-            new_df["time"] = pd.to_datetime(new_df["image_name"].str.extract(r'--(\d{4}-\d{2}-\d{2})--(\d{2}-\d{2}-\d{2})')[0] + ' ' + new_df["image_name"].str.extract(r'--(\d{2}-\d{2}-\d{2})')[0], format='%Y-%m-%d %H-%M-%S')
+            new_df["time"] = pd.to_datetime(
+                new_df["image_name"].str.extract(
+                    r"--(\d{4}-\d{2}-\d{2})--(\d{2}-\d{2}-\d{2})"
+                )[0]
+                + " "
+                + new_df["image_name"].str.extract(r"--(\d{2}-\d{2}-\d{2})")[0],
+                format="%Y-%m-%d %H-%M-%S",
+            )
             new_df.to_csv(out_dir / "all.csv", index=False)
             continue
 

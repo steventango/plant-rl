@@ -1,4 +1,4 @@
-from abc import abstractmethod
+from abc import abstractmethod  # type: ignore
 from typing import Any, Dict, Tuple
 
 import numpy as np
@@ -12,7 +12,14 @@ from utils.checkpoint import checkpointable
 
 @checkpointable(("buffer", "steps", "updates"))
 class TCAgentOffline(TCAgent):
-    def __init__(self, observations: Tuple[int, ...], actions: int, params: Dict, collector: Collector, seed: int):
+    def __init__(
+        self,
+        observations: Tuple[int, ...],
+        actions: int,
+        params: Dict,
+        collector: Collector,
+        seed: int,
+    ):
         super().__init__(observations, actions, params, collector, seed)
 
         # Params for replay
@@ -91,6 +98,6 @@ class TCAgentOffline(TCAgent):
 
         return {}
 
-    def plan(self):
+    def plan(self):  # type: ignore
         self.batch_update()
         return self.get_info()

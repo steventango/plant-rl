@@ -9,11 +9,18 @@ from typing import Any, Callable, Dict, Optional, Protocol, Sequence, Type, Type
 
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 
-T = TypeVar('T')
+T = TypeVar("T")
 Builder = Callable[[], T]
 
+
 class Checkpoint:
-    def __init__(self, exp: ExperimentDescription, idx: int, base_path: str = './', save_every: float = -1) -> None:
+    def __init__(
+        self,
+        exp: ExperimentDescription,
+        idx: int,
+        base_path: str = "./",
+        save_every: float = -1,
+    ) -> None:
         self._storage: Dict[str, Any] = {}
         self._exp = exp
         self._idx = idx
@@ -24,8 +31,8 @@ class Checkpoint:
         self._ctx = self._exp.buildSaveContext(idx, base=base_path)
 
         self._params = exp.getPermutation(idx)
-        self._base_path = f'{idx}'
-        self._params_path = f'{idx}/params.json'
+        self._base_path = f"{idx}"
+        self._params_path = f"{idx}/params.json"
         self._data_path = f"{idx}/chk.pkl.xz"
 
     def __getitem__(self, name: str):
@@ -52,17 +59,17 @@ class Checkpoint:
     def save(self):
         params_path = self._ctx.resolve(self._params_path)
 
-        logging.info('Dumping checkpoint')
+        logging.info("Dumping checkpoint")
         if not os.path.exists(params_path):
             params_path = self._ctx.ensureExists(self._params_path, is_file=True)
-            with open(params_path, 'w') as f:
+            with open(params_path, "w") as f:
                 json.dump(self._params, f)
 
         data_path = self._ctx.ensureExists(self._data_path, is_file=True)
         with lzma.open(data_path, "wb") as f:
             pickle.dump(self._storage, f)
 
-        logging.info('Finished dumping checkpoint')
+        logging.info("Finished dumping checkpoint")
 
     def maybe_save(self):
         if self._save_every < 0:
@@ -84,13 +91,15 @@ class Checkpoint:
         params_path = self._ctx.resolve(self._params_path)
 
         try:
-            with open(params_path, 'r') as f:
+            with open(params_path, "r") as f:
                 params = json.load(f)
 
-            assert params == self._params, 'The idx->params mapping has changed between checkpoints!!'
+            assert params == self._params, (
+                "The idx->params mapping has changed between checkpoints!!"
+            )
 
         except Exception as e:
-            print('Failed to load checkpoint')
+            print("Failed to load checkpoint")
             print(e)
 
         path = self._ctx.resolve(self._data_path)
@@ -98,12 +107,12 @@ class Checkpoint:
             with lzma.open(path, "rb") as f:
                 self._storage = pickle.load(f)
         except Exception as e:
-            print(f'Failed to load checkpoint: {path}')
+            print(f"Failed to load checkpoint: {path}")
             print(e)
 
     def load_if_exists(self):
         if self._ctx.exists(self._data_path):
-            print('Found a checkpoint! Loading...')
+            print("Found a checkpoint! Loading...")
             self.load()
 
 
@@ -111,11 +120,14 @@ class Checkpointable(Protocol):
     def __setstate__(self, state) -> None: ...
     def __getstate__(self) -> Dict[str, Any]: ...
 
-C = TypeVar('C', bound=Type[Checkpointable])
+
+C = TypeVar("C", bound=Type[Checkpointable])
+
+
 def checkpointable(props: Sequence[str]):
     def _inner(c: C) -> C:
-        o_getter = getattr(c, '__getstate__')
-        o_setter = getattr(c, '__setstate__')
+        o_getter = c.__getstate__
+        o_setter = c.__setstate__
 
         def setter(self, state):
             if o_setter is not None:
@@ -132,9 +144,9 @@ def checkpointable(props: Sequence[str]):
             out2 = {}
             if o_getter is not None:
                 out2 = o_getter(self)
-            elif getattr(c.__bases__[0], '__getstate__'):
-                _getter = getattr(c.__bases__[0], '__getstate__')
-                out2 = _getter(self)
+            elif c.__bases__[0].__getstate__:
+                _getter = c.__bases__[0].__getstate__
+                out2 = _getter(self)  # type: ignore
 
             out2 |= out
             return out2

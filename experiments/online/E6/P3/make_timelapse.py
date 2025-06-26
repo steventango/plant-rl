@@ -45,7 +45,9 @@ def get_image(image_path, zone_identifier: str):
 
 def make_timelapse(pattern, output_video, zone):
     image_files = sorted(glob.glob(pattern), key=get_key)
-    images = process_map(get_image, image_files, [zone] * len(image_files), max_workers=8)
+    images = process_map(
+        get_image, image_files, [zone] * len(image_files), max_workers=8
+    )
     clip = ImageSequenceClip(images, fps=1)
     clip.write_videofile(output_video)
 

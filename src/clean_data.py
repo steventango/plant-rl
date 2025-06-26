@@ -7,9 +7,9 @@ from utils.metrics import UnbiasedExponentialMovingAverage as UEMA
 
 def clean_area(df, a=0.2, b=0.2):
     df["clean_area"] = df["area"].copy()
-    df["mean"] = 0.
+    df["mean"] = 0.0
     prev_area = 0
-    for plant_id, plant_df in df.groupby("plant_id"):
+    for _plant_id, plant_df in df.groupby("plant_id"):
         uema = UEMA(alpha=0.1)
         for j, (i, row) in enumerate(plant_df.iterrows()):
             area = row["area"]
@@ -38,7 +38,7 @@ def main():
         df = pd.read_csv(csv_path)
 
         # if has nan print warning and fillna with 0
-        if df["area"].isna().any():
+        if df["area"].isna().any():  # type: ignore
             print(f"Warning: NaN values found in {csv_path}. Filling with 0.")
             df["area"] = df["area"].fillna(0)
 

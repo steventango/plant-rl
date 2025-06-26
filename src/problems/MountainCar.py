@@ -1,4 +1,4 @@
-from PyExpUtils.collection.Collector import Collector
+from PyExpUtils.collection.Collector import Collector  # type: ignore
 from PyRlEnvs.domains.MountainCar import GymMountainCar
 
 from experiment.ExperimentModel import ExperimentModel
@@ -6,7 +6,7 @@ from problems.BaseProblem import BaseProblem
 
 
 class Env(GymMountainCar):
-    def start(self):
+    def start(self):  # type: ignore
         return super().start(), {}
 
 
@@ -18,7 +18,7 @@ class MountainCar(BaseProblem):
 
         # encode the observation ranges for this problem
         # useful for tile-coding
-        self.rep_params['input_ranges'] = [
+        self.rep_params["input_ranges"] = [
             [-1.2, 0.5],
             [-0.07, 0.07],
         ]

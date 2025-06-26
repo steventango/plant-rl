@@ -1,5 +1,5 @@
 import shutil
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 image_dir = Path("data/first_exp/z2cR")
@@ -17,6 +17,7 @@ def main():
         if time.minute % 5 == 0:
             new_path2 = output_dir2 / f"{timestamp}.png"
             shutil.copy(image_path, new_path2)
+
 
 if __name__ == "__main__":
     main()

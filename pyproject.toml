@@ -74,8 +74,11 @@ version_files = ['pyproject.toml']
 select = ['F', 'E', 'W', 'B']
 ignore = ['E501', 'E701', 'B023']
 
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends", "fastapi.Query", "fastapi.params.Query"]
+
 [tool.pyright]
-include = ['.']
+include = ['analysis', 'experiments', 'plots', 'scripts', 'src', 'tests']
 venvPath = '.'
 venv = '.venv'
 typeCheckingMode = 'standard'

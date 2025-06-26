@@ -1,20 +1,21 @@
-import os
+import os  # type: ignore
 import sys
-sys.path.append(os.getcwd() + '/src')
 
-import numpy as np
+sys.path.append(os.getcwd() + "/src")
+
 import matplotlib.pyplot as plt
+import numpy as np
+import RlEvaluation.hypers as Hypers
 from PyExpPlotting.matplot import save, setDefaultConference
 from PyExpUtils.results.Collection import ResultCollection
-
 from RlEvaluation.config import data_definition
-from RlEvaluation.interpolation import compute_step_return
-from RlEvaluation.temporal import TimeSummary, extract_learning_curves, curve_percentile_bootstrap_ci
 from RlEvaluation.statistics import Statistic
+from RlEvaluation.temporal import (
+    TimeSummary,
+    curve_percentile_bootstrap_ci,
+    extract_learning_curves,
+)
 from RlEvaluation.utils.pandas import split_over_column
-
-import RlEvaluation.hypers as Hypers
-import RlEvaluation.metrics as Metrics
 
 # from analysis.confidence_intervals import bootstrapCI
 from experiment.ExperimentModel import ExperimentModel
@@ -22,11 +23,11 @@ from experiment.tools import parseCmdLineArgs
 
 # makes sure figures are right size for the paper/column widths
 # also sets fonts to be right size when saving
-setDefaultConference('jmlr')
+setDefaultConference("jmlr")
 
-THIS_AGENT = 'GAC-sweep'
+THIS_AGENT = "GAC-sweep"
 COLORS = {
-    THIS_AGENT: 'green',
+    THIS_AGENT: "green",
 }
 
 if __name__ == "__main__":
@@ -36,47 +37,47 @@ if __name__ == "__main__":
 
     data_definition(
         hyper_cols=results.get_hyperparameter_columns(),
-        seed_col='seed',
-        time_col='frame',
-        environment_col='environment',
-        algorithm_col='algorithm',
+        seed_col="seed",
+        time_col="frame",
+        environment_col="environment",
+        algorithm_col="algorithm",
         make_global=True,
     )
 
     df = results.combine(
-        folder_columns=(None, None, None, 'environment'),
-        file_col='algorithm',
+        folder_columns=(None, None, None, "environment"),
+        file_col="algorithm",
     )
 
     assert df is not None
     print(df["hidden_dim"].unique())
     exp = results.get_any_exp()
 
-    for env, env_df in split_over_column(df, col='environment'):
-        
-        for alg, sub_df in split_over_column(env_df, col='algorithm'):
-            if len(sub_df) == 0: continue
+    for env, env_df in split_over_column(df, col="environment"):
+        for alg, sub_df in split_over_column(env_df, col="algorithm"):  # type: ignore
+            if len(sub_df) == 0:
+                continue
             if alg == THIS_AGENT:
                 f, ax = plt.subplots()
 
                 report = Hypers.select_best_hypers(
-                    sub_df,
-                    metric='return',
+                    sub_df,  # type: ignore
+                    metric="return",
                     prefer=Hypers.Preference.high,
                     time_summary=TimeSummary.sum,
                     statistic=Statistic.mean,
                 )
 
-                print('-' * 25)
+                print("-" * 25)
                 print(env, alg)
                 Hypers.pretty_print(report)
 
                 xs, ys = extract_learning_curves(
-                        sub_df,
-                        report.best_configuration,
-                        metric='return',
-                        interpolation=None,
-                    )
+                    sub_df,  # type: ignore
+                    report.best_configuration,
+                    metric="return",
+                    interpolation=None,
+                )
 
                 xs = np.asarray(xs)
                 ys = np.asarray(ys)
@@ -90,19 +91,28 @@ if __name__ == "__main__":
                     statistic=Statistic.mean,
                 )
                 for i in range(xs.shape[0]):
-                    ax.plot(xs[i]*10, ys[i], label=f'{alg},seed{i}', linewidth=0.5)
+                    ax.plot(xs[i] * 10, ys[i], label=f"{alg},seed{i}", linewidth=0.5)
 
-                ax.plot(np.linspace(0, exp.total_steps, 100)*10, np.ones(100)*-3.86, 'k-.', linewidth=1, label='light-on')
-                ax.plot(np.linspace(0, exp.total_steps, 100)*10, np.ones(100)*-5.1, 'b--', linewidth=1, label='random')
-
-                ax.set_xlim(0, exp.total_steps*10)
-                ax.legend()
-                ax.set_title('Learning Curve in MultiPlantSimulator')
-                ax.set_ylabel('Return')
-                ax.set_xlabel('Day Time [Minutes]')
-
-                save(
-                    save_path=f'{path}/plots',
-                    plot_name=f'{alg}'
+                ax.plot(
+                    np.linspace(0, exp.total_steps, 100) * 10,
+                    np.ones(100) * -3.86,
+                    "k-.",
+                    linewidth=1,
+                    label="light-on",
                 )
+                ax.plot(
+                    np.linspace(0, exp.total_steps, 100) * 10,
+                    np.ones(100) * -5.1,
+                    "b--",
+                    linewidth=1,
+                    label="random",
+                )
+
+                ax.set_xlim(0, exp.total_steps * 10)
+                ax.legend()
+                ax.set_title("Learning Curve in MultiPlantSimulator")
+                ax.set_ylabel("Return")
+                ax.set_xlabel("Day Time [Minutes]")
+
+                save(save_path=f"{path}/plots", plot_name=f"{alg}")
                 plt.show()

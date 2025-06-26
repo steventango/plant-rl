@@ -15,7 +15,9 @@ class BasePlantGrowthChamberAsyncProblem(BaseAsyncProblem):
             self.params["gamma"] = self.gamma
 
         Agent = getAgent(self.exp.agent)
-        agent = Agent(self.observations, self.actions, self.params, self.collector, self.seed)
+        agent = Agent(
+            self.observations, self.actions, self.params, self.collector, self.seed
+        )
         if not isinstance(agent, BaseAsyncAgent):
             agent = PlantGrowthChamberAsyncAgentWrapper(agent)
         self.agent = agent

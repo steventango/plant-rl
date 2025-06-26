@@ -1,10 +1,4 @@
-import asyncio
-import html
-import json
-from datetime import datetime
-
 import httpx
-import numpy as np
 from fastapi import FastAPI, Response
 from fastapi.responses import HTMLResponse
 
@@ -119,8 +113,14 @@ async def show_zones():
 @app.get("/proxy/zone/{zone}/latest")
 async def proxy_latest(zone: int):
     async with httpx.AsyncClient() as client:
-        resp = await client.get(f"http://mitacs-zone{zone}.ccis.ualberta.ca:8080/action/latest", timeout=5)
-        return Response(content=resp.text, status_code=resp.status_code, media_type=resp.headers.get("Content-Type"))
+        resp = await client.get(
+            f"http://mitacs-zone{zone}.ccis.ualberta.ca:8080/action/latest", timeout=5
+        )
+        return Response(
+            content=resp.text,
+            status_code=resp.status_code,
+            media_type=resp.headers.get("Content-Type"),
+        )
 
 
 @app.get("/proxy/zone/{zone}/camera/{camera_id}.jpg")

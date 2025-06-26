@@ -1,8 +1,9 @@
-from typing import Optional
+from typing import Optional  # type: ignore
+
 import gymnasium
-from gymnasium.spaces import Box
-from RlGlue.environment import BaseEnvironment
 import numpy as np
+from RlGlue.environment import BaseEnvironment
+
 
 class Gym(BaseEnvironment):
     def __init__(self, name: str, seed: int, max_steps: Optional[int] = None):
@@ -14,9 +15,18 @@ class Gym(BaseEnvironment):
     def start(self):
         self.seed += 1
         s, info = self.env.reset(seed=self.seed)
-        return np.asarray(s, dtype=np.float64).reshape(-1,), info
+        return np.asarray(s, dtype=np.float64).reshape(
+            -1,
+        ), info
 
-    def step(self, a):
+    def step(self, a):  # type: ignore
         sp, r, t, _, info = self.env.step(a)
 
-        return (r, np.asarray(sp, dtype=np.float64).reshape(-1,), t, {})
+        return (
+            r,
+            np.asarray(sp, dtype=np.float64).reshape(
+                -1,
+            ),
+            t,
+            {},
+        )

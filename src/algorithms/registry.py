@@ -4,12 +4,11 @@ from algorithms.BaseAgent import BaseAgent
 from algorithms.BernoulliAgent import BernoulliAgent
 from algorithms.ConstantAgent import ConstantAgent
 from algorithms.ContinuousRandomAgent import ContinuousRandomAgent
-from algorithms.MotionTrackingController import MotionTrackingController 
 from algorithms.DiscreteRandomAgent import DiscreteRandomAgent
 from algorithms.linear.ESARSA import ESARSA as LinearESARSA
-from algorithms.linear.linearDQN.LinearDynamicBatchDQN import \
-    LinearDynamicBatchDQN
+from algorithms.linear.linearDQN.LinearDynamicBatchDQN import LinearDynamicBatchDQN
 from algorithms.linear.LinearQL import LinearQL
+from algorithms.MotionTrackingController import MotionTrackingController
 from algorithms.nn.DQN import DQN
 from algorithms.nn.DynamicBatchDQN import DynamicBatchDQN
 from algorithms.nn.EQRC import EQRC
@@ -19,40 +18,37 @@ from algorithms.SpreadsheetAgent import SpreadsheetAgent
 from algorithms.tc.ESARSA import ESARSA
 from algorithms.tc.QL import QL
 from algorithms.tc.SoftmaxAC import SoftmaxAC
+from algorithms.tc.tc_offline.ESARSA import ESARSA as OfflineESARSA
 from algorithms.tc.tc_replay.ESARSA import ESARSA as ReplayESARSA
 from algorithms.tc.tc_replay.QL import QL as QLReplay
-from algorithms.tc.tc_offline.ESARSA import ESARSA as OfflineESARSA
-from algorithms.tc.SoftmaxAC import SoftmaxAC
-from algorithms.linear.ESARSA import ESARSA as LinearESARSA
-from algorithms.linear.LinearQL import LinearQL
-from algorithms.nn.GreedyAC.GreedyAC import GreedyAC
+
 
 def getAgent(name) -> Type[BaseAgent]:
     if name.startswith("DQN"):
         return DQN
 
-    if name == 'DynamicBatchDQN':
+    if name == "DynamicBatchDQN":
         return DynamicBatchDQN
 
-    if name == 'LinearDynamicBatchDQN':
+    if name == "LinearDynamicBatchDQN":
         return LinearDynamicBatchDQN
 
-    if name == 'EQRC':
+    if name == "EQRC":
         return EQRC
 
     if name.startswith("ESARSA"):
         return ESARSA
 
-    if name == 'QL':
+    if name == "QL":
         return QL
 
-    if name == 'ReplayESARSA':
+    if name == "ReplayESARSA":
         return ReplayESARSA
 
-    if name.startswith('Bernoulli'):
+    if name.startswith("Bernoulli"):
         return BernoulliAgent
 
-    if name == 'QLReplay':
+    if name == "QLReplay":
         return QLReplay
 
     if name.startswith("LinearESARSA"):
@@ -61,25 +57,25 @@ def getAgent(name) -> Type[BaseAgent]:
     if name.startswith("OfflineESARSA"):
         return OfflineESARSA
 
-    if name == 'LinearQL':
+    if name == "LinearQL":
         return LinearQL
-    '''
+    """
     if name == 'LinearBatchQL':
         return LinearBatchQL
-    '''
-    if name == 'SoftmaxAC':
+    """
+    if name == "SoftmaxAC":
         return SoftmaxAC
 
     if name.startswith("Constant"):
         return ConstantAgent
 
-    if name == 'DiscreteRandom':
+    if name == "DiscreteRandom":
         return DiscreteRandomAgent
 
-    if name == 'ContinuousRandom':
+    if name == "ContinuousRandom":
         return ContinuousRandomAgent
-    
-    if name == 'MotionTrackingController':
+
+    if name == "MotionTrackingController":
         return MotionTrackingController
 
     if name.startswith("Sequence"):
@@ -91,4 +87,4 @@ def getAgent(name) -> Type[BaseAgent]:
     if name.startswith("GreedyAC"):
         return GreedyAC
 
-    raise Exception('Unknown algorithm')
+    raise Exception("Unknown algorithm")

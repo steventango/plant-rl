@@ -60,12 +60,16 @@ class TestLightbar:
         action[1, :0] = -100
         action = lightbar.ensure_safety_limits(action)
         assert action.shape == (2, 6)
-        np.testing.assert_array_equal(action, np.array([[2, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]]))
+        np.testing.assert_array_equal(
+            action, np.array([[2, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]])
+        )
 
         action = np.zeros((2, 6))
         action = lightbar.ensure_safety_limits(action)
         assert action.shape == (2, 6)
-        np.testing.assert_array_equal(action, np.array([[0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]]))
+        np.testing.assert_array_equal(
+            action, np.array([[0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]])
+        )
 
     def test_convert_to_duty_cycle_zeros(self, lightbar: Lightbar):
         action = np.zeros((2, 6))

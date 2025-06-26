@@ -1,15 +1,15 @@
-import numpy as np
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
+import haiku as hk
 import jax
 import jax.numpy as jnp
-import haiku as hk
+import numpy as np
 
 import utils.hk as hku
 from utils.functions import fta
 
-
 ModuleBuilder = Callable[[], Callable[[jax.Array | np.ndarray], jax.Array]]
+
 
 class NetworkBuilder:
     def __init__(self, input_shape: Tuple, params: Dict[str, Any], seed: int):
@@ -17,10 +17,12 @@ class NetworkBuilder:
         self._h_params = params
         self._rng, feat_rng = jax.random.split(jax.random.PRNGKey(seed))
 
-        self._feat_net, self._feat_params = buildFeatureNetwork(input_shape, params, feat_rng)
+        self._feat_net, self._feat_params = buildFeatureNetwork(
+            input_shape, params, feat_rng
+        )
 
         self._params = {
-            'phi': self._feat_params,
+            "phi": self._feat_params,
         }
 
         self._retrieved_params = False
@@ -31,17 +33,21 @@ class NetworkBuilder:
 
     def getFeatureFunction(self):
         def _inner(params: Any, x: jax.Array | np.ndarray):
-            return self._feat_net.apply(params['phi'], x)
+            return self._feat_net.apply(params["phi"], x)
 
         return _inner
 
-    def addHead(self, module: ModuleBuilder, name: Optional[str] = None, grad: bool = True):
-        assert not self._retrieved_params, 'Attempted to add head after params have been retrieved'
+    def addHead(
+        self, module: ModuleBuilder, name: Optional[str] = None, grad: bool = True
+    ):
+        assert not self._retrieved_params, (
+            "Attempted to add head after params have been retrieved"
+        )
         _state = {}
 
         def _builder(x: jax.Array | np.ndarray):
             head = module()
-            _state['name'] = getattr(head, 'name', None)
+            _state["name"] = getattr(head, "name", None)
 
             if not grad:
                 x = jax.lax.stop_gradient(x)
@@ -56,8 +62,8 @@ class NetworkBuilder:
         h_net = hk.without_apply_rng(hk.transform(_builder))
         h_params = h_net.init(rng, sample_phi)
 
-        name = name or _state.get('name')
-        assert name is not None, 'Could not detect name from module'
+        name = name or _state.get("name")
+        assert name is not None, "Could not detect name from module"
         self._params[name] = h_params
 
         def _inner(params: Any, x: jax.Array):
@@ -77,29 +83,30 @@ def reluLayers(layers: List[int], name: Optional[str] = None):
 
     return out
 
+
 def buildFeatureNetwork(inputs: Tuple, params: Dict[str, Any], rng: Any):
     def _inner(x: jax.Array):
-        name = params['type']
-        hidden = params['hidden']
+        name = params["type"]
+        hidden = params["hidden"]
 
-        if name == 'TwoLayerRelu':
-            layers = reluLayers([hidden, hidden], name='phi')
+        if name == "TwoLayerRelu":
+            layers = reluLayers([hidden, hidden], name="phi")
 
-        elif name == 'OneLayerRelu':
-            layers = reluLayers([hidden], name='phi')
+        elif name == "OneLayerRelu":
+            layers = reluLayers([hidden], name="phi")
 
-        elif name == 'FTA':
-            eta = params.get('fta_eta', 0.4)
+        elif name == "FTA":
+            eta = params.get("fta_eta", 0.4)
             layers = [
-                hk.Linear(hidden, name='linear'),
+                hk.Linear(hidden, name="linear"),
                 lambda x: fta(
-                    x, 
-                    eta=eta, 
-                    tiles=params.get('fta_tiles', 20), 
-                    lower_bound = -10*eta, 
-                    upper_bound = 10*eta,
-                    ),
-                hk.Flatten(name='phi'),
+                    x,
+                    eta=eta,
+                    tiles=params.get("fta_tiles", 20),
+                    lower_bound=-10 * eta,
+                    upper_bound=10 * eta,
+                ),
+                hk.Flatten(name="phi"),
             ]
 
         else:
@@ -124,6 +131,6 @@ def make_conv(size: int, shape: Tuple[int, int], stride: Tuple[int, int]):
         stride=stride,
         w_init=w_init,
         b_init=b_init,
-        padding='VALID',
-        name='conv',
+        padding="VALID",
+        name="conv",
     )

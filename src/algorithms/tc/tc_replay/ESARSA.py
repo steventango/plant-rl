@@ -1,14 +1,13 @@
-import numpy as np
-
-from numba import njit
+import logging
 from typing import Dict, Tuple
+
+import numpy as np
+from numba import njit
 from PyExpUtils.collection.Collector import Collector
 
 from algorithms.tc.tc_replay.TCAgentReplay import TCAgentReplay
 from utils.checkpoint import checkpointable
 from utils.policies import egreedy_probabilities
-
-import logging
 
 logger = logging.getLogger("esarsa")
 logger.setLevel(logging.DEBUG)
@@ -20,7 +19,9 @@ def _update(w, x, a, xp, pi, r, gamma, alpha, n_features):
     delta = r + gamma * (qsp * pi).sum(axis=1) - qsa
 
     grad = x * delta[:, None]
-    np.add.at(w, a, alpha / n_features * grad)  # TODO: Check if it makes sense to divide by n_features
+    np.add.at(
+        w, a, alpha / n_features * grad
+    )  # TODO: Check if it makes sense to divide by n_features
 
     return delta
 
@@ -33,7 +34,14 @@ def value(w, x):
 
 @checkpointable(("w",))
 class ESARSA(TCAgentReplay):
-    def __init__(self, observations: Tuple, actions: int, params: Dict, collector: Collector, seed: int):
+    def __init__(
+        self,
+        observations: Tuple,
+        actions: int,
+        params: Dict,
+        collector: Collector,
+        seed: int,
+    ):
         super().__init__(observations, actions, params, collector, seed)
 
         # define parameter contract
@@ -78,7 +86,17 @@ class ESARSA(TCAgentReplay):
             self.updates += 1
             batch = self.buffer.sample(self.batch_size)
             pi = self.policies(batch.xp)
-            delta = _update(self.w, batch.x, batch.a, batch.xp, pi, batch.r, batch.gamma, self.alpha, self.n_features)
+            delta = _update(
+                self.w,
+                batch.x,
+                batch.a,
+                batch.xp,
+                pi,
+                batch.r,
+                batch.gamma,
+                self.alpha,
+                self.n_features,
+            )
 
             self.info.update(
                 {

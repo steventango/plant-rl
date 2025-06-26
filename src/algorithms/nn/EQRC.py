@@ -1,39 +1,56 @@
-from functools import partial
+from functools import partial  # type: ignore
 from typing import Dict, Tuple
+
+import haiku as hk
+import jax
+import numpy as np
+import optax
 from PyExpUtils.collection.Collector import Collector
 from ReplayTables.interface import Batch
 
-from algorithms.nn.NNAgent import NNAgent, AgentState
-from representations.networks import NetworkBuilder
-from utils.jax import vmap_except, argmax_with_random_tie_breaking
-
-import jax
-import optax
-import numpy as np
-import haiku as hk
 import utils.hk as hku
+from algorithms.nn.NNAgent import AgentState, NNAgent
+from representations.networks import NetworkBuilder
+from utils.jax import argmax_with_random_tie_breaking, vmap_except
 
 tree_leaves = jax.tree_util.tree_leaves
 tree_map = jax.tree_util.tree_map
 
+
 class EQRC(NNAgent):
-    def __init__(self, observations: Tuple, actions: int, params: Dict, collector: Collector, seed: int):
+    def __init__(
+        self,
+        observations: Tuple,
+        actions: int,
+        params: Dict,
+        collector: Collector,
+        seed: int,
+    ):
         super().__init__(observations, actions, params, collector, seed)
-        self.beta = params.get('beta', 1.)
-        self.stepsize = self.optimizer_params['alpha']
+        self.beta = params.get("beta", 1.0)
+        self.stepsize = self.optimizer_params["alpha"]
 
     # ------------------------
     # -- NN agent interface --
     # ------------------------
     def _build_heads(self, builder: NetworkBuilder) -> None:
         zero_init = hk.initializers.Constant(0)
-        self.q = builder.addHead(lambda: hku.DuelingHeads(self.actions, name='q', w_init=zero_init, b_init=zero_init))
-        self.h = builder.addHead(lambda: hku.DuelingHeads(self.actions, name='h', w_init=zero_init, b_init=zero_init), grad=False)
+        self.q = builder.addHead(
+            lambda: hku.DuelingHeads(  # type: ignore
+                self.actions, name="q", w_init=zero_init, b_init=zero_init
+            )
+        )
+        self.h = builder.addHead(
+            lambda: hku.DuelingHeads(  # type: ignore
+                self.actions, name="h", w_init=zero_init, b_init=zero_init
+            ),
+            grad=False,
+        )
 
     # jit'ed internal value function approximator
     # considerable speedup, especially for larger networks (note: haiku networks are not jit'ed by default)
     @partial(jax.jit, static_argnums=0)
-    def _values(self, state: AgentState, x: jax.Array):
+    def _values(self, state: AgentState, x: jax.Array):  # type: ignore
         phi = self.phi(state.params, x).out
         return self.q(state.params, phi)
 
@@ -53,11 +70,11 @@ class EQRC(NNAgent):
 
         metrics = jax.device_get(metrics)
 
-        priorities = metrics['delta']
+        priorities = metrics["delta"]
         self.buffer.update_batch(batch, priorities=priorities)
 
         for k, v in metrics.items():
-            self.collector.collect(k, np.mean(v).item())
+            self.collector.collect(k, np.mean(v).item())  # type: ignore
 
     # -------------
     # -- Updates --
@@ -75,11 +92,11 @@ class EQRC(NNAgent):
 
         decay = tree_map(
             lambda h, dh: dh - self.stepsize * self.beta * h,
-            params['h'],
-            updates['h'],
+            params["h"],
+            updates["h"],  # type: ignore
         )
 
-        updates |= {'h': decay}
+        updates |= {"h": decay}
         new_params = optax.apply_updates(params, updates)
 
         new_state = AgentState(
@@ -101,23 +118,27 @@ class EQRC(NNAgent):
         # apply qc loss function to each sample in the minibatch
         # gives back value of the loss individually for parameters of v and h
         # note QC instead of QRC (i.e. no regularization)
-        v_loss, h_loss, metrics = qc_loss(q, batch.a, batch.r, batch.gamma, qp, h, self.epsilon)
+        v_loss, h_loss, metrics = qc_loss(
+            q, batch.a, batch.r, batch.gamma, qp, h, self.epsilon
+        )
 
         h_loss = h_loss.mean()
         v_loss = v_loss.mean()
 
         metrics |= {
-            'v_loss': v_loss,
-            'h_loss': h_loss,
+            "v_loss": v_loss,
+            "h_loss": h_loss,
         }
 
         return v_loss + h_loss, metrics
+
 
 # ---------------
 # -- Utilities --
 # ---------------
 
-@partial(vmap_except, exclude=['epsilon'])
+
+@partial(vmap_except, exclude=["epsilon"])
 def qc_loss(q, a, r, gamma, qtp1, h, epsilon):
     pi = argmax_with_random_tie_breaking(qtp1)
 
@@ -132,9 +153,13 @@ def qc_loss(q, a, r, gamma, qtp1, h, epsilon):
     delta_hat = h[a]
 
     v_loss = 0.5 * delta**2 + gamma * jax.lax.stop_gradient(delta_hat) * vtp1
-    h_loss = 0.5 * (jax.lax.stop_gradient(delta) - delta_hat)**2
+    h_loss = 0.5 * (jax.lax.stop_gradient(delta) - delta_hat) ** 2
 
-    return v_loss, h_loss, {
-        'delta': delta,
-        'h': delta_hat,
-    }
+    return (
+        v_loss,
+        h_loss,
+        {
+            "delta": delta,
+            "h": delta_hat,
+        },
+    )

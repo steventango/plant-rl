@@ -1,7 +1,6 @@
 import base64
 import io
 import os
-import traceback
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import nullcontext
 
@@ -88,15 +87,20 @@ class SegmentAnythingAPI(ls.LitAPI):
 
                 if not has_boxes:
                     # No boxes provided for any images, return empty results
-                    results = [{"contours": [], "scores": np.array([])} for _ in range(len(images))]
+                    results = [
+                        {"contours": [], "scores": np.array([])}
+                        for _ in range(len(images))
+                    ]
                 else:
                     # Use batch prediction
-                    masks_batch, scores_batch, logits_batch = self.sam2_predictor.predict_batch(
-                        point_coords_batch=[None] * len(images),
-                        point_labels_batch=[None] * len(images),
-                        box_batch=boxes_list,
-                        mask_input_batch=[None] * len(images),
-                        multimask_output=any(multimask_outputs),
+                    masks_batch, scores_batch, logits_batch = (
+                        self.sam2_predictor.predict_batch(
+                            point_coords_batch=[None] * len(images),
+                            point_labels_batch=[None] * len(images),
+                            box_batch=boxes_list,
+                            mask_input_batch=[None] * len(images),
+                            multimask_output=any(multimask_outputs),
+                        )
                     )
 
                     results = []
@@ -116,9 +120,15 @@ class SegmentAnythingAPI(ls.LitAPI):
                             contours = []
                             for mask in masks:
                                 mask = mask.astype("uint8") * 255
-                                cs, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                                cs, _ = cv2.findContours(
+                                    mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+                                )
                                 biggest = max(cs, key=cv2.contourArea) if cs else None
-                                contour = biggest[:, 0, :].tolist() if biggest is not None else []
+                                contour = (
+                                    biggest[:, 0, :].tolist()
+                                    if biggest is not None
+                                    else []
+                                )
                                 contours.append(contour)
 
                             results.append({"contours": contours, "scores": scores})
@@ -128,7 +138,9 @@ class SegmentAnythingAPI(ls.LitAPI):
 
         except Exception:
             # If there's an error in batch processing, return empty results
-            results = [{"contours": [], "scores": np.array([])} for _ in range(len(images))]
+            results = [
+                {"contours": [], "scores": np.array([])} for _ in range(len(images))
+            ]
 
         return results
 
@@ -173,7 +185,9 @@ class SegmentAnythingAPI(ls.LitAPI):
                 contours = []
                 for mask in masks:
                     mask = mask.astype("uint8") * 255
-                    cs, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                    cs, _ = cv2.findContours(
+                        mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+                    )
                     biggest = max(cs, key=cv2.contourArea) if cs else None
                     contour = biggest[:, 0, :].tolist() if biggest is not None else []
                     contours.append(contour)

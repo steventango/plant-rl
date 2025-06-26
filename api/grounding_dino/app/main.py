@@ -7,19 +7,24 @@ from contextlib import nullcontext
 import litserve as ls
 import torch
 from PIL import Image
-from transformers import AutoModelForZeroShotObjectDetection
-
 from processing_grounding_dino import BatchGroundingDinoProcessor
+from transformers import AutoModelForZeroShotObjectDetection
 
 
 class GroundingDinoAPI(ls.LitAPI):
-    def setup(self, device, pretrained_model_name_or_path="IDEA-Research/grounding-dino-base"):
+    def setup(
+        self, device, pretrained_model_name_or_path="IDEA-Research/grounding-dino-base"
+    ):
         self.device = device
         if device == "cuda" and torch.cuda.get_device_properties(0).major >= 8:
             torch.backends.cuda.matmul.allow_tf32 = True
             torch.backends.cudnn.allow_tf32 = True
-        self.processor = BatchGroundingDinoProcessor.from_pretrained(pretrained_model_name_or_path)
-        self.model = AutoModelForZeroShotObjectDetection.from_pretrained(pretrained_model_name_or_path).to(self.device)
+        self.processor = BatchGroundingDinoProcessor.from_pretrained(
+            pretrained_model_name_or_path
+        )
+        self.model = AutoModelForZeroShotObjectDetection.from_pretrained(
+            pretrained_model_name_or_path
+        ).to(self.device)
         self.pool = ThreadPoolExecutor(os.cpu_count())
 
     def decode_request(self, request):
@@ -73,10 +78,14 @@ class GroundingDinoAPI(ls.LitAPI):
         # Process all images in a single batch, but handle post-processing individually
         with (
             torch.inference_mode(),
-            torch.autocast(device_type=self.device, dtype=torch.bfloat16) if self.device == "cuda" else nullcontext(),
+            torch.autocast(device_type=self.device, dtype=torch.bfloat16)
+            if self.device == "cuda"
+            else nullcontext(),
         ):
             # Process all images with their respective text prompts in a single batch
-            inputs = self.processor(images=images, text=text_prompts, padding=True, return_tensors="pt").to(self.device)
+            inputs = self.processor(
+                images=images, text=text_prompts, padding=True, return_tensors="pt"
+            ).to(self.device)
             outputs = self.model(**inputs)
 
             return self.processor.post_process_grounded_object_detection(

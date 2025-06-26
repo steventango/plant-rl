@@ -1,9 +1,9 @@
-import json
+import json  # type: ignore
 import logging
 from datetime import datetime
 from pathlib import Path
-# from zoneinfo import ZoneInfo
 
+# from zoneinfo import ZoneInfo
 import numpy as np
 import pandas as pd
 from PIL import Image
@@ -14,8 +14,8 @@ from environments.PlantGrowthChamber.zones import deserialize_zone
 logger = logging.getLogger("MockPlantGrowthChamber")
 logger.setLevel(logging.DEBUG)
 
-class MockPlantGrowthChamber(PlantGrowthChamber):
 
+class MockPlantGrowthChamber(PlantGrowthChamber):
     def __init__(self, *args, **kwargs):
         self.dataset_path = Path(kwargs["dataset_path"])
         self.config_path = self.dataset_path / "config.json"
@@ -71,7 +71,7 @@ class MockPlantGrowthChamber(PlantGrowthChamber):
         path = self.images_path / row["image_name"]
         self.images["left"] = Image.open(path)
 
-    def get_time(self):
+    def get_time(self):  # type: ignore
         return self.time
 
     def get_terminal(self):
@@ -101,12 +101,13 @@ class MockPlantGrowthChamber(PlantGrowthChamber):
             if self.index + 1 >= self.dataset_df["frame"].max():
                 self.index = 0
                 break
-            next_row = self.dataset_df[self.dataset_df["frame"] == self.index + 1].iloc[0]
+            next_row = self.dataset_df[self.dataset_df["frame"] == self.index + 1].iloc[
+                0
+            ]
             next_time = next_row["time"]
             if next_time <= self.time:
                 self.time = next_time
                 self.index += 1
-
 
     async def close(self):
         pass
