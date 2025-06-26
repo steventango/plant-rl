@@ -213,7 +213,7 @@ class OfflinePlantGrowthChamber:
 class OfflinePlantGrowthChamberTime(OfflinePlantGrowthChamber):
     def get_observation(self):
         super_obs = super().get_observation()
-        obs = super_obs[[0, 1]]
+        obs = super_obs[[0]]
         return obs
 
 
