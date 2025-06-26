@@ -108,7 +108,7 @@ def _prepare_trajectory_df(df):
     return plot_df
 
 
-def _plot_single_trajectory_on_ax(ax, traj_df):
+def _plot_single_trajectory_on_ax(ax, traj_df, scale=1):
     """Plots a single trajectory on a given matplotlib axes."""
     num_segments = len(traj_df)
     actions = (
@@ -126,11 +126,17 @@ def _plot_single_trajectory_on_ax(ax, traj_df):
             color = reds(time_norm[j] * 0.7 + 0.3)
         else:
             color = blues(time_norm[j] * 0.7 + 0.3)
+
+        daytime_scaled = traj_df["daytime"].iloc[j] * scale
+        area_scaled = traj_df["area"].iloc[j] * scale
+        next_daytime_scaled = traj_df["next_daytime"].iloc[j] * scale
+        next_area_scaled = traj_df["next_area"].iloc[j] * scale
+
         ax.quiver(
-            traj_df["daytime"].iloc[j],
-            traj_df["area"].iloc[j],
-            traj_df["next_daytime"].iloc[j] - traj_df["daytime"].iloc[j],
-            traj_df["next_area"].iloc[j] - traj_df["area"].iloc[j],
+            daytime_scaled,
+            area_scaled,
+            next_daytime_scaled - daytime_scaled,
+            next_area_scaled - area_scaled,
             angles="xy",
             scale_units="xy",
             scale=1,
@@ -167,11 +173,11 @@ def plot_q_values_and_diff(
 
             # Plot and save Q-values
             q_plot_filename = q_plots_dir / f"q_values_step_{step:06d}.jpg"
-            plot_q(
+            fig_q, _ = plot_q(
                 daytime_observation_space, area_observation_space, Q_vals
             )  # Call the plot function
-            plt.savefig(q_plot_filename)  # Save the figure
-            plt.close()  # Close the figure
+            fig_q.savefig(q_plot_filename)  # Save the figure
+            plt.close(fig_q)  # Close the figure
 
             # Plot and save Q-value differences
             if num_actions >= 2:
@@ -183,7 +189,7 @@ def plot_q_values_and_diff(
                 Q_diff = Q_vals[:, :, 0]
 
             q_diff_plot_filename = q_plots_dir / f"q_diff_step_{step:06d}.jpg"
-            plot_q_diff(
+            fig_diff, axs_diff = plot_q_diff(
                 daytime_observation_space, area_observation_space, Q_diff
             )  # Call the plot function
 
@@ -192,18 +198,18 @@ def plot_q_values_and_diff(
                 plot_df = _prepare_trajectory_df(df)
                 if not plot_df.empty:
                     trajectory_ids = plot_df["trajectory_id"].unique()
-                    ax = plt.gca()
+                    ax = axs_diff[1]
                     for traj_id in trajectory_ids:
                         traj_df = plot_df[plot_df["trajectory_id"] == traj_id]
-                        _plot_single_trajectory_on_ax(ax, traj_df)
+                        _plot_single_trajectory_on_ax(ax, traj_df, scale=11 * 6)
             except Exception as e:
                 logger.error(
                     f"Step {step}: Error during trajectory overlay plotting: {e}",
                     exc_info=True,
                 )
 
-            plt.savefig(q_diff_plot_filename)  # Save the figure
-            plt.close()  # Close the figure
+            fig_diff.savefig(q_diff_plot_filename)  # Save the figure
+            plt.close(fig_diff)  # Close the figure
             logger.info(f"Step {step}: Saved Q-value plots to {q_plots_dir}")
         except Exception as e:
             logger.error(

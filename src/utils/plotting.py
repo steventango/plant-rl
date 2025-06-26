@@ -35,7 +35,7 @@ def get_Q(
 
 def plot_q_diff(daytime_observation_space, area_observation_space, Q_diff):
     fig, axs = plt.subplots(
-        1, 2, figsize=(12, 4)
+        1, 2, figsize=(12, 5)
     )  # Two subplots: one for Q-diff, one for policy
 
     # Plot Q-difference (similar to before)
@@ -46,18 +46,25 @@ def plot_q_diff(daytime_observation_space, area_observation_space, Q_diff):
     norm = mcolors.TwoSlopeNorm(vmin=vmin, vcenter=0.0, vmax=vmax)
 
     sns.heatmap(Q_diff.T, ax=ax_q_diff, cmap="bwr", cbar=True, norm=norm)
+    if ax_q_diff.images:
+        ax_q_diff.set_aspect("auto")
 
     ax_q_diff.set_title("Q(s, a=1) - Q(s, a=0)")
-    ax_q_diff.set_xlabel("s[0]")
-    hour_interval = 6
-    ax_q_diff.set_xticks(np.arange(0, len(daytime_observation_space), hour_interval))
-    ax_q_diff.set_xticklabels(
-        [f"{int(t * 11) + 9}:30" for t in daytime_observation_space[::hour_interval]]
+    ax_q_diff.set_xlabel("s[0] (daytime)")
+    num_daytime_bins = len(daytime_observation_space)
+    xtick_indices = np.linspace(0, num_daytime_bins - 1, 7, dtype=int)
+    xtick_labels_values = np.linspace(0, 1, 7)
+    ax_q_diff.set_xticks(xtick_indices)
+    ax_q_diff.set_xticklabels([f"{int(t * 11) + 9}" for t in xtick_labels_values])
+
+    ax_q_diff.set_ylabel("s[1] (area)")
+    num_area_bins = len(area_observation_space)
+    ytick_indices = np.linspace(0, num_area_bins - 1, 6, dtype=int)
+    ytick_labels_values = np.linspace(0, 1, 6)
+    ax_q_diff.set_yticks(ytick_indices)
+    ax_q_diff.set_yticklabels(
+        [f"{area:.1f}" for area in ytick_labels_values], rotation=0
     )
-    ax_q_diff.set_ylabel("s[1]")
-    ax_q_diff.set_yticks(np.arange(0, len(area_observation_space), 10))
-    ax_q_diff.set_yticklabels([f"{area:.1f}" for area in area_observation_space[::10]])
-    ax_q_diff.set_yticklabels(ax_q_diff.get_yticklabels(), rotation=0)
     ax_q_diff.invert_yaxis()
 
     # Plot Policy
@@ -82,28 +89,32 @@ def plot_q_diff(daytime_observation_space, area_observation_space, Q_diff):
         cbar=True,
         cbar_kws={"ticks": [-1, 0, 1]},  # Ticks for the policy colorbar
     )
+    if ax_policy.images:
+        ax_policy.set_aspect("auto")
+
     ax_policy.set_title(r"Policy")
-    ax_policy.set_xlabel("s[0]")
-    ax_policy.set_xticks(np.arange(0, len(daytime_observation_space), hour_interval))
-    ax_policy.set_xticklabels(
-        [f"{int(t * 11) + 9}:30" for t in daytime_observation_space[::hour_interval]]
+    ax_policy.set_xlabel("s[0] (daytime)")
+    ax_policy.set_xticks(xtick_indices)
+    ax_policy.set_xticklabels([f"{int(t * 11) + 9}" for t in xtick_labels_values])
+    ax_policy.set_ylabel("s[1] (area)")
+    ax_policy.set_yticks(ytick_indices)
+    ax_policy.set_yticklabels(
+        [f"{area:.1f}" for area in ytick_labels_values], rotation=0
     )
-    ax_policy.set_ylabel("s[1]")
-    ax_policy.set_yticks(np.arange(0, len(area_observation_space), 10))
-    ax_policy.set_yticklabels([f"{area:.2f}" for area in area_observation_space[::10]])
-    ax_policy.set_yticklabels(ax_policy.get_yticklabels(), rotation=0)
     ax_policy.invert_yaxis()
 
     # Set labels for policy colorbar
-    cbar = ax_policy.collections[0].colorbar
-    cbar.set_ticklabels(["A=0", "N/A", "A=1"])
+    if ax_policy.collections:
+        cbar = ax_policy.collections[0].colorbar
+        cbar.set_ticklabels(["A=0", "N/A", "A=1"])
     fig.tight_layout()
-    fig.suptitle("ESARSA Q-value Difference and Policy", fontsize=16)
+    fig.suptitle("Q-value Difference and Policy", fontsize=16)
+    return fig, axs
 
 
 def plot_q(daytime_observation_space, area_observation_space, Q):
     num_actions = Q.shape[2]
-    fig, axs = plt.subplots(1, num_actions, figsize=(6 * num_actions, 4))
+    fig, axs = plt.subplots(1, num_actions, figsize=(6 * num_actions, 5))
     if num_actions == 1:
         axs = [axs]  # Ensure axs is iterable even for a single subplot
 
@@ -121,28 +132,25 @@ def plot_q(daytime_observation_space, area_observation_space, Q):
             vmin=vmin,
             vmax=vmax,
         )
+        if ax.images:
+            ax.set_aspect("auto")
+
         ax.set_title(f"Q(s, {i})")
 
-        ax.set_xlabel("s[0]")
-        hour_interval = 6
-        ax.set_xticks(
-            np.arange(0, len(daytime_observation_space), hour_interval)
-        )  # Set ticks every hour
-        ax.set_xticklabels(
-            [
-                f"{int(t * 11) + 9}:30"
-                for t in daytime_observation_space[::hour_interval]
-            ]
-        )  # Format as hours
+        ax.set_xlabel("s[0] (daytime)")
+        num_daytime_bins = len(daytime_observation_space)
+        xtick_indices = np.linspace(0, num_daytime_bins - 1, 7, dtype=int)
+        xtick_labels_values = np.linspace(0, 1, 7)
+        ax.set_xticks(xtick_indices)
+        ax.set_xticklabels([f"{int(t * 11) + 9}" for t in xtick_labels_values])
 
-        ax.set_ylabel("s[1]")  # Area is now on the y-axis
-        ax.set_yticks(
-            np.arange(0, len(area_observation_space), 10)
-        )  # Set y ticks every 10 areas
-        ax.set_yticklabels(
-            [f"{area:.1f}" for area in area_observation_space[::10]]
-        )  # Format as float
-        ax.set_yticklabels(ax.get_yticklabels(), rotation=0)  # Rotate y ticks
-        ax.invert_yaxis()  # Invert the y-axis
+        ax.set_ylabel("s[1] (area)")
+        num_area_bins = len(area_observation_space)
+        ytick_indices = np.linspace(0, num_area_bins - 1, 6, dtype=int)
+        ytick_labels_values = np.linspace(0, 1, 6)
+        ax.set_yticks(ytick_indices)
+        ax.set_yticklabels([f"{area:.1f}" for area in ytick_labels_values], rotation=0)
+        ax.invert_yaxis()
     fig.tight_layout()
-    fig.suptitle("ESARSA Q-values", fontsize=16)
+    fig.suptitle("Q-values", fontsize=16)
+    return fig, axs
