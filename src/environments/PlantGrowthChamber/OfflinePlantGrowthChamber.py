@@ -77,13 +77,13 @@ class OfflinePlantGrowthChamber:
 
     def get_observation(self):
         # tod
-        local_time = self.dataset.iloc[self.index]["time"]
+        local_time = self.dataset.iloc[self.index - 1]["time"]
         morning_time = local_time.replace(hour=9, minute=30, second=0, microsecond=0)
         seconds_since_morning = (local_time - morning_time).total_seconds()
         normalized_seconds_since_morning = seconds_since_morning / (11 * 3600)
 
         # area
-        mean_clean_area = self.dataset.iloc[self.index]["mean_clean_area"]
+        mean_clean_area = self.dataset.iloc[self.index - 1]["mean_clean_area"]
         normalized_mean_clean_area = normalize(mean_clean_area, 0, 680)
 
         # openness
@@ -164,7 +164,7 @@ class OfflinePlantGrowthChamber:
 
     def start(self):
         self.dataset = self.load_dataset(self.dataset_paths[self.dataset_index])
-        self.index = 0
+        self.index = 1
         self.dli = 0
         return self.get_observation(), {"action": self.get_action()}
 
