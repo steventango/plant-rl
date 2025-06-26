@@ -10,6 +10,7 @@ from environments.PlantGrowthChamber.OfflinePlantGrowthChamber import (
     OfflinePlantGrowthChamber_1hrStep_MC_OpennessOnly,
     OfflinePlantGrowthChamber_1hrStep_MC_TimeOnly,
     OfflinePlantGrowthChamberTime,
+    OfflinePlantGrowthChamberTimeArea,
     OfflinePlantGrowthChamberTimeDLI,
 )
 from experiment.ExperimentModel import ExperimentModel
@@ -46,6 +47,8 @@ class OfflinePlantGrowthChamber(BaseProblem):
         elif self.env_params["type"] == "Time":
             self.env = OfflinePlantGrowthChamberTime(**self.env_params)  # type: ignore
             self.observations = (1,)
+        elif self.env_params["type"] == "TimeArea":
+            self.env = OfflinePlantGrowthChamberTimeArea(**self.env_params)
         elif self.env_params["type"] == "TimeDLI":
             self.env = OfflinePlantGrowthChamberTimeDLI(**self.env_params)  # type: ignore
             self.observations = (2,)

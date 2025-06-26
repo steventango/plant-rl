@@ -224,6 +224,13 @@ class OfflinePlantGrowthChamberTimeDLI(OfflinePlantGrowthChamber):
         return obs
 
 
+class OfflinePlantGrowthChamberTimeArea(OfflinePlantGrowthChamber):
+    def get_observation(self):
+        super_obs = super().get_observation()
+        obs = super_obs[[0, 2]]
+        return obs
+
+
 class OfflinePlantGrowthChamber_1hrStep(OfflinePlantGrowthChamber):
     def get_observation(self):
         s = super().get_observation()
