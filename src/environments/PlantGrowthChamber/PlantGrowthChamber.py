@@ -250,9 +250,10 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             yesterday_morning_local_date, 0.0
         )
 
+        if yesterday_morning_mean_area == 0:
+            return 0
+
         if self.normalize_reward:
-            if yesterday_morning_mean_area == 0:
-                return 0
             reward = normalize(
                 today_morning_mean_area / yesterday_morning_mean_area - 1, 0, 0.35
             )
