@@ -67,7 +67,7 @@ def main():
 
             best_lr = max(lr2metric, key=lr2metric.get)  # type: ignore
             xs, ys = extract_learning_curves(
-                alg_df,
+                alg_df,  # type: ignore
                 best_lr,
                 metric="return",
                 interpolation=None,  # type: ignore

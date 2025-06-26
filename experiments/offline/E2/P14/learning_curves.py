@@ -74,7 +74,7 @@ def main():
                     for alr in alg_df["actor_lr_scale"].unique():  # type: ignore
                         print((clr, alr))
                         xs, ys = extract_learning_curves(
-                            alg_df,
+                            alg_df,  # type: ignore
                             (clr, alr),
                             metric="return",
                             interpolation=None,  # type: ignore
@@ -88,7 +88,7 @@ def main():
 
                 # Plot reward history averaged over 5 seeds
                 xs, ys = extract_learning_curves(
-                    alg_df,
+                    alg_df,  # type: ignore
                     best_hyper,
                     metric="return",
                     interpolation=None,  # type: ignore
@@ -120,7 +120,7 @@ def main():
 
                 # Plot action history averaged over 5 seeds
                 xs_a, ys_a = extract_learning_curves(
-                    alg_df,
+                    alg_df,  # type: ignore
                     best_hyper,
                     metric="action",
                     interpolation=None,  # type: ignore

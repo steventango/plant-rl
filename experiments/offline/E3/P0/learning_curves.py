@@ -68,7 +68,7 @@ def main():
 
             # Plot action history averaged over 5 seeds
             xs_a, ys_a = extract_learning_curves(
-                sub_df,
+                sub_df,  # type: ignore
                 report.best_configuration,
                 metric="action",
                 interpolation=None,  # type: ignore
@@ -103,7 +103,7 @@ def main():
 
             # Plot reward history averaged over 5 seeds
             xs, ys = extract_learning_curves(
-                sub_df,
+                sub_df,  # type: ignore
                 report.best_configuration,
                 metric="return",
                 interpolation=None,  # type: ignore

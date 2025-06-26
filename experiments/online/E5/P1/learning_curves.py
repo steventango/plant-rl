@@ -86,13 +86,13 @@ def main():
     df = pd.read_csv(f"{path}/data.csv")
 
     for metric in ["state", "action", "reward"]:
-        df[metric] = df[metric].apply(maybe_convert_to_array)
+        df[metric] = df[metric].apply(maybe_convert_to_array)  # type: ignore
         for alg, sub_df in split_over_column(df, col="algorithm"):
             print("-" * 25)
             print(metric, alg)
 
             xs, ys = extract_learning_curves(
-                sub_df,
+                sub_df,  # type: ignore
                 tuple(),
                 metric=metric,
                 interpolation=None,  # type: ignore

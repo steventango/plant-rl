@@ -77,7 +77,7 @@ def main():
             Hypers.pretty_print(report)
 
             xs_a, ys_a = extract_learning_curves(
-                sub_df,
+                sub_df,  # type: ignore
                 report.best_configuration,
                 metric="action",
                 interpolation=None,  # type: ignore

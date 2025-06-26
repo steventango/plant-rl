@@ -52,7 +52,7 @@ def main():
 
     for env, env_df in split_over_column(df, col="environment"):
         for _last_day, filter_df in split_over_column(
-            env_df,
+            env_df,  # type: ignore
             col="environment.last_day",  # type: ignore
         ):
             for metric in ["reward", "action"]:

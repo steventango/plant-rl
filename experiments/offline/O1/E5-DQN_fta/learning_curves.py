@@ -101,7 +101,7 @@ def main():
 
             # Plot reward history averaged over 5 seeds
             xs, ys = extract_learning_curves(
-                sub_df,
+                sub_df,  # type: ignore
                 report.best_configuration,
                 metric="reward",
                 interpolation=None,  # type: ignore

@@ -76,25 +76,25 @@ def main():
             Hypers.pretty_print(report)
 
             xs_w0, ys_w0 = extract_learning_curves(
-                sub_df,
+                sub_df,  # type: ignore
                 report.best_configuration,
                 metric="weight0",
                 interpolation=None,  # type: ignore
             )
             xs_w1, ys_w1 = extract_learning_curves(
-                sub_df,
+                sub_df,  # type: ignore
                 report.best_configuration,
                 metric="weight1",
                 interpolation=None,  # type: ignore
             )
             xs_w2, ys_w2 = extract_learning_curves(
-                sub_df,
+                sub_df,  # type: ignore
                 report.best_configuration,
                 metric="weight2",
                 interpolation=None,  # type: ignore
             )
             xs_w3, ys_w3 = extract_learning_curves(
-                sub_df,
+                sub_df,  # type: ignore
                 report.best_configuration,
                 metric="weight3",
                 interpolation=None,  # type: ignore

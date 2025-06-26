@@ -26,9 +26,9 @@ def weights_init_(layer, init="kaiming", activation="relu"):
         elif init == "xavier_normal":
             torch.nn.init.xavier_normal_(layer.weight, gain=gain)
         elif init == "uniform":
-            torch.nn.init.uniform_(layer.weight) / layer.in_features
+            torch.nn.init.uniform_(layer.weight) / layer.in_features  # type: ignore
         elif init == "normal":
-            torch.nn.init.normal_(layer.weight) / layer.in_features
+            torch.nn.init.normal_(layer.weight) / layer.in_features  # type: ignore
         elif init == "orthogonal":
             torch.nn.init.orthogonal_(layer.weight)
         elif init == "zeros":

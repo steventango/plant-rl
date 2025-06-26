@@ -40,7 +40,7 @@ def main():
     assert df is not None
 
     for metric in ["area", "state", "action", "reward"]:
-        df[metric] = df[metric].apply(maybe_convert_to_array)
+        df[metric] = df[metric].apply(maybe_convert_to_array)  # type: ignore
 
     df.to_csv(f"{path}/data.csv", index=False)
 

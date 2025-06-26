@@ -80,7 +80,7 @@ def main():
             lr2metric = {}
             for lr in alg_df["critic_lr"].unique():  # type: ignore
                 xs, ys = extract_learning_curves(
-                    alg_df,
+                    alg_df,  # type: ignore
                     (lr,),
                     metric="return",
                     interpolation=None,  # type: ignore
@@ -92,7 +92,7 @@ def main():
             best_lr = max(lr2metric, key=lr2metric.get)  # type: ignore
             print(f"Best critic_lr = {best_lr}")
             xs, ys = extract_learning_curves(
-                alg_df,
+                alg_df,  # type: ignore
                 (best_lr,),
                 metric="return",
                 interpolation=None,  # type: ignore

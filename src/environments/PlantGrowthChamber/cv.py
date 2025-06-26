@@ -289,14 +289,14 @@ def process_image(
     labels = [
         f"{'R' if class_id in reason_codes else ''}{class_id} {confidence:.2f}"
         for class_id, confidence in zip(
-            annotate_detections.class_id,
-            annotate_detections.confidence,
+            annotate_detections.class_id,  # type: ignore
+            annotate_detections.confidence,  # type: ignore
             strict=False,  # type: ignore
         )
     ]
     annotated_frame = label_annotator.annotate(
         scene=annotated_frame,
-        detections=annotate_detections,
+        detections=annotate_detections,  # type: ignore
         labels=labels,  # type: ignore
     )
     debug_images["boxes"] = Image.fromarray(annotated_frame)
@@ -337,14 +337,14 @@ def process_image(
     labels = [
         f"{'R' if class_id in reason_codes else ''}{class_id} {confidence:.2f}"
         for class_id, confidence in zip(
-            annotate_detections.class_id,
-            annotate_detections.confidence,
+            annotate_detections.class_id,  # type: ignore
+            annotate_detections.confidence,  # type: ignore
             strict=False,  # type: ignore
         )
     ]
     annotated_frame = label_annotator.annotate(
         scene=annotated_frame,
-        detections=annotate_detections,
+        detections=annotate_detections,  # type: ignore
         labels=labels,  # type: ignore
     )
 
@@ -417,7 +417,7 @@ def process_image(
     )
     annotated_frame = label_annotator.annotate(
         scene=annotated_frame,
-        detections=annotate_detections,
+        detections=annotate_detections,  # type: ignore
         labels=labels,  # type: ignore
     )
 
@@ -461,14 +461,14 @@ def infer_pot_positions(trays, debug_images, undistorted_image):
     labels = [
         f"{class_id} {confidence:.2f}"
         for class_id, confidence in zip(
-            annotate_detections.class_id,
-            annotate_detections.confidence,
+            annotate_detections.class_id,  # type: ignore
+            annotate_detections.confidence,  # type: ignore
             strict=False,  # type: ignore
         )
     ]
     annotated_frame = label_annotator.annotate(
         scene=annotated_frame,
-        detections=annotate_detections,
+        detections=annotate_detections,  # type: ignore
         labels=labels,  # type: ignore
     )
     debug_images["pot_boxes"] = Image.fromarray(annotated_frame)

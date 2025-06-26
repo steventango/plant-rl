@@ -42,7 +42,7 @@ def main():
     assert df is not None
 
     for metric in ["area", "state", "action", "reward"]:
-        df[metric] = df[metric].apply(maybe_convert_to_array)
+        df[metric] = df[metric].apply(maybe_convert_to_array)  # type: ignore
 
     dfs = []
     for _alg, sub_df in split_over_column(df, col="algorithm"):

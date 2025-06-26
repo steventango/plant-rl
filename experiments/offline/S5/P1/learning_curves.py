@@ -49,7 +49,7 @@ def main():
     for env, env_df in split_over_column(df, col="environment"):
         f, ax = plt.subplots(1)
         for replay_ratio, sub_df in sorted(
-            split_over_column(env_df, col="replay_ratio"),
+            split_over_column(env_df, col="replay_ratio"),  # type: ignore
             key=lambda x: x[0],  # type: ignore
         ):
             report = Hypers.select_best_hypers(
@@ -65,7 +65,7 @@ def main():
             Hypers.pretty_print(report)
 
             xs, ys = extract_learning_curves(
-                sub_df,
+                sub_df,  # type: ignore
                 report.best_configuration,
                 metric="action",
                 interpolation=None,  # type: ignore

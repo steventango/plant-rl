@@ -58,7 +58,7 @@ def main():
                 for alpha in alg_df["alpha"].unique():  # type: ignore
                     for n_step in alg_df["n_step"].unique():  # type: ignore
                         xs, ys = extract_learning_curves(
-                            alg_df,
+                            alg_df,  # type: ignore
                             (alpha, n_step),
                             metric="return",
                             interpolation=None,  # type: ignore
@@ -71,7 +71,7 @@ def main():
 
                 # Reward Plot
                 xs, ys = extract_learning_curves(
-                    alg_df,
+                    alg_df,  # type: ignore
                     best_hyper,
                     metric="return",
                     interpolation=None,  # type: ignore
@@ -130,7 +130,7 @@ def main():
 
                 # Action Plot
                 xs_a, ys_a = extract_learning_curves(
-                    alg_df,
+                    alg_df,  # type: ignore
                     best_hyper,
                     metric="action",
                     interpolation=None,  # type: ignore

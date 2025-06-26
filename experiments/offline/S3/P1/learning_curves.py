@@ -65,7 +65,7 @@ if __name__ == "__main__":
         best_scores = []
         # TODO: make colors and font size consistent
         for alpha_val, sub_df in sorted(
-            split_over_column(lambda_df, col="alpha"),
+            split_over_column(lambda_df, col="alpha"),  # type: ignore
             key=lambda x: x[0],  # type: ignore
         ):
             sub_df = sub_df[sub_df["episode"] < 50]

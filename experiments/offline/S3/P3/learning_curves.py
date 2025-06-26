@@ -97,7 +97,7 @@ def main():
         all_ys = []
         for _alg, sub_df in split_over_column(df, col="algorithm"):
             xs, ys = extract_learning_curves(
-                sub_df,
+                sub_df,  # type: ignore
                 tuple(),
                 metric=metric,
                 interpolation=None,  # type: ignore

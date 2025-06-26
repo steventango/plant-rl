@@ -559,11 +559,11 @@ class Gridworld(gym.Env):
                     pygame.draw.polygon(
                         self.window_surface,
                         GRAY,
-                        (start_pos, end_pos),
+                        (start_pos, end_pos),  # type: ignore
                         arrow_width,  # type: ignore
                     )
                     arr_pos = arrow_head(
-                        end_pos,
+                        end_pos,  # type: ignore
                         [cs / 2 for cs in t_size],
                         self.grid[y][x],  # type: ignore
                     )
