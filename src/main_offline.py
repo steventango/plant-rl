@@ -68,8 +68,79 @@ indices = args.idxs
 Problem = getProblem(exp.problem)
 
 
+def _prepare_trajectory_df(df):
+    """Prepares a DataFrame for trajectory plotting."""
+    # Filter out rows where observation is invalid
+    plot_df = df[
+        df["observation"].notna()
+        & df["observation"].apply(
+            lambda x: isinstance(x, (list, np.ndarray)) and len(x) >= 2
+        )
+    ].copy()
+
+    # Identify trajectory boundaries
+    plot_df["trajectory_id"] = plot_df["terminal"].isnull().cumsum()
+    if "trajectory_name" in plot_df.columns:
+        plot_df["trajectory_name"] = (
+            plot_df["trajectory_name"].fillna(method="ffill").fillna(method="bfill")
+        )
+    else:
+        plot_df["trajectory_name"] = None
+
+    # Shift observations to create trajectory segments
+    plot_df["next_observation"] = plot_df.groupby("trajectory_id")[
+        "observation"
+    ].transform(lambda x: x.shift(-1))
+    plot_df = plot_df[
+        plot_df["next_observation"].notna()
+        & plot_df["next_observation"].apply(
+            lambda x: isinstance(x, (list, np.ndarray)) and len(x) >= 2
+        )
+    ].copy()
+
+    if not plot_df.empty:
+        # Extract state components
+        plot_df["daytime"] = plot_df["observation"].apply(lambda x: x[0])
+        plot_df["area"] = plot_df["observation"].apply(lambda x: x[1])
+        plot_df["next_daytime"] = plot_df["next_observation"].apply(lambda x: x[0])
+        plot_df["next_area"] = plot_df["next_observation"].apply(lambda x: x[1])
+
+    return plot_df
+
+
+def _plot_single_trajectory_on_ax(ax, traj_df):
+    """Plots a single trajectory on a given matplotlib axes."""
+    num_segments = len(traj_df)
+    actions = (
+        traj_df["action"].values
+        if "action" in traj_df.columns
+        else np.zeros(num_segments)
+    )
+    time_norm = np.linspace(0, 1, num_segments)
+    reds = plt.get_cmap("Reds")
+    blues = plt.get_cmap("Blues")
+
+    for j in range(num_segments):
+        action = actions[j] if not pd.isna(actions[j]) else 0
+        if action == 1:
+            color = reds(time_norm[j] * 0.7 + 0.3)
+        else:
+            color = blues(time_norm[j] * 0.7 + 0.3)
+        ax.quiver(
+            traj_df["daytime"].iloc[j],
+            traj_df["area"].iloc[j],
+            traj_df["next_daytime"].iloc[j] - traj_df["daytime"].iloc[j],
+            traj_df["next_area"].iloc[j] - traj_df["area"].iloc[j],
+            angles="xy",
+            scale_units="xy",
+            scale=1,
+            color=color,
+            alpha=0.7,
+        )
+
+
 def plot_q_values_and_diff(
-    logger, agent, q_plots_dir, step
+    logger, agent, q_plots_dir, step, df
 ):  # Renamed original plot function
     if (
         hasattr(agent, "w")
@@ -115,12 +186,29 @@ def plot_q_values_and_diff(
             plot_q_diff(
                 daytime_observation_space, area_observation_space, Q_diff
             )  # Call the plot function
+
+            # PLOT TRAJECTORIES ON TOP
+            try:
+                plot_df = _prepare_trajectory_df(df)
+                if not plot_df.empty:
+                    trajectory_ids = plot_df["trajectory_id"].unique()
+                    ax = plt.gca()
+                    for traj_id in trajectory_ids:
+                        traj_df = plot_df[plot_df["trajectory_id"] == traj_id]
+                        _plot_single_trajectory_on_ax(ax, traj_df)
+            except Exception as e:
+                logger.error(
+                    f"Step {step}: Error during trajectory overlay plotting: {e}",
+                    exc_info=True,
+                )
+
             plt.savefig(q_diff_plot_filename)  # Save the figure
             plt.close()  # Close the figure
             logger.info(f"Step {step}: Saved Q-value plots to {q_plots_dir}")
         except Exception as e:
-            logger.error(f"Step {step}: Error during Q-value plotting: {e}")
-
+            logger.error(
+                f"Step {step}: Error during Q-value plotting: {e}", exc_info=True
+            )
     else:
         logger.warning(
             f"Step {step}: Agent does not have 'w' or 'tile_coder' attributes, or they are None. Skipping Q-value plotting."
@@ -321,43 +409,9 @@ def plot_state_action_distribution(df, q_plots_dir, logger):
 
 def plot_trajectories(df, q_plots_dir, logger):
     try:
-        # Filter out rows where observation and next observation are valid
-        plot_df = df[
-            df["observation"].notna()
-            & df["observation"].apply(
-                lambda x: isinstance(x, (list, np.ndarray)) and len(x) >= 2
-            )
-        ].copy()
-
-        # Identify trajectory boundaries. A new trajectory starts when 'terminal' is None,
-        # which marks the beginning of an episode in the collected data.
-        plot_df["trajectory_id"] = plot_df["terminal"].isnull().cumsum()
-        # Add trajectory_name for each trajectory_id (should be constant within a trajectory)
-        if "trajectory_name" in plot_df.columns:
-            plot_df["trajectory_name"] = (
-                plot_df["trajectory_name"].fillna(method="ffill").fillna(method="bfill")
-            )
-        else:
-            plot_df["trajectory_name"] = None
-
-        # Shift observations to create trajectory segments
-        plot_df["next_observation"] = plot_df.groupby("trajectory_id")[
-            "observation"
-        ].transform(lambda x: x.shift(-1))
-        plot_df = plot_df[
-            plot_df["next_observation"].notna()
-            & plot_df["next_observation"].apply(
-                lambda x: isinstance(x, (list, np.ndarray)) and len(x) >= 2
-            )
-        ].copy()
+        plot_df = _prepare_trajectory_df(df)
 
         if not plot_df.empty:
-            # Extract state components
-            plot_df["daytime"] = plot_df["observation"].apply(lambda x: x[0])
-            plot_df["area"] = plot_df["observation"].apply(lambda x: x[1])
-            plot_df["next_daytime"] = plot_df["next_observation"].apply(lambda x: x[0])
-            plot_df["next_area"] = plot_df["next_observation"].apply(lambda x: x[1])
-
             # Determine the number of trajectories
             trajectory_ids = plot_df["trajectory_id"].unique()
             num_trajectories = len(trajectory_ids)
@@ -381,6 +435,8 @@ def plot_trajectories(df, q_plots_dir, logger):
             for i, traj_id in enumerate(trajectory_ids):
                 ax = axes[i]
                 traj_df = plot_df[plot_df["trajectory_id"] == traj_id]
+                _plot_single_trajectory_on_ax(ax, traj_df)
+
                 traj_name = (
                     traj_df["trajectory_name"].iloc[0]
                     if "trajectory_name" in traj_df.columns
@@ -406,34 +462,12 @@ def plot_trajectories(df, q_plots_dir, logger):
                     if "action" in traj_df.columns
                     else np.zeros(num_segments)
                 )
-                time_norm = np.linspace(0, 1, num_segments)
-                reds = plt.get_cmap("Reds")
-                blues = plt.get_cmap("Blues")
 
                 # Calculate empirical % action 1
                 n_action_1 = np.sum(actions == 1)
                 pct_action_1 = (
                     100 * n_action_1 / len(actions) if len(actions) > 0 else 0
                 )
-
-                for j in range(num_segments):
-                    action = actions[j] if not pd.isna(actions[j]) else 0
-                    # Blue gradient for action=0, red gradient for action=1
-                    if action == 1:
-                        color = reds(time_norm[j] * 0.7 + 0.3)  # avoid too light
-                    else:
-                        color = blues(time_norm[j] * 0.7 + 0.3)
-                    ax.quiver(
-                        traj_df["daytime"].iloc[j],
-                        traj_df["area"].iloc[j],
-                        traj_df["next_daytime"].iloc[j] - traj_df["daytime"].iloc[j],
-                        traj_df["next_area"].iloc[j] - traj_df["area"].iloc[j],
-                        angles="xy",
-                        scale_units="xy",
-                        scale=1,
-                        color=color,
-                        alpha=0.7,
-                    )
 
                 # Add 11x11 grid
                 grid_lines = np.linspace(0, 1, 12)
@@ -604,7 +638,7 @@ for idx in indices:
         ):
             # Plot and save Q-values
             plot_q_values_and_diff(
-                logger, agent, q_plots_dir, step
+                logger, agent, q_plots_dir, step, df
             )  # Updated function call
 
     collector.reset()
