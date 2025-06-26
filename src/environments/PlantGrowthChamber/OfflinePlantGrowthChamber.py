@@ -5,6 +5,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import pytz
+from RlGlue.environment import BaseEnvironment
 
 from utils.functions import normalize
 
@@ -12,7 +13,7 @@ logger = logging.getLogger("OfflinePlantGrowthChamber")
 logger.setLevel(logging.DEBUG)
 
 
-class OfflinePlantGrowthChamber:
+class OfflinePlantGrowthChamber(BaseEnvironment):
     """
     Use Exp 3 data to do offline learning.
     State = [time of day,
@@ -154,7 +155,7 @@ class OfflinePlantGrowthChamber:
             previous_area = self.dataset.iloc[self.index - 1]["mean_clean_area"]
             reward = normalize(current_area - previous_area, 0, 150)
 
-        return reward
+        return float(reward)
 
     def get_light_amount(self, action):
         if action == 1:
@@ -168,7 +169,7 @@ class OfflinePlantGrowthChamber:
         self.dli = 0
         return self.get_observation(), {"action": self.get_action()}
 
-    def step(self, _):
+    def step(self, action):
         # Update action history based on previous action
         self.dli += self.get_light_amount(self.get_action())
 
@@ -246,7 +247,7 @@ class OfflinePlantGrowthChamber_1hrStep(OfflinePlantGrowthChamber):
         else:
             return int(0)
 
-    def step(self, _):
+    def step(self, action):
         # Update action history based on previous action
         self.dli += self.get_light_amount(self.get_action())
 
