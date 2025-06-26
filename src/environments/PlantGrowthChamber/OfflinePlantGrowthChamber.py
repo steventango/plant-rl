@@ -74,6 +74,8 @@ class OfflinePlantGrowthChamber(BaseEnvironment):
             )  # max areas
             self.daily_areas[date_val] = group["mean_clean_area"].values  # type: ignore
 
+        self.current_dataset_name = str(dataset_path)
+
         return df  # type: ignore
 
     def get_observation(self):
@@ -167,7 +169,11 @@ class OfflinePlantGrowthChamber(BaseEnvironment):
         self.dataset = self.load_dataset(self.dataset_paths[self.dataset_index])
         self.index = 1
         self.dli = 0
-        return self.get_observation(), {"action": self.get_action()}
+        info = {
+            "action": self.get_action(),
+            "trajectory_name": getattr(self, "current_dataset_name", None),
+        }
+        return self.get_observation(), info
 
     def step(self, action):
         # Update action history based on previous action
@@ -198,7 +204,8 @@ class OfflinePlantGrowthChamber(BaseEnvironment):
                 info.update({"exhausted": True})
         else:
             info.update({"action": self.get_action()})
-
+        # Always add trajectory_name to info
+        info["trajectory_name"] = getattr(self, "current_dataset_name", None)
         return r, obs, terminal, info
 
     def remove_incomplete_days(self, df, timestamps_per_day=72):
