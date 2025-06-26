@@ -4,7 +4,7 @@ from functools import partial
 
 import jax
 import jax.numpy as jnp
-from jax._src.typing import Array, ArrayLike
+from jax._src.typing import Array
 from jax.nn import relu
 
 
