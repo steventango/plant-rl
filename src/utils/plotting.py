@@ -53,14 +53,14 @@ def plot_q_diff(daytime_observation_space, area_observation_space, Q_diff):
         ax_q_diff.set_aspect("auto")
 
     ax_q_diff.set_title("Q(s, a=1) - Q(s, a=0)")
-    ax_q_diff.set_xlabel("s[0] (daytime)")
+    ax_q_diff.set_xlabel("s[0]")
     num_daytime_bins = len(daytime_observation_space)
     xtick_indices = np.linspace(0, num_daytime_bins - 1, 7, dtype=int)
     xtick_labels_values = np.linspace(0, 1, 7)
     ax_q_diff.set_xticks(xtick_indices)
     ax_q_diff.set_xticklabels([f"{int(t * 11) + 9}" for t in xtick_labels_values])
 
-    ax_q_diff.set_ylabel("s[1] (area)")
+    ax_q_diff.set_ylabel("s[1]")
     num_area_bins = len(area_observation_space)
     ytick_indices = np.linspace(0, num_area_bins - 1, 6, dtype=int)
     ytick_labels_values = np.linspace(0, 1, 6)
@@ -95,11 +95,11 @@ def plot_q_diff(daytime_observation_space, area_observation_space, Q_diff):
     if ax_policy.images:
         ax_policy.set_aspect("auto")
 
-    ax_policy.set_title(r"Policy")
-    ax_policy.set_xlabel("s[0] (daytime)")
+    ax_policy.set_title("Policy")
+    ax_policy.set_xlabel("s[0]")
     ax_policy.set_xticks(xtick_indices)
     ax_policy.set_xticklabels([f"{int(t * 11) + 9}" for t in xtick_labels_values])
-    ax_policy.set_ylabel("s[1] (area)")
+    ax_policy.set_ylabel("s[1]")
     ax_policy.set_yticks(ytick_indices)
     ax_policy.set_yticklabels(
         [f"{area:.1f}" for area in ytick_labels_values], rotation=0
@@ -140,14 +140,14 @@ def plot_q(daytime_observation_space, area_observation_space, Q):
 
         ax.set_title(f"Q(s, {i})")
 
-        ax.set_xlabel("s[0] (daytime)")
+        ax.set_xlabel("s[0]")
         num_daytime_bins = len(daytime_observation_space)
         xtick_indices = np.linspace(0, num_daytime_bins - 1, 7, dtype=int)
         xtick_labels_values = np.linspace(0, 1, 7)
         ax.set_xticks(xtick_indices)
         ax.set_xticklabels([f"{int(t * 11) + 9}" for t in xtick_labels_values])
 
-        ax.set_ylabel("s[1] (area)")
+        ax.set_ylabel("s[1]")
         num_area_bins = len(area_observation_space)
         ytick_indices = np.linspace(0, num_area_bins - 1, 6, dtype=int)
         ytick_labels_values = np.linspace(0, 1, 6)
