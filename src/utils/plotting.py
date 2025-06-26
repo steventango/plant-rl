@@ -62,15 +62,17 @@ def plot_q_diff(daytime_observation_space, area_observation_space, Q_diff):
 
     # Plot Policy
     ax_policy = axs[1]
-    policy_cutoff = 0
+    policy_cutoff = 1e-10
     policy = (Q_diff > policy_cutoff).astype(int) - (Q_diff < -policy_cutoff).astype(
         int
     )
 
     # Create a discrete colormap for the policy: -1 (blue), 0 (gray), 1 (red),
-    cmap_policy = mcolors.ListedColormap(["blue", "red"])
-    bounds = [-1.5, 0, 1.5]
-    norm_policy = mcolors.BoundaryNorm(bounds, cmap_policy.N)
+    cmap_policy = mcolors.ListedColormap(["blue", "gray", "red"])
+    norm_policy = mcolors.BoundaryNorm(
+        boundaries=[-1.5, -0.5, 0.5, 1.5],
+        ncolors=3,
+    )  # Boundaries for the policy colormap
 
     sns.heatmap(
         policy.T,
@@ -78,7 +80,7 @@ def plot_q_diff(daytime_observation_space, area_observation_space, Q_diff):
         cmap=cmap_policy,
         norm=norm_policy,
         cbar=True,
-        cbar_kws={"ticks": [-1, 1]},  # Ticks for the policy colorbar
+        cbar_kws={"ticks": [-1, 0, 1]},  # Ticks for the policy colorbar
     )
     ax_policy.set_title(r"Policy")
     ax_policy.set_xlabel("s[0]")
@@ -88,13 +90,13 @@ def plot_q_diff(daytime_observation_space, area_observation_space, Q_diff):
     )
     ax_policy.set_ylabel("s[1]")
     ax_policy.set_yticks(np.arange(0, len(area_observation_space), 10))
-    ax_policy.set_yticklabels([f"{area:.1f}" for area in area_observation_space[::10]])
+    ax_policy.set_yticklabels([f"{area:.2f}" for area in area_observation_space[::10]])
     ax_policy.set_yticklabels(ax_policy.get_yticklabels(), rotation=0)
     ax_policy.invert_yaxis()
 
     # Set labels for policy colorbar
     cbar = ax_policy.collections[0].colorbar
-    cbar.set_ticklabels(["A=0", "A=1"])
+    cbar.set_ticklabels(["A=0", "N/A", "A=1"])
     fig.tight_layout()
     fig.suptitle("ESARSA Q-value Difference and Policy", fontsize=16)
 
