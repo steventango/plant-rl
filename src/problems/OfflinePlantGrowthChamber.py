@@ -49,6 +49,7 @@ class OfflinePlantGrowthChamber(BaseProblem):
             self.observations = (1,)
         elif self.env_params["type"] == "TimeArea":
             self.env = OfflinePlantGrowthChamberTimeArea(**self.env_params)
+            self.observations = (2,)
         elif self.env_params["type"] == "TimeDLI":
             self.env = OfflinePlantGrowthChamberTimeDLI(**self.env_params)
             self.observations = (2,)
