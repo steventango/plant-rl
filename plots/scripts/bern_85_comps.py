@@ -108,7 +108,7 @@ for agent, group in df.groupby("agent"):
     )
     # print(f"Agent: {agent}, First times: {first_5_times}")
     first_obs_values = [
-        group[group["time"] == t]["mean_clean_area"].iloc[0]    # type: ignore
+        group[group["time"] == t]["mean_clean_area"].iloc[0]  # type: ignore
         for t in first_5_times  # type: ignore
     ]  # Get corresponding values
     for t in list(zip(first_5_times, first_obs_values, strict=False)):
