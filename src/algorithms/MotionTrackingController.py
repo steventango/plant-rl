@@ -23,34 +23,42 @@ class MotionTrackingController(BaseAgent):
         seed: int,
     ):
         super().__init__(observations, actions, params, collector, seed)
-        self.start_hour= 13   # included in daytime
-        self.end_hour = 21    # excluded in daytime
+        self.start_hour = 13  # included in daytime
+        self.end_hour = 21  # excluded in daytime
 
         self.env_local_time = None
         self.mean_clean_areas = defaultdict(float)
         self.openness_trace = uema(alpha=0.1)
 
-        self.Imin = 0.35           # lowest allowable intensity during daytime. Fixed at "moonlight" level.
-        self.Imax = 1.0            # highest allowable intensity. Can be tuned by higher-level RL
-        self.sensitivity = 10.0    # roughly (change in intensity) / (change in plants openness). Can be tuned by higher-level RL
+        self.Imin = 0.35  # lowest allowable intensity during daytime. Fixed at "moonlight" level.
+        self.Imax = 1.0  # highest allowable intensity. Can be tuned by higher-level RL
+        self.sensitivity = 10.0  # roughly (change in intensity) / (change in plants openness). Can be tuned by higher-level RL
 
     def is_night(self) -> bool:
         assert self.env_local_time is not None, (
             "Environment local time must be set before checking night."
         )
-        is_night = self.env_local_time.hour >= self.end_hour or self.env_local_time.hour < self.start_hour
+        is_night = (
+            self.env_local_time.hour >= self.end_hour
+            or self.env_local_time.hour < self.start_hour
+        )
         return is_night
-    
+
     def is_first_tod(self) -> bool:
         assert self.env_local_time is not None, (
             "Environment local time must be set before checking is_first_tod."
         )
-        is_first_tod = self.env_local_time.hour == self.start_hour and self.env_local_time.minute == 0
+        is_first_tod = (
+            self.env_local_time.hour == self.start_hour
+            and self.env_local_time.minute == 0
+        )
         return is_first_tod
 
     def get_action(self) -> float:
         openness = self.openness_trace.compute().item()
-        return self.Imin + max(0, (self.Imax - self.Imin) * tanh(self.sensitivity * openness))
+        return self.Imin + max(
+            0, (self.Imax - self.Imin) * tanh(self.sensitivity * openness)
+        )
 
     def start(self, observation: np.ndarray, extra: Dict[str, Any]):  # type: ignore
         self.openness_trace.reset()
@@ -70,7 +78,7 @@ class MotionTrackingController(BaseAgent):
                 "Starting motion-tracking controller during daytime. Enforce standard lighting until tomorrow."
             )
             action = 1.0
-        
+
         return action, {}
 
     def step(self, reward: float, observation: np.ndarray, extra: Dict[str, Any]):
@@ -95,7 +103,7 @@ class MotionTrackingController(BaseAgent):
                     f"No same-day morning measurement available at {self.env_local_time}. Enforce standard lighting."
                 )
                 action = 1.0
-            elif today_morning_area == 0.0: 
+            elif today_morning_area == 0.0:
                 logger.warning(
                     f"Same-day morning measurement at {self.env_local_time} is zero. Enforce standard lighting."
                 )
