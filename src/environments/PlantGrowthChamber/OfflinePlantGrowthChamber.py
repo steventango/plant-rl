@@ -1,5 +1,5 @@
 import logging  # type: ignore
-from datetime import time, timedelta
+from datetime import date, time, timedelta
 from pathlib import Path
 
 import numpy as np
@@ -62,6 +62,20 @@ class OfflinePlantGrowthChamber(BaseEnvironment):
 
         # Remove incomplete days
         df = self.remove_incomplete_days(df, timestamps_per_day=67)
+
+        # For the last day, keep only the first timestamp
+        dates: pd.Series[date] = df["time"].dt.date  # type: ignore
+        last_date = dates.max()
+        last_date_df = df[dates == last_date]
+        first_time_of_last_day = last_date_df["time"].iloc[0]  # type: ignore
+        first_time_of_last_day_df = last_date_df[
+            last_date_df["time"] == first_time_of_last_day
+        ]
+        without_last_day_df = df[dates != last_date]
+        df = pd.concat(
+            [without_last_day_df, first_time_of_last_day_df],  # type: ignore
+            ignore_index=True,
+        )
 
         # Compute morning and max areas on each day
         local_dates = df["time"].dt.date  # type: ignore
@@ -192,7 +206,7 @@ class OfflinePlantGrowthChamber(BaseEnvironment):
         r = self.get_reward()
 
         # Check if terminal
-        terminal = self.index + 72 >= len(self.dataset)
+        terminal = self.index + 1 >= len(self.dataset)
         info = {}
         if terminal:
             dataset_path = self.dataset_paths[self.dataset_index]
@@ -236,6 +250,13 @@ class OfflinePlantGrowthChamberTimeArea(OfflinePlantGrowthChamber):
     def get_observation(self):
         super_obs = super().get_observation()
         obs = super_obs[[0, 2]]
+        return obs
+
+
+class OfflinePlantGrowthChamberTimeOpenness(OfflinePlantGrowthChamber):
+    def get_observation(self):
+        super_obs = super().get_observation()
+        obs = super_obs[[0, 3]]
         return obs
 
 

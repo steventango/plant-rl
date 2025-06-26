@@ -372,7 +372,7 @@ def plot_trajectories(df, q_plots_dir, logger):
             fig, axes = plt.subplots(
                 num_rows, num_cols, figsize=(6 * num_cols, 6 * num_rows)
             )
-            fig.suptitle("State Trajectories", fontsize=16)
+            fig.suptitle("Trajectories", fontsize=16)
 
             # Flatten the axes array for easy indexing
             axes = axes.flatten()
@@ -448,8 +448,8 @@ def plot_trajectories(df, q_plots_dir, logger):
 
                 ax.set_xlim(0, 1)
                 ax.set_ylim(0, 1)
-                ax.set_xlabel("Daytime")
-                ax.set_ylabel("Area")
+                ax.set_xlabel("s[0]")
+                ax.set_ylabel("s[1]")
                 # Title: dataset name and empirical % action 1
                 if traj_name:
                     ax.set_title(f"{traj_name}\n% action 1: {pct_action_1:.1f}%")

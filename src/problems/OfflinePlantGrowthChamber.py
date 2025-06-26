@@ -12,6 +12,7 @@ from environments.PlantGrowthChamber.OfflinePlantGrowthChamber import (
     OfflinePlantGrowthChamberTime,
     OfflinePlantGrowthChamberTimeArea,
     OfflinePlantGrowthChamberTimeDLI,
+    OfflinePlantGrowthChamberTimeOpenness,
 )
 from experiment.ExperimentModel import ExperimentModel
 from problems.BaseProblem import BaseProblem
@@ -52,6 +53,9 @@ class OfflinePlantGrowthChamber(BaseProblem):
             self.observations = (2,)
         elif self.env_params["type"] == "TimeDLI":
             self.env = OfflinePlantGrowthChamberTimeDLI(**self.env_params)
+            self.observations = (2,)
+        elif self.env_params["type"] == "TimeOpenness":
+            self.env = OfflinePlantGrowthChamberTimeOpenness(**self.env_params)
             self.observations = (2,)
         else:
             raise ValueError("Env type invalid.")
