@@ -64,7 +64,7 @@ class AsyncRLGlue:
             o=s,
             a=self.last_action,
             t=False,
-            r=None,
+            r=None,  # type: ignore
             extra=info,
         )
         self.log()
