@@ -127,7 +127,7 @@ class PiecewiseLinear:
 
 @partial(jax.jit, static_argnums=(2))
 def fta(
-    x: ArrayLike,
+    x: Array,
     eta: float = 2,
     tiles: int = 20,
     lower_bound: float = -20,
@@ -165,7 +165,7 @@ def fta(
 
 
 @jax.jit
-def fuzzy_indicator_function(x: ArrayLike, eta: float):
+def fuzzy_indicator_function(x: Array, eta: float):
     return jnp.greater(eta, x).astype(x.dtype) * x + jnp.greater_equal(x, eta).astype(
         x.dtype
     )

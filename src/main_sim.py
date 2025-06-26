@@ -139,7 +139,7 @@ for idx in indices:
             interaction.o,
             interaction.a,
             interaction.extra,
-            interaction.r,
+            r=interaction.r,
         )
 
         collector.collect("reward", interaction.r)

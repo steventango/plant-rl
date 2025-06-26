@@ -146,7 +146,7 @@ def checkpointable(props: Sequence[str]):
                 out2 = o_getter(self)
             elif c.__bases__[0].__getstate__:
                 _getter = c.__bases__[0].__getstate__
-                out2 = _getter(self)
+                out2 = _getter(self)  # type: ignore
 
             out2 |= out
             return out2
