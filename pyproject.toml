@@ -78,7 +78,7 @@ ignore = ['E501', 'E701', 'B023']
 extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends", "fastapi.Query", "fastapi.params.Query"]
 
 [tool.pyright]
-include = ['.']
+include = ['analysis', 'experiments', 'plots', 'scripts', 'src', 'tests']
 venvPath = '.'
 venv = '.venv'
 typeCheckingMode = 'standard'
