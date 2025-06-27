@@ -75,7 +75,7 @@ def getAgent(name) -> Type[BaseAgent]:
     if name == "ContinuousRandom":
         return ContinuousRandomAgent
 
-    if name == "MotionTrackingController":
+    if name.startswith("MotionTrackingController"):
         return MotionTrackingController
 
     if name.startswith("Sequence"):

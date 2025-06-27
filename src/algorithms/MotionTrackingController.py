@@ -23,14 +23,16 @@ class MotionTrackingController(BaseAgent):
         seed: int,
     ):
         super().__init__(observations, actions, params, collector, seed)
-        self.start_hour = 14  # included in daytime
+        self.start_hour = 15  # included in daytime
         self.end_hour = 21  # excluded in daytime
 
         self.env_local_time = None
         self.total_areas = defaultdict(float)
         self.openness_trace = uema(alpha=0.1)
 
-        self.Imin = 0.50  # lowest allowable intensity during daytime. Fixed at a dim level.
+        self.Imin = (
+            0.50  # lowest allowable intensity during daytime. Fixed at a dim level.
+        )
         self.Imax = 1.0  # highest allowable intensity. Can be tuned by higher-level RL
         self.sensitivity = 5.0  # roughly (change in intensity) / (change in plants openness). Can be tuned by higher-level RL
 
@@ -80,8 +82,8 @@ class MotionTrackingController(BaseAgent):
     def step(self, reward: float, observation: np.ndarray, extra: Dict[str, Any]):
         total_area = observation[1] if not self.is_night() else 0.0
         self.env_local_time = observation[0]
-        self.total_areas[self.env_local_time.replace(second=0, microsecond=0)] = (
-            float(total_area)
+        self.total_areas[self.env_local_time.replace(second=0, microsecond=0)] = float(
+            total_area
         )
 
         if self.is_night():
@@ -103,7 +105,7 @@ class MotionTrackingController(BaseAgent):
                     f"No same-day morning measurement available at {self.env_local_time}. Enforce standard lighting."
                 )
                 action = 1.0
-            elif today_first_area == 0.0:   
+            elif today_first_area == 0.0:
                 logger.warning(
                     f"Same-day morning measurement at {self.env_local_time} is zero. Enforce standard lighting."
                 )
