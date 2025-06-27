@@ -1,5 +1,5 @@
 import logging  # type: ignore
-from datetime import date, time, timedelta
+from datetime import date, datetime, time, timedelta
 from pathlib import Path
 
 import numpy as np
@@ -62,8 +62,17 @@ class OfflinePlantGrowthChamber(BaseEnvironment):
             & (df["time"].dt.time <= self.end_time)
         ]
 
+        timestamps_per_day = int(
+            (
+                datetime.combine(date.min, self.end_time)
+                - datetime.combine(date.min, self.start_time)
+            ).total_seconds()
+            / 600
+        )
+        print(f"Number of timestamps per day: {timestamps_per_day}")
+
         # Remove incomplete days
-        df = self.remove_incomplete_days(df, timestamps_per_day=67)
+        df = self.remove_incomplete_days(df, timestamps_per_day=timestamps_per_day)
 
         # For the last day, keep only the first timestamp
         dates: pd.Series[date] = df["time"].dt.date  # type: ignore
@@ -228,8 +237,13 @@ class OfflinePlantGrowthChamber(BaseEnvironment):
         local_dates = df["time"].dt.date
         complete_dates = []
         for date_val, group in df.groupby(local_dates):
+            print(len(group))
             if len(group) == timestamps_per_day:
                 complete_dates.append(date_val)
+
+        # add the last day
+        last_date = local_dates.max()
+        complete_dates.append(last_date)
 
         return df[df["time"].dt.date.isin(complete_dates)]
 
