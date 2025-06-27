@@ -213,4 +213,3 @@ for idx in indices:
     saveCollector(exp, collector, base=args.save_path)
     # -- Saving --
     # ------------
-    saveCollector(exp, collector, base=args.save_path)
