@@ -58,7 +58,7 @@ class AsyncAgentWrapper(BaseAsyncAgent):
     ) -> tuple[Any, dict[str, Any]]:
         if extra is None:
             extra = {}
-        return await asyncio.to_thread(self.agent.start, observation)
+        return await asyncio.to_thread(self.agent.start, observation, extra)
 
     async def step(
         self, reward: float, observation: Any, extra: dict[str, Any]

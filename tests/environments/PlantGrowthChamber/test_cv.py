@@ -26,6 +26,7 @@ E5_TEST_DIR = TEST_DIR / "Spreadsheet-C-v2"
 E6_TEST_DIR = TEST_DIR / "Spreadsheet-C-v3"
 E7_TEST_DIR = TEST_DIR / "E7/P2"
 E8_TEST_DIR = TEST_DIR / "E8"
+A0_TEST_DIR = TEST_DIR / "A0/P0"
 
 skipif_github_actions = pytest.mark.skipif(
     os.environ.get("GITHUB_ACTIONS") == "true",
@@ -35,7 +36,7 @@ skipif_github_actions = pytest.mark.skipif(
 
 def get_plant_area(test_dir: Path, zone: Zone):
     dfs = []
-    zone_dir = test_dir / f"z{zone.identifier}"
+    zone_dir = test_dir / zone.identifier
     out_dir = zone_dir / "results"
     out_dir.mkdir(exist_ok=True)
     paths = sorted(chain(zone_dir.glob("*.png"), zone_dir.glob("*.jpg")))
@@ -62,6 +63,12 @@ def get_plant_area(test_dir: Path, zone: Zone):
 
     df = pd.concat(dfs)
     plot_area_comparison(df, out_dir)
+
+
+@skipif_github_actions
+def test_process_A0_zone_12():
+    zone = load_zone_from_config("alliance-zone12")
+    get_plant_area(A0_TEST_DIR, zone)
 
 
 @skipif_github_actions

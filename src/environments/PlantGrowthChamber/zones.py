@@ -59,6 +59,28 @@ def deserialize_zone(zone: dict) -> Zone:
     )
 
 
+def serialize_zone(zone: Zone) -> dict:
+    return {
+        "identifier": zone.identifier,
+        "camera_left_url": zone.camera_left_url,
+        "camera_right_url": zone.camera_right_url,
+        "lightbar_url": zone.lightbar_url,
+        "trays": [
+            {
+                "n_wide": tray.n_wide,
+                "n_tall": tray.n_tall,
+                "rect": {
+                    "top_left": tray.rect.top_left,
+                    "top_right": tray.rect.top_right,
+                    "bottom_left": tray.rect.bottom_left,
+                    "bottom_right": tray.rect.bottom_right,
+                },
+            }
+            for tray in zone.trays
+        ],
+    }
+
+
 def load_zone_from_config(identifier: str) -> Zone:
     with open(CONFIG_DIR / f"{identifier}.json") as f:
         config = json.load(f)
