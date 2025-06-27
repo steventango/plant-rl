@@ -587,4 +587,3 @@ def plot_trajectories(df, q_plots_dir, logger):
             logger.info("No valid data points to plot for state trajectories.")
     except Exception as e:
         logger.error(f"Error during state trajectories plotting: {e}", exc_info=True)
-        logger.error(f"Error during state trajectories plotting: {e}", exc_info=True)
