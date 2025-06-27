@@ -1,0 +1,45 @@
+{
+    "agent": "OfflineESARSA",
+    "problem": "OfflinePlantGrowthChamber",
+    "total_steps": 10000,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment":{
+            "type": "TimeArea",
+            "daily_reward": false,
+            "dataset_paths": [
+                [
+                    "/data/online/E7/P2/Constant1/z1",
+                    "/data/online/E7/P2/Constant2/z2",
+                    "/data/online/E7/P3/ESARSA3/z3",
+                    "/data/online/E7/P4/LinearESARSA6/z6",
+                    "/data/online/E7/P4/LinearESARSA8/z8",
+                    "/data/online/E7/P4/LinearESARSA9/z9",
+                    "/data/online/E8/P1/Spreadsheet1/z1",
+                    "/data/online/E8/P1/Bernoulli2/z2",
+                    "/data/online/E8/P1/Bernoulli3/z3",
+                    "/data/online/E8/P1/Bernoulli8/z8",
+                    "/data/online/E8/P1/Bernoulli9/z9",
+                    "/data/online/E8/P1/Spreadsheet6/z6"
+                ]
+            ]
+        },
+        "alpha": 0.01,
+        "alpha_decay": false,
+        "epsilon": 0.0,
+        "w0": 0.0,
+        "buffer_type": "uniform",
+        "buffer_size": 100000,
+        "batch": 256,
+        "replay_ratio": 1,
+        "gamma": 0.99,
+        "n_step": 66,
+
+        "representation": {
+            "which_tc": "RichTileCoder",
+            "strategy": -1,
+            "tiles": 11,
+            "tilings": 1
+        }
+    }
+}

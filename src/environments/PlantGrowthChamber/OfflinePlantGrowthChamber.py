@@ -1,10 +1,11 @@
 import logging  # type: ignore
-from datetime import time, timedelta
+from datetime import date, time, timedelta
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytz
+from RlGlue.environment import BaseEnvironment
 
 from utils.functions import normalize
 
@@ -12,7 +13,7 @@ logger = logging.getLogger("OfflinePlantGrowthChamber")
 logger.setLevel(logging.DEBUG)
 
 
-class OfflinePlantGrowthChamber:
+class OfflinePlantGrowthChamber(BaseEnvironment):
     """
     Use Exp 3 data to do offline learning.
     State = [time of day,
@@ -62,6 +63,20 @@ class OfflinePlantGrowthChamber:
         # Remove incomplete days
         df = self.remove_incomplete_days(df, timestamps_per_day=67)
 
+        # For the last day, keep only the first timestamp
+        dates: pd.Series[date] = df["time"].dt.date  # type: ignore
+        last_date = dates.max()
+        last_date_df = df[dates == last_date]
+        first_time_of_last_day = last_date_df["time"].iloc[0]  # type: ignore
+        first_time_of_last_day_df = last_date_df[
+            last_date_df["time"] == first_time_of_last_day
+        ]
+        without_last_day_df = df[dates != last_date]
+        df = pd.concat(
+            [without_last_day_df, first_time_of_last_day_df],  # type: ignore
+            ignore_index=True,
+        )
+
         # Compute morning and max areas on each day
         local_dates = df["time"].dt.date  # type: ignore
         for date_val, group in df.groupby(local_dates):  # type: ignore
@@ -73,17 +88,19 @@ class OfflinePlantGrowthChamber:
             )  # max areas
             self.daily_areas[date_val] = group["mean_clean_area"].values  # type: ignore
 
+        self.current_dataset_name = str(dataset_path)
+
         return df  # type: ignore
 
     def get_observation(self):
         # tod
-        local_time = self.dataset.iloc[self.index]["time"]
+        local_time = self.dataset.iloc[self.index - 1]["time"]
         morning_time = local_time.replace(hour=9, minute=30, second=0, microsecond=0)
         seconds_since_morning = (local_time - morning_time).total_seconds()
         normalized_seconds_since_morning = seconds_since_morning / (11 * 3600)
 
         # area
-        mean_clean_area = self.dataset.iloc[self.index]["mean_clean_area"]
+        mean_clean_area = self.dataset.iloc[self.index - 1]["mean_clean_area"]
         normalized_mean_clean_area = normalize(mean_clean_area, 0, 680)
 
         # openness
@@ -154,7 +171,7 @@ class OfflinePlantGrowthChamber:
             previous_area = self.dataset.iloc[self.index - 1]["mean_clean_area"]
             reward = normalize(current_area - previous_area, 0, 150)
 
-        return reward
+        return float(reward)
 
     def get_light_amount(self, action):
         if action == 1:
@@ -164,11 +181,15 @@ class OfflinePlantGrowthChamber:
 
     def start(self):
         self.dataset = self.load_dataset(self.dataset_paths[self.dataset_index])
-        self.index = 0
+        self.index = 1
         self.dli = 0
-        return self.get_observation(), {"action": self.get_action()}
+        info = {
+            "action": self.get_action(),
+            "trajectory_name": getattr(self, "current_dataset_name", None),
+        }
+        return self.get_observation(), info
 
-    def step(self, _):
+    def step(self, action):
         # Update action history based on previous action
         self.dli += self.get_light_amount(self.get_action())
 
@@ -185,7 +206,7 @@ class OfflinePlantGrowthChamber:
         r = self.get_reward()
 
         # Check if terminal
-        terminal = self.index + 72 >= len(self.dataset)
+        terminal = self.index + 1 >= len(self.dataset)
         info = {}
         if terminal:
             dataset_path = self.dataset_paths[self.dataset_index]
@@ -197,7 +218,8 @@ class OfflinePlantGrowthChamber:
                 info.update({"exhausted": True})
         else:
             info.update({"action": self.get_action()})
-
+        # Always add trajectory_name to info
+        info["trajectory_name"] = getattr(self, "current_dataset_name", None)
         return r, obs, terminal, info
 
     def remove_incomplete_days(self, df, timestamps_per_day=72):
@@ -213,7 +235,7 @@ class OfflinePlantGrowthChamber:
 class OfflinePlantGrowthChamberTime(OfflinePlantGrowthChamber):
     def get_observation(self):
         super_obs = super().get_observation()
-        obs = super_obs[[0, 1]]
+        obs = super_obs[[0]]
         return obs
 
 
@@ -221,6 +243,20 @@ class OfflinePlantGrowthChamberTimeDLI(OfflinePlantGrowthChamber):
     def get_observation(self):
         super_obs = super().get_observation()
         obs = super_obs[[0, 1]]
+        return obs
+
+
+class OfflinePlantGrowthChamberTimeArea(OfflinePlantGrowthChamber):
+    def get_observation(self):
+        super_obs = super().get_observation()
+        obs = super_obs[[0, 2]]
+        return obs
+
+
+class OfflinePlantGrowthChamberTimeOpenness(OfflinePlantGrowthChamber):
+    def get_observation(self):
+        super_obs = super().get_observation()
+        obs = super_obs[[0, 3]]
         return obs
 
 
@@ -239,7 +275,7 @@ class OfflinePlantGrowthChamber_1hrStep(OfflinePlantGrowthChamber):
         else:
             return int(0)
 
-    def step(self, _):
+    def step(self, action):
         # Update action history based on previous action
         self.dli += self.get_light_amount(self.get_action())
 
