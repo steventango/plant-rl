@@ -37,8 +37,10 @@ def get_Q(
 
 def plot_q_diff(daytime_observation_space, area_observation_space, Q_diff):
     fig, axs = plt.subplots(
-        1, 2, figsize=(12, 5)
-    )  # Two subplots: one for Q-diff, one for policy
+        1,
+        3,
+        figsize=(18, 5),
+    )  # Three subplots: one for Q-diff, one for policy, and one for trajectories
 
     def _get_edges(space):
         """Helper to calculate cell edges from cell centers."""
@@ -60,7 +62,7 @@ def plot_q_diff(daytime_observation_space, area_observation_space, Q_diff):
         daytime_edges, area_edges, Q_diff.T, cmap="bwr", norm=norm
     )
     fig.colorbar(mesh, ax=ax_q_diff)
-    ax_q_diff.set_aspect("auto")
+    ax_q_diff.set_aspect("equal")
 
     ax_q_diff.set_title("Q(s, a=1) - Q(s, a=0)")
     ax_q_diff.set_xlabel("s[0]")
@@ -90,7 +92,7 @@ def plot_q_diff(daytime_observation_space, area_observation_space, Q_diff):
     )
     cbar = fig.colorbar(mesh_policy, ax=ax_policy, ticks=[-1, 0, 1])
 
-    ax_policy.set_aspect("auto")
+    ax_policy.set_aspect("equal")
 
     ax_policy.set_title("Policy")
     ax_policy.set_xlabel("s[0]")
@@ -135,7 +137,7 @@ def plot_q(daytime_observation_space, area_observation_space, Q):
             vmax=vmax,
         )
         fig.colorbar(mesh, ax=ax)
-        ax.set_aspect("auto")
+        ax.set_aspect("equal")
 
         ax.set_title(f"Q(s, {i})")
 
@@ -278,11 +280,22 @@ def plot_q_values_and_diff(
             try:
                 plot_df = _prepare_trajectory_df(df)
                 if not plot_df.empty:
+                    ax_traj = axs_diff[2]
                     trajectory_ids = plot_df["trajectory_id"].unique()
-                    ax = axs_diff[1]
                     for traj_id in trajectory_ids:
                         traj_df = plot_df[plot_df["trajectory_id"] == traj_id]
-                        _plot_single_trajectory_on_ax(ax, traj_df)
+                        _plot_single_trajectory_on_ax(ax_traj, traj_df)
+
+                    ax_traj.set_title("Trajectories")
+                    ax_traj.set_xlabel("s[0]")
+                    ax_traj.set_ylabel("s[1]")
+                    xtick_labels_values = np.linspace(0, 1, 11)
+                    ax_traj.set_xticks(xtick_labels_values)
+                    ytick_labels_values = np.linspace(0, 1, 11)
+                    ax_traj.set_yticks(ytick_labels_values)
+                    ax_traj.set_aspect("equal")
+                    ax_traj.set_xlim(0, 1)
+                    ax_traj.set_ylim(0, 1)
             except Exception as e:
                 logger.error(
                     f"Step {step}: Error during trajectory overlay plotting: {e}",
