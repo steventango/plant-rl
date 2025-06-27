@@ -23,7 +23,7 @@ class MotionTrackingController(BaseAgent):
         seed: int,
     ):
         super().__init__(observations, actions, params, collector, seed)
-        self.start_hour = 9  # included in daytime
+        self.start_hour = 13  # included in daytime
         self.end_hour = 21  # excluded in daytime
 
         self.env_local_time = None
