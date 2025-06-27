@@ -23,14 +23,14 @@ class MotionTrackingController(BaseAgent):
         seed: int,
     ):
         super().__init__(observations, actions, params, collector, seed)
-        self.start_hour = 13  # included in daytime
+        self.start_hour = 14  # included in daytime
         self.end_hour = 21  # excluded in daytime
 
         self.env_local_time = None
-        self.mean_clean_areas = defaultdict(float)
+        self.total_areas = defaultdict(float)
         self.openness_trace = uema(alpha=0.1)
 
-        self.Imin = 0.35  # lowest allowable intensity during daytime. Fixed at "moonlight" level.
+        self.Imin = 0.50  # lowest allowable intensity during daytime. Fixed at a dim level.
         self.Imax = 1.0  # highest allowable intensity. Can be tuned by higher-level RL
         self.sensitivity = 5.0  # roughly (change in intensity) / (change in plants openness). Can be tuned by higher-level RL
 
@@ -64,10 +64,6 @@ class MotionTrackingController(BaseAgent):
         self.openness_trace.reset()
 
         self.env_local_time = observation[0]
-        mean_area = observation[1]
-        self.mean_clean_areas[self.env_local_time.replace(second=0, microsecond=0)] = (
-            float(mean_area)
-        )
 
         if self.is_night():
             action = 0.0
@@ -82,10 +78,10 @@ class MotionTrackingController(BaseAgent):
         return action, {}
 
     def step(self, reward: float, observation: np.ndarray, extra: Dict[str, Any]):
+        total_area = observation[1] if not self.is_night() else 0.0
         self.env_local_time = observation[0]
-        mean_area = observation[1]
-        self.mean_clean_areas[self.env_local_time.replace(second=0, microsecond=0)] = (
-            float(mean_area)
+        self.total_areas[self.env_local_time.replace(second=0, microsecond=0)] = (
+            float(total_area)
         )
 
         if self.is_night():
@@ -100,8 +96,8 @@ class MotionTrackingController(BaseAgent):
             today_first_time = self.env_local_time.replace(
                 hour=self.start_hour, minute=1, second=0, microsecond=0
             )
-            today_zeroth_area = self.mean_clean_areas.get(today_zeroth_time, -1)
-            today_first_area = self.mean_clean_areas.get(today_first_time, -1)
+            today_zeroth_area = self.total_areas.get(today_zeroth_time, -1)
+            today_first_area = self.total_areas.get(today_first_time, -1)
             if today_zeroth_area == -1 or today_first_area == -1:
                 logger.warning(
                     f"No same-day morning measurement available at {self.env_local_time}. Enforce standard lighting."
@@ -113,7 +109,7 @@ class MotionTrackingController(BaseAgent):
                 )
                 action = 1.0
             else:
-                self.openness_trace.update(mean_area / today_first_area - 1)
+                self.openness_trace.update(total_area / today_first_area - 1)
                 action = self.get_action()
 
         return action, {}
