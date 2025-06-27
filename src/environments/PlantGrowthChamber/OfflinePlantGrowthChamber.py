@@ -35,6 +35,8 @@ class OfflinePlantGrowthChamber(BaseEnvironment):
         self.daily_max_areas = {}
         self.daily_areas = {}
         self.dli = 0
+        self.start_time = time(9, 30)
+        self.end_time = time(20, 30)
 
     def load_dataset(self, dataset_path: Path) -> pd.DataFrame:
         processed_csv_paths = sorted(dataset_path.glob("raw.csv"))
@@ -55,9 +57,9 @@ class OfflinePlantGrowthChamber(BaseEnvironment):
             .reset_index()
         )
 
-        # Remove time stamps before 9:30 and after 20:30, which are not relevant when twilight is used
         df = df[
-            (time(9, 30) <= df["time"].dt.time) & (df["time"].dt.time <= time(20, 31))
+            (self.start_time <= df["time"].dt.time)
+            & (df["time"].dt.time <= self.end_time)
         ]
 
         # Remove incomplete days
