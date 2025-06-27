@@ -35,8 +35,8 @@ class OfflinePlantGrowthChamber(BaseEnvironment):
         self.daily_max_areas = {}
         self.daily_areas = {}
         self.dli = 0
-        self.start_time = time(9, 30)
-        self.end_time = time(20, 30)
+        self.start_time = time(*kwargs.get("start_time", (9, 30)))
+        self.end_time = time(*kwargs.get("end_time", (20, 30)))
 
     def load_dataset(self, dataset_path: Path) -> pd.DataFrame:
         processed_csv_paths = sorted(dataset_path.glob("raw.csv"))
