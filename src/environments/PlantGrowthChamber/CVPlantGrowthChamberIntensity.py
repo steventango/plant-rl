@@ -16,8 +16,8 @@ class CVPlantGrowthChamberIntensity_MotionTracking(CVPlantGrowthChamberIntensity
         local_time = epoch_time.astimezone(self.tz)
 
         if not df.empty:
-            mean_clean_area = df["clean_area"].mean() if "clean_area" in df else 0.0
+            total_area = df["area"].sum()
         else:
-            mean_clean_area = 0.0
+            total_area = 0.0
 
-        return np.array([local_time, mean_clean_area])
+        return np.array([local_time, total_area])
