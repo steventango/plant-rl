@@ -64,16 +64,12 @@ def plot_q_diff(daytime_observation_space, area_observation_space, Q_diff):
 
     ax_q_diff.set_title("Q(s, a=1) - Q(s, a=0)")
     ax_q_diff.set_xlabel("s[0]")
-    xtick_labels_values = np.linspace(0, 1, 7)
+    xtick_labels_values = np.linspace(0, 1, 11)
     ax_q_diff.set_xticks(xtick_labels_values)
-    ax_q_diff.set_xticklabels([f"{int(t * 11) + 9}" for t in xtick_labels_values])
 
     ax_q_diff.set_ylabel("s[1]")
-    ytick_labels_values = np.linspace(0, 1, 6)
+    ytick_labels_values = np.linspace(0, 1, 11)
     ax_q_diff.set_yticks(ytick_labels_values)
-    ax_q_diff.set_yticklabels(
-        [f"{area:.1f}" for area in ytick_labels_values], rotation=0
-    )
 
     # Plot Policy
     ax_policy = axs[1]
@@ -99,12 +95,8 @@ def plot_q_diff(daytime_observation_space, area_observation_space, Q_diff):
     ax_policy.set_title("Policy")
     ax_policy.set_xlabel("s[0]")
     ax_policy.set_xticks(xtick_labels_values)
-    ax_policy.set_xticklabels([f"{int(t * 11) + 9}" for t in xtick_labels_values])
     ax_policy.set_ylabel("s[1]")
     ax_policy.set_yticks(ytick_labels_values)
-    ax_policy.set_yticklabels(
-        [f"{area:.1f}" for area in ytick_labels_values], rotation=0
-    )
 
     # Set labels for policy colorbar
     cbar.set_ticklabels(["A=0", "N/A", "A=1"])
@@ -148,14 +140,12 @@ def plot_q(daytime_observation_space, area_observation_space, Q):
         ax.set_title(f"Q(s, {i})")
 
         ax.set_xlabel("s[0]")
-        xtick_labels_values = np.linspace(0, 1, 7)
+        xtick_labels_values = np.linspace(0, 1, 11)
         ax.set_xticks(xtick_labels_values)
-        ax.set_xticklabels([f"{int(t * 11) + 9}" for t in xtick_labels_values])
 
         ax.set_ylabel("s[1]")
-        ytick_labels_values = np.linspace(0, 1, 6)
+        ytick_labels_values = np.linspace(0, 1, 11)
         ax.set_yticks(ytick_labels_values)
-        ax.set_yticklabels([f"{area:.1f}" for area in ytick_labels_values], rotation=0)
     fig.tight_layout()
     fig.suptitle("Q-values", fontsize=16)
     return fig, axs
@@ -458,17 +448,11 @@ def plot_state_action_distribution(df, q_plots_dir, logger):
                             "s[1]" if i == 0 else ""
                         )  # Only label y-axis on the first plot
 
-                        xtick_labels_values = np.linspace(0, 1, 7)
+                        xtick_labels_values = np.linspace(0, 1, 11)
                         ax.set_xticks(xtick_labels_values)
-                        ax.set_xticklabels(
-                            [f"{int(t * 11) + 9}" for t in xtick_labels_values]
-                        )
 
-                        ytick_labels_values = np.linspace(0, 1, 6)
+                        ytick_labels_values = np.linspace(0, 1, 11)
                         ax.set_yticks(ytick_labels_values)
-                        ax.set_yticklabels(
-                            [f"{area:.1f}" for area in ytick_labels_values], rotation=0
-                        )
 
                     plt.tight_layout()  # Adjust layout to make space for suptitle
                     plot_filename = q_plots_dir / "state_action_count_heatmap.jpg"
