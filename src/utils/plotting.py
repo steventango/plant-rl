@@ -4,7 +4,6 @@ import matplotlib.colors as mcolors  # type: ignore
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
 
 
 def confidenceInterval(mean, stderr):
@@ -41,6 +40,15 @@ def plot_q_diff(daytime_observation_space, area_observation_space, Q_diff):
         1, 2, figsize=(12, 5)
     )  # Two subplots: one for Q-diff, one for policy
 
+    def _get_edges(space):
+        """Helper to calculate cell edges from cell centers."""
+        step = space[1] - space[0]
+        edges = np.append(space - step / 2, space[-1] + step / 2)
+        return edges
+
+    daytime_edges = _get_edges(daytime_observation_space)
+    area_edges = _get_edges(area_observation_space)
+
     # Plot Q-difference (similar to before)
     ax_q_diff = axs[0]
     eps = 1e-5  # Small epsilon to avoid division by zero
@@ -48,27 +56,24 @@ def plot_q_diff(daytime_observation_space, area_observation_space, Q_diff):
     vmax = max(Q_diff.max(), eps)  # Ensure vmax is not greater than eps
     norm = mcolors.TwoSlopeNorm(vmin=vmin, vcenter=0.0, vmax=vmax)
 
-    sns.heatmap(Q_diff.T, ax=ax_q_diff, cmap="bwr", cbar=True, norm=norm)
-    if ax_q_diff.images:
-        ax_q_diff.set_aspect("auto")
+    mesh = ax_q_diff.pcolormesh(
+        daytime_edges, area_edges, Q_diff.T, cmap="bwr", norm=norm
+    )
+    fig.colorbar(mesh, ax=ax_q_diff)
+    ax_q_diff.set_aspect("auto")
 
     ax_q_diff.set_title("Q(s, a=1) - Q(s, a=0)")
     ax_q_diff.set_xlabel("s[0]")
-    num_daytime_bins = len(daytime_observation_space)
-    xtick_indices = np.linspace(0, num_daytime_bins - 1, 7, dtype=int)
     xtick_labels_values = np.linspace(0, 1, 7)
-    ax_q_diff.set_xticks(xtick_indices)
+    ax_q_diff.set_xticks(xtick_labels_values)
     ax_q_diff.set_xticklabels([f"{int(t * 11) + 9}" for t in xtick_labels_values])
 
     ax_q_diff.set_ylabel("s[1]")
-    num_area_bins = len(area_observation_space)
-    ytick_indices = np.linspace(0, num_area_bins - 1, 6, dtype=int)
     ytick_labels_values = np.linspace(0, 1, 6)
-    ax_q_diff.set_yticks(ytick_indices)
+    ax_q_diff.set_yticks(ytick_labels_values)
     ax_q_diff.set_yticklabels(
         [f"{area:.1f}" for area in ytick_labels_values], rotation=0
     )
-    ax_q_diff.invert_yaxis()
 
     # Plot Policy
     ax_policy = axs[1]
@@ -84,32 +89,25 @@ def plot_q_diff(daytime_observation_space, area_observation_space, Q_diff):
         ncolors=3,
     )  # Boundaries for the policy colormap
 
-    sns.heatmap(
-        policy.T,
-        ax=ax_policy,
-        cmap=cmap_policy,
-        norm=norm_policy,
-        cbar=True,
-        cbar_kws={"ticks": [-1, 0, 1]},  # Ticks for the policy colorbar
+    mesh_policy = ax_policy.pcolormesh(
+        daytime_edges, area_edges, policy.T, cmap=cmap_policy, norm=norm_policy
     )
-    if ax_policy.images:
-        ax_policy.set_aspect("auto")
+    cbar = fig.colorbar(mesh_policy, ax=ax_policy, ticks=[-1, 0, 1])
+
+    ax_policy.set_aspect("auto")
 
     ax_policy.set_title("Policy")
     ax_policy.set_xlabel("s[0]")
-    ax_policy.set_xticks(xtick_indices)
+    ax_policy.set_xticks(xtick_labels_values)
     ax_policy.set_xticklabels([f"{int(t * 11) + 9}" for t in xtick_labels_values])
     ax_policy.set_ylabel("s[1]")
-    ax_policy.set_yticks(ytick_indices)
+    ax_policy.set_yticks(ytick_labels_values)
     ax_policy.set_yticklabels(
         [f"{area:.1f}" for area in ytick_labels_values], rotation=0
     )
-    ax_policy.invert_yaxis()
 
     # Set labels for policy colorbar
-    if ax_policy.collections:
-        cbar = ax_policy.collections[0].colorbar
-        cbar.set_ticklabels(["A=0", "N/A", "A=1"])
+    cbar.set_ticklabels(["A=0", "N/A", "A=1"])
     fig.tight_layout()
     fig.suptitle("Q-value Difference and Policy", fontsize=16)
     return fig, axs
@@ -125,35 +123,39 @@ def plot_q(daytime_observation_space, area_observation_space, Q):
     vmin = Q.min()
     vmax = Q.max()
 
+    def _get_edges(space):
+        """Helper to calculate cell edges from cell centers."""
+        step = space[1] - space[0]
+        edges = np.append(space - step / 2, space[-1] + step / 2)
+        return edges
+
+    daytime_edges = _get_edges(daytime_observation_space)
+    area_edges = _get_edges(area_observation_space)
+
     for i, ax in enumerate(axs):  # type: ignore
         # Create the heatmap
-        sns.heatmap(
+        mesh = ax.pcolormesh(
+            daytime_edges,
+            area_edges,
             Q[:, :, i].T,
-            ax=ax,
             cmap="viridis",
-            cbar=True,
             vmin=vmin,
             vmax=vmax,
         )
-        if ax.images:
-            ax.set_aspect("auto")
+        fig.colorbar(mesh, ax=ax)
+        ax.set_aspect("auto")
 
         ax.set_title(f"Q(s, {i})")
 
         ax.set_xlabel("s[0]")
-        num_daytime_bins = len(daytime_observation_space)
-        xtick_indices = np.linspace(0, num_daytime_bins - 1, 7, dtype=int)
         xtick_labels_values = np.linspace(0, 1, 7)
-        ax.set_xticks(xtick_indices)
+        ax.set_xticks(xtick_labels_values)
         ax.set_xticklabels([f"{int(t * 11) + 9}" for t in xtick_labels_values])
 
         ax.set_ylabel("s[1]")
-        num_area_bins = len(area_observation_space)
-        ytick_indices = np.linspace(0, num_area_bins - 1, 6, dtype=int)
         ytick_labels_values = np.linspace(0, 1, 6)
-        ax.set_yticks(ytick_indices)
+        ax.set_yticks(ytick_labels_values)
         ax.set_yticklabels([f"{area:.1f}" for area in ytick_labels_values], rotation=0)
-        ax.invert_yaxis()
     fig.tight_layout()
     fig.suptitle("Q-values", fontsize=16)
     return fig, axs
@@ -172,9 +174,7 @@ def _prepare_trajectory_df(df):
     # Identify trajectory boundaries
     plot_df["trajectory_id"] = plot_df["terminal"].isnull().cumsum()
     if "trajectory_name" in plot_df.columns:
-        plot_df["trajectory_name"] = (
-            plot_df["trajectory_name"].fillna(method="ffill").fillna(method="bfill")
-        )
+        plot_df["trajectory_name"] = plot_df["trajectory_name"].bfill()
     else:
         plot_df["trajectory_name"] = None
 
@@ -199,7 +199,7 @@ def _prepare_trajectory_df(df):
     return plot_df
 
 
-def _plot_single_trajectory_on_ax(ax, traj_df, scale=1):
+def _plot_single_trajectory_on_ax(ax, traj_df):
     """Plots a single trajectory on a given matplotlib axes."""
     num_segments = len(traj_df)
     actions = (
@@ -218,10 +218,10 @@ def _plot_single_trajectory_on_ax(ax, traj_df, scale=1):
         else:
             color = blues(time_norm[j] * 0.7 + 0.3)
 
-        daytime_scaled = traj_df["daytime"].iloc[j] * scale
-        area_scaled = traj_df["area"].iloc[j] * scale
-        next_daytime_scaled = traj_df["next_daytime"].iloc[j] * scale
-        next_area_scaled = traj_df["next_area"].iloc[j] * scale
+        daytime_scaled = traj_df["daytime"].iloc[j]
+        area_scaled = traj_df["area"].iloc[j]
+        next_daytime_scaled = traj_df["next_daytime"].iloc[j]
+        next_area_scaled = traj_df["next_area"].iloc[j]
 
         ax.quiver(
             daytime_scaled,
@@ -292,7 +292,7 @@ def plot_q_values_and_diff(
                     ax = axs_diff[1]
                     for traj_id in trajectory_ids:
                         traj_df = plot_df[plot_df["trajectory_id"] == traj_id]
-                        _plot_single_trajectory_on_ax(ax, traj_df, scale=11 * 6)
+                        _plot_single_trajectory_on_ax(ax, traj_df)
             except Exception as e:
                 logger.error(
                     f"Step {step}: Error during trajectory overlay plotting: {e}",
@@ -348,14 +348,14 @@ def plot_state_action_distribution(df, q_plots_dir, logger):
 
                 plot_df["daytime_bin"] = pd.cut(
                     plot_df["daytime"],
-                    bins=daytime_bin_edges,
+                    bins=daytime_bin_edges.tolist(),
                     labels=daytime_bin_labels,
                     include_lowest=True,
                     right=True,
                 )
                 plot_df["area_bin"] = pd.cut(
                     plot_df["area"],
-                    bins=area_bin_edges,
+                    bins=area_bin_edges.tolist(),
                     labels=area_bin_labels,
                     include_lowest=True,
                     right=True,
@@ -417,18 +417,20 @@ def plot_state_action_distribution(df, q_plots_dir, logger):
                                 else 0
                             )
 
-                            sns.heatmap(
-                                heatmap_data.T,  # Transpose for daytime on x, area on y
-                                ax=ax,
+                            mesh = ax.pcolormesh(
+                                daytime_bin_edges,
+                                area_bin_edges,
+                                heatmap_data.T.values,  # Transpose for daytime on x, area on y
                                 cmap="viridis",  # Or "Reds" for action 1, "Blues" for action 0 if preferred
                                 vmin=0,
                                 vmax=(
                                     current_max_count if current_max_count > 0 else 1
                                 ),  # Avoid error if all counts are 0
-                                cbar_kws={
-                                    "label": f"Count of Action {int(action_val)}"
-                                },
-                                square=False,
+                            )
+                            fig.colorbar(
+                                mesh,
+                                ax=ax,
+                                label=f"Count of Action {int(action_val)}",
                             )
                         else:
                             # If no data for this action, plot an empty heatmap or indicate no data
@@ -436,16 +438,18 @@ def plot_state_action_distribution(df, q_plots_dir, logger):
                             empty_heatmap_data = pd.DataFrame(
                                 0, index=daytime_bin_labels, columns=area_bin_labels
                             )
-                            sns.heatmap(
-                                empty_heatmap_data.T,
-                                ax=ax,
+                            mesh = ax.pcolormesh(
+                                daytime_bin_edges,
+                                area_bin_edges,
+                                empty_heatmap_data.T.values,
                                 cmap="viridis",
                                 vmin=0,
                                 vmax=1,
-                                cbar_kws={
-                                    "label": f"Count of Action {int(action_val)} (No Data)"
-                                },
-                                square=False,
+                            )
+                            fig.colorbar(
+                                mesh,
+                                ax=ax,
+                                label=f"Count of Action {int(action_val)} (No Data)",
                             )
 
                         ax.set_title(f"Distribution of Action {int(action_val)}")
@@ -454,33 +458,17 @@ def plot_state_action_distribution(df, q_plots_dir, logger):
                             "s[1]" if i == 0 else ""
                         )  # Only label y-axis on the first plot
 
-                        daytime_observation_space_for_labels = np.linspace(
-                            0, 1, num_daytime_bins, endpoint=True
-                        )
-                        area_observation_space_for_labels = np.linspace(
-                            0, 1, num_area_bins, endpoint=True
-                        )
-                        hour_interval = 6
-                        xtick_indices = np.arange(0, num_daytime_bins, hour_interval)
-                        ax.set_xticks(xtick_indices + 0.5)
-                        xtick_labels_values = daytime_observation_space_for_labels[
-                            ::hour_interval
-                        ]
+                        xtick_labels_values = np.linspace(0, 1, 7)
+                        ax.set_xticks(xtick_labels_values)
                         ax.set_xticklabels(
                             [f"{int(t * 11) + 9}" for t in xtick_labels_values]
                         )
 
-                        area_tick_interval = 10
-                        ytick_indices = np.arange(0, num_area_bins, area_tick_interval)
-                        ax.set_yticks(ytick_indices + 0.5)
-                        ytick_labels_values = area_observation_space_for_labels[
-                            ::area_tick_interval
-                        ]
+                        ytick_labels_values = np.linspace(0, 1, 6)
+                        ax.set_yticks(ytick_labels_values)
                         ax.set_yticklabels(
                             [f"{area:.1f}" for area in ytick_labels_values], rotation=0
                         )
-
-                        ax.invert_yaxis()
 
                     plt.tight_layout()  # Adjust layout to make space for suptitle
                     plot_filename = q_plots_dir / "state_action_count_heatmap.jpg"
