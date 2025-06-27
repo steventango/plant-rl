@@ -285,7 +285,7 @@ services:
       - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E9/P0/Spreadsheet11.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/A0/P0/MotionTrackingController.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -312,7 +312,7 @@ services:
       - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E9/P0/Spreadsheet12.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/A0/P0/MotionTrackingController.json -i 0 --deploy
     deploy:
       resources:
         reservations:
