@@ -52,7 +52,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.normalize_reward = normalize_reward
         self.glue = None
 
-        self.last_action = None
+        self.last_action = np.zeros(6)
         self.plant_areas = np.array([])
 
     async def _ensure_session(self):
@@ -99,21 +99,24 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.plant_stats = np.array(self.df, dtype=np.float32)
 
     def get_clean_area(self, plant_areas):
-        clean_area = plant_areas.copy()
-        mean = np.array(
-            [self.uema_areas[i].compute() for i in range(self.zone.num_plants)]
-        ).flatten()
-        cond = (self.area_count > self.minimum_area_count) & (
-            (plant_areas < (1 - self.clean_area_lower) * mean)
-            | (plant_areas > (1 + self.clean_area_upper) * mean)
-        )
-        clean_area[cond] = self.prev_plant_areas[cond]
-        self.prev_plant_areas[~cond] = plant_areas[~cond]
-        for i, area in enumerate(plant_areas):
-            if area > 0:
-                self.uema_areas[i].update(area)
-        self.area_count += 1
-        return clean_area
+        if np.sum(self.last_action) == 0:
+            return np.zeros(len(plant_areas))
+        else:
+            clean_area = plant_areas.copy()
+            mean = np.array(
+                [self.uema_areas[i].compute() for i in range(self.zone.num_plants)]
+            ).flatten()
+            cond = (self.area_count > self.minimum_area_count) & (
+                (plant_areas < (1 - self.clean_area_lower) * mean)
+                | (plant_areas > (1 + self.clean_area_upper) * mean)
+            )
+            clean_area[cond] = self.prev_plant_areas[cond]
+            self.prev_plant_areas[~cond] = plant_areas[~cond]
+            for i, area in enumerate(plant_areas):
+                if area > 0:
+                    self.uema_areas[i].update(area)
+            self.area_count += 1
+            return clean_area
 
     def get_time(self):
         return datetime.now(tz=self.tz_utc)
