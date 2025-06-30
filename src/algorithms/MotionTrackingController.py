@@ -23,8 +23,8 @@ class MotionTrackingController(BaseAgent):
         seed: int,
     ):
         super().__init__(observations, actions, params, collector, seed)
-        self.start_hour = 10  # included in daytime
-        self.start_min = 15  # included in daytime
+        self.start_hour = 9
+        self.start_min = 0
         self.end_hour = 21  # excluded in daytime
 
         self.env_local_time = None
@@ -35,7 +35,7 @@ class MotionTrackingController(BaseAgent):
             0.50  # lowest allowable intensity during daytime. Fixed at a dim level.
         )
         self.Imax = 1.0  # highest allowable intensity. Can be tuned by higher-level RL
-        self.sensitivity = 5.0  # roughly (change in intensity) / (change in plants openness). Can be tuned by higher-level RL
+        self.sensitivity = 10.0  # roughly (change in intensity) / (change in plants openness). Can be tuned by higher-level RL
 
     def is_night(self) -> bool:
         assert self.env_local_time is not None, (
@@ -71,6 +71,10 @@ class MotionTrackingController(BaseAgent):
         self.openness_trace.reset()
 
         self.env_local_time = observation[0]
+        mean_area = observation[1]
+        self.mean_areas[self.env_local_time.replace(second=0, microsecond=0)] = float(
+            mean_area
+        )
 
         if self.is_night():
             action = 0.0
