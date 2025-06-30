@@ -8,6 +8,8 @@ from PyExpUtils.collection.Collector import Collector
 
 from algorithms.BaseAgent import BaseAgent
 from utils.metrics import UnbiasedExponentialMovingAverage as uema
+from datetime import timedelta
+
 
 logger = logging.getLogger("MotionTrackingController")
 logger.setLevel(logging.DEBUG)
@@ -30,12 +32,11 @@ class MotionTrackingController(BaseAgent):
         self.env_local_time = None
         self.mean_areas = defaultdict(float)
         self.openness_trace = uema(alpha=0.5)
+        self.openness_record = []
 
-        self.Imin = (
-            0.50  # lowest allowable intensity during daytime. Fixed at a dim level.
-        )
-        self.Imax = 1.0  # highest allowable intensity. Can be tuned by higher-level RL
-        self.sensitivity = 10.0  # roughly (change in intensity) / (change in plants openness). Can be tuned by higher-level RL
+        self.Imin = 0.5  # Lowest intensity. Fixed at a dim level at which CV still functions well.
+        self.Imax = 1.1  # Highest intensity. Its optimal value depends on plant species, developmental stage, and environmental factors. Can be tuned by a higher-level RL agent
+        self.sensitivity = 6.0  # = (change in intensity) / (change in plants openness). Adjusted daily to attempt to reach Imax when openness is the largest.
 
     def is_night(self) -> bool:
         assert self.env_local_time is not None, (
@@ -63,12 +64,17 @@ class MotionTrackingController(BaseAgent):
 
     def get_action(self) -> float:
         openness = self.openness_trace.compute().item()
-        return self.Imin + max(
-            0, (self.Imax - self.Imin) * tanh(self.sensitivity * openness)
-        )
+        return min(self.Imin + self.sensitivity * openness, self.Imax)
+    
+    def adjust_sensitivity(self):
+        if self.openness_record != []:
+            max_openness = np.mean(np.sort(self.openness_record)[-10:])
+            self.sensitivity = (self.Imax - self.Imin) / max_openness
+            logger.info(f'Adjusted sensitivity = {self.sensitivity:.2f}')
 
     def start(self, observation: np.ndarray, extra: Dict[str, Any]):  # type: ignore
         self.openness_trace.reset()
+        self.openness_record = []
 
         self.env_local_time = observation[0]
         mean_area = observation[1]
@@ -98,6 +104,8 @@ class MotionTrackingController(BaseAgent):
         if self.is_night():
             action = 0.0
         elif self.is_zeroth_tod():
+            self.adjust_sensitivity()
+            self.openness_record = []
             self.openness_trace.reset()
             action = self.Imin
         else:
@@ -120,7 +128,9 @@ class MotionTrackingController(BaseAgent):
                 )
                 action = 1.0
             else:
-                self.openness_trace.update(mean_area / today_first_area - 1)
+                openness = mean_area / today_first_area - 1
+                self.openness_trace.update(openness)
+                self.openness_record.append(openness)
                 action = self.get_action()
 
         return action, {}
