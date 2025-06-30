@@ -1,5 +1,6 @@
 import numpy as np  # type: ignore
 
+
 from environments.PlantGrowthChamber.PlantGrowthChamberIntensity import (
     PlantGrowthChamberIntensity,
 )
@@ -16,8 +17,10 @@ class CVPlantGrowthChamberIntensity_MotionTracking(CVPlantGrowthChamberIntensity
         local_time = epoch_time.astimezone(self.tz)
 
         if not df.empty:
-            total_area = df["area"].sum()
+            clean_areas = df["clean_area"]
+            # mean_area = clean_areas.mean()
+            mean_area = np.mean(clean_areas[18:])
         else:
-            total_area = 0.0
+            mean_area = 0.0
 
-        return np.array([local_time, total_area])
+        return np.array([local_time, mean_area])
