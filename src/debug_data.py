@@ -19,6 +19,7 @@ def get_zone_from_config(config):
         camera_left_url=config_zone["camera_left_url"],
         camera_right_url=config_zone["camera_right_url"],
         lightbar_url=config_zone["lightbar_url"],
+        calibration = None,
         trays=[
             Tray(
                 n_wide=tray["n_wide"],
