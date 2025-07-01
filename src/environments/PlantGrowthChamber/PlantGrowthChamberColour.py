@@ -10,7 +10,7 @@ class PlantGrowthChamberColour(PlantGrowthChamber):
     async def step(self, action: int | np.ndarray):
         if isinstance(action, np.ndarray):
             return await super().step(action)
-            
+
         assert self.zone.calibration is list
         action = np.array(self.zone.calibration[action])
         return await super().step(action)  # type: ignore
