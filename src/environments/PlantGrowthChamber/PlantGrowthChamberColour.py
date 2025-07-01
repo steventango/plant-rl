@@ -2,6 +2,7 @@ import numpy as np  # type: ignore
 
 from environments.PlantGrowthChamber.PlantGrowthChamber import PlantGrowthChamber
 
+
 class PlantGrowthChamberColour(PlantGrowthChamber):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
