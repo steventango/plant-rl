@@ -159,7 +159,7 @@ def log(
         data["time"] = env.time.timestamp()
 
     if not is_mock_env:
-        if hasattr(env, "image"):
+        if hasattr(env, "image") and env.time.minute % 10 == 0:
             data["raw_image"] = wandb.Image(env.image, file_type="jpg")
 
             if hasattr(env, "detections"):

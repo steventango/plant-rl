@@ -2760,7 +2760,6 @@ dependencies = [
     { name = "pyexputils-andnp" },
     { name = "pyfixedreps-andnp" },
     { name = "pyrlenvs-andnp" },
-    { name = "pytest-asyncio" },
     { name = "replaytables-andnp" },
     { name = "requests" },
     { name = "rlevaluation" },
@@ -2780,6 +2779,7 @@ dev = [
     { name = "pre-commit" },
     { name = "pyright" },
     { name = "pytest" },
+    { name = "pytest-asyncio" },
     { name = "pytest-cov" },
     { name = "ruff" },
 ]
@@ -2807,7 +2807,6 @@ requires-dist = [
     { name = "pyexputils-andnp", specifier = "~=7.0" },
     { name = "pyfixedreps-andnp", specifier = "~=4.0" },
     { name = "pyrlenvs-andnp", specifier = "~=2.0" },
-    { name = "pytest-asyncio", specifier = ">=1.0.0" },
     { name = "replaytables-andnp", specifier = "~=6.0" },
     { name = "requests", specifier = ">=2.32.3" },
     { name = "rlevaluation", git = "https://github.com/rlai-lab/rl-evaluation?rev=ef3a117f7515ba74e7d6ef455e0a2b6a481531b8" },
@@ -2826,6 +2825,7 @@ dev = [
     { name = "pre-commit" },
     { name = "pyright" },
     { name = "pytest" },
+    { name = "pytest-asyncio", specifier = ">=1.0.0" },
     { name = "pytest-cov" },
     { name = "ruff" },
 ]
