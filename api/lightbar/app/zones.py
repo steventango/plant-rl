@@ -5,7 +5,7 @@ class Zone:
 
 
 ZONES = {
-    "alliance-zone1": Zone(0x25, 0x24),
+    "alliance-zone1": Zone(0x16, 0x17),
     "alliance-zone2": Zone(0x24, 0x26),
     "alliance-zone3": Zone(0x41, 0x42),
     "alliance-zone4": Zone(0x49, 0x54),
