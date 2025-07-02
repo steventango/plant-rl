@@ -1,6 +1,5 @@
 import logging  # type: ignore
 from collections import defaultdict
-from math import tanh
 from typing import Any, Dict, Tuple
 
 import numpy as np
@@ -8,7 +7,6 @@ from PyExpUtils.collection.Collector import Collector
 
 from algorithms.BaseAgent import BaseAgent
 from utils.metrics import UnbiasedExponentialMovingAverage as uema
-from datetime import timedelta
 
 
 logger = logging.getLogger("MotionTrackingController")
@@ -65,12 +63,12 @@ class MotionTrackingController(BaseAgent):
     def get_action(self) -> float:
         openness = self.openness_trace.compute().item()
         return min(self.Imin + self.sensitivity * openness, self.Imax)
-    
+
     def adjust_sensitivity(self):
         if self.openness_record != []:
             max_openness = np.mean(np.sort(self.openness_record)[-10:])
             self.sensitivity = (self.Imax - self.Imin) / max_openness
-            logger.info(f'Adjusted sensitivity = {self.sensitivity:.2f}')
+            logger.info(f"Adjusted sensitivity = {self.sensitivity:.2f}")
 
     def start(self, observation: np.ndarray, extra: Dict[str, Any]):  # type: ignore
         self.openness_trace.reset()
