@@ -1,138 +1,111 @@
-import httpx
-from fastapi import FastAPI, Response
+import json
+from pathlib import Path
+
+import pandas as pd
+from fastapi import FastAPI, Request, Response
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+
+DATA_ROOT = Path("/data")
+APP_ROOT = Path(__file__).parent
 
 app = FastAPI()
 
+app.mount("/static", StaticFiles(directory=DATA_ROOT), name="static")
+templates = Jinja2Templates(directory=APP_ROOT / "templates")
+
 
 @app.get("/", response_class=HTMLResponse)
-async def show_zones():
-    zones = [1, 2, 3, 6, 8, 9]
-    response = """
-    <html>
-    <head>
-    <style>
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        margin: 0 auto;
-      }
-      .zone {
-        border: 1px solid #000;
-        height: 50vh;
-        overflow: hidden;
-        display: grid;
-        grid-template-rows: auto;
-        align-content: start;
-      }
-      h3 {
-        text-align: center;
-        grid-row: 1 / 2;
-        margin: 0;
-      }
-      body {
-        font-family: sans-serif;
-        margin: 0;
-      }
-      pre {
-        white-space: pre-wrap;
-      }
-      img {
-        width: 100%;
-        aspect-ratio: 4 / 3;
-        background-color: #ccc;
-        grid-row: 2 / 3;
-      }
-      .images {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        grid-row: 2 / 3;
-      }
-    </style>
-    </head>
-    <body>
-      <div class="grid">
-    """
-    for zone in zones:
-        response += f"""
-        <div class="zone">
-          <h3>Zone {zone}</h3>
-          <div class="images">
-            <img/>
-            <img/>
-          </div>
-          <pre><code></code></pre>
-          <code>Fetched at: <span class="fetch-time" data-iso=""></span></code>
-        </div>
-        """
-    response += """
-      </div>
-      <script>
-        async function reloadZone(zone) {
-          const fetchTimeElement = zone.querySelector(".fetch-time");
-          fetchTimeElement.textContent = new Date().toLocaleString();
-          const images = zone.querySelectorAll("img");
-          const zoneId = zone.querySelector("h3").textContent.split(" ")[1];
-          for (const [index, img] of images.entries()) {
-            const src = "/proxy/zone/0" + zoneId + "/camera/" + (index + 1).toString().padStart(2, "0") + ".jpg";
-            const newSrc = src + "?t=" + Date.now();
-            const newImg = new Image();
-            newImg.onload = () => {
-              img.src = newSrc;
-            };
-            newImg.src = newSrc;
-          }
-          try {
-            const response = await fetch(`/proxy/zone/${zoneId}/latest`);
-            const data = await response.json();
-            const latestElement = zone.querySelector("pre code");
-            const action = data.action.map(arr => arr.map(num => parseFloat(num).toFixed(3)));
-            const safeAction = data.safe_action.map(arr => arr.map(num => parseFloat(num).toFixed(3)));
-            latestElement.textContent = `Action: [\n  ${action[0]},\n  ${action[1]}\n]\nSafe Action: [\n  ${safeAction[0]},\n  ${safeAction[1]}\n]`;
-          } catch (error) {
-            const latestElement = zone.querySelector("code");
-            const data = await response.text();
-            latestElement.textContent = `Error: ${data}`;
-          }
+async def list_datasets(request: Request):
+    # Recursively find all raw.csv files to identify dataset directories
+    dataset_paths = DATA_ROOT.rglob("raw.csv")
+    datasets = []
+    for p in dataset_paths:
+        try:
+            df = pd.read_csv(p)
+            if not df.empty:
+                latest_event = df.iloc[-1]
+                time = latest_event["time"]
+                image_name = latest_event["image_name"]
+                dataset_path = p.parent
+                image_dir = "images" if (dataset_path / "images").exists() else ""
+                image_path = f"/static/{p.parent.relative_to(DATA_ROOT)}/{image_dir}/{image_name}"
+                datasets.append(
+                    {
+                        "path": p.parent.relative_to(DATA_ROOT),
+                        "time": time,
+                        "image_path": image_path,
+                    }
+                )
+        except (pd.errors.EmptyDataError, KeyError):
+            # Ignore empty or malformed CSV files
+            continue
+
+    datasets.sort(key=lambda x: x["time"], reverse=True)
+
+    return templates.TemplateResponse(
+        "datasets.html", {"request": request, "datasets": datasets}
+    )
+
+
+@app.get("/dataset/{dataset_name:path}", response_class=HTMLResponse)
+async def show_dataset(request: Request, dataset_name: str):
+    dataset_path = DATA_ROOT / dataset_name
+    csv_path = dataset_path / "raw.csv"
+    if not csv_path.exists():
+        return Response(content="Dataset not found", status_code=404)
+
+    df = pd.read_csv(csv_path)
+
+    image_dir = "images" if (dataset_path / "images").exists() else ""
+    events = []
+    for time, group in df.groupby("time"):
+        left_image_row = group[group["image_name"].str.endswith("_left.png")]
+        right_image_row = group[group["image_name"].str.endswith("_right.png")]
+
+        left_image_path = None
+        if not left_image_row.empty:
+            image_name = left_image_row.iloc[0]["image_name"]
+            left_image_path = f"/static/{dataset_name}/{image_dir}/{image_name}"
+
+        right_image_path = None
+        if not right_image_row.empty:
+            image_name = right_image_row.iloc[0]["image_name"]
+            right_image_path = f"/static/{dataset_name}/{image_dir}/{image_name}"
+
+        if left_image_path is None and right_image_path is None:
+            # Fallback for older data
+            if not group.empty:
+                image_name = group.iloc[0]["image_name"]
+                left_image_path = f"/static/{dataset_name}/{image_dir}/{image_name}"
+
+        actions = {
+            f"action_{i}": group.iloc[0][f"action.{i}"]
+            for i in range(6)
+            if f"action.{i}" in group.columns
         }
+        mean_area = None
+        if "area" in group.columns:
+            mean_area = group["area"].mean()
 
-        async function reload() {
-          const zones = document.querySelectorAll(".zone");
-          const reloadPromises = Array.from(zones).map(reloadZone);
-          await Promise.all(reloadPromises);
-        }
-        setInterval(reload, 30000);
-        window.onload = reload;
-      </script>
-    </body>
-    </html>
-    """
-    return response
-
-
-@app.get("/proxy/zone/{zone}/latest")
-async def proxy_latest(zone: int):
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(
-            f"http://mitacs-zone{zone}.ccis.ualberta.ca:8080/action/latest", timeout=5
-        )
-        return Response(
-            content=resp.text,
-            status_code=resp.status_code,
-            media_type=resp.headers.get("Content-Type"),
+        events.append(
+            {
+                "time": time,
+                "left_image_path": left_image_path,
+                "right_image_path": right_image_path,
+                **actions,  # Include all action data
+                "mean_area": mean_area,
+            }
         )
 
+    events_json = json.dumps({"events": events})
 
-@app.get("/proxy/zone/{zone}/camera/{camera_id}.jpg")
-async def proxy_camera(zone: int, camera_id: int):
-    async with httpx.AsyncClient() as client:
-        resp = await client.get(
-            f"http://mitacs-zone{zone:02d}-camera{camera_id:02d}.ccis.ualberta.ca:8080/observation",
-            timeout=30,
-        )
-        return Response(
-            content=resp.content,
-            status_code=resp.status_code,
-            headers=resp.headers,
-            media_type=resp.headers.get("Content-Type"),
-        )
+    return templates.TemplateResponse(
+        "dataset.html",
+        {
+            "request": request,
+            "dataset_name": dataset_name,
+            "events_json": events_json,
+        },
+    )

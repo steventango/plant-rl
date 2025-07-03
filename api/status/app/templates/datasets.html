@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Datasets</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 0;
+      }
+      ul {
+        list-style-type: none;
+        padding: 0;
+      }
+      li {
+        padding: 8px 16px;
+        border-bottom: 1px solid #ddd;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+      li:last-child {
+        border-bottom: none
+      }
+      a {
+        text-decoration: none;
+        color: #000;
+        flex-grow: 1;
+      }
+      img {
+        max-height: 100px;
+        width: auto;
+      }
+    </style>
+</head>
+<body>
+  <h1>Datasets</h1>
+  <ul>
+    {% for dataset_info in datasets %}
+    <li>
+      <a href="/dataset/{{ dataset_info.path }}">{{ dataset_info.path }}</a>
+      {% if dataset_info.time %}
+      <span class="utc-time">{{ dataset_info.time }}</span>
+      <img src="{{ dataset_info.image_path }}" />
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  <script>
+    document.querySelectorAll('.utc-time').forEach(function(element) {
+      const utcTime = element.textContent;
+      if (utcTime) {
+        const localTime = new Date(utcTime).toLocaleString();
+        element.textContent = localTime;
+      }
+    });
+  </script>
+</body>
+</html>
