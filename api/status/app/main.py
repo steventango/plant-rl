@@ -61,24 +61,18 @@ async def show_dataset(request: Request, dataset_name: str):
     image_dir = "images" if (dataset_path / "images").exists() else ""
     events = []
     for time, group in df.groupby("time"):
-        left_image_row = group[group["image_name"].str.endswith("_left.png")]
-        right_image_row = group[group["image_name"].str.endswith("_right.png")]
+        row = group.iloc[0]
+        left_image_name = row["image_name"]
+        left_image_name = left_image_name.replace("_right", "_left")
+        right_image_name = left_image_name.replace("_left", "_right")
 
         left_image_path = None
-        if not left_image_row.empty:
-            image_name = left_image_row.iloc[0]["image_name"]
-            left_image_path = f"/static/{dataset_name}/{image_dir}/{image_name}"
+        if left_image_name:
+            left_image_path = f"/static/{dataset_name}/{image_dir}/{left_image_name}"
 
         right_image_path = None
-        if not right_image_row.empty:
-            image_name = right_image_row.iloc[0]["image_name"]
-            right_image_path = f"/static/{dataset_name}/{image_dir}/{image_name}"
-
-        if left_image_path is None and right_image_path is None:
-            # Fallback for older data
-            if not group.empty:
-                image_name = group.iloc[0]["image_name"]
-                left_image_path = f"/static/{dataset_name}/{image_dir}/{image_name}"
+        if right_image_name:
+            right_image_path = f"/static/{dataset_name}/{image_dir}/{right_image_name}"
 
         actions = {
             f"action_{i}": group.iloc[0][f"action.{i}"]
