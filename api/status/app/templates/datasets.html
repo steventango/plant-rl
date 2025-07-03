@@ -1,61 +1,61 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <title>Datasets</title>
-    <style>
-      body {
-        font-family: sans-serif;
-        margin: 0;
-      }
-      ul {
-        list-style-type: none;
-        padding: 0;
-      }
-      li {
-        padding: 8px 16px;
-        border-bottom: 1px solid #ddd;
-        display: flex;
-        align-items: center;
-        gap: 20px;
-      }
-      li:last-child {
-        border-bottom: none
-      }
-      a {
-        text-decoration: none;
-        color: #000;
-        flex-grow: 1;
-      }
-      img {
-        max-height: 100px;
-        width: auto;
-        margin: 0 5px;
-      }
-      .image-container {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-      }
-    </style>
+  <title>Datasets</title>
+  <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
+  <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+    }
+
+    .mdc-list-item {
+      height: 120px;
+    }
+
+    .mdc-list-item__meta {
+      display: flex;
+      align-items: center;
+      margin-left: auto;
+    }
+
+    img {
+      max-height: 100px;
+      width: auto;
+      margin: 0 5px;
+    }
+  </style>
 </head>
-<body>
-  <h1>Datasets</h1>
-  <ul>
+<body class="mdc-typography">
+  <header class="mdc-top-app-bar">
+    <div class="mdc-top-app-bar__row">
+      <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
+        <span class="mdc-top-app-bar__title">Datasets</span>
+      </section>
+    </div>
+  </header>
+  <ul class="mdc-list mdc-list--two-line" style="padding-top: 64px;">
     {% for dataset_info in datasets %}
-    <li>
-      <a href="/dataset/{{ dataset_info.path }}">{{ dataset_info.path }}</a>
+    <a class="mdc-list-item" href="/dataset/{{ dataset_info.path }}" tabindex="0">
+      <span class="mdc-list-item__ripple"></span>
+      <span class="mdc-list-item__text">
+        <span class="mdc-list-item__primary-text">{{ dataset_info.path }}</span>
+        <span class="mdc-list-item__secondary-text utc-time">{{ dataset_info.time }}</span>
+      </span>
       {% if dataset_info.time %}
-      <span class="utc-time">{{ dataset_info.time }}</span>
-      <div class="image-container">
+      <span class="mdc-list-item__meta">
         <img src="{{ dataset_info.left_image_path }}" alt="Left camera" />
         <img src="{{ dataset_info.right_image_path }}" alt="Right camera" />
-      </div>
+      </span>
       {% endif %}
-    </li>
+    </a>
     {% endfor %}
   </ul>
   <script>
-    document.querySelectorAll('.utc-time').forEach(function(element) {
+      mdc.autoInit();
+      document.querySelectorAll('.utc-time').forEach(function (element) {
       const utcTime = element.textContent;
       if (utcTime) {
         const localTime = new Date(utcTime).toLocaleString();
@@ -64,4 +64,5 @@
     });
   </script>
 </body>
+
 </html>
