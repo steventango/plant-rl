@@ -1,7 +1,7 @@
 {
-    "agent": "MotionTrackingController12",
+    "agent": "MotionTrackingController_Exp5_Zone12",
     "problem": "MotionTracking",
-    "total_steps": 10100,
+    "total_steps": 20000,
     "episode_cutoff": -1,
     "metaParameters": {
         "environment": {
