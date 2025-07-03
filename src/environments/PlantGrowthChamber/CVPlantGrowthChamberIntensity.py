@@ -18,8 +18,7 @@ class CVPlantGrowthChamberIntensity_MotionTracking(CVPlantGrowthChamberIntensity
 
         if not df.empty:
             clean_areas = df["clean_area"]
-            # mean_area = clean_areas.mean()
-            mean_area = np.mean(clean_areas[18:])
+            mean_area = clean_areas.mean()
         else:
             mean_area = 0.0
 
