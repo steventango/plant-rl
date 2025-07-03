@@ -49,6 +49,7 @@ dependencies = [
     'aiohttp>=3.11.18',
     'aiohttp-retry',
     'scipy<1.16',
+    'jinja2',
 ]
 
 [dependency-groups]

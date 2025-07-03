@@ -218,6 +218,13 @@ def process_image(
         threshold=0.05,
         text_threshold=0.05,
     )
+    if len(boxes) == 0:
+        return pd.DataFrame(
+            [
+                {**{col: 0 for col in plant_df_columns}, "plant_id": i + 1}
+                for i in range(num_plants)
+            ]
+        ), sv.Detections(np.zeros((0, 4)))  # type: ignore
 
     class_ids = np.full(len(class_names), 901, dtype=int)
     detections = sv.Detections(xyxy=boxes, confidence=confidences, class_id=class_ids)  # type: ignore

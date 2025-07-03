@@ -114,6 +114,7 @@ def test_process_E5_zone_1():
         camera_left_url="http://mitacs-zone01-camera02.ccis.ualberta.ca:8080/observation",
         camera_right_url=None,
         lightbar_url="http://mitacs-zone1.ccis.ualberta.ca:8080/action",
+        calibration=None,
         trays=[
             Tray(
                 n_wide=6,
@@ -147,6 +148,7 @@ def test_process_E5_zone_2():
         camera_left_url=None,
         camera_right_url="http://mitacs-zone02-camera02.ccis.ualberta.ca:8080/observation",
         lightbar_url="http://mitacs-zone2.ccis.ualberta.ca:8080/action",
+        calibration=None,
         trays=[
             Tray(
                 n_wide=6,
@@ -180,6 +182,7 @@ def test_process_E4_zone_1():
         camera_left_url="http://mitacs-zone01-camera02.ccis.ualberta.ca:8080/observation",
         camera_right_url=None,
         lightbar_url="http://mitacs-zone1.ccis.ualberta.ca:8080/action",
+        calibration=None,
         trays=[
             Tray(
                 n_wide=6,
@@ -213,6 +216,7 @@ def test_process_E4_zone_6():
         camera_left_url="http://mitacs-zone06-camera01.ccis.ualberta.ca:8080/observation",
         camera_right_url=None,
         lightbar_url="http://mitacs-zone6.ccis.ualberta.ca:8080/action",
+        calibration=None,
         trays=[
             Tray(
                 n_wide=4,
@@ -236,6 +240,7 @@ def test_process_E4_zone_3():
         camera_left_url="http://mitacs-zone03-camera01.ccis.ualberta.ca:8080/observation",
         camera_right_url=None,
         lightbar_url="http://mitacs-zone3.ccis.ualberta.ca:8080/action",
+        calibration=None,
         trays=[
             Tray(
                 n_wide=8,
