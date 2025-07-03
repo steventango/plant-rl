@@ -29,6 +29,12 @@
       img {
         max-height: 100px;
         width: auto;
+        margin: 0 5px;
+      }
+      .image-container {
+        display: flex;
+        gap: 10px;
+        align-items: center;
       }
     </style>
 </head>
@@ -40,7 +46,10 @@
       <a href="/dataset/{{ dataset_info.path }}">{{ dataset_info.path }}</a>
       {% if dataset_info.time %}
       <span class="utc-time">{{ dataset_info.time }}</span>
-      <img src="{{ dataset_info.image_path }}" />
+      <div class="image-container">
+        <img src="{{ dataset_info.left_image_path }}" alt="Left camera" />
+        <img src="{{ dataset_info.right_image_path }}" alt="Right camera" />
+      </div>
       {% endif %}
     </li>
     {% endfor %}

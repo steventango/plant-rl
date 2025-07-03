@@ -30,12 +30,20 @@ async def list_datasets(request: Request):
                 image_name = latest_event["image_name"]
                 dataset_path = p.parent
                 image_dir = "images" if (dataset_path / "images").exists() else ""
-                image_path = f"/static/{p.parent.relative_to(DATA_ROOT)}/{image_dir}/{image_name}"
+
+                # Generate both left and right image paths
+                left_image_name = image_name.replace("_right", "_left")
+                right_image_name = left_image_name.replace("_left", "_right")
+
+                left_image_path = f"/static/{p.parent.relative_to(DATA_ROOT)}/{image_dir}/{left_image_name}"
+                right_image_path = f"/static/{p.parent.relative_to(DATA_ROOT)}/{image_dir}/{right_image_name}"
+
                 datasets.append(
                     {
                         "path": p.parent.relative_to(DATA_ROOT),
                         "time": time,
-                        "image_path": image_path,
+                        "left_image_path": left_image_path,
+                        "right_image_path": right_image_path,
                     }
                 )
         except (pd.errors.EmptyDataError, KeyError):
