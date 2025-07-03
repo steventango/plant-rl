@@ -268,6 +268,7 @@ class TrayConfigApp:
                         camera_left_url=None,
                         camera_right_url=None,
                         lightbar_url=None,
+                        calibration=None,
                         trays=[],
                     )
 

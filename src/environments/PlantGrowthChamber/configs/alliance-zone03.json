@@ -4,6 +4,32 @@
         "camera_left_url": "http://alliance-zone03-camera01.ccis.ualberta.ca:8080/observation",
         "camera_right_url": "http://alliance-zone03-camera02.ccis.ualberta.ca:8080/observation",
         "lightbar_url": "http://142.244.191.28:8080/action",
-        "trays": []
+        "trays": [],
+        "calibration": [
+            [
+                0.16,
+                0.562,
+                0.136,
+                0.0,
+                0.06,
+                0.448
+            ],
+            [
+                0.502,
+                0.422,
+                0.102,
+                0.0,
+                0.0,
+                0.0
+            ],
+            [
+                0.0,
+                0.746,
+                0.178,
+                0.0,
+                0.164,
+                0.552
+            ]
+        ]
     }
 }

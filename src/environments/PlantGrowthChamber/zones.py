@@ -31,6 +31,7 @@ class Zone:
     camera_right_url: str | None
     lightbar_url: str | None
     trays: list[Tray]
+    calibration: list[list[float]] | None
 
     @property
     def num_plants(self) -> int:
@@ -43,6 +44,7 @@ def deserialize_zone(zone: dict) -> Zone:
         camera_left_url=zone.get("camera_left_url"),
         camera_right_url=zone.get("camera_right_url"),
         lightbar_url=zone.get("lightbar_url"),
+        calibration=zone.get("calibration"),
         trays=[
             Tray(
                 n_wide=tray["n_wide"],
@@ -65,6 +67,7 @@ def serialize_zone(zone: Zone) -> dict:
         "camera_left_url": zone.camera_left_url,
         "camera_right_url": zone.camera_right_url,
         "lightbar_url": zone.lightbar_url,
+        "calibration": zone.calibration,
         "trays": [
             {
                 "n_wide": tray.n_wide,
