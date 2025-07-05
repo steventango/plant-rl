@@ -4,8 +4,8 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from src.environments.PlantGrowthChamber.Calibration import Calibration
-from src.utils.constants import BALANCED_ACTION, BLUE_ACTION, RED_ACTION
+from environments.PlantGrowthChamber.Calibration import Calibration
+from utils.constants import BALANCED_ACTION, BLUE_ACTION, RED_ACTION
 
 
 def create_calibration_object(zone: str) -> Calibration:
