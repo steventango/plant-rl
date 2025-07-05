@@ -1,12 +1,13 @@
 import numpy as np
 
 from environments.PlantGrowthChamber.PlantGrowthChamber import PlantGrowthChamber
+from utils.constants import BALANCED_ACTION
 
 
 class PlantGrowthChamberIntensity(PlantGrowthChamber):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.reference_spectrum = np.array([0.398, 0.762, 0.324, 0.000, 0.332, 0.606])
+        self.reference_spectrum = BALANCED_ACTION
 
     async def step(self, action: float | np.ndarray):
         if isinstance(action, np.ndarray):
