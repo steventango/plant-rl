@@ -226,7 +226,7 @@ def test_red_action(calibration_z3: Calibration):
     """
     np.testing.assert_allclose(
         RED_ACTION,
-        np.array([12.5, 45.1, 5.2, 0.0, 57.2, 21.4]),
+        np.array([12.5, 45.1, 5.2, 0.0, 57.2, 7.9]),
         atol=1e-1,
     )
 

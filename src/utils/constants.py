@@ -6,10 +6,7 @@ def get_modified_action(ppfd: float, channel: int, offset: float) -> np.ndarray:
 
     modified_action = BALANCED_ACTION.copy()
     modified_action[channel] += adjustment
-    modified_action[:5] = modified_action[:5] / (ppfd + adjustment) * ppfd
-    modified_action[5] = min(
-        BALANCED_ACTION[5] / BALANCED_ACTION[4] * modified_action[4], 21.4
-    )
+    modified_action = modified_action / (ppfd + adjustment) * ppfd
 
     return modified_action
 
