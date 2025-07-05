@@ -9,7 +9,7 @@
             "timezone": "America/Edmonton"
         },
         "lam": 3.0,
-        "max_repeat": 5,
+        "max_repeat": 6,
         "timezone": "America/Edmonton"
     }
 }
