@@ -3,12 +3,11 @@ import numpy as np
 
 def get_modified_action(ppfd: float, channel: int, offset: float) -> np.ndarray:
     adjustment = -offset / (((offset + BALANCED_ACTION[channel]) / ppfd) - 1)
-    action = BALANCED_ACTION
 
     modified_action = BALANCED_ACTION.copy()
     modified_action[channel] += adjustment
     modified_action[:5] = modified_action[:5] / (ppfd + adjustment) * ppfd
-    modified_action[5] = action[5] / action[4] * modified_action[4]
+    modified_action[5] = BALANCED_ACTION[5] / BALANCED_ACTION[4] * modified_action[4]
 
     return modified_action
 
