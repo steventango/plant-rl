@@ -5,7 +5,7 @@
         "warm_white": 95,
         "orange_red": 101,
         "red": 75.0,
-        "far_red": 32807.58649999998
+        "far_red": 32.807586499999985
     },
     "safe_maximum": {
         "blue": 114,
@@ -13,6 +13,6 @@
         "warm_white": 80,
         "orange_red": 89,
         "red": 29.0,
-        "far_red": 21487.820999999996
+        "far_red": 21.487820999999997
     }
 }

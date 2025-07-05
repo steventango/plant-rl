@@ -42,5 +42,10 @@ def calculate_integrals(df):
         integral = np.trapz(df_filtered[col], df_filtered["Wavelength"])
         if integral < 0:
             integral = 0
-        integrals[col] = integral
+        # NOTE: this integral is in the unit of spectrometer counts, there is no easy conversion to PFD.
+        # To keep the units of far red on the same order of magnitude as the other channels, we divide by 1000,
+        # obtaining the somewhat arbitrary unit of spectrometer kilocounts.
+        # https://www.reddit.com/r/Optics/comments/1bb3hy8/comment/kua3k9y/
+        # https://en.wikipedia.org/wiki/Spectroradiometer
+        integrals[col] = integral / 1000
     return integrals
