@@ -29,7 +29,7 @@ class PoissonAgent(BaseAgent):
         # Sample an action uniformly
         action = self.rng.integers(0, self.actions)
         # Sample the number of repetitions from Poisson
-        repeat = self.rng.poisson(self.lam)
+        repeat = min(self.rng.poisson(self.lam), self.max_repeat)
         # Store in state
         self.current_action = action
         self.current_repeat = repeat
@@ -52,7 +52,7 @@ class PoissonAgent(BaseAgent):
         # Decrement repeat count, only sample new action if repeat is 0
         assert self.current_repeat is not None
         self.current_repeat -= 1
-        if self.current_repeat == 0:
+        if self.current_repeat < 1:
             # Sample a new action
             self.sample_action()
         return self.current_action, {}
