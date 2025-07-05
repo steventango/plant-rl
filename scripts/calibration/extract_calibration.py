@@ -71,7 +71,7 @@ for zone in range(1, 13):
             safe_maximum[action] = min(safe_maximum[action], max_value)
 
     # Save maximum to a JSON file
-    # /workspaces/plant-rl/src/environments/PlantGrowthChamber/configs/caibration.json
+    # /workspaces/plant-rl/src/environments/PlantGrowthChamber/configs/calibration.json
     max_file_path = "/workspaces/plant-rl/src/environments/PlantGrowthChamber/configs/calibration.json"
     with open(max_file_path, "w") as max_file:
         out = {
