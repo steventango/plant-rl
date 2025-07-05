@@ -4,10 +4,12 @@ from environments.PlantGrowthChamber.CVPlantGrowthChamberColor import (
     CVPlantGrowthChamberColor as Env,
 )
 from experiment.ExperimentModel import ExperimentModel
-from problems.BaseAsyncProblem import BaseAsyncProblem
+from problems.BasePlantGrowthChamberAsyncProblem import (
+    BasePlantGrowthChamberAsyncProblem,
+)
 
 
-class CVPlantGrowthChamberColor(BaseAsyncProblem):
+class CVPlantGrowthChamberColor(BasePlantGrowthChamberAsyncProblem):
     def __init__(self, exp: ExperimentModel, idx: int, collector: Collector):
         super().__init__(exp, idx, collector)
 
