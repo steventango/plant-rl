@@ -4,7 +4,6 @@
         "camera_left_url": "http://alliance-zone05-camera02.ccis.ualberta.ca:8080/observation",
         "camera_right_url": null,
         "lightbar_url": "http://142.244.191.30:8080/action",
-        "trays": [],
         "calibration": {
             "action": [
                 0.2,
@@ -111,6 +110,52 @@
                 20.99049899999999,
                 21.487820999999997
             ]
-        }
+        },
+        "trays": [
+            {
+                "n_wide": 6,
+                "n_tall": 3,
+                "rect": {
+                    "top_left": [
+                        247,
+                        362
+                    ],
+                    "top_right": [
+                        1513,
+                        184
+                    ],
+                    "bottom_left": [
+                        252,
+                        991
+                    ],
+                    "bottom_right": [
+                        1579,
+                        882
+                    ]
+                }
+            },
+            {
+                "n_wide": 6,
+                "n_tall": 3,
+                "rect": {
+                    "top_left": [
+                        262,
+                        1064
+                    ],
+                    "top_right": [
+                        1586,
+                        962
+                    ],
+                    "bottom_left": [
+                        381,
+                        1688
+                    ],
+                    "bottom_right": [
+                        1640,
+                        1640
+                    ]
+                }
+            }
+        ]
     }
 }

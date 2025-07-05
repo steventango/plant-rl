@@ -4,52 +4,6 @@
         "camera_left_url": null,
         "camera_right_url": "http://alliance-zone12-camera02.ccis.ualberta.ca:8080/observation",
         "lightbar_url": "http://142.244.191.37:8080/action",
-        "trays": [
-            {
-                "n_wide": 6,
-                "n_tall": 3,
-                "rect": {
-                    "top_left": [
-                        230,
-                        381
-                    ],
-                    "top_right": [
-                        1504,
-                        298
-                    ],
-                    "bottom_left": [
-                        218,
-                        1006
-                    ],
-                    "bottom_right": [
-                        1528,
-                        976
-                    ]
-                }
-            },
-            {
-                "n_wide": 6,
-                "n_tall": 3,
-                "rect": {
-                    "top_left": [
-                        204,
-                        1081
-                    ],
-                    "top_right": [
-                        1509,
-                        1049
-                    ],
-                    "bottom_left": [
-                        269,
-                        1713
-                    ],
-                    "bottom_right": [
-                        1526,
-                        1710
-                    ]
-                }
-            }
-        ],
         "calibration": {
             "action": [
                 0.2,
@@ -156,6 +110,52 @@
                 27.568404499999986,
                 27.761256999999983
             ]
-        }
+        },
+        "trays": [
+            {
+                "n_wide": 6,
+                "n_tall": 3,
+                "rect": {
+                    "top_left": [
+                        230,
+                        381
+                    ],
+                    "top_right": [
+                        1504,
+                        298
+                    ],
+                    "bottom_left": [
+                        218,
+                        1006
+                    ],
+                    "bottom_right": [
+                        1528,
+                        976
+                    ]
+                }
+            },
+            {
+                "n_wide": 6,
+                "n_tall": 3,
+                "rect": {
+                    "top_left": [
+                        204,
+                        1081
+                    ],
+                    "top_right": [
+                        1509,
+                        1049
+                    ],
+                    "bottom_left": [
+                        269,
+                        1713
+                    ],
+                    "bottom_right": [
+                        1526,
+                        1710
+                    ]
+                }
+            }
+        ]
     }
 }

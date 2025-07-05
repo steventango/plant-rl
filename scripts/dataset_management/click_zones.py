@@ -40,7 +40,7 @@ BASE_DIRS = [
 ]
 BASE_DIRS.extend(
     chain(
-        Path("/data/online/A0/P0").rglob("*"),
+        Path("/data/online/E9/P0").rglob("*"),
     )
 )
 

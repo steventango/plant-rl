@@ -111,6 +111,51 @@
                 25.387443999999988
             ]
         },
-        "trays": []
+        "trays": [
+            {
+                "n_wide": 6,
+                "n_tall": 3,
+                "rect": {
+                    "top_left": [
+                        194,
+                        498
+                    ],
+                    "top_right": [
+                        1445,
+                        289
+                    ],
+                    "bottom_left": [
+                        247,
+                        1120
+                    ],
+                    "bottom_right": [
+                        1540,
+                        979
+                    ]
+                }
+            },
+            {
+                "n_wide": 6,
+                "n_tall": 3,
+                "rect": {
+                    "top_left": [
+                        257,
+                        1190
+                    ],
+                    "top_right": [
+                        1557,
+                        1057
+                    ],
+                    "bottom_left": [
+                        393,
+                        1778
+                    ],
+                    "bottom_right": [
+                        1601,
+                        1705
+                    ]
+                }
+            }
+        ]
     }
 }
