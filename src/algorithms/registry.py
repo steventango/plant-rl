@@ -69,7 +69,7 @@ def getAgent(name) -> Type[BaseAgent]:
     if name.startswith("Constant"):
         return ConstantAgent
 
-    if name == "DiscreteRandom":
+    if name.startswith("DiscreteRandom"):
         return DiscreteRandomAgent
 
     if name == "ContinuousRandom":

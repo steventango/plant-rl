@@ -17,4 +17,4 @@ class PlantGrowthChamberColor(PlantGrowthChamber):
         if isinstance(action, np.ndarray):
             return await super().step(action)
 
-        return await super().step(action)  # type: ignore
+        return await super().step(self.action_map[action])  # type: ignore

@@ -1,6 +1,6 @@
 {
-    "agent": "Spreadsheet10",
-    "problem": "TemporalPlantGrowthChamber",
+    "agent": "DiscreteRandom10",
+    "problem": "CVPlantGrowthChamberColor",
     "total_steps": 40320,
     "episode_cutoff": -1,
     "metaParameters": {
@@ -10,6 +10,6 @@
         },
         "filepath": "experiments/online/E9/P0.1/balanced.xlsx",
         "compatibility_mode": false,
-            "timezone": "Asia/Dubai"
+        "timezone": "Asia/Dubai"
     }
 }
