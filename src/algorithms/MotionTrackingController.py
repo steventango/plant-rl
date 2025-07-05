@@ -29,12 +29,12 @@ class MotionTrackingController(BaseAgent):
 
         self.env_local_time = None
         self.mean_areas = defaultdict(float)
-        self.openness_trace = uema(alpha=0.5)
+        self.openness_trace = uema(alpha=0.1)
         self.openness_record = []
 
         self.Imin = 0.5  # Lowest intensity. Fixed at a dim level at which CV still functions well.
-        self.Imax = 1.1  # Highest intensity. Its optimal value depends on plant species, developmental stage, and environmental factors. Can be tuned by a higher-level RL agent
-        self.sensitivity = 3.0  # = (change in intensity) / (change in plants openness). Adjusted daily to attempt to reach Imax when openness is the largest.
+        self.Imax = 1.0  # Highest intensity. Its optimal value depends on plant species, developmental stage, and environmental factors. Can be tuned by a higher-level RL agent
+        self.sensitivity = 4.0  # = (change in intensity) / (change in plants openness). Adjusted daily to attempt to reach Imax when openness is the largest.
 
     def is_night(self) -> bool:
         assert self.env_local_time is not None, (
@@ -62,7 +62,7 @@ class MotionTrackingController(BaseAgent):
 
     def get_action(self) -> float:
         openness = self.openness_trace.compute().item()
-        return min(self.Imin + self.sensitivity * openness, self.Imax)
+        return max(min(self.Imin + self.sensitivity * openness, self.Imax), self.Imin)
 
     def adjust_sensitivity(self):
         if self.openness_record != []:
