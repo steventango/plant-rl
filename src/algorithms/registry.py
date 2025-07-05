@@ -5,6 +5,7 @@ from algorithms.BernoulliAgent import BernoulliAgent
 from algorithms.ConstantAgent import ConstantAgent
 from algorithms.ContinuousRandomAgent import ContinuousRandomAgent
 from algorithms.DiscreteRandomAgent import DiscreteRandomAgent
+from algorithms.PoissonAgent import PoissonAgent
 from algorithms.linear.ESARSA import ESARSA as LinearESARSA
 from algorithms.linear.linearDQN.LinearDynamicBatchDQN import LinearDynamicBatchDQN
 from algorithms.linear.LinearQL import LinearQL
@@ -47,6 +48,9 @@ def getAgent(name) -> Type[BaseAgent]:
 
     if name.startswith("Bernoulli"):
         return BernoulliAgent
+
+    if name.startswith("Poisson"):
+        return PoissonAgent
 
     if name == "QLReplay":
         return QLReplay
