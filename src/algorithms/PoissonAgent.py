@@ -1,9 +1,13 @@
+import logging
 from typing import Any, Dict, Tuple  # type: ignore
 
 import numpy as np
 from PyExpUtils.collection.Collector import Collector
 
 from algorithms.BaseAgent import BaseAgent
+
+logger = logging.getLogger("PoissonAgent")
+logger.setLevel(logging.DEBUG)
 
 
 class PoissonAgent(BaseAgent):
@@ -33,6 +37,7 @@ class PoissonAgent(BaseAgent):
         # Store in state
         self.current_action = action
         self.current_repeat = repeat
+        logger.info(f"Sampled action: {action}, repeat: {repeat}")
         return action
 
     # ----------------------
@@ -44,6 +49,9 @@ class PoissonAgent(BaseAgent):
     ) -> Tuple[int, Dict[str, Any]]:
         self.sample_action()
         assert self.current_action is not None
+        logger.info(
+            f"Start: action={self.current_action}, repeat={self.current_repeat}"
+        )
         return self.current_action, {}
 
     def step(
@@ -55,6 +63,7 @@ class PoissonAgent(BaseAgent):
         if self.current_repeat < 1:
             # Sample a new action
             self.sample_action()
+        logger.info(f"Step: action={self.current_action}, repeat={self.current_repeat}")
         return self.current_action, {}
 
     def end(self, reward: float, extra: Dict[str, Any]):
