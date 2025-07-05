@@ -144,6 +144,7 @@ class AsyncRLGlue:
             "time": [self.environment.time],  # type: ignore
             "frame": [self.num_steps],
             **expand("action", self.environment.last_action),  # type: ignore
+            **expand("calibrated_action", self.environment.last_calibrated_action),  # type: ignore
             "steps": [self.num_steps],
             "image_name": [img_name],
             "episode": [chk["episode"] if chk is not None else None],

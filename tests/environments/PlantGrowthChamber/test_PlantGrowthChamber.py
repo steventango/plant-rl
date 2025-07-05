@@ -24,24 +24,28 @@ skipif_github_actions = pytest.mark.skipif(
 async def _run_single_zone_test(
     zone_id: str,
     output_dir: Path,
-    num_channels: int,
-    light_intensity: float,
     sleep_duration: float,
+    channels: list[int] | None = None,
+    light_intensities: list[float] | None = None,
 ):
     """Internal helper to test a single zone asynchronously, identified by its full zone_id string."""
     print(f"Starting test for Zone ID {zone_id}")
+    if channels is None:
+        channels = list(range(NUM_CHANNELS))
+    if light_intensities is None:
+        light_intensities = [1.0]
 
     chamber = PlantGrowthChamber(zone=zone_id, timezone="America/Edmonton")
 
     # Generate all actions: one-hot for each channel, then all-off
     actions = []
-    for ch_idx in range(num_channels):
-        arr_vals = [
-            light_intensity if i == ch_idx else 0.0 for i in range(num_channels)
-        ]
-        actions.append(arr_vals)
-    # Add the off action (all zeros)
-    off_payload = [0.0] * num_channels
+    for light_intensity in light_intensities:
+        for ch_idx in channels:
+            arr_vals = [
+                light_intensity if i == ch_idx else 0.0 for i in range(NUM_CHANNELS)
+            ]
+            actions.append(arr_vals)
+    off_payload = [0.0] * NUM_CHANNELS
     actions.append(off_payload)
 
     for arr_vals in actions:
@@ -208,8 +212,6 @@ async def test_cycle_lights_and_observe_all_zones():
             _run_single_zone_test(
                 zone_id=zone_id_val,
                 output_dir=OUTPUT_DIR,
-                num_channels=NUM_CHANNELS,
-                light_intensity=LIGHT_INTENSITY,
                 sleep_duration=SLEEP_DURATION,
             )
         )
@@ -220,3 +222,33 @@ async def test_cycle_lights_and_observe_all_zones():
 
     print("Pytest: Generating plot...")
     plot_images(OUTPUT_DIR, False)
+
+
+@skipif_github_actions
+@pytest.mark.skip(
+    reason="Skipping to prevent accidental execution during automated runs."
+)
+@pytest.mark.asyncio
+async def test_calibrate_colors_and_intensities_zone_alliance_01():
+    """Pytest test function to run the chamber tests with default parameters."""
+    await _run_single_zone_test(
+        zone_id="alliance-zone01",
+        output_dir=OUTPUT_DIR,
+        sleep_duration=4,
+        channels=[0, 1, 2, 3, 4, 5],
+        light_intensities=[
+            0.2,
+            0.25,
+            0.3,
+            0.35,
+            0.4,
+            0.5,
+            0.6,
+            0.7,
+            0.8,
+            0.85,
+            0.9,
+            0.95,
+            1.0,
+        ],
+    )

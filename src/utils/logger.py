@@ -155,6 +155,8 @@ def log(
     }
     if hasattr(env, "last_action"):
         data.update(expand("action", env.last_action))
+    if hasattr(env, "last_calibrated_action"):
+        data.update(expand("calibrated_action", env.last_calibrated_action))
     if hasattr(env, "time"):
         data["time"] = env.time.timestamp()
 

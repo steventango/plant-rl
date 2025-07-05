@@ -53,6 +53,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.glue = None
 
         self.last_action = np.zeros(6)
+        self.last_calibrated_action = np.zeros(6)
         self.plant_areas = np.array([])
 
     async def _ensure_session(self):
@@ -153,16 +154,24 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         """Send action to the lightbar using aiohttp with retry logic"""
         self.last_action = action
 
+        self.last_calibrated_action = (
+            self.zone.calibration.get_calibrated_action(action)
+            if self.zone.calibration
+            else action
+        )
+
         # clip action to have max value 1
-        action = np.clip(action, None, 1)
-        action = np.tile(action, (2, 1))
+        self.last_calibrated_action = np.clip(self.last_calibrated_action, None, 1)
+        action_to_send = np.tile(self.last_calibrated_action, (2, 1))
 
         try:
             session = await self._ensure_session()
-            logger.debug(f"{self.zone.lightbar_url}: {action}")
+            logger.debug(f"{self.zone.lightbar_url}: {action_to_send}")
             assert self.zone.lightbar_url is not None, "Lightbar URL must be set."
             await session.put(
-                self.zone.lightbar_url, json={"array": action.tolist()}, timeout=10
+                self.zone.lightbar_url,
+                json={"array": action_to_send.tolist()},
+                timeout=10,
             )
         except Exception as e:
             logger.error(f"Error: {self.zone.lightbar_url} after retries: {str(e)}")

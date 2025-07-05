@@ -2,6 +2,8 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from environments.PlantGrowthChamber.Calibration import Calibration
+
 CONFIG_DIR = Path(__file__).parent / "configs"
 
 
@@ -31,7 +33,7 @@ class Zone:
     camera_right_url: str | None
     lightbar_url: str | None
     trays: list[Tray]
-    calibration: list[list[float]] | None
+    calibration: Calibration | None
 
     @property
     def num_plants(self) -> int:
@@ -39,12 +41,15 @@ class Zone:
 
 
 def deserialize_zone(zone: dict) -> Zone:
+    calibration_data = zone.get("calibration")
+    calibration = Calibration(**calibration_data) if calibration_data else None
+
     return Zone(
         identifier=zone["identifier"],
         camera_left_url=zone.get("camera_left_url"),
         camera_right_url=zone.get("camera_right_url"),
         lightbar_url=zone.get("lightbar_url"),
-        calibration=zone.get("calibration"),
+        calibration=calibration,
         trays=[
             Tray(
                 n_wide=tray["n_wide"],
@@ -62,12 +67,14 @@ def deserialize_zone(zone: dict) -> Zone:
 
 
 def serialize_zone(zone: Zone) -> dict:
+    calibration_data = zone.calibration.to_dict() if zone.calibration else None
+
     return {
         "identifier": zone.identifier,
         "camera_left_url": zone.camera_left_url,
         "camera_right_url": zone.camera_right_url,
         "lightbar_url": zone.lightbar_url,
-        "calibration": zone.calibration,
+        "calibration": calibration_data,
         "trays": [
             {
                 "n_wide": tray.n_wide,

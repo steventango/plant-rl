@@ -8,9 +8,9 @@ from aiohttp_retry import ExponentialRetry, RetryClient
 async def create_session():
     # Configure retry options with exponential backoff
     retry_options = ExponentialRetry(
-        attempts=3,  # Maximum 3 retry attempts
-        start_timeout=0.5,  # Start with 0.5s delay
-        max_timeout=10,  # Maximum 10s delay
+        attempts=9,  # Maximum 9 retry attempts
+        start_timeout=0.1,  # Start with 0.1s delay
+        max_timeout=30,  # Maximum 30s delay
         factor=2,  # Double the delay each retry
         statuses={500, 502, 503, 504, 429},  # Retry on server errors and rate limiting
     )
