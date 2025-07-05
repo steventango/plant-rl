@@ -4,7 +4,7 @@ from environments.PlantGrowthChamber.PlantGrowthChamber import PlantGrowthChambe
 from utils.constants import BALANCED_ACTION, BLUE_ACTION, RED_ACTION
 
 
-class PlantGrowthChamberColour(PlantGrowthChamber):
+class PlantGrowthChamberColor(PlantGrowthChamber):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.action_map = {
