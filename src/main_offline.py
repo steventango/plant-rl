@@ -178,6 +178,8 @@ for idx in indices:
         else:
             agent.load_step(reward, s, env_info)
 
+    chk.save()
+
     df = pd.DataFrame(data)
     df.to_csv(context.resolve("data.csv"), index=False)
 
