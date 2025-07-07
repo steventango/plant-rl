@@ -2,6 +2,11 @@ import numpy as np
 import pandas as pd
 
 import wandb
+import time
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 def expand(key, value):
@@ -138,6 +143,7 @@ def log(
     episodic_return=None,
     episode=None,
 ):
+    start_time = time.time()
     expanded_info = {}
     for key, value in info.items():
         if isinstance(value, pd.DataFrame):
@@ -193,3 +199,7 @@ def log(
     if episode is not None:
         data["episode"] = episode
     wandb_run.log(data)
+
+    end_time = time.time()
+    log_time = end_time - start_time
+    logger.debug(f"Logging data to wandb took {log_time:.4f} seconds")
