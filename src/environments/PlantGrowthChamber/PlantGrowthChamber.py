@@ -270,7 +270,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             )
         else:
             reward = normalize(
-                today_morning_mean_area - yesterday_morning_mean_area, 0, 50
+                today_morning_mean_area - yesterday_morning_mean_area, 0, 150
             )
 
         # if reward only @ 9:30 AM
