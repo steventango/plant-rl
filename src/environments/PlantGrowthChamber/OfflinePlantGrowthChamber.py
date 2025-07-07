@@ -169,7 +169,10 @@ class OfflinePlantGrowthChamber(BaseEnvironment):
         else:
             current_area = self.dataset.iloc[self.index]["mean_clean_area"]
             previous_area = self.dataset.iloc[self.index - 1]["mean_clean_area"]
-            reward = normalize(current_area - previous_area, 0, 150)
+            if previous_area == 0:
+                reward = 0.0
+            else:
+                reward = normalize(current_area - previous_area, 0, 150)
 
         return float(reward)
 
