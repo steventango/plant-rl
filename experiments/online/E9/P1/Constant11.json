@@ -1,0 +1,14 @@
+{
+    "agent": "Constant11",
+    "problem": "BasePlantGrowthChamberAsyncProblem",
+    "total_steps": 40320,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": "alliance-zone11",
+            "timezone": "America/Edmonton",
+            "twilight_type": "dim"
+        },
+        "timezone": "America/Edmonton"
+    }
+}
