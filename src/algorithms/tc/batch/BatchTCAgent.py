@@ -11,7 +11,7 @@ from utils.checkpoint import checkpointable
 
 
 @checkpointable(("buffer", "steps", "updates"))
-class TCAgentOffline(TCAgent):
+class BatchTCAgent(TCAgent):
     def __init__(
         self,
         observations: Tuple[int, ...],
@@ -44,7 +44,7 @@ class TCAgentOffline(TCAgent):
     def batch_update(self): ...
 
     # ----------------------
-    # -- RLGlue interface --
+    # -- Offline RLGlue interface --
     # ----------------------
     def load_start(self, s: np.ndarray, extra: Dict[str, Any]):
         self.buffer.flush()

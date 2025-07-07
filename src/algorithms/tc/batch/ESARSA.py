@@ -5,7 +5,7 @@ import numpy as np
 from numba import njit
 from PyExpUtils.collection.Collector import Collector
 
-from algorithms.tc.tc_offline.TCAgentOffline import TCAgentOffline
+from algorithms.tc.batch.BatchTCAgent import BatchTCAgent
 from utils.checkpoint import checkpointable
 from utils.policies import egreedy_probabilities
 
@@ -33,7 +33,7 @@ def value(w, x):
 
 
 @checkpointable(("w",))
-class ESARSA(TCAgentOffline):
+class ESARSA(BatchTCAgent):
     def __init__(
         self,
         observations: Tuple,
