@@ -100,6 +100,14 @@ async def main():
         )
         chk.initial_value("episode", 0)
 
+        load_params = problem.exp_params.get("load", {})
+        if isinstance(load_params, dict):
+            loaded_chk = Checkpoint(
+                exp, run, base_path=args.checkpoint_path, load_path=load_params["path"]
+            )
+            loaded_chk.load()
+            chk.load_from_checkpoint(loaded_chk, load_params.get("config"))
+
         config = {
             **problem.params,
             "context": str(agent_path),
