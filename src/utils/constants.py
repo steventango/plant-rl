@@ -6,8 +6,7 @@ def get_modified_action(ppfd: float, channel: int, offset: float) -> np.ndarray:
 
     modified_action = BALANCED_ACTION.copy()
     modified_action[channel] += adjustment
-    modified_action[:5] = modified_action[:5] / (ppfd + adjustment) * ppfd
-    modified_action[5] = BALANCED_ACTION[5] / BALANCED_ACTION[4] * modified_action[4]
+    modified_action = modified_action / (ppfd + adjustment) * ppfd
 
     return modified_action
 
@@ -15,7 +14,7 @@ def get_modified_action(ppfd: float, channel: int, offset: float) -> np.ndarray:
 BALANCED_ACTION = np.array([22.5, 81.0, 9.3, 0.0, 7.2, 14.2])
 DIM_ACTION = 0.675 * BALANCED_ACTION
 
-RED_ACTION = get_modified_action(ppfd=120.0, channel=4, offset=3.5)
+RED_ACTION = get_modified_action(ppfd=120.0, channel=4, offset=50.0)
 BLUE_ACTION = get_modified_action(ppfd=120.0, channel=0, offset=50.0)
 
 TWILIGHT_INTENSITIES_30_MIN = np.array(

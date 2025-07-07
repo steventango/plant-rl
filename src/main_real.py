@@ -1,7 +1,6 @@
 import asyncio
 import json
 import os
-import shutil
 import sys
 
 from environments.PlantGrowthChamber.zones import serialize_zone
@@ -16,10 +15,6 @@ from pathlib import Path
 
 import jax
 import numpy as np
-import pandas as pd
-from PyExpUtils.collection.Collector import Collector
-from PyExpUtils.collection.Sampler import Identity
-from PyExpUtils.results.sqlite import saveCollector
 
 import wandb
 from experiment import ExperimentModel
@@ -79,50 +74,19 @@ indices = args.idxs
 Problem = getProblem(exp.problem)
 
 
-def backup_and_save(exp, collector, idx, base):
-    context = exp.buildSaveContext(idx, base=base)
-    db_file = context.resolve("results.db")
-    db_file_bak = context.resolve("results.db.bak")
-    if os.path.exists(db_file):
-        shutil.copy(db_file, db_file_bak)
-    saveCollector(exp, collector, base=base)
-
-
 async def main():
     for idx in indices:
         chk = Checkpoint(exp, idx, base_path=args.checkpoint_path)
         chk.load_if_exists()
         timeout_handler.before_cancel(chk.save)
 
-        collector = chk.build(
-            "collector",
-            lambda: Collector(
-                # specify which keys to actually store and ultimately save
-                # Options are:
-                #  - Identity() (save everything)
-                #  - Window(n)  take a window average of size n
-                #  - Subsample(n) save one of every n elements
-                config={
-                    "state": Identity(),
-                    "action": Identity(),
-                    "terminal": Identity(),
-                    "reward": Identity(),
-                    "steps": Identity(),
-                    "time": Identity(),
-                    "area": Identity(),
-                },
-                # by default, ignore keys that are not explicitly listed above
-                default=Identity(),
-            ),
-        )
-        collector.setIdx(idx)
         run = exp.getRun(idx)
 
         # set random seeds accordingly
         np.random.seed(run)
 
         # build stateful things and attach to checkpoint
-        problem = chk.build("p", lambda: Problem(exp, idx, collector))
+        problem = chk.build("p", lambda: Problem(exp, idx, None))
         agent = chk.build("a", problem.getAgent)
         env = chk.build("e", problem.getEnvironment)
 
@@ -197,26 +161,7 @@ async def main():
                 )
 
             for step in range(glue.total_steps, exp.total_steps):
-                collector.next_frame()
-
                 interaction = await glue.step()
-                collector.collect("time", env.time.timestamp())
-                collector.collect("state", interaction.o)
-                collector.collect("action", env.last_action)
-                collector.collect("agent_action", interaction.a)
-                collector.collect("reward", interaction.r)
-                collector.collect("terminal", interaction.t)
-                collector.collect("steps", glue.num_steps)
-                for key, value in interaction.extra.items():
-                    if isinstance(value, np.ndarray):
-                        value = value.astype(np.float64)
-                    elif isinstance(value, pd.DataFrame):
-                        for col in value.columns:
-                            collector.collect(
-                                f"{key}_{col}", value[col].to_numpy().astype(np.float64)
-                            )
-                        continue
-                    collector.collect(key, value)
 
                 episodic_return = glue.total_reward if interaction.t else None
                 episode = chk["episode"]
@@ -237,11 +182,6 @@ async def main():
                 if interaction.t or (
                     exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff
                 ):
-                    # collect some data
-                    collector.collect("return", glue.total_reward)
-                    collector.collect("episode", chk["episode"])
-                    collector.collect("steps", glue.num_steps)
-
                     # track how many episodes are completed (cutoff is counted as termination for this count)
                     chk["episode"] += 1
 
@@ -265,15 +205,10 @@ async def main():
                         is_mock_env=is_mock_env,
                     )
 
-                backup_and_save(exp, collector, idx, args.save_path)
-
-            collector.reset()
-
         finally:
             # ------------
             # -- Saving --
             # ------------
-            backup_and_save(exp, collector, idx, args.save_path)
             await env.close()
             chk.save()
             wandb_run.finish()

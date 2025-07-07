@@ -14,6 +14,7 @@ from RlGlue.rl_glue import Interaction
 from utils.logger import expand
 from utils.RlGlue.agent import BaseAgent, BaseAsyncAgent
 from utils.RlGlue.environment import BaseAsyncEnvironment
+import time
 
 logger = logging.getLogger("rlglue")
 logger.setLevel(logging.DEBUG)
@@ -140,6 +141,7 @@ class AsyncRLGlue:
     def append_csv(
         self, chk, raw_csv_path: Path, img_name: str, interaction: Interaction
     ):
+        start_time = time.time()
         data_dict = {
             "time": [self.environment.time],  # type: ignore
             "frame": [self.num_steps],
@@ -168,11 +170,14 @@ class AsyncRLGlue:
                     expanded_info.update(expand(key, value))
             data_dict.update(expanded_info)
 
+        logger.debug("Creating DataFrame from data_dict")
         df = pd.DataFrame(data_dict)
         if interaction is not None:
+            logger.debug("Processing interaction.extra['df'] for merging")
             interaction.extra["df"].reset_index(inplace=True, drop=True)
             interaction.extra["df"]["plant_id"] = interaction.extra["df"].index
             interaction.extra["df"]["frame"] = self.num_steps
+            logger.debug("Merging DataFrames on 'frame'")
             df = pd.merge(
                 df,
                 interaction.extra["df"],
@@ -181,6 +186,7 @@ class AsyncRLGlue:
                 right_on=["frame"],
             )
         if raw_csv_path.exists():
+            logger.debug(f"{raw_csv_path} exists, reading and backing up")
             df_old = pd.read_csv(raw_csv_path)
             shutil.copy(raw_csv_path, raw_csv_path.with_suffix(".bak"))
             with warnings.catch_warnings():
@@ -189,10 +195,15 @@ class AsyncRLGlue:
                     message="The behavior of DataFrame concatenation with empty or all-NA entries is deprecated.",
                     category=FutureWarning,
                 )
-                df = pd.concat([df_old, df], ignore_index=True)
+            logger.debug("Concatenating old and new DataFrames")
+            df = pd.concat([df_old, df], ignore_index=True)
+        logger.debug(f"Saving DataFrame to {raw_csv_path}")
         df.to_csv(raw_csv_path, index=False)
+        end_time = time.time()
+        logger.debug(f"append_csv took {end_time - start_time:.4f} seconds")
 
     def save_images(self, dataset_path: Path, save_keys: set[str]):
+        start_time = time.time()
         isoformat = self.environment.time.isoformat(timespec="seconds").replace(":", "")  # type: ignore
         images_path = dataset_path / "images"
         images_path.mkdir(parents=True, exist_ok=True)
@@ -203,6 +214,8 @@ class AsyncRLGlue:
             img_path = images_path / f"{isoformat}_{key}.jpg"
             image = image.convert("RGB")
             image.save(img_path, "JPEG", quality=90)
+        end_time = time.time()
+        logger.debug(f"save_images took {end_time - start_time:.4f} seconds")
         return img_path.name if img_path else None
 
     def log(self):
