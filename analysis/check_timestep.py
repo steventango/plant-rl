@@ -48,7 +48,7 @@ def main():
     zone_timesteps = defaultdict(list)
     tz = pytz.timezone("America/Edmonton")
     start = tz.localize(datetime.datetime(2025, 7, 4, 0, 0, 0))
-    end = tz.localize(datetime.datetime(2025, 7, 6, 23, 59, 59))
+    end = tz.localize(datetime.datetime(2025, 7, 7, 23, 59, 59))
     expected_times = pd.date_range(start=start, end=end, freq="min")
     import re
 
