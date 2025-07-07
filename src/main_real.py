@@ -98,7 +98,6 @@ async def main():
         glue = chk.build(
             "glue", lambda: AsyncRLGlue(agent, env, dataset_path, images_save_keys)
         )
-        env.glue = glue
         chk.initial_value("episode", 0)
 
         config = {

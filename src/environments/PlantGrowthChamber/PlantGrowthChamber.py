@@ -50,7 +50,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.minimum_area_count = 5
         self.prev_plant_areas = np.zeros(self.zone.num_plants)
         self.normalize_reward = normalize_reward
-        self.glue = None
 
         self.last_action = np.zeros(6)
         self.last_calibrated_action = np.zeros(6)
