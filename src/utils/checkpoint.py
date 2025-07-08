@@ -20,6 +20,8 @@ from typing import (
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 from PyExpUtils.FileSystemContext import FileSystemContext
 
+from utils.RlGlue.agent import AsyncAgentWrapper
+
 T = TypeVar("T")
 Builder = Callable[[], T]
 
@@ -167,7 +169,12 @@ class Checkpoint:
             else:
                 load = load_or_subconfig
                 if load:
-                    target[key] = deepcopy(get(source, key))
+                    if isinstance(target, AsyncAgentWrapper):
+                        target = target.agent
+                    if hasattr(target, "__getitem__"):
+                        target[key] = deepcopy(get(source, key))  # type: ignore
+                    else:
+                        setattr(target, key, deepcopy(get(source, key)))
 
 
 class Checkpointable(Protocol):
