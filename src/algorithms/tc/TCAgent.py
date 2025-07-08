@@ -13,7 +13,7 @@ from representations.TileCoder import DenseTileCoder, TileCoderConfig
 from utils.checkpoint import checkpointable
 
 
-@checkpointable(("lag",))
+@checkpointable(("lag", "tile_coder"))
 class TCAgent(BaseAgent):
     def __init__(
         self,
