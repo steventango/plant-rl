@@ -16,7 +16,8 @@
                 "config": {
                     "a": {
                         "buffer": true,
-                        "w": true
+                        "w": true,
+                        "tile_coder": true
                     }
                 }
             }
