@@ -1,14 +1,15 @@
 import asyncio
 import io
 import logging
-from collections import defaultdict  # Added import
+import traceback
+from collections import defaultdict
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import numpy as np
 from PIL import Image
 
-from environments.PlantGrowthChamber.utils import create_session  # Changed import
+from environments.PlantGrowthChamber.utils import create_session
 from utils.functions import normalize
 from utils.metrics import UnbiasedExponentialMovingAverage as UEMA
 from utils.RlGlue.environment import BaseAsyncEnvironment
@@ -147,6 +148,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 logger.debug(f"Successfully fetched image from {url}")
         except Exception as e:
             logger.error(f"Error fetching image from {url} after retries: {str(e)}")
+            logger.error(traceback.format_exc())
             # Keep previous image if available, otherwise this side will be missing
 
     async def put_action(self, action):
@@ -173,8 +175,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 timeout=10,
             )
         except Exception as e:
-            logger.error(f"Error: {self.zone.lightbar_url} after retries: {str(e)}")
-            raise
+            logger.error(f"Error: {self.zone.lightbar_url} after retries")
+            logger.error(traceback.format_exc())
+            raise e
 
     async def start(self):
         logger.info(f"Local time: {self.get_local_time()}. Step 0")

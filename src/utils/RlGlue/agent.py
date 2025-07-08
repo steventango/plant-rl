@@ -19,6 +19,10 @@ class BaseAgent(RlGlueBaseAgent):
         raise NotImplementedError("Expected `step` to be implemented")
 
     @abstractmethod
+    def plan(self) -> None:
+        raise NotImplementedError("Expected `plan` to be implemented")
+
+    @abstractmethod
     def end(self, reward: float, extra: dict[str, Any]) -> dict[str, Any]:  # type: ignore
         raise NotImplementedError("Expected `end` to be implemented")
 
@@ -66,7 +70,7 @@ class AsyncAgentWrapper(BaseAsyncAgent):
         return await asyncio.to_thread(self.agent.step, reward, observation, extra)
 
     async def plan(self) -> None:
-        pass
+        return await asyncio.to_thread(self.agent.plan)
 
     async def end(self, reward: float, extra: dict[str, Any]) -> dict[str, Any]:
         return await asyncio.to_thread(self.agent.end, reward, extra)
