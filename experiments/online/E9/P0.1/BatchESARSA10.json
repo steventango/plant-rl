@@ -6,13 +6,13 @@
     "metaParameters": {
         "environment": {
             "zone": "alliance-zone10",
-            "timezone": "Asia/Dhaka",
-            "normalize_reward": false,
-            "sparse_reward": false
+            "timezone": "America/Edmonton",
+            "normalize_reward": true,
+            "sparse_reward": true
         },
         "experiment": {
             "load": {
-                "path": "results/offline/S7/P0/BatchESARSA",
+                "path": "results/offline/S7/P1/BatchESARSA",
                 "config": {
                     "a": {
                         "buffer": true,
