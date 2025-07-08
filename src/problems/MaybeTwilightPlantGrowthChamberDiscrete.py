@@ -1,14 +1,27 @@
+from PyExpUtils.collection.Collector import Collector
+
 from algorithms.PlantGrowthChamberAsyncAgentWrapper import (
     PlantGrowthChamberAsyncAgentWrapper,
     PlantGrowthChamberAsyncAgentWrapper_BrightTwilight,
-    PlantGrowthChamberAsyncAgentWrapper_DimTwilight
+    PlantGrowthChamberAsyncAgentWrapper_DimTwilight,
 )
 from algorithms.registry import getAgent
+from environments.PlantGrowthChamber.CVPlantGrowthChamberDiscrete import (
+    CVPlantGrowthChamberDiscrete as Env,
+)
+from experiment.ExperimentModel import ExperimentModel
 from problems.BaseAsyncProblem import BaseAsyncProblem
 from utils.RlGlue.agent import BaseAsyncAgent
 
 
-class BasePlantGrowthChamberAsyncProblem(BaseAsyncProblem):
+class MaybeTwilightPlantGrowthChamberDiscrete(BaseAsyncProblem):
+    def __init__(self, exp: ExperimentModel, idx: int, collector: Collector):
+        super().__init__(exp, idx, collector)
+
+        self.env = Env(**self.env_params)
+        self.actions = 2
+        self.observations = (13,)
+
     def getAgent(self):
         if self.agent is not None:
             return self.agent
@@ -28,9 +41,7 @@ class BasePlantGrowthChamberAsyncProblem(BaseAsyncProblem):
             elif self.env_params["twilight_type"] == "dim":
                 agent = PlantGrowthChamberAsyncAgentWrapper_DimTwilight(agent)
             else:
-                raise ValueError(
-                    "Invalid twilight_type."
-                )
+                raise ValueError("Invalid twilight_type.")
 
         self.agent = agent
         return self.agent
