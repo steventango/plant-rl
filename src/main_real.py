@@ -199,7 +199,7 @@ async def main():
                 if (
                     now - last_q_plot_time >= 3600
                     or step == glue.total_steps
-                    or step < 2
+                    or step < 10
                 ):
                     try:
                         # Use a dummy DataFrame for plotting (real data not available in online mode)
