@@ -24,7 +24,7 @@
         },
         "alpha": 0.001,
         "alpha_decay": false,
-        "epsilon": 0.05,
+        "epsilon": 0.1,
         "w0": 0.0,
         "buffer_type": "uniform",
         "buffer_size": 100000,
