@@ -6,7 +6,9 @@
     "metaParameters": {
         "environment": {
             "zone": "alliance-zone10",
-            "timezone": "Asia/Dhaka"
+            "timezone": "Asia/Dhaka",
+            "normalize_reward": false,
+            "sparse_reward": false
         },
         "experiment": {
             "load": {

@@ -6,7 +6,9 @@
     "metaParameters": {
         "environment": {
             "zone": "alliance-zone06",
-            "timezone": "America/Edmonton"
+            "timezone": "America/Edmonton",
+            "normalize_reward": false,
+            "sparse_reward": false
         },
         "experiment": {
             "load": {
