@@ -18,7 +18,7 @@ class TimeDLIPlantGrowthChamber(PlantGrowthChamber):
         hours_normalized = np.clip(hours_since_start / 11.0, 0, 1)
         return np.array([hours_normalized, dli])
 
-    async def step(self, action):
+    async def put_action(self, action):
         if np.array_equal(action, BALANCED_ACTION):
             self.dli += 1.0
         elif np.array_equal(action, DIM_ACTION):
@@ -26,4 +26,4 @@ class TimeDLIPlantGrowthChamber(PlantGrowthChamber):
         if self.get_local_time().hour == 9 and self.get_local_time().minute == 30:
             self.dli = 0.0
 
-        return await super().step(action)
+        return await super().put_action(action)
