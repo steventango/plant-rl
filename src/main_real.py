@@ -211,19 +211,15 @@ async def main():
                             }
                         )
                         plot_q_values_and_diff(
-                            logger, agent, q_plots_dir, step, dummy_df
+                            logger, agent.agent, q_plots_dir, step, dummy_df
                         )
                         # Log the latest Q-value and Q-diff plots to wandb
                         q_plot_file = q_plots_dir / f"q_values_step_{step:06d}.jpg"
                         q_diff_file = q_plots_dir / f"q_diff_step_{step:06d}.jpg"
                         if q_plot_file.exists():
-                            wandb_run.log(
-                                {"q_values": wandb.Image(str(q_plot_file))}, step=step
-                            )
+                            wandb_run.log({"q_values": wandb.Image(str(q_plot_file))})
                         if q_diff_file.exists():
-                            wandb_run.log(
-                                {"q_diff": wandb.Image(str(q_diff_file))}, step=step
-                            )
+                            wandb_run.log({"q_diff": wandb.Image(str(q_diff_file))})
                         last_q_plot_time = now
                     except Exception as e:
                         logger.error(
