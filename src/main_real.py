@@ -197,7 +197,7 @@ async def main():
                 # --- Q-value plotting every hour ---
                 now = time.time()
                 if (
-                    now - last_q_plot_time >= 3600
+                    now - last_q_plot_time >= 600
                     or step == glue.total_steps
                     or step < 10
                 ):
