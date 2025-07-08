@@ -6,7 +6,7 @@
     "metaParameters": {
         "environment": {
             "zone": "alliance-zone10",
-            "timezone": "America/Edmonton",
+            "timezone": "Asia/Dhaka",
             "normalize_reward": true,
             "sparse_reward": true
         },
