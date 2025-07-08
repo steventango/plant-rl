@@ -89,7 +89,12 @@ class BatchTCAgent(TCAgent):
             )
         )
 
-        self.batch_update()
+        self.steps += 1
+
+        # only update every `update_freq` steps
+        if self.steps % self.update_freq == 0:
+            self.batch_update()
+
         return a, self.get_info()
 
     def end(self, r: float, extra: Dict[str, Any]):
@@ -103,7 +108,11 @@ class BatchTCAgent(TCAgent):
             )
         )
 
-        self.batch_update()
+        self.steps += 1
+
+        # only update every `update_freq` steps
+        if self.steps % self.update_freq == 0:
+            self.batch_update()
 
         return self.get_info()
 

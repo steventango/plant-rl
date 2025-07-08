@@ -72,12 +72,6 @@ class ESARSA(BatchTCAgent):
         return value(self.w, x)
 
     def batch_update(self):
-        self.steps += 1
-
-        # only update every `update_freq` steps
-        if self.steps % self.update_freq != 0:
-            return
-
         if self.batch == "buffer":
             self.batch_size = self.buffer.size()
 
