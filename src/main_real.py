@@ -103,7 +103,7 @@ async def main():
         )
         chk.initial_value("episode", 0)
 
-        load_params = problem.exp_params.get("load", {})
+        load_params = problem.exp_params.get("load", None)
         if isinstance(load_params, dict):
             loaded_chk = Checkpoint(
                 exp, run, base_path=args.checkpoint_path, load_path=load_params["path"]
