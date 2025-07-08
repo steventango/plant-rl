@@ -178,8 +178,6 @@ for idx in indices:
         else:
             agent.load_step(reward, s, env_info)
 
-    chk.save()
-
     df = pd.DataFrame(data)
     df.to_csv(context.resolve("data.csv"), index=False)
 
@@ -206,6 +204,8 @@ for idx in indices:
             plot_q_values_and_diff(
                 logger, agent, q_plots_dir, step, df
             )  # Updated function call
+
+    chk.save()
 
     collector.reset()
 
