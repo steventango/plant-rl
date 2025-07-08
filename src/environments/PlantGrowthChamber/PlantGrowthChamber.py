@@ -10,6 +10,7 @@ import numpy as np
 from PIL import Image
 
 from environments.PlantGrowthChamber.utils import create_session
+from utils.constants import BALANCED_ACTION, DIM_ACTION
 from utils.functions import normalize
 from utils.metrics import UnbiasedExponentialMovingAverage as UEMA
 from utils.RlGlue.environment import BaseAsyncEnvironment
@@ -49,6 +50,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.uema_areas = [UEMA(alpha=0.1) for _ in range(self.zone.num_plants)]
         self.area_count = 0
         self.minimum_area_count = 5
+        self.dli = 0
         self.prev_plant_areas = np.zeros(self.zone.num_plants)
         self.normalize_reward = normalize_reward
 
@@ -193,6 +195,12 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         logger.info(
             f"Local time: {self.get_local_time()}. Step {self.n_step} with action {action}"
         )
+        if np.array_equal(action, BALANCED_ACTION):
+            self.dli += 1.0
+        elif np.array_equal(action, DIM_ACTION):
+            self.dli += 0.5
+        if self.get_local_time().hour == 9 and self.get_local_time().minute == 30:
+            self.dli = 0.0
         await self.put_action(action)
 
         terminal = self.get_terminal()
