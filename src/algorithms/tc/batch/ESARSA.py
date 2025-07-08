@@ -105,6 +105,7 @@ class ESARSA(BatchTCAgent):
                 {
                     "delta": (delta**2).mean(),
                     "w": self.w,
+                    "updates": self.updates,  # type: ignore
                 }
             )
 
@@ -113,9 +114,6 @@ class ESARSA(BatchTCAgent):
         # (Optional) decay step size linearly
         if self.alpha_decay:
             self.alpha = self.get_step_size()
-
-    def get_info(self):
-        return self.info
 
     def get_step_size(self):  # linear decay with minimum
         min_alpha = 0.001
