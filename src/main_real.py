@@ -196,7 +196,11 @@ async def main():
 
                 # --- Q-value plotting every hour ---
                 now = time.time()
-                if now - last_q_plot_time >= 3600 or step == glue.total_steps:
+                if (
+                    now - last_q_plot_time >= 3600
+                    or step == glue.total_steps
+                    or step < 2
+                ):
                     try:
                         # Use a dummy DataFrame for plotting (real data not available in online mode)
                         import pandas as pd
