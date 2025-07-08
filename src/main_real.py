@@ -21,6 +21,9 @@ from experiment import ExperimentModel
 from problems.registry import getProblem
 from utils.checkpoint import Checkpoint
 from utils.logger import log
+
+# --- Q-value plotting imports ---
+from utils.plotting import plot_q_values_and_diff
 from utils.preempt import TimeoutHandler
 from utils.RlGlue.rl_glue import AsyncRLGlue
 
@@ -152,6 +155,11 @@ async def main():
             start_time = time.time()
             is_mock_env = exp.problem.startswith("Mock")
 
+            # --- Q-value plotting setup ---
+            last_q_plot_time = 0
+            q_plots_dir = Path(context.resolve()) / "q_value_plots"
+            q_plots_dir.mkdir(parents=True, exist_ok=True)
+
             # if we haven't started yet, then make the first interaction
             if glue.total_steps == 0:
                 interaction = await glue.start()
@@ -185,6 +193,43 @@ async def main():
                     episodic_return=episodic_return,
                     episode=episode,
                 )
+
+                # --- Q-value plotting every hour ---
+                now = time.time()
+                if now - last_q_plot_time >= 3600 or step == glue.total_steps:
+                    try:
+                        # Use a dummy DataFrame for plotting (real data not available in online mode)
+                        import pandas as pd
+
+                        dummy_df = pd.DataFrame(
+                            {
+                                "observation": [],
+                                "action": [],
+                                "reward": [],
+                                "terminal": [],
+                                "trajectory_name": [],
+                            }
+                        )
+                        plot_q_values_and_diff(
+                            logger, agent, q_plots_dir, step, dummy_df
+                        )
+                        # Log the latest Q-value and Q-diff plots to wandb
+                        q_plot_file = q_plots_dir / f"q_values_step_{step:06d}.jpg"
+                        q_diff_file = q_plots_dir / f"q_diff_step_{step:06d}.jpg"
+                        if q_plot_file.exists():
+                            wandb_run.log(
+                                {"q_values": wandb.Image(str(q_plot_file))}, step=step
+                            )
+                        if q_diff_file.exists():
+                            wandb_run.log(
+                                {"q_diff": wandb.Image(str(q_diff_file))}, step=step
+                            )
+                        last_q_plot_time = now
+                    except Exception as e:
+                        logger.error(
+                            f"Q-value plotting/logging failed at step {step}: {e}",
+                            exc_info=True,
+                        )
 
                 if interaction.t or (
                     exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff
