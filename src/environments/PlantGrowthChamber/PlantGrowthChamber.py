@@ -280,10 +280,10 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 today_morning_mean_area / yesterday_morning_mean_area - 1, 0, 0.35
             )
         else:
-            if len(self.clean_areas) < 2:
+            if len(self.clean_areas) < 10:
                 return 0
             reward = normalize(
-                np.mean(self.clean_areas[-1]) - np.mean(self.clean_areas[-2]), 0, 150
+                np.mean(self.clean_areas[-1]) - np.mean(self.clean_areas[-10]), 0, 150
             )
 
         # if reward only @ 9:30 AM
