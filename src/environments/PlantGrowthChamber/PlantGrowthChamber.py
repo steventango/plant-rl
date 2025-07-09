@@ -272,15 +272,18 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             yesterday_morning_local_date, 0.0
         )
 
-        if yesterday_morning_mean_area == 0:
-            return 0
-
         if self.normalize_reward:
+            if yesterday_morning_mean_area == 0:
+                logger.debug(
+                    "Yesterday's morning mean area is 0, returning 0 reward to avoid division by zero."
+                )
+                return 0
             reward = normalize(
                 today_morning_mean_area / yesterday_morning_mean_area - 1, 0, 0.35
             )
         else:
             if len(self.clean_areas) < 10:
+                logger.debug("Not enough clean areas to compute reward.")
                 return 0
             reward = normalize(
                 np.mean(self.clean_areas[-1]) - np.mean(self.clean_areas[-10]), 0, 150
@@ -290,6 +293,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         if self.sparse_reward and not (
             self.get_local_time().hour == 9 and self.get_local_time().minute == 30
         ):
+            logger.debug(
+                f"Returning sparse reward of 0 at {self.get_local_time().astimezone(self.tz)}"
+            )
             return 0
 
         return reward
