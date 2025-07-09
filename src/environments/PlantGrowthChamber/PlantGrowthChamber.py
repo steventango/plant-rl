@@ -282,7 +282,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         else:
             if len(self.clean_areas) < 2:
                 return 0
-            reward = normalize(self.clean_areas[-1] - self.clean_areas[-2], 0, 150)
+            reward = normalize(
+                np.mean(self.clean_areas[-1]) - np.mean(self.clean_areas[-2]), 0, 150
+            )
 
         # if reward only @ 9:30 AM
         if self.sparse_reward and not (
