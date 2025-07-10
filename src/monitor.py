@@ -224,6 +224,8 @@ class SystemMonitor:
         logger.info(f"Disk threshold: {self.disk_threshold * 100}%")
 
         try:
+            # Initial delay to allow Wandb to start collecting metrics
+            time.sleep(30)
             while True:
                 self.run_monitoring_cycle()
                 logger.info(f"Sleeping for {interval_seconds} seconds...")
