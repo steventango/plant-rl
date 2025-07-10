@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 import numpy as np
 
 from algorithms.BaseAgent import BaseAgent
-from utils.constants import DIM_ACTION, BALANCED_ACTION, TWILIGHT_INTENSITIES_30_MIN
+from utils.constants import BALANCED_ACTION, DIM_ACTION, TWILIGHT_INTENSITIES_30_MIN
 from utils.RlGlue.agent import AsyncAgentWrapper
 
 logger = logging.getLogger("PlantGrowthChamberAsyncAgentWrapper")
@@ -73,7 +73,7 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
         else:
             intensity = TWILIGHT_INTENSITIES_30_MIN[minute_in_dawn]
 
-        logger.info(f"Dawn action at minute {minute_in_dawn}, intensity: {intensity}")
+        logger.debug(f"Dawn action at minute {minute_in_dawn}, intensity: {intensity}")
         return BALANCED_ACTION * intensity
 
     def get_dusk_action(self) -> np.ndarray:
@@ -96,7 +96,7 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
                 len(TWILIGHT_INTENSITIES_30_MIN) - 1 - idx
             ]
 
-        logger.info(f"Dusk action at minute {minute_in_hour}, intensity: {intensity}")
+        logger.debug(f"Dusk action at minute {minute_in_hour}, intensity: {intensity}")
         return BALANCED_ACTION * intensity
 
     def get_night_action(self) -> np.ndarray:
@@ -111,7 +111,7 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
         self.update_time_from_extra(extra)
 
         if not self.maybe_enforce_action():
-            logger.info(f"Starting agent at {self.env_local_time}")
+            logger.debug(f"Starting agent at {self.env_local_time}")
             self.last_action_info = await asyncio.to_thread(
                 self.agent.start, observation, extra
             )
@@ -125,17 +125,17 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
         if self.is_night():
             action = self.get_night_action()
             self.last_action_info = (action, {})
-            logger.info(f"Enforcing night mode at {self.env_local_time}")
+            logger.debug(f"Enforcing night mode at {self.env_local_time}")
             return True
         if self.is_dawn():
             action = self.get_dawn_action()
             self.last_action_info = (action, {})
-            logger.info(f"Enforcing dawn transition at {self.env_local_time}")
+            logger.debug(f"Enforcing dawn transition at {self.env_local_time}")
             return True
         if self.is_dusk():
             action = self.get_dusk_action()
             self.last_action_info = (action, {})
-            logger.info(f"Enforcing dusk transition at {self.env_local_time}")
+            logger.debug(f"Enforcing dusk transition at {self.env_local_time}")
             return True
         return False
 
@@ -148,7 +148,7 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
             return self.last_action_info
 
         if not self.agent_started:
-            logger.info(f"Starting agent at {self.env_local_time}")
+            logger.debug(f"Starting agent at {self.env_local_time}")
             self.last_action_info = await asyncio.to_thread(
                 self.agent.start, observation, extra
             )
@@ -173,7 +173,7 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
         should_poll = self.env_local_time.minute % action_timestep_minutes == 0
 
         if time_since_last_action >= self.action_timestep or should_poll:
-            logger.info(
+            logger.debug(
                 f"Polling agent at timestep mark: {self.env_local_time}, time since last action: {time_since_last_action}"
             )
             self.last_action_info = await asyncio.to_thread(
@@ -182,15 +182,21 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
             self.last_action_time = self.env_time
 
         return self.last_action_info
-    
-class PlantGrowthChamberAsyncAgentWrapper_BrightTwilight(PlantGrowthChamberAsyncAgentWrapper):
+
+
+class PlantGrowthChamberAsyncAgentWrapper_BrightTwilight(
+    PlantGrowthChamberAsyncAgentWrapper
+):
     def get_dawn_action(self) -> np.ndarray:
         return BALANCED_ACTION
 
     def get_dusk_action(self) -> np.ndarray:
         return BALANCED_ACTION
-    
-class PlantGrowthChamberAsyncAgentWrapper_DimTwilight(PlantGrowthChamberAsyncAgentWrapper):
+
+
+class PlantGrowthChamberAsyncAgentWrapper_DimTwilight(
+    PlantGrowthChamberAsyncAgentWrapper
+):
     def get_dawn_action(self) -> np.ndarray:
         return DIM_ACTION
 

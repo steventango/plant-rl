@@ -213,7 +213,7 @@ class OfflinePlantGrowthChamber(BaseEnvironment):
         info = {}
         if terminal:
             dataset_path = self.dataset_paths[self.dataset_index]
-            logger.info(
+            logger.debug(
                 f"Added {self.index} transitions from {dataset_path} to the replay buffer."
             )
             self.dataset_index += 1
@@ -298,7 +298,7 @@ class OfflinePlantGrowthChamber_1hrStep(OfflinePlantGrowthChamber):
         terminal = self.index + 72 >= len(self.dataset)
         info = {}
         if terminal:
-            logger.info(
+            logger.debug(
                 f"Added {int(self.index / 6)} transitions to the replay buffer."
             )
             self.dataset_index += 1

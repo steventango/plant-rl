@@ -182,7 +182,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             raise e
 
     async def start(self):
-        logger.info(f"Local time: {self.get_local_time()}. Step 0")
+        logger.debug(f"Local time: {self.get_local_time()}. Step 0")
         self.n_step = 0
         self.clean_areas = []
         self.daily_mean_clean_areas = defaultdict(float)
@@ -192,7 +192,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         return observation, self.get_info()
 
     async def step(self, action: np.ndarray):
-        logger.info(
+        logger.debug(
             f"Local time: {self.get_local_time()}. Step {self.n_step} with action {action}"
         )
         if np.array_equal(action, BALANCED_ACTION):
@@ -209,7 +209,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         await self.sleep_until_next_step(self.duration)
         observation = await self.get_observation()
         reward = self.reward_function()
-        logger.info(
+        logger.debug(
             f"Local time: {self.get_local_time()}. Step {self.n_step} completed. Reward: {reward}, Terminal: {terminal}"
         )
         self.n_step += 1
@@ -225,7 +225,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     async def sleep_until(self, wake_time: datetime):
         time_left = wake_time - self.get_time()
-        logger.info(f"Sleeping until {wake_time.astimezone(self.tz)} (in {time_left})")
+        logger.debug(f"Sleeping until {wake_time.astimezone(self.tz)} (in {time_left})")
         await asyncio.sleep(time_left.total_seconds())
 
     async def sleep_until_next_step(self, duration: timedelta):
@@ -305,7 +305,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         # Turn off lights
         try:
             await self.put_action(np.zeros(6))
-            logger.info(
+            logger.debug(
                 f"Lights turned off for zone {self.zone.identifier} during environment closure"
             )
         except Exception as e:
@@ -317,7 +317,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         if self.session:
             try:
                 await self.session.close()
-                logger.info(f"Closed aiohttp session for zone {self.zone.identifier}")
+                logger.debug(f"Closed aiohttp session for zone {self.zone.identifier}")
             except Exception as e:
                 logger.error(
                     f"Error closing aiohttp session for zone {self.zone.identifier}: {str(e)}"

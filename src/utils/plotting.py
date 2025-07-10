@@ -266,7 +266,7 @@ def plot_q_values_and_diff(
             if num_actions >= 2:
                 Q_diff = Q_vals[:, :, 1] - Q_vals[:, :, 0]
             else:
-                logger.info(
+                logger.debug(
                     f"Step {step}: Not enough actions ({num_actions}) to compute Q-difference. Plotting Q[s,0] instead."
                 )
                 Q_diff = Q_vals[:, :, 0]
@@ -278,7 +278,7 @@ def plot_q_values_and_diff(
 
             fig_diff.savefig(q_diff_plot_filename)  # Save the figure
             plt.close(fig_diff)  # Close the figure
-            logger.info(f"Step {step}: Saved Q-value plots to {q_plots_dir}")
+            logger.debug(f"Step {step}: Saved Q-value plots to {q_plots_dir}")
         except Exception as e:
             logger.error(
                 f"Step {step}: Error during Q-value plotting: {e}", exc_info=True
@@ -348,7 +348,7 @@ def plot_state_action_distribution(df, q_plots_dir, logger):
                         ]
                     )
                     if not actions_to_plot:
-                        logger.info("No actions 0 or 1 found in the data to plot.")
+                        logger.debug("No actions 0 or 1 found in the data to plot.")
                         return
 
                     num_subplots = len(actions_to_plot)
@@ -445,17 +445,19 @@ def plot_state_action_distribution(df, q_plots_dir, logger):
                     plot_filename = q_plots_dir / "state_action_count_heatmap.jpg"
                     plt.savefig(plot_filename)
                     plt.close()
-                    logger.info(f"Saved state-action count heatmaps to {plot_filename}")
+                    logger.debug(
+                        f"Saved state-action count heatmaps to {plot_filename}"
+                    )
                 else:
-                    logger.info(
+                    logger.debug(
                         "No data points left after binning for state-action distribution heatmap."
                     )
             else:
-                logger.info(
+                logger.debug(
                     "No valid data points to plot for state-action distribution after processing observations."
                 )
         else:
-            logger.info("No actions recorded to plot state-action distribution.")
+            logger.debug("No actions recorded to plot state-action distribution.")
     except Exception as e:
         logger.error(
             f"Error during state-action distribution heatmap plotting: {e}",
@@ -556,8 +558,8 @@ def plot_trajectories(df, q_plots_dir, logger):
             plot_filename = q_plots_dir / "state_trajectories_subplots.jpg"
             plt.savefig(plot_filename)
             plt.close()
-            logger.info(f"Saved state trajectories plot to {plot_filename}")
+            logger.debug(f"Saved state trajectories plot to {plot_filename}")
         else:
-            logger.info("No valid data points to plot for state trajectories.")
+            logger.debug("No valid data points to plot for state trajectories.")
     except Exception as e:
         logger.error(f"Error during state trajectories plotting: {e}", exc_info=True)
