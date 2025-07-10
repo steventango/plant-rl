@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 
 from utils.logger import WandbAlertHandler, log
+from wandb.sdk.wandb_alerts import AlertLevel
 
 
 @pytest.fixture
@@ -29,29 +30,44 @@ def logger():
 def test_wandb_alert_handler_debug(mock_wandb_run, logger):
     handler = WandbAlertHandler(mock_wandb_run)
     logger.addHandler(handler)
-    logger.error("Test error message")
-    mock_wandb_run.alert.assert_called()
+    logger.debug("Test debug message")
+    mock_wandb_run.alert.assert_not_called()
 
 
 def test_wandb_alert_handler_info(mock_wandb_run, logger):
     handler = WandbAlertHandler(mock_wandb_run)
     logger.addHandler(handler)
     logger.info("Test info message")
-    mock_wandb_run.alert.assert_called()
+    mock_wandb_run.alert.assert_called_once_with(
+        title="Test info message",
+        text="",
+        level=AlertLevel.INFO,
+        wait_duration=1,
+    )
 
 
 def test_wandb_alert_handler_warning(mock_wandb_run, logger):
     handler = WandbAlertHandler(mock_wandb_run)
     logger.addHandler(handler)
     logger.warning("Test warning message")
-    mock_wandb_run.alert.assert_called()
+    mock_wandb_run.alert.assert_called_once_with(
+        title="Test warning message",
+        text="",
+        level=AlertLevel.WARN,
+        wait_duration=1,
+    )
 
 
 def test_wandb_alert_handler_error(mock_wandb_run, logger):
     handler = WandbAlertHandler(mock_wandb_run)
     logger.addHandler(handler)
     logger.error("Test error message")
-    mock_wandb_run.alert.assert_called()
+    mock_wandb_run.alert.assert_called_once_with(
+        title="Test error message",
+        text="",
+        level=AlertLevel.ERROR,
+        wait_duration=1,
+    )
 
 
 def test_wandb_alert_handler_exception(mock_wandb_run, logger):
@@ -61,7 +77,15 @@ def test_wandb_alert_handler_exception(mock_wandb_run, logger):
         raise ValueError("Test exception")
     except ValueError as e:
         logger.exception(e)
-    mock_wandb_run.alert.assert_called()
+    mock_wandb_run.alert.assert_called_once_with(
+        title="Test exception",
+        text="""```Traceback (most recent call last):
+  File "/workspaces/plant-rl/tests/utils/test_logger.py", line 77, in test_wandb_alert_handler_exception
+    raise ValueError("Test exception")
+ValueError: Test exception```""",
+        level=AlertLevel.ERROR,
+        wait_duration=1,
+    )
 
 
 def test_log_function_with_mock_env(mock_wandb_run):
