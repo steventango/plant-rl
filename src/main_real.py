@@ -153,7 +153,7 @@ async def main():
             if isinstance(load_params, dict):
                 loaded_chk = Checkpoint(
                     exp,
-                    run,
+                    0,
                     base_path=args.checkpoint_path,
                     load_path=load_params["path"],
                 )
