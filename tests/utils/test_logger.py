@@ -77,15 +77,14 @@ def test_wandb_alert_handler_exception(mock_wandb_run, logger):
         raise ValueError("Test exception")
     except ValueError as e:
         logger.exception(e)
-    mock_wandb_run.alert.assert_called_once_with(
-        title="Test exception",
-        text="""```Traceback (most recent call last):
-  File "/workspaces/plant-rl/tests/utils/test_logger.py", line 77, in test_wandb_alert_handler_exception
-    raise ValueError("Test exception")
-ValueError: Test exception```""",
-        level=AlertLevel.ERROR,
-        wait_duration=1,
-    )
+
+    args, kwargs = mock_wandb_run.alert.call_args
+    assert kwargs["title"] == "Test exception"
+    assert kwargs["level"] == AlertLevel.ERROR
+    assert kwargs["wait_duration"] == 1
+    assert "ValueError: Test exception" in kwargs["text"]
+    assert "Traceback (most recent call last):" in kwargs["text"]
+    assert 'raise ValueError("Test exception")' in kwargs["text"]
 
 
 def test_log_function_with_mock_env(mock_wandb_run):
