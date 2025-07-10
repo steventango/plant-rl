@@ -8,8 +8,7 @@ from PyExpUtils.collection.Collector import Collector
 from algorithms.BaseAgent import BaseAgent
 from utils.metrics import UnbiasedExponentialMovingAverage as uema
 
-logger = logging.getLogger("MotionTrackingController")
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger("plant_rl.MotionTrackingController")
 
 
 class MotionTrackingController(BaseAgent):

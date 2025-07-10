@@ -6,8 +6,7 @@ from PyExpUtils.collection.Collector import Collector
 
 from algorithms.BaseAgent import BaseAgent
 
-logger = logging.getLogger("PoissonAgent")
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger("plant_rl.PoissonAgent")
 
 
 class PoissonAgent(BaseAgent):

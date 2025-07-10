@@ -17,8 +17,7 @@ from utils.RlGlue.environment import BaseAsyncEnvironment
 from .cv import process_image
 from .zones import load_zone_from_config
 
-logger = logging.getLogger("PlantGrowthChamber")
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger("plant_rl.PlantGrowthChamber")
 
 
 class PlantGrowthChamber(BaseAsyncEnvironment):
@@ -56,6 +55,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.last_action = np.zeros(6)
         self.last_calibrated_action = np.zeros(6)
         self.plant_areas = np.array([])
+        self.last_step_time = None
 
     async def _ensure_session(self):
         """Ensures an aiohttp session is available and returns it."""
@@ -185,8 +185,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.n_step = 0
         self.clean_areas = []
         self.daily_mean_clean_areas = defaultdict(float)
-        await self.sleep_until_next_step(self.duration)
         observation = await self.get_observation()
+        await self.sleep_until_next_step(self.duration)
+        self.last_step_time = self.get_time()
         self.n_step = 1
         return observation, self.get_info()
 
@@ -208,6 +209,18 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         await self.sleep_until_next_step(self.duration)
         observation = await self.get_observation()
         reward = self.reward_function()
+        current_time = self.get_time()
+        if self.last_step_time:
+            cycle_time = current_time - self.last_step_time
+            if cycle_time > self.duration * 1.1:
+                logger.warning(
+                    f"Cycle time ({cycle_time}) exceeded duration by 10% ({self.duration * 1.1})"
+                )
+            elif cycle_time > self.duration:
+                logger.debug(
+                    f"Cycle time ({cycle_time}) exceeded duration {self.duration})"
+                )
+        self.last_step_time = current_time
         logger.debug(
             f"Local time: {self.get_local_time()}. Step {self.n_step} completed. Reward: {reward}, Terminal: {terminal}"
         )

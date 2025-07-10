@@ -10,8 +10,7 @@ from algorithms.BaseAgent import BaseAgent
 from utils.constants import BALANCED_ACTION, DIM_ACTION, TWILIGHT_INTENSITIES_30_MIN
 from utils.RlGlue.agent import AsyncAgentWrapper
 
-logger = logging.getLogger("PlantGrowthChamberAsyncAgentWrapper")
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger("plant_rl.PlantGrowthChamberAsyncAgentWrapper")
 
 
 class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
