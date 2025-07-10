@@ -13,7 +13,7 @@ from representations.TileCoder import DenseTileCoder, TileCoderConfig
 from utils.checkpoint import checkpointable
 
 
-@checkpointable(("lag",))
+@checkpointable(("lag", "tile_coder"))
 class TCAgent(BaseAgent):
     def __init__(
         self,
@@ -52,6 +52,7 @@ class TCAgent(BaseAgent):
 
         self.n_features = self.tile_coder.features()
         self.nonzero_features = self.tile_coder.nonzero_features()
+        self.info = {}
 
         self.alpha = params["alpha"]
         self.alpha0 = params["alpha"]
@@ -61,7 +62,7 @@ class TCAgent(BaseAgent):
         return self.tile_coder.encode(s)
 
     def get_info(self):
-        return {}
+        return self.info
 
     @abstractmethod
     def policy(self, obs: np.ndarray) -> np.ndarray: ...
@@ -142,4 +143,4 @@ class TCAgent(BaseAgent):
 
         self.lag.flush()
 
-        return {}
+        return self.get_info()

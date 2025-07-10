@@ -18,7 +18,7 @@ class ConstantAgent(BaseAgent):
         super().__init__(observations, actions, params, collector, seed)
         self.steps = 0
         self.updates = 0
-        self.action = self.params["constant_action"]
+        self.action = params.get("constant_action", 1)
 
     # ----------------------
     # -- RLGlue interface --

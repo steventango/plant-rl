@@ -5,7 +5,7 @@ import numpy as np
 from numba import njit
 from PyExpUtils.collection.Collector import Collector
 
-from algorithms.tc.tc_offline.TCAgentOffline import TCAgentOffline
+from algorithms.tc.batch.BatchTCAgent import BatchTCAgent
 from utils.checkpoint import checkpointable
 from utils.policies import egreedy_probabilities
 
@@ -33,7 +33,7 @@ def value(w, x):
 
 
 @checkpointable(("w",))
-class ESARSA(TCAgentOffline):
+class ESARSA(BatchTCAgent):
     def __init__(
         self,
         observations: Tuple,
@@ -72,12 +72,6 @@ class ESARSA(TCAgentOffline):
         return value(self.w, x)
 
     def batch_update(self):
-        self.steps += 1
-
-        # only update every `update_freq` steps
-        if self.steps % self.update_freq != 0:
-            return
-
         if self.batch == "buffer":
             self.batch_size = self.buffer.size()
 
@@ -105,6 +99,7 @@ class ESARSA(TCAgentOffline):
                 {
                     "delta": (delta**2).mean(),
                     "w": self.w,
+                    "updates": self.updates,  # type: ignore
                 }
             )
 
@@ -113,9 +108,6 @@ class ESARSA(TCAgentOffline):
         # (Optional) decay step size linearly
         if self.alpha_decay:
             self.alpha = self.get_step_size()
-
-    def get_info(self):
-        return self.info
 
     def get_step_size(self):  # linear decay with minimum
         min_alpha = 0.001

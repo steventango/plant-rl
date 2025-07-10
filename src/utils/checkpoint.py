@@ -1,13 +1,26 @@
+import os
 import json
+import time
+import shutil
+import pickle
 import logging
 import lzma
-import os
-import pickle
-import shutil
-import time
-from typing import Any, Callable, Dict, Optional, Protocol, Sequence, Type, TypeVar
-
+from copy import deepcopy
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Optional,
+    Self,
+    Sequence,
+    Type,
+    TypeVar,
+    Protocol,
+)
 from PyExpUtils.models.ExperimentDescription import ExperimentDescription
+from PyExpUtils.FileSystemContext import FileSystemContext
+
+from utils.RlGlue.agent import AsyncAgentWrapper
 
 T = TypeVar("T")
 Builder = Callable[[], T]
@@ -19,6 +32,7 @@ class Checkpoint:
         exp: ExperimentDescription,
         idx: int,
         base_path: str = "./",
+        load_path: str | None = None,
         save_every: float = -1,
     ) -> None:
         self._storage: Dict[str, Any] = {}
@@ -28,7 +42,11 @@ class Checkpoint:
         self._last_save: Optional[float] = None
         self._save_every = save_every * 60
 
-        self._ctx = self._exp.buildSaveContext(idx, base=base_path)
+        self._load_path = load_path
+        if load_path is None:
+            self._ctx = self._exp.buildSaveContext(idx, base=base_path)
+        else:
+            self._ctx = FileSystemContext(load_path, base_path)
 
         self._params = exp.getPermutation(idx)
         self._base_path = f"{idx}"
@@ -94,7 +112,7 @@ class Checkpoint:
             with open(params_path, "r") as f:
                 params = json.load(f)
 
-            assert params == self._params, (
+            assert self._load_path or params == self._params, (
                 "The idx->params mapping has changed between checkpoints!!"
             )
 
@@ -106,14 +124,57 @@ class Checkpoint:
         try:
             with lzma.open(path, "rb") as f:
                 self._storage = pickle.load(f)
-        except Exception as e:
-            print(f"Failed to load checkpoint: {path}")
-            print(e)
+        except Exception:
+            try:
+                with open(path.removesuffix(".xz"), "rb") as f:
+                    self._storage = pickle.load(f)
+            except Exception as e:
+                print(f"Failed to load checkpoint: {path}")
+                print(e)
 
     def load_if_exists(self):
         if self._ctx.exists(self._data_path):
             print("Found a checkpoint! Loading...")
             self.load()
+
+    def load_from_checkpoint(
+        self,
+        source: Self | dict | object,
+        config: dict | None,
+        target=None,
+        debug_key="",
+    ):
+        if target is None:
+            target = self._storage
+
+        if isinstance(source, Checkpoint):
+            source = source._storage
+
+        if config is None:
+            if isinstance(source, Checkpoint):
+                self._storage = deepcopy(source._storage)
+            elif isinstance(source, dict):
+                self._storage = deepcopy(source)
+            return
+
+        for key, load_or_subconfig in config.items():
+            if isinstance(load_or_subconfig, dict):
+                subconfig = load_or_subconfig
+                self.load_from_checkpoint(
+                    get(source, key),
+                    subconfig,
+                    get(target, key),
+                    debug_key=f"{debug_key}.{key}",
+                )
+            else:
+                load = load_or_subconfig
+                if load:
+                    if isinstance(target, AsyncAgentWrapper):
+                        target = target.agent
+                    if hasattr(target, "__getitem__"):
+                        target[key] = deepcopy(get(source, key))  # type: ignore
+                    else:
+                        setattr(target, key, deepcopy(get(source, key)))
 
 
 class Checkpointable(Protocol):
@@ -157,3 +218,9 @@ def checkpointable(props: Sequence[str]):
         return c
 
     return _inner
+
+
+def get(dict_or_obj: dict | object, key: str, default: T = None) -> T:
+    if isinstance(dict_or_obj, dict):
+        return dict_or_obj.get(key, default)
+    return getattr(dict_or_obj, key, default)

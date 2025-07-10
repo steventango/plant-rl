@@ -8,7 +8,6 @@ from PyExpUtils.collection.Collector import Collector
 from algorithms.BaseAgent import BaseAgent
 from utils.metrics import UnbiasedExponentialMovingAverage as uema
 
-
 logger = logging.getLogger("MotionTrackingController")
 logger.setLevel(logging.DEBUG)
 
@@ -69,7 +68,7 @@ class MotionTrackingController(BaseAgent):
         if self.openness_record != []:
             max_openness = np.mean(np.sort(self.openness_record)[-10:])
             self.sensitivity = (self.Imax - self.Imin) / max_openness
-            logger.info(f"Adjusted sensitivity = {self.sensitivity:.2f}")
+            logger.debug(f"Adjusted sensitivity = {self.sensitivity:.2f}")
 
     def start(self, observation: np.ndarray, extra: Dict[str, Any]):  # type: ignore
         self.openness_trace.reset()
