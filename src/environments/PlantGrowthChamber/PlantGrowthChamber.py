@@ -182,7 +182,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     async def start(self):
         logger.debug(f"Local time: {self.get_local_time()}. Step 0")
-        logger.warning("Testing logger propagation")
         self.n_step = 0
         self.clean_areas = []
         self.daily_mean_clean_areas = defaultdict(float)
@@ -196,9 +195,13 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         current_time = self.get_time()
         if self.last_step_time:
             cycle_time = current_time - self.last_step_time
-            if cycle_time > self.duration:
+            if cycle_time > self.duration * 1.1:
                 logger.warning(
-                    f"Cycle time ({cycle_time}) exceeded duration ({self.duration})"
+                    f"Cycle time ({cycle_time}) exceeded duration by 10% ({self.duration * 1.1})"
+                )
+            elif cycle_time > self.duration:
+                logger.debug(
+                    f"Cycle time ({cycle_time}) exceeded duration {self.duration})"
                 )
         self.last_step_time = current_time
         logger.debug(
