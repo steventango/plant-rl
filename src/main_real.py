@@ -20,7 +20,7 @@ import wandb
 from experiment import ExperimentModel
 from problems.registry import getProblem
 from utils.checkpoint import Checkpoint
-from utils.logger import log, WandbAlertLogger
+from utils.logger import WandbAlertHandler, log
 
 # --- Q-value plotting imports ---
 from utils.plotting import plot_q_values_and_diff
@@ -60,8 +60,10 @@ logging.basicConfig(
     format="[%(asctime)s] %(levelname)s:%(name)s %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
+logger = logging.getLogger("exp")
 prod = "cdr" in socket.gethostname() or args.silent
-
+if not prod:
+    logger.setLevel(logging.DEBUG)
 
 # ----------------------
 # -- Experiment Def'n --
@@ -140,12 +142,9 @@ async def main():
             ),
         )
 
-        # Set up logger
-        logger = WandbAlertLogger("plant-rl", wandb_run)
-        logger.setLevel(logging.DEBUG if not prod else logging.ERROR)
-        # Add console handler
-        console_handler = logging.StreamHandler()
-        logger.addHandler(console_handler)
+        # Set up wandb alert handler
+        handler = WandbAlertHandler(wandb_run)
+        logger.addHandler(handler)
 
         # save config to dataset
         if not dataset_path.exists():

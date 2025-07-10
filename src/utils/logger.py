@@ -1,11 +1,11 @@
 import logging
 import time
-import traceback
 
 import numpy as np
 import pandas as pd
 
 import wandb
+from wandb.sdk.wandb_alerts import AlertLevel
 from wandb.sdk.wandb_run import Run
 
 logger = logging.getLogger(__name__)
@@ -208,69 +208,34 @@ def log(
     logger.debug(f"Logging data to wandb took {log_time:.4f} seconds")
 
 
-class WandbAlertLogger(logging.Logger):
-    def __init__(self, name: str, run: Run, *args, **kwargs):
-        super().__init__(name, *args, **kwargs)
+class WandbAlertHandler(logging.Handler):
+    def __init__(self, run: Run, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.run = run
 
-    def info(self, msg: object, *args, **kwargs):
-        self.run.alert(
-            title=str(msg),
-            text=kwargs.get("text", ""),
-            level="INFO",
-            wait_duration=kwargs.get("wait_duration"),
-        )
-        super().info(msg, *args, **kwargs)
-
-    def warning(self, msg: object, *args, **kwargs):
-        self.run.alert(
-            title=str(msg),
-            text=kwargs.get("text", ""),
-            level="WARN",
-            wait_duration=kwargs.get("wait_duration", 0),
-        )
-        super().warning(msg, *args, **kwargs)
-
-    def error(self, msg: object, *args, **kwargs):
-        self.run.alert(
-            title=str(msg),
-            text=kwargs.get("text", ""),
-            level="ERROR",
-            wait_duration=kwargs.get("wait_duration", 0),
-        )
-        super().error(msg, *args, **kwargs)
-
-    def critical(self, msg: object, *args, **kwargs):
-        self.run.alert(
-            title=str(msg),
-            text=kwargs.get("text", ""),
-            level="CRITICAL",
-            wait_duration=kwargs.get("wait_duration", 0),
-        )
-        super().critical(msg, *args, **kwargs)
-
-    def log(self, level: int, msg: object, *args, **kwargs):
-        wandb_level = None
-        if level >= logging.ERROR:
-            wandb_level = "ERROR"
-        elif level >= logging.WARNING:
-            wandb_level = "WARN"
-        elif level >= logging.INFO:
-            wandb_level = "INFO"
-        if wandb_level is not None:
+    def emit(self, record: logging.LogRecord):
+        try:
+            msg = self.format(record)
+            level = None
+            if record.levelno >= logging.ERROR:
+                level = AlertLevel.ERROR
+            elif record.levelno >= logging.WARNING:
+                level = AlertLevel.WARN
+            elif record.levelno >= logging.INFO:
+                level = AlertLevel.INFO
+            else:
+                return
+            title = str(msg).split("\n")[0]
+            text = "\n".join(str(msg).split("\n")[1:]) if "\n" in str(msg) else ""
+            if record.exc_info:
+                text = f"```{text}```"
             self.run.alert(
-                title=str(msg),
-                text=kwargs.get("text", ""),
-                level=wandb_level,
-                wait_duration=kwargs.get("wait_duration", 0),
+                title=title,
+                text=text,
+                level=level,
+                wait_duration=1,
             )
-        super().log(level, msg, *args, **kwargs)
-
-    def exception(self, msg: object, *args, **kwargs):
-        self.run.alert(
-            title=str(msg),
-            text=f"```{kwargs.get('text', traceback.format_exc())}```",
-            level="ERROR",
-            wait_duration=kwargs.get("wait_duration", 0),
-        )
-        super().exception(msg, *args, **kwargs)
+        except RecursionError:
+            raise
+        except Exception:
+            self.handleError(record)

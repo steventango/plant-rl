@@ -1,9 +1,15 @@
-# %%
-
 import logging
 
 import wandb
-from utils.logger import WandbAlertLogger
+from utils.logger import WandbAlertHandler
+
+# Get the root logger
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="[%(asctime)s] %(levelname)s:%(name)s %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger()
 
 
 def main():
@@ -19,12 +25,8 @@ def main():
     )
 
     # Set up logger
-    logger = WandbAlertLogger("plant-rl", wandb_run)
-    logger.setLevel(logging.DEBUG)
-    # Add console handler
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
-    logger.addHandler(console_handler)
+    handler = WandbAlertHandler(wandb_run)
+    logger.addHandler(handler)
 
     logger.debug("This is a debug alert to test wandb alerts.")
 
