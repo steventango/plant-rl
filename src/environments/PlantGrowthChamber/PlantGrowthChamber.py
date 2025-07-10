@@ -237,18 +237,14 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 "df": self.df,
                 "env_time": self.time.timestamp(),
             }
-        N = 3
-        raw_area = self.plant_areas[:N]
         mean = np.array(
             [self.uema_areas[i].compute() for i in range(self.zone.num_plants)]
-        ).flatten()[:N]
+        ).flatten()
         upper = mean * (1 + self.clean_area_upper)
         lower = mean * (1 - self.clean_area_lower)
         return {
             "df": self.df,
             "mean_clean_area": np.mean(self.clean_areas[-1]),
-            "clean_area": self.clean_areas[-1][:N],
-            "raw_area": raw_area,
             "uema_area": mean,
             "upper_area": upper,
             "lower_area": lower,
