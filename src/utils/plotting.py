@@ -280,11 +280,11 @@ def plot_q_values_and_diff(
             plt.close(fig_diff)  # Close the figure
             logger.debug(f"Step {step}: Saved Q-value plots to {q_plots_dir}")
         except Exception as e:
-            logger.error(
+            logger.warning(
                 f"Step {step}: Error during Q-value plotting: {e}", exc_info=True
             )
     else:
-        logger.warning(
+        logger.debug(
             f"Step {step}: Agent does not have 'w' or 'tile_coder' attributes, or they are None. Skipping Q-value plotting."
         )
 

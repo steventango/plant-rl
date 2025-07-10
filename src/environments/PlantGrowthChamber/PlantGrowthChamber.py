@@ -1,7 +1,6 @@
 import asyncio
 import io
 import logging
-import traceback
 from collections import defaultdict
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -148,9 +147,10 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 image_data = await response.read()
                 self.images[side] = Image.open(io.BytesIO(image_data))
                 logger.debug(f"Successfully fetched image from {url}")
-        except Exception as e:
-            logger.error(f"Error fetching image from {url} after retries: {str(e)}")
-            logger.error(traceback.format_exc())
+        except Exception:
+            logger.warning(
+                f"Error fetching image from {url} after retries", exc_info=True
+            )
             # Keep previous image if available, otherwise this side will be missing
 
     async def put_action(self, action):
@@ -176,10 +176,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 json={"array": action_to_send.tolist()},
                 timeout=10,
             )
-        except Exception as e:
-            logger.error(f"Error: {self.zone.lightbar_url} after retries")
-            logger.error(traceback.format_exc())
-            raise e
+        except Exception:
+            # TODO: better handling of this exception
+            logger.exception(f"Error: {self.zone.lightbar_url} after retries")
 
     async def start(self):
         logger.debug(f"Local time: {self.get_local_time()}. Step 0")
@@ -309,7 +308,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 f"Lights turned off for zone {self.zone.identifier} during environment closure"
             )
         except Exception as e:
-            logger.error(
+            logger.exception(
                 f"Failed to turn off lights for zone {self.zone.identifier} during close: {e}"
             )
 
@@ -319,7 +318,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 await self.session.close()
                 logger.debug(f"Closed aiohttp session for zone {self.zone.identifier}")
             except Exception as e:
-                logger.error(
+                logger.exception(
                     f"Error closing aiohttp session for zone {self.zone.identifier}: {str(e)}"
                 )
             self.session = None
