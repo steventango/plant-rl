@@ -186,8 +186,8 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.n_step = 0
         self.clean_areas = []
         self.daily_mean_clean_areas = defaultdict(float)
-        self.last_step_time = self.get_time()
         await self.sleep_until_next_step(self.duration)
+        self.last_step_time = self.get_time()
         observation = await self.get_observation()
         self.n_step = 1
         return observation, self.get_info()
