@@ -77,7 +77,7 @@ class Checkpoint:
     def save(self):
         params_path = self._ctx.resolve(self._params_path)
 
-        logging.info("Dumping checkpoint")
+        logging.debug("Dumping checkpoint")
         if not os.path.exists(params_path):
             params_path = self._ctx.ensureExists(self._params_path, is_file=True)
             with open(params_path, "w") as f:
@@ -87,7 +87,7 @@ class Checkpoint:
         with lzma.open(data_path, "wb") as f:
             pickle.dump(self._storage, f)
 
-        logging.info("Finished dumping checkpoint")
+        logging.debug("Finished dumping checkpoint")
 
     def maybe_save(self):
         if self._save_every < 0:
