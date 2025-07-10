@@ -105,18 +105,18 @@ class SystemMonitor:
             logger.warning("Memory metrics not available from wandb yet")
             return
 
-        if memory_percent >= self.memory_threshold:
-            title = f"High Memory Usage Alert - {memory_percent * 100:.1f}%"
+        if memory_percent >= self.memory_threshold * 100:
+            title = f"High Memory Usage Alert - {memory_percent:.1f}%"
             text = (
-                f"Memory usage has exceeded {self.memory_threshold * 100}% threshold.\n"
-                f"Current system memory usage: {memory_percent * 100:.1f}%\n"
+                f"Memory usage has exceeded {self.memory_threshold * 100:.0f}% threshold.\n"
+                f"Current system memory usage: {memory_percent:.1f}%\n"
                 f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
             )
 
             self.send_wandb_alert(title, text)
-            logger.warning(f"Memory usage high: {memory_percent * 100:.1f}%")
+            logger.warning(f"Memory usage high: {memory_percent:.1f}%")
         else:
-            logger.info(f"Memory usage normal: {memory_percent * 100:.1f}%")
+            logger.info(f"Memory usage normal: {memory_percent:.1f}%")
 
     def check_disk(self, metrics: Dict[str, Any]):
         """Check disk usage and send wandb alert if threshold exceeded for any disk."""
@@ -151,7 +151,7 @@ class SystemMonitor:
                 continue
 
             # Log status for each disk
-            if usage >= self.disk_threshold:
+            if usage >= self.disk_threshold * 100:
                 high_usage_disks.append((disk_path, usage))
                 logger.warning(f"Disk usage high on {disk_path}: {usage:.1f}%")
             else:
@@ -175,7 +175,7 @@ class SystemMonitor:
             )
 
             text = (
-                f"Disk usage has exceeded {self.disk_threshold}% threshold on {len(high_usage_disks)} disk(s).\n"
+                f"Disk usage has exceeded {self.disk_threshold * 100:.0f}% threshold on {len(high_usage_disks)} disk(s).\n"
                 f"Highest usage: {highest_disk_path} at {highest_usage:.1f}%\n\n"
                 f"Disks above threshold:\n{high_usage_details}\n\n"
                 f"All monitored disks:\n{all_disk_details}\n"
@@ -220,8 +220,8 @@ class SystemMonitor:
             interval_seconds: Time interval between checks in seconds (default: 60)
         """
         logger.info(f"Starting system monitor with {interval_seconds}s interval")
-        logger.info(f"Memory threshold: {self.memory_threshold}%")
-        logger.info(f"Disk threshold: {self.disk_threshold}%")
+        logger.info(f"Memory threshold: {self.memory_threshold * 100}%")
+        logger.info(f"Disk threshold: {self.disk_threshold * 100}%")
 
         try:
             while True:
