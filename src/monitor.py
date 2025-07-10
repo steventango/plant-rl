@@ -43,6 +43,10 @@ class SystemMonitor:
             project: Wandb project name (default: "monitor")
             disk_paths: Tuple of disk paths to monitor (default: ("/", "/data"))
         """
+        assert 0.0 <= memory_threshold <= 1.0, (
+            "memory_threshold must be between 0 and 1"
+        )
+        assert 0.0 <= disk_threshold <= 1.0, "disk_threshold must be between 0 and 1"
         self.memory_threshold = memory_threshold
         self.disk_threshold = disk_threshold
         self.disk_paths = disk_paths
@@ -64,40 +68,18 @@ class SystemMonitor:
     def get_system_metrics(self) -> Dict[str, Any]:
         """Get current system metrics from wandb's built-in system monitoring."""
         try:
-            # Try to get system metrics from wandb's summary
             api = wandb.Api()
             run = api.run(self.wandb_run.path)
             system_metrics_history = run.history(stream="system")
             if system_metrics_history.empty:
                 logger.warning("No system metrics found in wandb history")
                 return {}
-            summary = system_metrics_history.iloc[-1]
+            system_metrics = system_metrics_history.iloc[-1]
 
-            logger.info("Latest system metrics summary:")
-            logger.info(summary)
+            logger.info("Latest system metrics:")
+            logger.info(system_metrics)
 
-            # Build metrics dict with memory and dynamically discovered disk metrics
-            metrics = {
-                "memory_percent": summary.get("system.memory_percent", 0),
-            }
-
-            # Dynamically find all disk usage metrics
-            disk_metrics = {}
-            for column in summary.index:
-                if column.startswith("system.disk.") and column.endswith(
-                    ".usagePercent"
-                ):
-                    # Extract disk path from column name (e.g., "system.disk./.usagePercent" -> "/")
-                    disk_path = column.replace("system.disk.", "").replace(
-                        ".usagePercent", ""
-                    )
-                    disk_metrics[
-                        f"disk_{disk_path.replace('/', 'root' if disk_path == '/' else disk_path.replace('/', '_'))}_percent"
-                    ] = summary.get(column, 0)
-
-            metrics.update(disk_metrics)
-            return metrics
-
+            return system_metrics
         except Exception as e:
             logger.exception(f"Failed to get system metrics from wandb: {e}")
             return {}
@@ -155,11 +137,11 @@ class SystemMonitor:
 
         for disk_name, usage in disk_metrics.items():
             # Convert disk name back to path for display
+            sanitized_path = disk_name.replace("disk_", "").replace("_percent", "")
             disk_path = (
-                disk_name.replace("disk_", "")
-                .replace("_percent", "")
-                .replace("root", "/")
-                .replace("_", "/")
+                "/"
+                if sanitized_path == "root"
+                else f"/{sanitized_path.replace('_', '/')}"
             )
 
             if usage == 0:
@@ -171,11 +153,11 @@ class SystemMonitor:
             # Log status for each disk
             if usage >= self.disk_threshold:
                 high_usage_disks.append((disk_path, usage))
-                logger.warning(f"Disk usage high on {disk_path}: {usage * 100:.1f}%")
+                logger.warning(f"Disk usage high on {disk_path}: {usage:.1f}%")
             else:
-                logger.info(f"Disk usage normal on {disk_path}: {usage * 100:.1f}%")
+                logger.info(f"Disk usage normal on {disk_path}: {usage:.1f}%")
 
-            all_disk_status.append(f"{disk_path}: {usage * 100:.1f}%")
+            all_disk_status.append(f"{disk_path}: {usage:.1f}%")
 
         # Send alert if any disk exceeds threshold
         if high_usage_disks:
@@ -189,12 +171,12 @@ class SystemMonitor:
             # Build detailed text with all disk usages
             all_disk_details = "\n".join(all_disk_status)
             high_usage_details = "\n".join(
-                [f"{path}: {usage * 100:.1f}%" for path, usage in high_usage_disks]
+                [f"{path}: {usage:.1f}%" for path, usage in high_usage_disks]
             )
 
             text = (
-                f"Disk usage has exceeded {self.disk_threshold * 100}% threshold on {len(high_usage_disks)} disk(s).\n"
-                f"Highest usage: {highest_disk_path} at {highest_usage * 100:.1f}%\n\n"
+                f"Disk usage has exceeded {self.disk_threshold}% threshold on {len(high_usage_disks)} disk(s).\n"
+                f"Highest usage: {highest_disk_path} at {highest_usage:.1f}%\n\n"
                 f"Disks above threshold:\n{high_usage_details}\n\n"
                 f"All monitored disks:\n{all_disk_details}\n"
                 f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
@@ -206,7 +188,7 @@ class SystemMonitor:
             if all_disk_status:
                 max_usage = max(disk_metrics.values())
                 logger.info(
-                    f"All disks within threshold - highest usage: {max_usage * 100:.1f}%"
+                    f"All disks within threshold - highest usage: {max_usage:.1f}%"
                 )
 
     def run_monitoring_cycle(self):
@@ -238,8 +220,8 @@ class SystemMonitor:
             interval_seconds: Time interval between checks in seconds (default: 60)
         """
         logger.info(f"Starting system monitor with {interval_seconds}s interval")
-        logger.info(f"Memory threshold: {self.memory_threshold * 100}%")
-        logger.info(f"Disk threshold: {self.disk_threshold * 100}%")
+        logger.info(f"Memory threshold: {self.memory_threshold}%")
+        logger.info(f"Disk threshold: {self.disk_threshold}%")
 
         try:
             while True:
