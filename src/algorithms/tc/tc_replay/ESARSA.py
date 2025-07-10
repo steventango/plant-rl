@@ -9,8 +9,7 @@ from algorithms.tc.tc_replay.TCAgentReplay import TCAgentReplay
 from utils.checkpoint import checkpointable
 from utils.policies import egreedy_probabilities
 
-logger = logging.getLogger("esarsa")
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger("plant_rl.esarsa")
 
 
 def _update(w, x, a, xp, pi, r, gamma, alpha, n_features):

@@ -27,7 +27,7 @@ from utils.plotting import plot_q_values_and_diff
 from utils.preempt import TimeoutHandler
 from utils.RlGlue.rl_glue import AsyncRLGlue
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("plant_rl")
 
 
 async def main():

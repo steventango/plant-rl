@@ -17,8 +17,7 @@ from utils.RlGlue.environment import BaseAsyncEnvironment
 from .cv import process_image
 from .zones import load_zone_from_config
 
-logger = logging.getLogger("PlantGrowthChamber")
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger("plant_rl.PlantGrowthChamber")
 
 
 class PlantGrowthChamber(BaseAsyncEnvironment):
@@ -183,6 +182,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     async def start(self):
         logger.debug(f"Local time: {self.get_local_time()}. Step 0")
+        logger.warning("Testing logger propagation")
         self.n_step = 0
         self.clean_areas = []
         self.daily_mean_clean_areas = defaultdict(float)

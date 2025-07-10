@@ -9,8 +9,7 @@ from RlGlue.environment import BaseEnvironment
 
 from utils.functions import normalize
 
-logger = logging.getLogger("OfflinePlantGrowthChamber")
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger("plant_rl.OfflinePlantGrowthChamber")
 
 
 class OfflinePlantGrowthChamber(BaseEnvironment):

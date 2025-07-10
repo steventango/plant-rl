@@ -11,8 +11,7 @@ from PIL import Image
 from environments.PlantGrowthChamber.PlantGrowthChamber import PlantGrowthChamber
 from environments.PlantGrowthChamber.zones import deserialize_zone
 
-logger = logging.getLogger("MockPlantGrowthChamber")
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger("plant_rl.MockPlantGrowthChamber")
 
 
 class MockPlantGrowthChamber(PlantGrowthChamber):
