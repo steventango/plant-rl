@@ -20,7 +20,7 @@ import wandb
 from experiment import ExperimentModel
 from problems.registry import getProblem
 from utils.checkpoint import Checkpoint
-from utils.logger import log
+from utils.logger import log, WandbAlertLogger
 
 # --- Q-value plotting imports ---
 from utils.plotting import plot_q_values_and_diff
@@ -60,10 +60,7 @@ logging.basicConfig(
     format="[%(asctime)s] %(levelname)s:%(name)s %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S",
 )
-logger = logging.getLogger("exp")
 prod = "cdr" in socket.gethostname() or args.silent
-if not prod:
-    logger.setLevel(logging.DEBUG)
 
 
 # ----------------------
@@ -142,6 +139,13 @@ async def main():
                 ),  # So wandb alerts when data dir is near full
             ),
         )
+
+        # Set up logger
+        logger = WandbAlertLogger("plant-rl", wandb_run)
+        logger.setLevel(logging.DEBUG if not prod else logging.ERROR)
+        # Add console handler
+        console_handler = logging.StreamHandler()
+        logger.addHandler(console_handler)
 
         # save config to dataset
         if not dataset_path.exists():
@@ -226,7 +230,7 @@ async def main():
                             wandb_run.log({"q_diff": wandb.Image(str(q_diff_file))})
                         last_q_plot_time = now
                     except Exception as e:
-                        logger.error(
+                        logger.warning(
                             f"Q-value plotting/logging failed at step {step}: {e}",
                             exc_info=True,
                         )
@@ -256,14 +260,16 @@ async def main():
                         interaction.extra,
                         is_mock_env=is_mock_env,
                     )
-
+        except Exception as e:
+            logger.exception(e)
+            raise e
         finally:
             # ------------
             # -- Saving --
             # ------------
             await env.close()
             chk.save()
-            wandb_run.finish()
+        wandb_run.finish()
 
 
 if __name__ == "__main__":
