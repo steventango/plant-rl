@@ -175,7 +175,7 @@ def test_get_calibrated_action(calibration_z3: Calibration):
     assert calibrated_action.shape == (6,)
     np.testing.assert_allclose(
         calibrated_action,
-        np.array([0.382, 0.693, 0.315, 0.000, 0.323, 0.564]),
+        np.array([0.382, 0.693, 0.315, 0.000, 0.323, 0.605]),
         atol=1e-3,
     )
 
@@ -203,7 +203,7 @@ def test_decalibrated_action(calibration_z3: Calibration):
         atol=1e-1,
     )
     calibrated_action = np.array(
-        [0.38159722, 0.69296875, 0.31526786, 0.0, 0.323, 0.56383542]
+        [0.38159722, 0.69296875, 0.31526786, 0.0, 0.323, 0.605335]
     )
     decalibrated_action = calibration_z3.decalibrated_action(calibrated_action)
     assert isinstance(decalibrated_action, np.ndarray)
@@ -221,7 +221,7 @@ def test_blue_action(calibration_z3: Calibration):
     """
     np.testing.assert_allclose(
         BLUE_ACTION,
-        np.array([69.7, 29.3, 3.4, 0.0, 2.6, 5.1]),
+        np.array([69.7, 29.3, 3.4, 0.0, 2.6, 5.8]),
         atol=1e-1,
     )
 
@@ -257,7 +257,7 @@ def test_red_action(calibration_z3: Calibration):
     """
     np.testing.assert_allclose(
         RED_ACTION,
-        np.array([9.7, 34.9, 4.0, 0.0, 56.3, 6.1]),
+        np.array([9.7, 34.9, 4.0, 0.0, 56.3, 7.0]),
         atol=1e-1,
     )
 
