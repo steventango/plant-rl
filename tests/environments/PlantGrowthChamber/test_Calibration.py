@@ -6,10 +6,10 @@ import pytest
 
 from environments.PlantGrowthChamber.Calibration import Calibration
 from utils.constants import (
-    BALANCED_ACTION,
     BALANCED_ACTION_100,
+    BALANCED_ACTION_105,
+    BALANCED_ACTION_120,
     BLUE_ACTION,
-    OLD_BALANCED_ACTION,
     RED_ACTION,
 )
 
@@ -138,7 +138,7 @@ def test_adjusted_action(calibration_z3: Calibration):
 
     np.testing.assert_allclose(
         adjusted_action,
-        OLD_BALANCED_ACTION,
+        BALANCED_ACTION_120,
         atol=1e-1,
     )
 
@@ -147,10 +147,10 @@ def test_get_ppfd(calibration_z3: Calibration):
     """
     Test that the get_ppfd method correctly returns the PPFD value.
     """
-    ppfd = calibration_z3.get_ppfd(OLD_BALANCED_ACTION)
+    ppfd = calibration_z3.get_ppfd(BALANCED_ACTION_120)
     assert isinstance(ppfd, float)
     assert ppfd == 120
-    ppfd = calibration_z3.get_ppfd(BALANCED_ACTION)
+    ppfd = calibration_z3.get_ppfd(BALANCED_ACTION_105)
     assert isinstance(ppfd, float)
     assert ppfd == 105
     ppfd = calibration_z3.get_ppfd(BALANCED_ACTION_100)
@@ -162,7 +162,7 @@ def test_get_calibrated_action(calibration_z3: Calibration):
     """
     Test that the get_calibrated_action method correctly returns a calibrated action.
     """
-    calibrated_action = calibration_z3.get_calibrated_action(OLD_BALANCED_ACTION)
+    calibrated_action = calibration_z3.get_calibrated_action(BALANCED_ACTION_120)
     assert isinstance(calibrated_action, np.ndarray)
     assert calibrated_action.shape == (6,)
     np.testing.assert_allclose(
@@ -170,7 +170,7 @@ def test_get_calibrated_action(calibration_z3: Calibration):
         np.array([0.397, 0.76, 0.324, 0.000, 0.332, 0.605]),
         atol=1e-3,
     )
-    calibrated_action = calibration_z3.get_calibrated_action(BALANCED_ACTION)
+    calibrated_action = calibration_z3.get_calibrated_action(BALANCED_ACTION_105)
     assert isinstance(calibrated_action, np.ndarray)
     assert calibrated_action.shape == (6,)
     np.testing.assert_allclose(
@@ -199,7 +199,7 @@ def test_decalibrated_action(calibration_z3: Calibration):
     assert decalibrated_action.shape == (6,)
     assert np.allclose(
         decalibrated_action,
-        OLD_BALANCED_ACTION,
+        BALANCED_ACTION_120,
         atol=1e-1,
     )
     calibrated_action = np.array(
@@ -210,7 +210,7 @@ def test_decalibrated_action(calibration_z3: Calibration):
     assert decalibrated_action.shape == (6,)
     assert np.allclose(
         decalibrated_action,
-        BALANCED_ACTION,
+        BALANCED_ACTION_105,
         atol=1e-1,
     )
 

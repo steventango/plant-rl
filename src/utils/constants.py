@@ -2,9 +2,9 @@ import numpy as np
 
 
 def get_modified_action(ppfd: float, channel: int, offset: float) -> np.ndarray:
-    adjustment = -offset / (((offset + BALANCED_ACTION[channel]) / ppfd) - 1)
+    adjustment = -offset / (((offset + BALANCED_ACTION_105[channel]) / ppfd) - 1)
 
-    modified_action = BALANCED_ACTION.copy()
+    modified_action = BALANCED_ACTION_105.copy()
     modified_action[channel] += adjustment
     modified_action = modified_action / (ppfd + adjustment) * ppfd
 
@@ -20,11 +20,11 @@ def adjust_ppfd(action: np.ndarray, ppfd: float) -> np.ndarray:
     return adjusted_action
 
 
-OLD_BALANCED_ACTION = np.array([22.5, 81.0, 9.3, 0.0, 7.2, 14.2])
-BALANCED_ACTION = adjust_ppfd(OLD_BALANCED_ACTION, 105.0)
-BALANCED_ACTION_100 = adjust_ppfd(OLD_BALANCED_ACTION, 100.0)
+BALANCED_ACTION_120 = np.array([22.5, 81.0, 9.3, 0.0, 7.2, 14.2])
+BALANCED_ACTION_105 = adjust_ppfd(BALANCED_ACTION_120, 105.0)
+BALANCED_ACTION_100 = adjust_ppfd(BALANCED_ACTION_120, 100.0)
 
-DIM_ACTION = 0.675 * BALANCED_ACTION
+DIM_ACTION = 0.675 * BALANCED_ACTION_100
 
 RED_ACTION = get_modified_action(ppfd=105.0, channel=4, offset=50.0)
 BLUE_ACTION = get_modified_action(ppfd=105.0, channel=0, offset=50.0)

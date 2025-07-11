@@ -1,7 +1,7 @@
 import numpy as np  # type: ignore
 
 from environments.PlantGrowthChamber.PlantGrowthChamber import PlantGrowthChamber
-from utils.constants import BALANCED_ACTION, DIM_ACTION
+from utils.constants import BALANCED_ACTION_105, DIM_ACTION
 
 
 class PlantGrowthChamberDiscrete(PlantGrowthChamber):
@@ -9,7 +9,7 @@ class PlantGrowthChamberDiscrete(PlantGrowthChamber):
         super().__init__(*args, **kwargs)
         self.action_map = {
             0: DIM_ACTION,
-            1: BALANCED_ACTION,
+            1: BALANCED_ACTION_105,
         }
 
     async def step(self, action: int | np.ndarray):

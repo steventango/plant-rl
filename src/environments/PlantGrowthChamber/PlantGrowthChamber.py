@@ -9,7 +9,7 @@ import numpy as np
 from PIL import Image
 
 from environments.PlantGrowthChamber.utils import create_session
-from utils.constants import BALANCED_ACTION, DIM_ACTION
+from utils.constants import BALANCED_ACTION_105, DIM_ACTION
 from utils.functions import normalize
 from utils.metrics import UnbiasedExponentialMovingAverage as UEMA
 from utils.RlGlue.environment import BaseAsyncEnvironment
@@ -195,7 +195,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         logger.debug(
             f"Local time: {self.get_local_time()}. Step {self.n_step} with action {action}"
         )
-        if np.array_equal(action, BALANCED_ACTION):
+        if np.array_equal(action, BALANCED_ACTION_105):
             self.dli += 1.0
         elif np.array_equal(action, DIM_ACTION):
             self.dli += 0.5
