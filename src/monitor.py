@@ -3,7 +3,8 @@ import logging
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
+
+import pandas as pd
 
 import wandb
 from wandb.sdk.wandb_alerts import AlertLevel
@@ -65,7 +66,7 @@ class SystemMonitor:
             logger.exception(f"Failed to initialize Wandb: {e}")
             raise
 
-    def get_system_metrics(self) -> Dict[str, Any]:
+    def get_system_metrics(self) -> pd.Series:
         """Get current system metrics from wandb's built-in system monitoring."""
         try:
             api = wandb.Api()
@@ -73,7 +74,7 @@ class SystemMonitor:
             system_metrics_history = run.history(stream="system")
             if system_metrics_history.empty:
                 logger.warning("No system metrics found in wandb history")
-                return {}
+                return pd.Series()
             system_metrics = system_metrics_history.iloc[-1]
 
             logger.info("Latest system metrics:")
@@ -82,7 +83,7 @@ class SystemMonitor:
             return system_metrics
         except Exception as e:
             logger.exception(f"Failed to get system metrics from wandb: {e}")
-            return {}
+            return pd.Series()
 
     def send_wandb_alert(self, title: str, text: str):
         """Send an alert using Wandb's alert system."""
@@ -97,15 +98,15 @@ class SystemMonitor:
         except Exception as e:
             logger.exception(f"Failed to send Wandb alert: {e}")
 
-    def check_memory(self, metrics: Dict[str, Any]):
+    def check_memory(self, metrics: pd.Series):
         """Check memory usage and send wandb alert if threshold exceeded."""
-        memory_percent = metrics.get("memory_percent", 0)
+        memory_percent = metrics.get("system.memory_percent", 0)
 
         if memory_percent == 0:
             logger.warning("Memory metrics not available from wandb yet")
             return
 
-        if memory_percent >= self.memory_threshold * 100:
+        if memory_percent is not None and memory_percent >= self.memory_threshold * 100:
             title = f"High Memory Usage Alert - {memory_percent:.1f}%"
             text = (
                 f"Memory usage has exceeded {self.memory_threshold * 100:.0f}% threshold.\n"
@@ -118,13 +119,13 @@ class SystemMonitor:
         else:
             logger.info(f"Memory usage normal: {memory_percent:.1f}%")
 
-    def check_disk(self, metrics: Dict[str, Any]):
+    def check_disk(self, metrics: pd.Series):
         """Check disk usage and send wandb alert if threshold exceeded for any disk."""
         # Find all disk metrics
         disk_metrics = {
             k: v
             for k, v in metrics.items()
-            if k.startswith("disk_") and k.endswith("_percent")
+            if isinstance(k, str) and "disk." in k and ".usagePercent" in k
         }
 
         if not disk_metrics:
@@ -137,12 +138,13 @@ class SystemMonitor:
 
         for disk_name, usage in disk_metrics.items():
             # Convert disk name back to path for display
-            sanitized_path = disk_name.replace("disk_", "").replace("_percent", "")
-            disk_path = (
-                "/"
-                if sanitized_path == "root"
-                else f"/{sanitized_path.replace('_', '/')}"
+            disk_path = disk_name.replace("system.disk.", "").replace(
+                ".usagePercent", ""
             )
+            if disk_path == "/":
+                disk_path = "/"
+            else:
+                disk_path = "/" + disk_path
 
             if usage == 0:
                 logger.warning(
@@ -199,7 +201,7 @@ class SystemMonitor:
             # Get system metrics (simplified since wandb handles the actual monitoring)
             metrics = self.get_system_metrics()
 
-            if not metrics:
+            if metrics.empty:
                 logger.warning("No metrics available for this cycle")
                 return
 
@@ -225,6 +227,9 @@ class SystemMonitor:
 
         try:
             # Initial delay to allow Wandb to start collecting metrics
+            logger.info(
+                "Waiting for Wandb to initialize and collect initial metrics..."
+            )
             time.sleep(30)
             while True:
                 self.run_monitoring_cycle()
