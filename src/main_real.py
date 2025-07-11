@@ -133,7 +133,7 @@ async def main():
                 "context": str(agent_path),
                 "zone": serialize_zone(env.zone),
             }
-            wandb_run.config.update(config)
+            wandb_run.config.update(config, allow_val_change=True)
 
             def glue_builder():
                 assert env is not None, (
