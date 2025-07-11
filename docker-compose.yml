@@ -362,6 +362,24 @@ services:
               capabilities:
                 - gpu
 
+  monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - plant-rl
+    volumes:
+      - .:/app:cached
+      - ~/.ssh:/root/.ssh:cached
+      - ~/.gitconfig:/root/.gitconfig:cached
+      - ~/.config:/root/.config:cached
+      - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
+      - ~/.cache:/root/.cache:cached
+      - ~/.netrc:/root/.netrc:cached
+      - /extra-storage:/data:cached
+    restart: unless-stopped
+    command: uv run python src/monitor.py --interval 300 --memory-threshold 0.9 --disk-threshold 0.9
+
 networks:
   plant-rl:
     name: plant-rl
