@@ -11,8 +11,18 @@ def get_modified_action(ppfd: float, channel: int, offset: float) -> np.ndarray:
     return modified_action
 
 
+def adjust_ppfd(action: np.ndarray, ppfd: float) -> np.ndarray:
+    """
+    Adjust the action to match the given PPFD.
+    """
+    adjusted_action = action.copy()
+    adjusted_action[:5] = adjusted_action[:5] / np.sum(adjusted_action[:5]) * ppfd
+    return adjusted_action
+
+
 OLD_BALANCED_ACTION = np.array([22.5, 81.0, 9.3, 0.0, 7.2, 14.2])
-BALANCED_ACTION = OLD_BALANCED_ACTION / np.sum(OLD_BALANCED_ACTION[:5]) * 105.0
+BALANCED_ACTION = adjust_ppfd(OLD_BALANCED_ACTION, 105.0)
+BALANCED_ACTION_100 = adjust_ppfd(OLD_BALANCED_ACTION, 100.0)
 
 DIM_ACTION = 0.675 * BALANCED_ACTION
 

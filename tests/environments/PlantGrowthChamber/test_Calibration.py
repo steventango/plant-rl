@@ -7,6 +7,7 @@ import pytest
 from environments.PlantGrowthChamber.Calibration import Calibration
 from utils.constants import (
     BALANCED_ACTION,
+    BALANCED_ACTION_100,
     BLUE_ACTION,
     OLD_BALANCED_ACTION,
     RED_ACTION,
@@ -152,6 +153,9 @@ def test_get_ppfd(calibration_z3: Calibration):
     ppfd = calibration_z3.get_ppfd(BALANCED_ACTION)
     assert isinstance(ppfd, float)
     assert ppfd == 105
+    ppfd = calibration_z3.get_ppfd(BALANCED_ACTION_100)
+    assert isinstance(ppfd, float)
+    assert ppfd == 100
 
 
 def test_get_calibrated_action(calibration_z3: Calibration):
