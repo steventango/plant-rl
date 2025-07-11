@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 import numpy as np
 
 from algorithms.BaseAgent import BaseAgent
-from utils.constants import BALANCED_ACTION, DIM_ACTION, TWILIGHT_INTENSITIES_30_MIN
+from utils.constants import BALANCED_ACTION_105, DIM_ACTION, TWILIGHT_INTENSITIES_30_MIN
 from utils.RlGlue.agent import AsyncAgentWrapper
 
 logger = logging.getLogger("plant_rl.PlantGrowthChamberAsyncAgentWrapper")
@@ -73,7 +73,7 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
             intensity = TWILIGHT_INTENSITIES_30_MIN[minute_in_dawn]
 
         logger.debug(f"Dawn action at minute {minute_in_dawn}, intensity: {intensity}")
-        return BALANCED_ACTION * intensity
+        return BALANCED_ACTION_105 * intensity
 
     def get_dusk_action(self) -> np.ndarray:
         """Calculate the appropriate light intensity for dusk based on current environment time."""
@@ -96,7 +96,7 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
             ]
 
         logger.debug(f"Dusk action at minute {minute_in_hour}, intensity: {intensity}")
-        return BALANCED_ACTION * intensity
+        return BALANCED_ACTION_105 * intensity
 
     def get_night_action(self) -> np.ndarray:
         """Return a zero action for night time (lights off)."""
@@ -187,10 +187,10 @@ class PlantGrowthChamberAsyncAgentWrapper_BrightTwilight(
     PlantGrowthChamberAsyncAgentWrapper
 ):
     def get_dawn_action(self) -> np.ndarray:
-        return BALANCED_ACTION
+        return BALANCED_ACTION_105
 
     def get_dusk_action(self) -> np.ndarray:
-        return BALANCED_ACTION
+        return BALANCED_ACTION_105
 
 
 class PlantGrowthChamberAsyncAgentWrapper_DimTwilight(
