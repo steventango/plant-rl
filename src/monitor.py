@@ -141,11 +141,6 @@ class SystemMonitor:
             disk_path = disk_name.replace("system.disk.", "").replace(
                 ".usagePercent", ""
             )
-            if disk_path == "/":
-                disk_path = "/"
-            else:
-                disk_path = "/" + disk_path
-
             if usage == 0:
                 logger.warning(
                     f"Disk metrics not available for {disk_path} from wandb yet"
