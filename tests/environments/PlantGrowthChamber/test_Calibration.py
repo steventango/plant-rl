@@ -5,7 +5,12 @@ import numpy as np
 import pytest
 
 from environments.PlantGrowthChamber.Calibration import Calibration
-from utils.constants import BALANCED_ACTION, BLUE_ACTION, RED_ACTION
+from utils.constants import (
+    BALANCED_ACTION,
+    BLUE_ACTION,
+    OLD_BALANCED_ACTION,
+    RED_ACTION,
+)
 
 
 def create_calibration_object(zone: str) -> Calibration:
@@ -132,7 +137,7 @@ def test_adjusted_action(calibration_z3: Calibration):
 
     np.testing.assert_allclose(
         adjusted_action,
-        BALANCED_ACTION,
+        OLD_BALANCED_ACTION,
         atol=1e-1,
     )
 
@@ -141,21 +146,32 @@ def test_get_ppfd(calibration_z3: Calibration):
     """
     Test that the get_ppfd method correctly returns the PPFD value.
     """
-    ppfd = calibration_z3.get_ppfd(BALANCED_ACTION)
+    ppfd = calibration_z3.get_ppfd(OLD_BALANCED_ACTION)
     assert isinstance(ppfd, float)
     assert ppfd == 120
+    ppfd = calibration_z3.get_ppfd(BALANCED_ACTION)
+    assert isinstance(ppfd, float)
+    assert ppfd == 105
 
 
 def test_get_calibrated_action(calibration_z3: Calibration):
     """
     Test that the get_calibrated_action method correctly returns a calibrated action.
     """
-    calibrated_action = calibration_z3.get_calibrated_action(BALANCED_ACTION)
+    calibrated_action = calibration_z3.get_calibrated_action(OLD_BALANCED_ACTION)
     assert isinstance(calibrated_action, np.ndarray)
     assert calibrated_action.shape == (6,)
     np.testing.assert_allclose(
         calibrated_action,
         np.array([0.397, 0.76, 0.324, 0.000, 0.332, 0.605]),
+        atol=1e-3,
+    )
+    calibrated_action = calibration_z3.get_calibrated_action(BALANCED_ACTION)
+    assert isinstance(calibrated_action, np.ndarray)
+    assert calibrated_action.shape == (6,)
+    np.testing.assert_allclose(
+        calibrated_action,
+        np.array([0.382, 0.693, 0.315, 0.000, 0.323, 0.564]),
         atol=1e-3,
     )
 
@@ -179,6 +195,17 @@ def test_decalibrated_action(calibration_z3: Calibration):
     assert decalibrated_action.shape == (6,)
     assert np.allclose(
         decalibrated_action,
+        OLD_BALANCED_ACTION,
+        atol=1e-1,
+    )
+    calibrated_action = np.array(
+        [0.38159722, 0.69296875, 0.31526786, 0.0, 0.323, 0.56383542]
+    )
+    decalibrated_action = calibration_z3.decalibrated_action(calibrated_action)
+    assert isinstance(decalibrated_action, np.ndarray)
+    assert decalibrated_action.shape == (6,)
+    assert np.allclose(
+        decalibrated_action,
         BALANCED_ACTION,
         atol=1e-1,
     )
@@ -190,13 +217,13 @@ def test_blue_action(calibration_z3: Calibration):
     """
     np.testing.assert_allclose(
         BLUE_ACTION,
-        np.array([72.5, 39.5, 4.5, 0.0, 3.5, 6.9]),
+        np.array([69.7, 29.3, 3.4, 0.0, 2.6, 5.1]),
         atol=1e-1,
     )
 
-    # make sure ppfd is 120
+    # make sure ppfd is 105
     ppfd = calibration_z3.get_ppfd(BLUE_ACTION)
-    assert np.isclose(ppfd, 120, atol=1)
+    assert np.isclose(ppfd, 105, atol=1)
 
     # check that it doesn't exceed the maximum safe values
     safe_maximum_values = calibration_z3.safe_maximum_values.copy()
@@ -226,13 +253,13 @@ def test_red_action(calibration_z3: Calibration):
     """
     np.testing.assert_allclose(
         RED_ACTION,
-        np.array([12.5, 45.1, 5.2, 0.0, 57.2, 7.9]),
+        np.array([9.7, 34.9, 4.0, 0.0, 56.3, 6.1]),
         atol=1e-1,
     )
 
-    # make sure ppfd is 120
+    # make sure ppfd is 105
     ppfd = calibration_z3.get_ppfd(RED_ACTION)
-    assert np.isclose(ppfd, 120, atol=1)
+    assert np.isclose(ppfd, 105, atol=1)
 
     # check that it doesn't exceed the maximum safe values
     safe_maximum_values = calibration_z3.safe_maximum_values.copy()
