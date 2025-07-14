@@ -205,6 +205,8 @@ for idx in indices:
                 logger, agent, q_plots_dir, step, df
             )  # Updated function call
 
+    chk.save()
+
     collector.reset()
 
     # ------------

@@ -9,8 +9,7 @@ from RlGlue.environment import BaseEnvironment
 
 from utils.functions import normalize
 
-logger = logging.getLogger("OfflinePlantGrowthChamber")
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger("plant_rl.OfflinePlantGrowthChamber")
 
 
 class OfflinePlantGrowthChamber(BaseEnvironment):
@@ -169,7 +168,10 @@ class OfflinePlantGrowthChamber(BaseEnvironment):
         else:
             current_area = self.dataset.iloc[self.index]["mean_clean_area"]
             previous_area = self.dataset.iloc[self.index - 1]["mean_clean_area"]
-            reward = normalize(current_area - previous_area, 0, 150)
+            if previous_area == 0:
+                reward = 0.0
+            else:
+                reward = normalize(current_area - previous_area, 0, 150)
 
         return float(reward)
 
@@ -210,7 +212,7 @@ class OfflinePlantGrowthChamber(BaseEnvironment):
         info = {}
         if terminal:
             dataset_path = self.dataset_paths[self.dataset_index]
-            logger.info(
+            logger.debug(
                 f"Added {self.index} transitions from {dataset_path} to the replay buffer."
             )
             self.dataset_index += 1
@@ -295,7 +297,7 @@ class OfflinePlantGrowthChamber_1hrStep(OfflinePlantGrowthChamber):
         terminal = self.index + 72 >= len(self.dataset)
         info = {}
         if terminal:
-            logger.info(
+            logger.debug(
                 f"Added {int(self.index / 6)} transitions to the replay buffer."
             )
             self.dataset_index += 1

@@ -1,0 +1,15 @@
+{
+    "agent": "Spreadsheet8",
+    "problem": "TemporalPlantGrowthChamber",
+    "total_steps": 40320,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": "alliance-zone08",
+            "timezone": "America/Edmonton"
+        },
+        "filepath": "experiments/online/E10/P0/balanced.xlsx",
+        "compatibility_mode": false,
+        "timezone": "America/Edmonton"
+    }
+}

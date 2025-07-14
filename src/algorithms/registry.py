@@ -19,7 +19,7 @@ from algorithms.SpreadsheetAgent import SpreadsheetAgent
 from algorithms.tc.ESARSA import ESARSA
 from algorithms.tc.QL import QL
 from algorithms.tc.SoftmaxAC import SoftmaxAC
-from algorithms.tc.tc_offline.ESARSA import ESARSA as OfflineESARSA
+from algorithms.tc.batch.ESARSA import ESARSA as BatchESARSA
 from algorithms.tc.tc_replay.ESARSA import ESARSA as ReplayESARSA
 from algorithms.tc.tc_replay.QL import QL as QLReplay
 
@@ -58,8 +58,8 @@ def getAgent(name) -> Type[BaseAgent]:
     if name.startswith("LinearESARSA"):
         return LinearESARSA
 
-    if name.startswith("OfflineESARSA"):
-        return OfflineESARSA
+    if name.startswith("BatchESARSA"):
+        return BatchESARSA
 
     if name == "LinearQL":
         return LinearQL

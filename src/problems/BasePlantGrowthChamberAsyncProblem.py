@@ -1,7 +1,5 @@
 from algorithms.PlantGrowthChamberAsyncAgentWrapper import (
     PlantGrowthChamberAsyncAgentWrapper,
-    PlantGrowthChamberAsyncAgentWrapper_BrightTwilight,
-    PlantGrowthChamberAsyncAgentWrapper_DimTwilight
 )
 from algorithms.registry import getAgent
 from problems.BaseAsyncProblem import BaseAsyncProblem
@@ -21,16 +19,6 @@ class BasePlantGrowthChamberAsyncProblem(BaseAsyncProblem):
             self.observations, self.actions, self.params, self.collector, self.seed
         )
         if not isinstance(agent, BaseAsyncAgent):
-            if "twilight_type" not in self.env_params:
-                agent = PlantGrowthChamberAsyncAgentWrapper(agent)
-            elif self.env_params["twilight_type"] == "bright":
-                agent = PlantGrowthChamberAsyncAgentWrapper_BrightTwilight(agent)
-            elif self.env_params["twilight_type"] == "dim":
-                agent = PlantGrowthChamberAsyncAgentWrapper_DimTwilight(agent)
-            else:
-                raise ValueError(
-                    "Invalid twilight_type."
-                )
-
+            agent = PlantGrowthChamberAsyncAgentWrapper(agent)
         self.agent = agent
         return self.agent
