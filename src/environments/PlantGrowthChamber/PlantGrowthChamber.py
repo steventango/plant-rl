@@ -310,17 +310,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     async def close(self):
         """Close the environment and clean up resources."""
-        # Turn off lights
-        try:
-            await self.put_action(np.zeros(6))
-            logger.debug(
-                f"Lights turned off for zone {self.zone.identifier} during environment closure"
-            )
-        except Exception as e:
-            logger.exception(
-                f"Failed to turn off lights for zone {self.zone.identifier} during close: {e}"
-            )
-
         # Close the aiohttp RetryClient
         if self.session:
             try:
