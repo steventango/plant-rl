@@ -2,9 +2,8 @@ import asyncio
 import logging
 from datetime import timedelta
 from collections import defaultdict
-from typing import Any
-import numpy as np
 from typing import Any, Dict
+import numpy as np
 
 from algorithms.BaseAgent import BaseAgent
 from utils.RlGlue.agent import AsyncAgentWrapper
