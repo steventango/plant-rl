@@ -12,11 +12,8 @@ logger = logging.getLogger("plant_rl.PoissonAgent")
 
 @checkpointable(
     [
-        "steps",
-        "updates",
         "lam",
         "max_repeat",
-        "actions",
         "current_action",
         "current_repeat",
     ]
@@ -31,12 +28,9 @@ class PoissonAgent(BaseAgent):
         seed: int,
     ):
         super().__init__(observations, actions, params, collector, seed)
-        self.steps = 0
-        self.updates = 0
         self.lam = params.get("lam", 3.0)
         self.max_repeat = params.get("max_repeat", 5)
         assert self.lam > 0, "Parameter 'lam' (lambda) must be positive."
-        self.actions = actions
         self.current_action = None
         self.current_repeat = None
 
