@@ -14,23 +14,21 @@ class CleanPlantSimulator(BaseEnvironment):
                  (ii) Growth only occurs at night. Overnight growth is 20% if lighting is standard.
                  (iii) Poor lighting reduces overnight growth and affects the shape of the gaussian curve.
     State = [time of day,
-             daily light integral (dli),
              plant area,
-             plant openness] (all normalized to [0,1])
-    Action = [low, standard]
+             plant openness,
+             daily light integral (dli)] (all normalized to [0,1])
+    Action = 1D continuous intensity. 0 is off. 1 is standard. 
     Reward = percentage or raw overnight growth assigned to last time stamp of each day
-    Time Step = 10 min
-    Episode duration = 14 days
     """
 
     def __init__(self, **kwargs):
         self.state_dim = (4,)
         self.current_state = np.empty(4)
-        self.action_dim = 2
-        self.actions = [0, 1]
 
-        self.steps_per_day = 72
-        self.total_steps = 72 * 14
+        self.time_step = 5  # minutes
+        self.duration = 14  # days
+        self.steps_per_day = int(12 * 60 / self.time_step)
+        self.total_steps = int(self.steps_per_day * self.duration)
 
         self.steps = 0
         self.dli = 0
@@ -52,9 +50,9 @@ class CleanPlantSimulator(BaseEnvironment):
         observation = np.hstack(
             [
                 self.normalize(tod, 0, self.steps_per_day),
-                self.normalize(daily_light_integral, 0, self.steps_per_day),
                 self.normalize(area, 0.5, 14),
                 self.normalize(openness, 0.97, 1.15),
+                self.normalize(daily_light_integral, 0, self.steps_per_day)
             ]
         )
 
@@ -69,10 +67,7 @@ class CleanPlantSimulator(BaseEnvironment):
             )
 
     def get_light_amount(self, action):
-        if action == 1:
-            return 1.0
-        else:
-            return 0.5
+        return action
 
     def start(self):
         self.steps = 0
@@ -88,9 +83,14 @@ class CleanPlantSimulator(BaseEnvironment):
         self.dli += self.get_light_amount(action)
 
         if self.steps % self.steps_per_day == 0:  # if transitioning overnight
-            percent_overnight_growth = 0.2 * self.normalize(
-                self.dli, 0, self.steps_per_day
-            )
+            if self.dli <= self.steps_per_day: 
+                percent_overnight_growth = 0.2 * self.normalize(
+                    self.dli, 0, self.steps_per_day
+                )
+            else: 
+                percent_overnight_growth = 0.2 * self.normalize(
+                    2*self.steps_per_day - self.dli, 0, self.steps_per_day
+                )
             self.reward = self.get_reward(percent_overnight_growth)
             self.current_morning_size += (
                 self.current_morning_size * percent_overnight_growth
