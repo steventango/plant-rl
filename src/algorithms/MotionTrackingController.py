@@ -12,8 +12,17 @@ from utils.checkpoint import checkpointable
 logger = logging.getLogger("plant_rl.MotionTrackingController")
 logger.setLevel(logging.DEBUG)
 
-#@checkpointable(("w", "theta"))
-@checkpointable(("sensitivity", "morning_area", "openness_record", "openness_trace", "env_local_time"))
+
+# @checkpointable(("w", "theta"))
+@checkpointable(
+    (
+        "sensitivity",
+        "morning_area",
+        "openness_record",
+        "openness_trace",
+        "env_local_time",
+    )
+)
 class MotionTrackingController(BaseAgent):
     def __init__(
         self,
@@ -27,11 +36,13 @@ class MotionTrackingController(BaseAgent):
         self.start_hour = 9
         self.end_hour = 21  # excluded in daytime
         self.time_step = 5  # minutes
-        self.steps_per_day = int((self.end_hour - self.start_hour) * 60 / self.time_step)
+        self.steps_per_day = int(
+            (self.end_hour - self.start_hour) * 60 / self.time_step
+        )
 
         self.env_local_time = None
         self.mean_areas = defaultdict(float)
-        self.openness_trace = uema(alpha=0.1)   # need to be a scalar
+        self.openness_trace = uema(alpha=0.1)  # need to be a scalar
         self.openness_record = []
         self.morning_area = None
 
@@ -43,7 +54,10 @@ class MotionTrackingController(BaseAgent):
         assert self.env_local_time is not None, (
             "Environment local time must be set before checking night."
         )
-        is_night = self.env_local_time.hour >= self.end_hour or self.env_local_time.hour < self.start_hour
+        is_night = (
+            self.env_local_time.hour >= self.end_hour
+            or self.env_local_time.hour < self.start_hour
+        )
         return is_night
 
     def is_zeroth_tod(self) -> bool:

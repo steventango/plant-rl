@@ -1,6 +1,6 @@
 from algorithms.MotionTrackingControllerWrapper import (
     MotionTrackingControllerWrapper,
-    MotionTrackingControllerWrapper_NoTracking
+    MotionTrackingControllerWrapper_NoTracking,
 )
 from algorithms.registry import getAgent
 from problems.BaseAsyncProblem import BaseAsyncProblem
@@ -10,6 +10,7 @@ from PyExpUtils.collection.Collector import Collector
 from environments.PlantGrowthChamber.CVPlantGrowthChamberIntensity import (
     CVPlantGrowthChamberIntensity_MotionTracking as Env,
 )
+
 
 class OptimizeMotionTracking(BaseAsyncProblem):
     def __init__(self, exp: ExperimentModel, idx: int, collector: Collector):
@@ -38,9 +39,7 @@ class OptimizeMotionTracking(BaseAsyncProblem):
             elif not self.env_params["should_track"]:
                 agent = MotionTrackingControllerWrapper_NoTracking(agent)
             else:
-                raise ValueError(
-                    "Invalid input for should_track."
-                )
+                raise ValueError("Invalid input for should_track.")
 
         self.agent = agent
         return self.agent

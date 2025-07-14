@@ -13,6 +13,7 @@ from utils.checkpoint import checkpointable
 logger = logging.getLogger("MotionTrackingControllerWrapper")
 logger.setLevel(logging.DEBUG)
 
+
 @checkpointable(("sensitivity", "mean_areas", "openness_record", "openness_trace"))
 class MotionTrackingControllerWrapper(AsyncAgentWrapper):
     def __init__(self, agent: BaseAgent):
@@ -43,7 +44,9 @@ class MotionTrackingControllerWrapper(AsyncAgentWrapper):
     def adjust_sensitivity(self):
         max_openness = np.mean(np.sort(self.openness_record)[-5:])
         self.sensitivity = (self.Imax - self.Imin) / max_openness
-        logger.info(f"New Imax = {self.Imax}. New sensitivity = {self.sensitivity:.2f}.")
+        logger.info(
+            f"New Imax = {self.Imax}. New sensitivity = {self.sensitivity:.2f}."
+        )
 
     def reward(self):
         current_time = self.env_local_time.replace(second=0, microsecond=0)
@@ -85,18 +88,25 @@ class MotionTrackingControllerWrapper(AsyncAgentWrapper):
             if not self.agent_started:
                 logger.info(f"Starting RL agent at {self.env_local_time}")
                 action = await asyncio.to_thread(
-                    self.agent.start, np.hstack([self.openness_record, self.Imax]), extra
+                    self.agent.start,
+                    np.hstack([self.openness_record, self.Imax]),
+                    extra,
                 )
                 tune_Imax = action * self.Imax_increment
                 self.agent_started = True
             else:
                 logger.info(f"Polling RL agent at {self.env_local_time}.")
                 action = await asyncio.to_thread(
-                    self.agent.step, self.reward(), np.hstack([self.openness_record, self.Imax]), extra
+                    self.agent.step,
+                    self.reward(),
+                    np.hstack([self.openness_record, self.Imax]),
+                    extra,
                 )
                 tune_Imax = action * self.Imax_increment
 
-            self.Imax = min(max(self.Imax + tune_Imax, self.Imax_lowerbound), self.Imax_upperbound)
+            self.Imax = min(
+                max(self.Imax + tune_Imax, self.Imax_lowerbound), self.Imax_upperbound
+            )
             self.adjust_sensitivity()
 
             self.openness_record = []
@@ -111,7 +121,10 @@ class MotionTrackingControllerWrapper(AsyncAgentWrapper):
                 hour=self.start_hour, minute=0, second=0, microsecond=0
             )
             today_first_time = self.env_local_time.replace(
-                hour=self.start_hour, minute=self.time_step, second=0, microsecond=0,
+                hour=self.start_hour,
+                minute=self.time_step,
+                second=0,
+                microsecond=0,
             )
             today_zeroth_area = self.mean_areas.get(today_zeroth_time, -1)
             today_first_area = self.mean_areas.get(today_first_time, -1)
@@ -165,6 +178,7 @@ class MotionTrackingControllerWrapper(AsyncAgentWrapper):
             and self.env_local_time.minute == self.time_step
         )
         return is_first_tod
+
 
 class MotionTrackingControllerWrapper_NoTracking(MotionTrackingControllerWrapper):
     def get_action(self) -> float:
