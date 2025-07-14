@@ -38,9 +38,9 @@ def get_Q(
 def plot_q_diff(daytime_observation_space, area_observation_space, Q_diff):
     fig, axs = plt.subplots(
         1,
-        3,
-        figsize=(18, 5),
-    )  # Three subplots: one for Q-diff, one for policy, and one for trajectories
+        2,
+        figsize=(12, 5),
+    )  # Two subplots: one for Q-diff, one for policy
 
     def _get_edges(space):
         """Helper to calculate cell edges from cell centers."""
@@ -266,7 +266,7 @@ def plot_q_values_and_diff(
             if num_actions >= 2:
                 Q_diff = Q_vals[:, :, 1] - Q_vals[:, :, 0]
             else:
-                logger.info(
+                logger.debug(
                     f"Step {step}: Not enough actions ({num_actions}) to compute Q-difference. Plotting Q[s,0] instead."
                 )
                 Q_diff = Q_vals[:, :, 0]
@@ -276,41 +276,15 @@ def plot_q_values_and_diff(
                 daytime_observation_space, area_observation_space, Q_diff
             )  # Call the plot function
 
-            # PLOT TRAJECTORIES ON TOP
-            try:
-                plot_df = _prepare_trajectory_df(df)
-                if not plot_df.empty:
-                    ax_traj = axs_diff[2]
-                    trajectory_ids = plot_df["trajectory_id"].unique()
-                    for traj_id in trajectory_ids:
-                        traj_df = plot_df[plot_df["trajectory_id"] == traj_id]
-                        _plot_single_trajectory_on_ax(ax_traj, traj_df)
-
-                    ax_traj.set_title("Trajectories")
-                    ax_traj.set_xlabel("s[0]")
-                    ax_traj.set_ylabel("s[1]")
-                    xtick_labels_values = np.linspace(0, 1, 11)
-                    ax_traj.set_xticks(xtick_labels_values)
-                    ytick_labels_values = np.linspace(0, 1, 11)
-                    ax_traj.set_yticks(ytick_labels_values)
-                    ax_traj.set_aspect("equal")
-                    ax_traj.set_xlim(0, 1)
-                    ax_traj.set_ylim(0, 1)
-            except Exception as e:
-                logger.error(
-                    f"Step {step}: Error during trajectory overlay plotting: {e}",
-                    exc_info=True,
-                )
-
             fig_diff.savefig(q_diff_plot_filename)  # Save the figure
             plt.close(fig_diff)  # Close the figure
-            logger.info(f"Step {step}: Saved Q-value plots to {q_plots_dir}")
+            logger.debug(f"Step {step}: Saved Q-value plots to {q_plots_dir}")
         except Exception as e:
-            logger.error(
+            logger.warning(
                 f"Step {step}: Error during Q-value plotting: {e}", exc_info=True
             )
     else:
-        logger.warning(
+        logger.debug(
             f"Step {step}: Agent does not have 'w' or 'tile_coder' attributes, or they are None. Skipping Q-value plotting."
         )
 
@@ -374,7 +348,7 @@ def plot_state_action_distribution(df, q_plots_dir, logger):
                         ]
                     )
                     if not actions_to_plot:
-                        logger.info("No actions 0 or 1 found in the data to plot.")
+                        logger.debug("No actions 0 or 1 found in the data to plot.")
                         return
 
                     num_subplots = len(actions_to_plot)
@@ -471,17 +445,19 @@ def plot_state_action_distribution(df, q_plots_dir, logger):
                     plot_filename = q_plots_dir / "state_action_count_heatmap.jpg"
                     plt.savefig(plot_filename)
                     plt.close()
-                    logger.info(f"Saved state-action count heatmaps to {plot_filename}")
+                    logger.debug(
+                        f"Saved state-action count heatmaps to {plot_filename}"
+                    )
                 else:
-                    logger.info(
+                    logger.debug(
                         "No data points left after binning for state-action distribution heatmap."
                     )
             else:
-                logger.info(
+                logger.debug(
                     "No valid data points to plot for state-action distribution after processing observations."
                 )
         else:
-            logger.info("No actions recorded to plot state-action distribution.")
+            logger.debug("No actions recorded to plot state-action distribution.")
     except Exception as e:
         logger.error(
             f"Error during state-action distribution heatmap plotting: {e}",
@@ -582,8 +558,8 @@ def plot_trajectories(df, q_plots_dir, logger):
             plot_filename = q_plots_dir / "state_trajectories_subplots.jpg"
             plt.savefig(plot_filename)
             plt.close()
-            logger.info(f"Saved state trajectories plot to {plot_filename}")
+            logger.debug(f"Saved state trajectories plot to {plot_filename}")
         else:
-            logger.info("No valid data points to plot for state trajectories.")
+            logger.debug("No valid data points to plot for state trajectories.")
     except Exception as e:
         logger.error(f"Error during state trajectories plotting: {e}", exc_info=True)

@@ -10,7 +10,6 @@ import cv2
 import numpy as np
 from PIL import Image, ImageTk
 
-
 from environments.PlantGrowthChamber.zones import (
     ZONE_IDENTIFIERS,
     Rect,
@@ -300,7 +299,7 @@ class TrayConfigApp:
                 with open(config_path, "w") as f:
                     json.dump({"zone": config_data}, f, indent=4)
 
-                logger.info(
+                logger.debug(
                     f"Successfully saved config for zone {self.zone_identifier} to {config_path}"
                 )
 
@@ -320,7 +319,7 @@ class TrayConfigApp:
             config_path = self.dataset_dir / "config.json"
             with open(config_path, "w") as f:
                 json.dump(final_config, f, indent=4)
-            logger.info(f"Successfully saved configuration to {config_path}")
+            logger.debug(f"Successfully saved configuration to {config_path}")
 
         # Load the next dataset
         self.load_next_dataset()
@@ -488,18 +487,18 @@ class TrayConfigApp:
     def extract_zone_identifier(self, dataset_path: Path) -> str | None:
         """Extract zone identifier from the dataset directory path."""
         zone_name = dataset_path.name
-        logger.info(f"Attempting to extract zone identifier from '{zone_name}'")
+        logger.debug(f"Attempting to extract zone identifier from '{zone_name}'")
 
         # Check for full match first
         for identifier in ZONE_IDENTIFIERS:
             if identifier == zone_name:
-                logger.info(f"Found exact match for zone identifier: '{identifier}'")
+                logger.debug(f"Found exact match for zone identifier: '{identifier}'")
                 return identifier
 
         # Check for partial match
         for identifier in ZONE_IDENTIFIERS:
             if identifier in zone_name:
-                logger.info(f"Found partial match for zone identifier: '{identifier}'")
+                logger.debug(f"Found partial match for zone identifier: '{identifier}'")
                 return identifier
 
         # Fallback for old naming convention like 'z01', 'z12'
@@ -508,7 +507,7 @@ class TrayConfigApp:
             zone_num = int(match.group(1))
             identifier = f"alliance-zone{zone_num:02d}"
             if identifier in ZONE_IDENTIFIERS:
-                logger.info(
+                logger.debug(
                     f"Found legacy zone identifier 'z{zone_num}' and mapped to '{identifier}'"
                 )
                 return identifier
@@ -538,7 +537,7 @@ class TrayConfigApp:
                     }
                     for tray in zone.trays
                 ]
-                logger.info(
+                logger.debug(
                     f"Loaded {len(self.tray_configs)} trays for zone {self.zone_identifier}"
                 )
             except FileNotFoundError:
@@ -560,7 +559,7 @@ class TrayConfigApp:
 
                     if "zone" in existing_config and "trays" in existing_config["zone"]:
                         self.tray_configs = existing_config["zone"]["trays"]
-                        logger.info(
+                        logger.debug(
                             f"Loaded {len(self.tray_configs)} trays from {config_path}"
                         )
                     else:
@@ -710,7 +709,7 @@ class TrayConfigApp:
             # Reset editing state
             self.cancel_edit()
             self.tray_count_label.config(text=f"Trays: {len(self.tray_configs)}")
-            logger.info(f"Tray {index + 1} deleted.")
+            logger.debug(f"Tray {index + 1} deleted.")
 
     def cancel_edit(self):
         """Cancel the current tray editing operation"""

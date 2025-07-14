@@ -1,14 +1,15 @@
 import asyncio
 import io
 import logging
-from collections import defaultdict  # Added import
+from collections import defaultdict
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import numpy as np
 from PIL import Image
 
-from environments.PlantGrowthChamber.utils import create_session  # Changed import
+from environments.PlantGrowthChamber.utils import create_session
+from utils.constants import BALANCED_ACTION_105, DIM_ACTION
 from utils.functions import normalize
 from utils.metrics import UnbiasedExponentialMovingAverage as UEMA
 from utils.RlGlue.environment import BaseAsyncEnvironment
@@ -16,8 +17,7 @@ from utils.RlGlue.environment import BaseAsyncEnvironment
 from .cv import process_image
 from .zones import load_zone_from_config
 
-logger = logging.getLogger("PlantGrowthChamber")
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger("plant_rl.PlantGrowthChamber")
 
 
 class PlantGrowthChamber(BaseAsyncEnvironment):
@@ -48,13 +48,14 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.uema_areas = [UEMA(alpha=0.1) for _ in range(self.zone.num_plants)]
         self.area_count = 0
         self.minimum_area_count = 5
+        self.dli = 0
         self.prev_plant_areas = np.zeros(self.zone.num_plants)
         self.normalize_reward = normalize_reward
-        self.glue = None
 
         self.last_action = np.zeros(6)
         self.last_calibrated_action = np.zeros(6)
         self.plant_areas = np.array([])
+        self.last_step_time = None
 
     async def _ensure_session(self):
         """Ensures an aiohttp session is available and returns it."""
@@ -146,8 +147,10 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 image_data = await response.read()
                 self.images[side] = Image.open(io.BytesIO(image_data))
                 logger.debug(f"Successfully fetched image from {url}")
-        except Exception as e:
-            logger.error(f"Error fetching image from {url} after retries: {str(e)}")
+        except Exception:
+            logger.warning(
+                f"Error fetching image from {url} after retries", exc_info=True
+            )
             # Keep previous image if available, otherwise this side will be missing
 
     async def put_action(self, action):
@@ -173,24 +176,31 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 json={"array": action_to_send.tolist()},
                 timeout=10,
             )
-        except Exception as e:
-            logger.error(f"Error: {self.zone.lightbar_url} after retries: {str(e)}")
-            raise
+        except Exception:
+            # TODO: better handling of this exception
+            logger.exception(f"Error: {self.zone.lightbar_url} after retries")
 
     async def start(self):
-        logger.info(f"Local time: {self.get_local_time()}. Step 0")
+        logger.debug(f"Local time: {self.get_local_time()}. Step 0")
         self.n_step = 0
         self.clean_areas = []
         self.daily_mean_clean_areas = defaultdict(float)
-        await self.sleep_until_next_step(self.duration)
         observation = await self.get_observation()
+        await self.sleep_until_next_step(self.duration)
+        self.last_step_time = self.get_time()
         self.n_step = 1
         return observation, self.get_info()
 
     async def step(self, action: np.ndarray):
-        logger.info(
+        logger.debug(
             f"Local time: {self.get_local_time()}. Step {self.n_step} with action {action}"
         )
+        if np.array_equal(action, BALANCED_ACTION_105):
+            self.dli += 1.0
+        elif np.array_equal(action, DIM_ACTION):
+            self.dli += 0.5
+        if self.get_local_time().hour == 9 and self.get_local_time().minute == 30:
+            self.dli = 0.0
         await self.put_action(action)
 
         terminal = self.get_terminal()
@@ -199,7 +209,19 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         await self.sleep_until_next_step(self.duration)
         observation = await self.get_observation()
         reward = self.reward_function()
-        logger.info(
+        current_time = self.get_time()
+        if self.last_step_time:
+            cycle_time = current_time - self.last_step_time
+            if cycle_time > self.duration * 1.1:
+                logger.warning(
+                    f"Cycle time ({cycle_time}) exceeded duration by 10% ({self.duration * 1.1})"
+                )
+            elif cycle_time > self.duration:
+                logger.debug(
+                    f"Cycle time ({cycle_time}) exceeded duration {self.duration})"
+                )
+        self.last_step_time = current_time
+        logger.debug(
             f"Local time: {self.get_local_time()}. Step {self.n_step} completed. Reward: {reward}, Terminal: {terminal}"
         )
         self.n_step += 1
@@ -215,7 +237,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     async def sleep_until(self, wake_time: datetime):
         time_left = wake_time - self.get_time()
-        logger.info(f"Sleeping until {wake_time.astimezone(self.tz)} (in {time_left})")
+        logger.debug(f"Sleeping until {wake_time.astimezone(self.tz)} (in {time_left})")
         await asyncio.sleep(time_left.total_seconds())
 
     async def sleep_until_next_step(self, duration: timedelta):
@@ -228,18 +250,14 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 "df": self.df,
                 "env_time": self.time.timestamp(),
             }
-        N = 3
-        raw_area = self.plant_areas[:N]
         mean = np.array(
             [self.uema_areas[i].compute() for i in range(self.zone.num_plants)]
-        ).flatten()[:N]
+        ).flatten()
         upper = mean * (1 + self.clean_area_upper)
         lower = mean * (1 - self.clean_area_lower)
         return {
             "df": self.df,
             "mean_clean_area": np.mean(self.clean_areas[-1]),
-            "clean_area": self.clean_areas[-1][:N],
-            "raw_area": raw_area,
             "uema_area": mean,
             "upper_area": upper,
             "lower_area": lower,
@@ -262,22 +280,30 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             yesterday_morning_local_date, 0.0
         )
 
-        if yesterday_morning_mean_area == 0:
-            return 0
-
         if self.normalize_reward:
+            if yesterday_morning_mean_area == 0:
+                logger.debug(
+                    "Yesterday's morning mean area is 0, returning 0 reward to avoid division by zero."
+                )
+                return 0
             reward = normalize(
                 today_morning_mean_area / yesterday_morning_mean_area - 1, 0, 0.35
             )
         else:
+            if len(self.clean_areas) < 10:
+                logger.debug("Not enough clean areas to compute reward.")
+                return 0
             reward = normalize(
-                today_morning_mean_area - yesterday_morning_mean_area, 0, 50
+                np.mean(self.clean_areas[-1]) - np.mean(self.clean_areas[-10]), 0, 150
             )
 
         # if reward only @ 9:30 AM
         if self.sparse_reward and not (
             self.get_local_time().hour == 9 and self.get_local_time().minute == 30
         ):
+            logger.debug(
+                f"Returning sparse reward of 0 at {self.get_local_time().astimezone(self.tz)}"
+            )
             return 0
 
         return reward
@@ -287,11 +313,11 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         # Turn off lights
         try:
             await self.put_action(np.zeros(6))
-            logger.info(
+            logger.debug(
                 f"Lights turned off for zone {self.zone.identifier} during environment closure"
             )
         except Exception as e:
-            logger.error(
+            logger.exception(
                 f"Failed to turn off lights for zone {self.zone.identifier} during close: {e}"
             )
 
@@ -299,9 +325,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         if self.session:
             try:
                 await self.session.close()
-                logger.info(f"Closed aiohttp session for zone {self.zone.identifier}")
+                logger.debug(f"Closed aiohttp session for zone {self.zone.identifier}")
             except Exception as e:
-                logger.error(
+                logger.exception(
                     f"Error closing aiohttp session for zone {self.zone.identifier}: {str(e)}"
                 )
             self.session = None

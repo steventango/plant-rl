@@ -1,9 +1,12 @@
+import logging
+import time
+
 import numpy as np
 import pandas as pd
 
 import wandb
-import time
-import logging
+from wandb.sdk.wandb_alerts import AlertLevel
+from wandb.sdk.wandb_run import Run
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -203,3 +206,36 @@ def log(
     end_time = time.time()
     log_time = end_time - start_time
     logger.debug(f"Logging data to wandb took {log_time:.4f} seconds")
+
+
+class WandbAlertHandler(logging.Handler):
+    def __init__(self, run: Run, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.run = run
+
+    def emit(self, record: logging.LogRecord):
+        try:
+            msg = self.format(record)
+            level = None
+            if record.levelno >= logging.ERROR:
+                level = AlertLevel.ERROR
+            elif record.levelno >= logging.WARNING:
+                level = AlertLevel.WARN
+            elif record.levelno >= logging.INFO:
+                level = AlertLevel.INFO
+            else:
+                return
+            title = str(msg).split("\n")[0]
+            text = "\n".join(str(msg).split("\n")[1:]) if "\n" in str(msg) else ""
+            if record.exc_info:
+                text = f"```{text}```"
+            self.run.alert(
+                title=title,
+                text=text,
+                level=level,
+                wait_duration=1,
+            )
+        except RecursionError:
+            raise
+        except Exception:
+            self.handleError(record)

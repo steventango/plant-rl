@@ -9,8 +9,7 @@ from algorithms.tc.TCAgent import TCAgent
 from utils.checkpoint import checkpointable
 from utils.policies import egreedy_probabilities
 
-logger = logging.getLogger("esarsa")
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger("plant_rl.esarsa")
 
 
 @njit(cache=True)

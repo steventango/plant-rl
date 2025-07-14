@@ -56,10 +56,10 @@ class AsyncRLGlue:
         self.num_steps = 0
         self.total_reward = 0
 
-        s, env_info = await self.environment.start()
-        self.last_action, agent_info = await self.agent.start(s, env_info)
         plan_task = asyncio.create_task(self.plan())
         background_tasks.add(plan_task)
+        s, env_info = await self.environment.start()
+        self.last_action, agent_info = await self.agent.start(s, env_info)
         info = {**env_info, **agent_info}
         self.last_interaction = Interaction(
             o=s,
