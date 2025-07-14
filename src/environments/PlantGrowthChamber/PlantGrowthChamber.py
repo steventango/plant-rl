@@ -219,9 +219,10 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         current_time = self.get_time()
         if self.last_step_time:
             cycle_time = current_time - self.last_step_time
-            if cycle_time > self.duration * 1.1:
+            warning_threshold = self.duration * 1.5
+            if cycle_time > warning_threshold:
                 logger.warning(
-                    f"Cycle time ({cycle_time}) exceeded duration by 10% ({self.duration * 1.1})"
+                    f"Cycle time ({cycle_time}) exceeded duration by 50% ({warning_threshold})"
                 )
             elif cycle_time > self.duration:
                 logger.debug(
