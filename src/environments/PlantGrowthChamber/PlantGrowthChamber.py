@@ -155,17 +155,15 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     async def put_action(self, action):
         """Send action to the lightbar using aiohttp with retry logic"""
-        self.last_action = action
-
-        self.last_calibrated_action = (
+        last_calibrated_action = (
             self.zone.calibration.get_calibrated_action(action)
             if self.zone.calibration
             else action
         )
 
         # clip action to have max value 1
-        self.last_calibrated_action = np.clip(self.last_calibrated_action, None, 1)
-        action_to_send = np.tile(self.last_calibrated_action, (2, 1))
+        last_calibrated_action = np.clip(last_calibrated_action, None, 1)
+        action_to_send = np.tile(last_calibrated_action, (2, 1))
 
         try:
             session = await self._ensure_session()
@@ -176,9 +174,18 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 json={"array": action_to_send.tolist()},
                 timeout=10,
             )
+            self.last_action = action
+            self.last_calibrated_action = last_calibrated_action
         except Exception:
-            # TODO: better handling of this exception
-            logger.exception(f"Error: {self.zone.lightbar_url} after retries")
+            if not np.array_equal(action, self.last_action):
+                logger.exception(
+                    f"Error: {self.zone.lightbar_url} after retries, re-using last action: {self.last_action}"
+                )
+            else:
+                logger.warning(
+                    f"Warning: {self.zone.lightbar_url} after retries, last action was identical",
+                    exc_info=True,
+                )
 
     async def start(self):
         logger.debug(f"Local time: {self.get_local_time()}. Step 0")
