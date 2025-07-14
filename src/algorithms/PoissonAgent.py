@@ -5,17 +5,29 @@ import numpy as np
 from PyExpUtils.collection.Collector import Collector
 
 from algorithms.BaseAgent import BaseAgent
+from utils.checkpoint import checkpointable
 
 logger = logging.getLogger("plant_rl.PoissonAgent")
 
 
+@checkpointable(
+    [
+        "steps",
+        "updates",
+        "lam",
+        "max_repeat",
+        "actions",
+        "current_action",
+        "current_repeat",
+    ]
+)
 class PoissonAgent(BaseAgent):
     def __init__(
         self,
         observations: Tuple[int, ...],
         actions: int,
         params: Dict,
-        collector: Collector,
+        collector: Collector | None,
         seed: int,
     ):
         super().__init__(observations, actions, params, collector, seed)
