@@ -391,11 +391,22 @@ class TestSpreadsheetAgent:
         assert loaded_agent.df.shape == original_df_shape, (
             "DataFrame shape not restored correctly"
         )
-
         # Verify agent behavior is consistent
         for test_time in [0, 3600, 43200, 86400]:
             original_action = original_agent.get_action(test_time)
             loaded_action = loaded_agent.get_action(test_time)
             np.testing.assert_array_equal(
                 original_action, loaded_action, f"Actions differ at time {test_time}"
+            )
+
+            # Test step method
+            reward = 0.0
+            obs = np.array([test_time])
+            original_action, _ = original_agent.step(reward, obs, {})
+            loaded_action, _ = loaded_agent.step(reward, obs, {})
+
+            np.testing.assert_array_equal(
+                original_action,
+                loaded_action,
+                f"Step actions differ at time {test_time}",
             )
