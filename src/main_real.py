@@ -110,7 +110,9 @@ async def main():
             Problem = getProblem(exp.problem)
 
             chk = Checkpoint(exp, idx, base_path=args.checkpoint_path)
-            chk.load_if_exists()
+            loaded = chk.load_if_exists()
+            if loaded:
+                logger.info(f"Loaded checkpoint from {chk._ctx.resolve()}")
             timeout_handler.before_cancel(chk.save)
 
             run = exp.getRun(idx)
