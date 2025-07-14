@@ -50,6 +50,17 @@ class BaseAsyncAgent:
     async def end(self, reward: float, extra: dict[str, Any]) -> dict[str, Any]:
         raise NotImplementedError("Expected `end` to be implemented")
 
+    # -------------------
+    # -- Checkpointing --
+    # -------------------
+    def __getstate__(self):
+        # Default implementation for base class
+        return {}
+
+    def __setstate__(self, state):
+        # Default implementation for base class
+        pass
+
 
 class AsyncAgentWrapper(BaseAsyncAgent):
     def __init__(self, agent: BaseAgent):
@@ -74,3 +85,26 @@ class AsyncAgentWrapper(BaseAsyncAgent):
 
     async def end(self, reward: float, extra: dict[str, Any]) -> dict[str, Any]:
         return await asyncio.to_thread(self.agent.end, reward, extra)
+
+    # -------------------
+    # -- Checkpointing --
+    # -------------------
+    def __getstate__(self):
+        return {
+            "__args": (
+                self.agent.observations,
+                self.agent.actions,
+                self.agent.params,
+                self.agent.collector,
+                self.agent.seed,
+            ),
+            "rng": self.agent.rng,
+        }
+
+    def __setstate__(self, state):
+        # Import BaseAgent here to avoid circular imports
+        import sys
+        from algorithms.BaseAgent import BaseAgent as LocalBaseAgent
+        agent = LocalBaseAgent(*state["__args"])
+        agent.rng = state["rng"]
+        self.__init__(agent)

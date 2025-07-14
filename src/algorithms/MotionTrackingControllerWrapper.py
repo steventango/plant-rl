@@ -36,13 +36,13 @@ class MotionTrackingControllerWrapper(AsyncAgentWrapper):
     async def start(
         self,
         observation: np.ndarray,
-        extra: Dict[str, Any] = None,
+        extra: Dict[str, Any] | None = None,
     ) -> Tuple[Any, Dict[str, Any]]:
         if extra is None:
             extra = {}
         
         self.last_observation = observation
-        # Issue: Trying to call replace on None if env_local_time is not set
+        # Fixed: Check if env_local_time exists and is not None before calling replace
         if hasattr(self.agent, 'env_local_time') and self.agent.env_local_time is not None:
             time_key = self.agent.env_local_time.replace(second=0, microsecond=0)
         
@@ -70,8 +70,11 @@ class MotionTrackingControllerWrapper(AsyncAgentWrapper):
         if self.last_observation is None:
             return {}
         
-        # Issue: Trying to multiply tuple by float
-        performance_metric = self.last_observation * 0.5  # This will cause the operator error
+        # Fixed: Check if observation is array-like before multiplication
+        if isinstance(self.last_observation, np.ndarray):
+            performance_metric = self.last_observation * 0.5
+        else:
+            performance_metric = 0.0
         
         return {
             "action_count": self.action_count,
@@ -84,19 +87,27 @@ class MotionTrackingControllerWrapper(AsyncAgentWrapper):
         if self.action_count == 0:
             return 0.0
         
-        # Issue: Another tuple multiplication
-        base_score = self.last_observation * 1.2  # This will also cause the operator error
+        # Fixed: Check if observation is array-like before multiplication
+        if isinstance(self.last_observation, np.ndarray):
+            base_score = np.mean(self.last_observation) * 1.2
+        else:
+            base_score = 1.0
+            
         return self.total_reward / self.action_count
 
     async def end(self, reward: float, extra: Dict[str, Any]) -> Dict[str, Any]:
         """End the episode and return summary data."""
         self.total_reward += reward
         
-        # Issue: This should return a coroutine but returns a dict
+        # Fixed: Call parent's end method and return its result
+        base_result = await super().end(reward, extra)
+        
         summary = {
             "total_reward": self.total_reward,
             "action_count": self.action_count,
             "final_metrics": self.get_tracking_metrics(),
         }
         
-        return summary  # This should be: await super().end(reward, extra)
+        # Merge with base result
+        base_result.update(summary)
+        return base_result
