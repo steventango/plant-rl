@@ -149,7 +149,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 logger.debug(f"Successfully fetched image from {url}")
         except Exception:
             logger.warning(
-                f"Error fetching image from {url} after retries", exc_info=True
+                f"Warning: {url} after retries, re-using previous image", exc_info=True
             )
             # Keep previous image if available, otherwise this side will be missing
 
