@@ -33,9 +33,9 @@ class OptimizeMotionTracking(BaseAsyncProblem):
         if not isinstance(agent, BaseAsyncAgent):
             if "should_track" not in self.env_params:
                 agent = MotionTrackingControllerWrapper(agent)
-            elif self.env_params["should_track"] == True:
+            elif self.env_params["should_track"]:
                 agent = MotionTrackingControllerWrapper(agent)
-            elif self.env_params["should_track"] == False:
+            elif not self.env_params["should_track"]:
                 agent = MotionTrackingControllerWrapper_NoTracking(agent)
             else:
                 raise ValueError(

@@ -4,6 +4,7 @@ from datetime import timedelta
 from collections import defaultdict
 from typing import Any
 import numpy as np
+from typing import Any, Dict
 
 from algorithms.BaseAgent import BaseAgent
 from utils.RlGlue.agent import AsyncAgentWrapper
@@ -25,7 +26,7 @@ class MotionTrackingControllerWrapper(AsyncAgentWrapper):
         self.Imin = 0.5  # Lowest intensity. Fixed at a dim level at which CV still functions well.
         self.Imax = 1.0  # Highest intensity. Its optimal value depends on plant species, developmental stage, and environmental factors. Tuned by the RL agent daily.
         self.sensitivity = 8.0  # = (change in intensity) / (change in plants openness). Adjusted daily by motion tracker to attempt to reach Imax at max openness.
-      
+
         self.mean_areas = defaultdict(float)
         self.openness_record = []
         self.openness_trace = uema(alpha=0.1)
@@ -44,7 +45,7 @@ class MotionTrackingControllerWrapper(AsyncAgentWrapper):
         max_openness = np.mean(np.sort(self.openness_record)[-5:])
         self.sensitivity = (self.Imax - self.Imin) / max_openness
         logger.info(f"New Imax = {self.Imax}. New sensitivity = {self.sensitivity:.2f}.")
-    
+
     def reward(self):
         current_time = self.env_local_time.replace(second=0, microsecond=0)
         current_area = self.mean_areas.get(current_time, -1)
@@ -82,14 +83,14 @@ class MotionTrackingControllerWrapper(AsyncAgentWrapper):
 
         # Poll RL agent every morning (starting on day 2)
         if self.is_first_tod and self.openness_record != []:
-            if not self.agent_started: 
+            if not self.agent_started:
                 logger.info(f"Starting RL agent at {self.env_local_time}")
                 action = await asyncio.to_thread(
                     self.agent.start, np.hstack([self.openness_record, self.Imax]), extra
                 )
                 tune_Imax = action * self.Imax_increment
                 self.agent_started = True
-            else: 
+            else:
                 logger.info(f"Polling RL agent at {self.env_local_time}.")
                 action = await asyncio.to_thread(
                     self.agent.step, self.reward(), np.hstack([self.openness_record, self.Imax]), extra
@@ -135,7 +136,7 @@ class MotionTrackingControllerWrapper(AsyncAgentWrapper):
 
     def end(self, reward: float, extra: Dict[str, Any]):
         return {}
-    
+
     def is_night(self) -> bool:
         assert self.env_local_time is not None, (
             "Environment local time must be set before checking night."

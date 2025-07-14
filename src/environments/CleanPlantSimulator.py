@@ -17,7 +17,7 @@ class CleanPlantSimulator(BaseEnvironment):
              plant area,
              plant openness,
              daily light integral (dli)] (all normalized to [0,1])
-    Action = 1D continuous intensity. 0 is off. 1 is standard. 
+    Action = 1D continuous intensity. 0 is off. 1 is standard.
     Reward = percentage or raw overnight growth assigned to last time stamp of each day
     """
 
@@ -83,11 +83,11 @@ class CleanPlantSimulator(BaseEnvironment):
         self.dli += self.get_light_amount(action)
 
         if self.steps % self.steps_per_day == 0:  # if transitioning overnight
-            if self.dli <= self.steps_per_day: 
+            if self.dli <= self.steps_per_day:
                 percent_overnight_growth = 0.2 * self.normalize(
                     self.dli, 0, self.steps_per_day
                 )
-            else: 
+            else:
                 percent_overnight_growth = 0.2 * self.normalize(
                     2*self.steps_per_day - self.dli, 0, self.steps_per_day
                 )
