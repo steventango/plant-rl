@@ -1,11 +1,6 @@
-import os
-from unittest.mock import MagicMock
-
 import numpy as np
-from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 
 from algorithms.SpreadsheetAgent import SpreadsheetAgent
-from utils.checkpoint import Checkpoint
 
 
 class TestSpreadsheetAgent:
@@ -301,83 +296,26 @@ class TestSpreadsheetAgent:
             action = agent.get_action(cycle * 86400 + 21 * 3600 + 1 - agent.offset)
             np.testing.assert_almost_equal(action, [0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 
-    def test_checkpointing(self, tmpdir):
+    def test_checkpointing(self, tmpdir, setup_checkpoint_test):
         """Test that the agent state can be saved and loaded via checkpointing."""
-        tmp_dir = str(tmpdir)
 
         # Create agent with specific parameters
-        n_actions = 6
         filepath = "tests/test_data/z3-0min-100ppfd-Balanced_optima12_12.xlsx"
         compatibility_mode = False
-        seed = 123
-
-        # Create directory structure
-        checkpoint_dir = os.path.join(tmp_dir, "0")
-        os.makedirs(checkpoint_dir, exist_ok=True)
-        params_file = os.path.join(checkpoint_dir, "params.json")
-
-        # Set up context mock
-        mock_ctx = MagicMock()
-        mock_ctx.resolve.side_effect = lambda path: os.path.join(tmp_dir, path)
-        mock_ctx.exists.return_value = True
-        mock_ctx.ensureExists.side_effect = lambda path, is_file: os.path.join(
-            tmp_dir, path
-        )
-
-        # Create a mock experiment description
-        mock_exp = MagicMock(spec=ExperimentDescription)
-        mock_exp.getPermutation.return_value = {
+        params = {
             "filepath": filepath,
             "compatibility_mode": compatibility_mode,
-            "seed": seed,
+            "seed": 123,
         }
-        mock_exp.buildSaveContext.return_value = mock_ctx
 
-        # Initialize a checkpoint with the mock experiment
-        chk = Checkpoint(mock_exp, 0, base_path=tmp_dir)
-
-        # Manually write params file that checkpoint expects
-        os.makedirs(os.path.dirname(params_file), exist_ok=True)
-        with open(params_file, "w") as f:
-            import json
-
-            json.dump(
-                {
-                    "filepath": filepath,
-                    "compatibility_mode": compatibility_mode,
-                    "seed": seed,
-                },
-                f,
-            )
-
-        # Create the original agent
-        original_agent = SpreadsheetAgent(
-            observations=(1,),
-            actions=n_actions,
-            params={"filepath": filepath, "compatibility_mode": compatibility_mode},
-            collector=None,
-            seed=seed,
+        # Use the common checkpoint test utility
+        original_agent, loaded_agent = setup_checkpoint_test(
+            tmpdir, params, SpreadsheetAgent, actions=6
         )
 
         # Store agent state for comparison
         original_offset = original_agent.offset
         original_df_shape = original_agent.df.shape
-
-        # Store the agent in the checkpoint
-        chk["a"] = original_agent
-
-        # Save the checkpoint
-        chk.save()
-
-        # Create a new checkpoint and load
-        new_chk = Checkpoint(mock_exp, 0, base_path=tmp_dir)
-        loaded = new_chk.load()
-
-        # Verify checkpoint loaded successfully
-        assert loaded, "Failed to load checkpoint"
-
-        # Get the loaded agent
-        loaded_agent = new_chk["a"]
 
         # Verify agent state was properly restored
         assert loaded_agent.params["filepath"] == original_agent.params["filepath"], (
@@ -391,6 +329,7 @@ class TestSpreadsheetAgent:
         assert loaded_agent.df.shape == original_df_shape, (
             "DataFrame shape not restored correctly"
         )
+
         # Verify agent behavior is consistent
         for test_time in [0, 3600, 43200, 86400]:
             original_action = original_agent.get_action(test_time)

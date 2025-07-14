@@ -1,11 +1,8 @@
-import os
 from unittest.mock import MagicMock
 
 import numpy as np
-from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 
 from algorithms.PoissonAgent import PoissonAgent
-from utils.checkpoint import Checkpoint
 
 
 class TestPoissonAgent:
@@ -119,77 +116,27 @@ class TestPoissonAgent:
         except AssertionError:
             pass
 
-    def test_checkpointing(self, tmpdir):
+    def test_checkpointing(self, tmpdir, setup_checkpoint_test):
         """Test that the agent state can be saved and loaded via checkpointing."""
-        tmp_dir = str(tmpdir)
 
         # Create agent with specific parameters
-        n_actions = 4
         lam = 2.5
         max_repeat = 7
-        seed = 123
+        params = {"lam": lam, "max_repeat": max_repeat, "seed": 123}
 
-        # Create directory structure
-        checkpoint_dir = os.path.join(tmp_dir, "0")
-        os.makedirs(checkpoint_dir, exist_ok=True)
-        params_file = os.path.join(checkpoint_dir, "params.json")
+        # Define initialization function to set the agent state
+        def init_agent(agent):
+            agent.sample_action()
+            return agent
 
-        # Set up context mock
-        mock_ctx = MagicMock()
-        mock_ctx.resolve.side_effect = lambda path: os.path.join(tmp_dir, path)
-        mock_ctx.exists.return_value = True
-        mock_ctx.ensureExists.side_effect = lambda path, is_file: os.path.join(
-            tmp_dir, path
+        # Use the common checkpoint test utility
+        original_agent, loaded_agent = setup_checkpoint_test(
+            tmpdir, params, PoissonAgent, actions=4, init_func=init_agent
         )
 
-        # Create a mock experiment description
-        mock_exp = MagicMock(spec=ExperimentDescription)
-        mock_exp.getPermutation.return_value = {
-            "lam": lam,
-            "max_repeat": max_repeat,
-            "seed": seed,
-        }
-        mock_exp.buildSaveContext.return_value = mock_ctx
-
-        # Initialize a checkpoint with the mock experiment
-        chk = Checkpoint(mock_exp, 0, base_path=tmp_dir)
-
-        # Manually write params file that checkpoint expects
-        os.makedirs(os.path.dirname(params_file), exist_ok=True)
-        with open(params_file, "w") as f:
-            import json
-
-            json.dump({"lam": lam, "max_repeat": max_repeat, "seed": seed}, f)
-
-        # Create the original agent
-        original_agent = PoissonAgent(
-            observations=(1,),
-            actions=n_actions,
-            params={"lam": lam, "max_repeat": max_repeat},
-            collector=None,
-            seed=seed,
-        )
-
-        # Initialize agent state by calling sample_action
-        original_agent.sample_action()
+        # Get the original state for comparison
         original_action = original_agent.current_action
         original_repeat = original_agent.current_repeat
-
-        # Store the agent in the checkpoint
-        chk["a"] = original_agent
-
-        # Save the checkpoint
-        chk.save()
-
-        # Create a new checkpoint and load
-        new_chk = Checkpoint(mock_exp, 0, base_path=tmp_dir)
-        loaded = new_chk.load()
-
-        # Verify checkpoint loaded successfully
-        assert loaded, "Failed to load checkpoint"
-
-        # Get the loaded agent
-        loaded_agent = new_chk["a"]
 
         # Verify agent state was properly restored
         assert loaded_agent.lam == original_agent.lam, (
