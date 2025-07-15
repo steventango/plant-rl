@@ -7,10 +7,13 @@ from PyExpUtils.collection.Collector import Collector
 
 from algorithms.BaseAgent import BaseAgent
 from utils.metrics import UnbiasedExponentialMovingAverage as uema
+from utils.checkpoint import checkpointable
 
 logger = logging.getLogger("plant_rl.MotionTrackingController")
+logger.setLevel(logging.DEBUG)
 
 
+@checkpointable(("mean_areas", "openness_trace", "openness_record", "sensitivity"))
 class MotionTrackingController(BaseAgent):
     def __init__(
         self,
@@ -21,10 +24,10 @@ class MotionTrackingController(BaseAgent):
         seed: int,
     ):
         super().__init__(observations, actions, params, collector, seed)
-        self.start_hour = 9
-        self.start_min = 0
+        self.start_hour = 10
+        self.start_min = 30
         self.end_hour = 21  # excluded in daytime
-        self.time_step = 5  # minutes
+        self.time_step = 1  # minutes
 
         self.env_local_time = None
         self.mean_areas = defaultdict(float)
@@ -32,32 +35,8 @@ class MotionTrackingController(BaseAgent):
         self.openness_record = []
 
         self.Imin = 0.5  # Lowest intensity. Fixed at a dim level at which CV still functions well.
-        self.Imax = 1.2  # Highest intensity. Its optimal value depends on plant species, developmental stage, and environmental factors. Can be tuned by a higher-level RL agent
-        self.sensitivity = 4.9  # = (change in intensity) / (change in plants openness). Adjusted daily to attempt to reach Imax when openness is the largest.
-
-    def is_night(self) -> bool:
-        assert self.env_local_time is not None, (
-            "Environment local time must be set before checking night."
-        )
-        is_night = (
-            self.env_local_time.hour >= self.end_hour
-            or self.env_local_time.hour < self.start_hour
-            or (
-                self.env_local_time.hour == self.start_hour
-                and self.env_local_time.minute < self.start_min
-            )
-        )
-        return is_night
-
-    def is_zeroth_tod(self) -> bool:
-        assert self.env_local_time is not None, (
-            "Environment local time must be set before checking is_zeroth_tod."
-        )
-        is_zeroth_tod = (
-            self.env_local_time.hour == self.start_hour
-            and self.env_local_time.minute == self.start_min
-        )
-        return is_zeroth_tod
+        self.Imax = 1.1  # Highest intensity. Its optimal value depends on plant species, developmental stage, and environmental factors. Can be tuned by a higher-level RL agent
+        self.sensitivity = 5.0  # = (change in intensity) / (change in plants openness). Adjusted daily to attempt to reach Imax when openness is the largest.
 
     def get_action(self) -> float:
         openness = self.openness_trace.compute().item()
@@ -65,7 +44,7 @@ class MotionTrackingController(BaseAgent):
 
     def adjust_sensitivity(self):
         if self.openness_record != []:
-            max_openness = np.mean(np.sort(self.openness_record)[-10:])
+            max_openness = np.mean(np.sort(self.openness_record)[-5:])
             self.sensitivity = (self.Imax - self.Imin) / max_openness
             logger.debug(f"Adjusted sensitivity = {self.sensitivity:.2f}")
 
@@ -92,6 +71,11 @@ class MotionTrackingController(BaseAgent):
         return action, {}
 
     def step(self, reward: float, observation: np.ndarray, extra: Dict[str, Any]):
+        logger.info(self.mean_areas)
+        logger.info(self.openness_trace)
+        logger.info(self.openness_record)
+        logger.info(self.sensitivity)
+
         self.env_local_time = observation[0]
         mean_area = observation[1]
         self.mean_areas[self.env_local_time.replace(second=0, microsecond=0)] = float(
@@ -137,3 +121,27 @@ class MotionTrackingController(BaseAgent):
 
     def end(self, reward: float, extra: Dict[str, Any]):
         return {}
+
+    def is_night(self) -> bool:
+        assert self.env_local_time is not None, (
+            "Environment local time must be set before checking night."
+        )
+        is_night = (
+            self.env_local_time.hour >= self.end_hour
+            or self.env_local_time.hour < self.start_hour
+            or (
+                self.env_local_time.hour == self.start_hour
+                and self.env_local_time.minute < self.start_min
+            )
+        )
+        return is_night
+
+    def is_zeroth_tod(self) -> bool:
+        assert self.env_local_time is not None, (
+            "Environment local time must be set before checking is_zeroth_tod."
+        )
+        is_zeroth_tod = (
+            self.env_local_time.hour == self.start_hour
+            and self.env_local_time.minute == self.start_min
+        )
+        return is_zeroth_tod
