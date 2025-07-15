@@ -1,29 +1,33 @@
-import os
 import json
-import time
-import shutil
-import pickle
 import logging
 import lzma
+import os
+import pickle
+import shutil
+import time
 from copy import deepcopy
 from typing import (
     Any,
     Callable,
     Dict,
     Optional,
+    Protocol,
     Self,
     Sequence,
     Type,
     TypeVar,
-    Protocol,
 )
-from PyExpUtils.models.ExperimentDescription import ExperimentDescription
+
 from PyExpUtils.FileSystemContext import FileSystemContext
+from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 
 from utils.RlGlue.agent import AsyncAgentWrapper
 
 T = TypeVar("T")
 Builder = Callable[[], T]
+
+logger = logging.getLogger("plant_rl.checkpoint")
+logger.setLevel(logging.DEBUG)
 
 
 class Checkpoint:
@@ -105,7 +109,7 @@ class Checkpoint:
         if os.path.exists(base_path):
             shutil.rmtree(base_path)
 
-    def load(self):
+    def load(self) -> bool:
         params_path = self._ctx.resolve(self._params_path)
 
         try:
@@ -116,9 +120,9 @@ class Checkpoint:
                 "The idx->params mapping has changed between checkpoints!!"
             )
 
-        except Exception as e:
-            print("Failed to load checkpoint")
-            print(e)
+        except Exception:
+            logger.warning("Failed to load params from checkpoint", exc_info=True)
+            return False
 
         path = self._ctx.resolve(self._data_path)
         try:
@@ -128,14 +132,16 @@ class Checkpoint:
             try:
                 with open(path.removesuffix(".xz"), "rb") as f:
                     self._storage = pickle.load(f)
-            except Exception as e:
-                print(f"Failed to load checkpoint: {path}")
-                print(e)
+            except Exception:
+                logger.warning("Failed to load checkpoint data", exc_info=True)
+                return False
+        return True
 
     def load_if_exists(self):
-        if self._ctx.exists(self._data_path):
-            print("Found a checkpoint! Loading...")
-            self.load()
+        if not self._ctx.exists(self._data_path):
+            return False
+        logger.debug("Found a checkpoint! Loading...")
+        return self.load()
 
     def load_from_checkpoint(
         self,

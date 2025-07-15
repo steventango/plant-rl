@@ -5,26 +5,32 @@ import numpy as np
 from PyExpUtils.collection.Collector import Collector
 
 from algorithms.BaseAgent import BaseAgent
+from utils.checkpoint import checkpointable
 
 logger = logging.getLogger("plant_rl.PoissonAgent")
 
 
+@checkpointable(
+    [
+        "lam",
+        "max_repeat",
+        "current_action",
+        "current_repeat",
+    ]
+)
 class PoissonAgent(BaseAgent):
     def __init__(
         self,
         observations: Tuple[int, ...],
         actions: int,
         params: Dict,
-        collector: Collector,
+        collector: Collector | None,
         seed: int,
     ):
         super().__init__(observations, actions, params, collector, seed)
-        self.steps = 0
-        self.updates = 0
         self.lam = params.get("lam", 3.0)
         self.max_repeat = params.get("max_repeat", 5)
         assert self.lam > 0, "Parameter 'lam' (lambda) must be positive."
-        self.actions = actions
         self.current_action = None
         self.current_repeat = None
 

@@ -149,23 +149,21 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 logger.debug(f"Successfully fetched image from {url}")
         except Exception:
             logger.warning(
-                f"Error fetching image from {url} after retries", exc_info=True
+                f"Warning: {url} after retries, re-using previous image", exc_info=True
             )
             # Keep previous image if available, otherwise this side will be missing
 
     async def put_action(self, action):
         """Send action to the lightbar using aiohttp with retry logic"""
-        self.last_action = action
-
-        self.last_calibrated_action = (
+        last_calibrated_action = (
             self.zone.calibration.get_calibrated_action(action)
             if self.zone.calibration
             else action
         )
 
         # clip action to have max value 1
-        self.last_calibrated_action = np.clip(self.last_calibrated_action, None, 1)
-        action_to_send = np.tile(self.last_calibrated_action, (2, 1))
+        last_calibrated_action = np.clip(last_calibrated_action, None, 1)
+        action_to_send = np.tile(last_calibrated_action, (2, 1))
 
         try:
             session = await self._ensure_session()
@@ -176,9 +174,18 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 json={"array": action_to_send.tolist()},
                 timeout=10,
             )
+            self.last_action = action
+            self.last_calibrated_action = last_calibrated_action
         except Exception:
-            # TODO: better handling of this exception
-            logger.exception(f"Error: {self.zone.lightbar_url} after retries")
+            if not np.array_equal(action, self.last_action):
+                logger.exception(
+                    f"Error: {self.zone.lightbar_url} after retries, re-using last action: {self.last_action}"
+                )
+            else:
+                logger.warning(
+                    f"Warning: {self.zone.lightbar_url} after retries, last action was identical",
+                    exc_info=True,
+                )
 
     async def start(self):
         logger.debug(f"Local time: {self.get_local_time()}. Step 0")
@@ -212,9 +219,10 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         current_time = self.get_time()
         if self.last_step_time:
             cycle_time = current_time - self.last_step_time
-            if cycle_time > self.duration * 1.1:
+            warning_threshold = self.duration * 1.5
+            if cycle_time > warning_threshold:
                 logger.warning(
-                    f"Cycle time ({cycle_time}) exceeded duration by 10% ({self.duration * 1.1})"
+                    f"Cycle time ({cycle_time}) exceeded duration by 50% ({warning_threshold})"
                 )
             elif cycle_time > self.duration:
                 logger.debug(
@@ -310,17 +318,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     async def close(self):
         """Close the environment and clean up resources."""
-        # Turn off lights
-        try:
-            await self.put_action(np.zeros(6))
-            logger.debug(
-                f"Lights turned off for zone {self.zone.identifier} during environment closure"
-            )
-        except Exception as e:
-            logger.exception(
-                f"Failed to turn off lights for zone {self.zone.identifier} during close: {e}"
-            )
-
         # Close the aiohttp RetryClient
         if self.session:
             try:

@@ -69,3 +69,43 @@ class TestBernoulliAgent:
             raise Exception("Should have raised an AssertionError")
         except AssertionError:
             pass
+
+    def test_checkpointing(self, tmpdir, setup_checkpoint_test):
+        """Test that the agent state can be saved and loaded via checkpointing."""
+
+        # Create agent with specific parameters
+        p = 0.75
+        params = {"p": p, "seed": 123}
+
+        # Define initialization function to set the agent state if needed
+        def init_agent(agent):
+            # For Bernoulli agent, we don't need special initialization,
+            # but we keep this for consistency with other agent tests
+            return agent
+
+        # Use the common checkpoint test utility
+        original_agent, loaded_agent = setup_checkpoint_test(
+            tmpdir,
+            params,
+            BernoulliAgent,
+            actions=2,
+            init_func=init_agent,
+        )
+
+        # Verify agent state was properly restored
+        assert loaded_agent.p == original_agent.p, (
+            "Probability parameter not restored correctly"
+        )
+
+        # Verify agent behavior is consistent
+        obs = np.array([0])
+        extra = {}
+
+        original_action, _ = original_agent.step(1.0, obs, extra)
+
+        loaded_action, _ = loaded_agent.step(1.0, obs, extra)
+
+        # Actions should be the same if the state was properly restored
+        assert original_action == loaded_action, (
+            "Restored agent produces different actions"
+        )

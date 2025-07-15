@@ -115,3 +115,52 @@ class TestPoissonAgent:
             raise Exception("Should have raised an AssertionError")
         except AssertionError:
             pass
+
+    def test_checkpointing(self, tmpdir, setup_checkpoint_test):
+        """Test that the agent state can be saved and loaded via checkpointing."""
+
+        # Create agent with specific parameters
+        lam = 2.5
+        max_repeat = 7
+        params = {"lam": lam, "max_repeat": max_repeat, "seed": 123}
+
+        # Define initialization function to set the agent state
+        def init_agent(agent):
+            agent.sample_action()
+            return agent
+
+        # Use the common checkpoint test utility
+        original_agent, loaded_agent = setup_checkpoint_test(
+            tmpdir, params, PoissonAgent, actions=4, init_func=init_agent
+        )
+
+        # Get the original state for comparison
+        original_action = original_agent.current_action
+        original_repeat = original_agent.current_repeat
+
+        # Verify agent state was properly restored
+        assert loaded_agent.lam == original_agent.lam, (
+            "Lambda parameter not restored correctly"
+        )
+        assert loaded_agent.max_repeat == original_agent.max_repeat, (
+            "Max repeat parameter not restored correctly"
+        )
+        assert loaded_agent.current_action == original_action, (
+            "Current action not restored correctly"
+        )
+        assert loaded_agent.current_repeat == original_repeat, (
+            "Current repeat count not restored correctly"
+        )
+
+        # Verify agent behavior is consistent
+        obs = np.array([0])
+        extra = {}
+
+        # Original agent step
+        orig_action, _ = original_agent.step(1.0, obs, extra)
+
+        # Loaded agent step
+        loaded_action, _ = loaded_agent.step(1.0, obs, extra)
+
+        # Actions should be the same if the state was properly restored
+        assert orig_action == loaded_action, "Restored agent produces different actions"
