@@ -110,7 +110,9 @@ async def main():
             Problem = getProblem(exp.problem)
 
             chk = Checkpoint(exp, idx, base_path=args.checkpoint_path)
-            chk.load_if_exists()
+            loaded = chk.load_if_exists()
+            if loaded:
+                logger.info(f"Loaded checkpoint from {chk._ctx.resolve()}")
             timeout_handler.before_cancel(chk.save)
 
             run = exp.getRun(idx)
@@ -149,17 +151,6 @@ async def main():
             glue = chk.build("glue", glue_builder)
             chk.initial_value("episode", 0)
 
-            load_params = problem.exp_params.get("load", None)
-            if isinstance(load_params, dict):
-                loaded_chk = Checkpoint(
-                    exp,
-                    0,
-                    base_path=args.checkpoint_path,
-                    load_path=load_params["path"],
-                )
-                loaded_chk.load()
-                chk.load_from_checkpoint(loaded_chk, load_params.get("config"))
-
             # save config to dataset
             if not dataset_path.exists():
                 dataset_path.mkdir(parents=True, exist_ok=True)
@@ -178,6 +169,18 @@ async def main():
 
             # if we haven't started yet, then make the first interaction
             if glue.total_steps == 0:
+                # Load partial checkpoint if specified (fine-tuning)
+                load_params = problem.exp_params.get("load", None)
+                if isinstance(load_params, dict):
+                    loaded_chk = Checkpoint(
+                        exp,
+                        0,
+                        base_path=args.checkpoint_path,
+                        load_path=load_params["path"],
+                    )
+                    loaded_chk.load()
+                    chk.load_from_checkpoint(loaded_chk, load_params.get("config"))
+
                 interaction = await glue.start()
                 episode = chk["episode"]
                 log(
@@ -282,7 +285,11 @@ async def main():
             if env is not None and hasattr(env, "close"):
                 await env.close()
             if chk is not None:
-                chk.save()
+                try:
+                    chk.save()
+                except Exception as e:
+                    logger.exception("Failed to save checkpoint")
+                    raise e
         wandb_run.finish()
 
 

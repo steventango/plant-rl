@@ -21,18 +21,24 @@ class DiscreteRandomAgent(BaseAgent):
         self.updates = 0
         self.pi = np.full(self.actions, 1 / self.actions)
 
+    def sample_action(self) -> int:
+        """
+        Sample an action uniformly at random from the available actions.
+        """
+        return sample(self.pi, rng=self.rng)
+
     # ----------------------
     # -- RLGlue interface --
     # ----------------------
     def start(  # type: ignore
         self, observation: np.ndarray, extra: Dict[str, Any]
     ) -> Tuple[np.ndarray, Dict[str, Any]]:
-        return sample(self.pi, rng=self.rng), {}  # type: ignore
+        return self.sample_action(), {}  # type: ignore
 
     def step(
         self, reward: float, observation: np.ndarray | None, extra: Dict[str, Any]
     ):
-        return sample(self.pi, rng=self.rng), {}
+        return self.sample_action(), {}
 
     def end(self, reward: float, extra: Dict[str, Any]):
         return {}
