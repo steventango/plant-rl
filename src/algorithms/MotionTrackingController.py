@@ -13,7 +13,7 @@ logger = logging.getLogger("plant_rl.MotionTrackingController")
 logger.setLevel(logging.DEBUG)
 
 
-@checkpointable(("mean_areas", "openness_trace", "openness_record", "sensitivity"))
+@checkpointable(("mean_areas", "openness_record", "sensitivity"))
 class MotionTrackingController(BaseAgent):
     def __init__(
         self,
@@ -24,8 +24,8 @@ class MotionTrackingController(BaseAgent):
         seed: int,
     ):
         super().__init__(observations, actions, params, collector, seed)
-        self.start_hour = 10
-        self.start_min = 30
+        self.start_hour = 11
+        self.start_min = 13
         self.end_hour = 21  # excluded in daytime
         self.time_step = 1  # minutes
 
@@ -46,7 +46,7 @@ class MotionTrackingController(BaseAgent):
         if self.openness_record != []:
             max_openness = np.mean(np.sort(self.openness_record)[-5:])
             self.sensitivity = (self.Imax - self.Imin) / max_openness
-            logger.debug(f"Adjusted sensitivity = {self.sensitivity:.2f}")
+            logger.info(f"Adjusted sensitivity = {self.sensitivity:.2f}")
 
     def start(self, observation: np.ndarray, extra: Dict[str, Any]):  # type: ignore
         self.openness_trace.reset()
@@ -71,12 +71,14 @@ class MotionTrackingController(BaseAgent):
         return action, {}
 
     def step(self, reward: float, observation: np.ndarray, extra: Dict[str, Any]):
-        logger.info(self.mean_areas)
-        logger.info(self.openness_trace)
-        logger.info(self.openness_record)
-        logger.info(self.sensitivity)
-
         self.env_local_time = observation[0]
+
+        logger.debug(f"mean_areas={self.mean_areas}")
+        logger.debug(f"openness_trace={self.openness_trace}")
+        logger.debug(f"openness_trace.compute()={self.openness_trace.compute().item()}")
+        logger.debug(f"openness_record={self.openness_record}")
+        logger.debug(f"sensitivity={self.sensitivity}")
+
         mean_area = observation[1]
         self.mean_areas[self.env_local_time.replace(second=0, microsecond=0)] = float(
             mean_area

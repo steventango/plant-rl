@@ -285,7 +285,11 @@ async def main():
             if env is not None and hasattr(env, "close"):
                 await env.close()
             if chk is not None:
-                chk.save()
+                try:
+                    chk.save()
+                except Exception as e:
+                    logger.exception("Failed to save checkpoint")
+                    raise e
         wandb_run.finish()
 
 
