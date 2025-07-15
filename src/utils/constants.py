@@ -16,7 +16,8 @@ def adjust_ppfd(action: np.ndarray, ppfd: float) -> np.ndarray:
     Adjust the action to match the given PPFD.
     """
     adjusted_action = action.copy()
-    adjusted_action[:5] = adjusted_action[:5] / np.sum(adjusted_action[:5]) * ppfd
+    adjusted_action /= np.sum(adjusted_action[:5])
+    adjusted_action *= ppfd
     return adjusted_action
 
 
