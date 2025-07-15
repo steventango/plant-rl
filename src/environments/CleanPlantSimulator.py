@@ -52,7 +52,7 @@ class CleanPlantSimulator(BaseEnvironment):
                 self.normalize(tod, 0, self.steps_per_day),
                 self.normalize(area, 0.5, 14),
                 self.normalize(openness, 0.97, 1.15),
-                self.normalize(daily_light_integral, 0, self.steps_per_day)
+                self.normalize(daily_light_integral, 0, self.steps_per_day),
             ]
         )
 
@@ -89,7 +89,7 @@ class CleanPlantSimulator(BaseEnvironment):
                 )
             else:
                 percent_overnight_growth = 0.2 * self.normalize(
-                    2*self.steps_per_day - self.dli, 0, self.steps_per_day
+                    2 * self.steps_per_day - self.dli, 0, self.steps_per_day
                 )
             self.reward = self.get_reward(percent_overnight_growth)
             self.current_morning_size += (
