@@ -12,6 +12,7 @@ from utils.checkpoint import checkpointable
 logger = logging.getLogger("plant_rl.MotionTrackingController")
 logger.setLevel(logging.DEBUG)
 
+
 @checkpointable(("mean_areas", "openness_trace", "openness_record", "sensitivity"))
 class MotionTrackingController(BaseAgent):
     def __init__(
@@ -24,13 +25,13 @@ class MotionTrackingController(BaseAgent):
     ):
         super().__init__(observations, actions, params, collector, seed)
         self.start_hour = 10
-        self.start_min = 20
+        self.start_min = 30
         self.end_hour = 21  # excluded in daytime
         self.time_step = 1  # minutes
 
         self.env_local_time = None
         self.mean_areas = defaultdict(float)
-        self.openness_trace = uema(alpha=0.1) 
+        self.openness_trace = uema(alpha=0.1)
         self.openness_record = []
 
         self.Imin = 0.5  # Lowest intensity. Fixed at a dim level at which CV still functions well.
@@ -120,7 +121,7 @@ class MotionTrackingController(BaseAgent):
 
     def end(self, reward: float, extra: Dict[str, Any]):
         return {}
-    
+
     def is_night(self) -> bool:
         assert self.env_local_time is not None, (
             "Environment local time must be set before checking night."
