@@ -12,8 +12,7 @@ from utils.checkpoint import checkpointable
 logger = logging.getLogger("plant_rl.MotionTrackingController")
 logger.setLevel(logging.DEBUG)
 
-#@checkpointable(("w", "theta"))
-@checkpointable(("sensitivity", "morning_area", "openness_record", "openness_trace", "env_local_time"))
+@checkpointable(("mean_areas", "openness_trace", "openness_record", "sensitivity"))
 class MotionTrackingController(BaseAgent):
     def __init__(
         self,
@@ -24,37 +23,19 @@ class MotionTrackingController(BaseAgent):
         seed: int,
     ):
         super().__init__(observations, actions, params, collector, seed)
-        self.start_hour = 9
+        self.start_hour = 10
+        self.start_min = 20
         self.end_hour = 21  # excluded in daytime
-        self.time_step = 5  # minutes
-        self.steps_per_day = int((self.end_hour - self.start_hour) * 60 / self.time_step)
+        self.time_step = 1  # minutes
 
         self.env_local_time = None
         self.mean_areas = defaultdict(float)
-        self.openness_trace = uema(alpha=0.1)   # need to be a scalar
+        self.openness_trace = uema(alpha=0.1) 
         self.openness_record = []
-        self.morning_area = None
 
         self.Imin = 0.5  # Lowest intensity. Fixed at a dim level at which CV still functions well.
         self.Imax = 1.1  # Highest intensity. Its optimal value depends on plant species, developmental stage, and environmental factors. Can be tuned by a higher-level RL agent
         self.sensitivity = 5.0  # = (change in intensity) / (change in plants openness). Adjusted daily to attempt to reach Imax when openness is the largest.
-
-    def is_night(self) -> bool:
-        assert self.env_local_time is not None, (
-            "Environment local time must be set before checking night."
-        )
-        is_night = self.env_local_time.hour >= self.end_hour or self.env_local_time.hour < self.start_hour
-        return is_night
-
-    def is_zeroth_tod(self) -> bool:
-        assert self.env_local_time is not None, (
-            "Environment local time must be set before checking is_zeroth_tod."
-        )
-        is_zeroth_tod = (
-            self.env_local_time.hour == self.start_hour
-            and self.env_local_time.minute == 0
-        )
-        return is_zeroth_tod
 
     def get_action(self) -> float:
         openness = self.openness_trace.compute().item()
@@ -89,6 +70,11 @@ class MotionTrackingController(BaseAgent):
         return action, {}
 
     def step(self, reward: float, observation: np.ndarray, extra: Dict[str, Any]):
+        logger.info(self.mean_areas)
+        logger.info(self.openness_trace)
+        logger.info(self.openness_record)
+        logger.info(self.sensitivity)
+
         self.env_local_time = observation[0]
         mean_area = observation[1]
         self.mean_areas[self.env_local_time.replace(second=0, microsecond=0)] = float(
@@ -104,11 +90,11 @@ class MotionTrackingController(BaseAgent):
             action = self.Imin
         else:
             today_zeroth_time = self.env_local_time.replace(
-                hour=self.start_hour, minute=0, second=0, microsecond=0
+                hour=self.start_hour, minute=self.start_min, second=0, microsecond=0
             )
             today_first_time = self.env_local_time.replace(
                 hour=self.start_hour,
-                minute=self.time_step,
+                minute=self.start_min + self.time_step,
                 second=0,
                 microsecond=0,
             )
@@ -134,3 +120,27 @@ class MotionTrackingController(BaseAgent):
 
     def end(self, reward: float, extra: Dict[str, Any]):
         return {}
+    
+    def is_night(self) -> bool:
+        assert self.env_local_time is not None, (
+            "Environment local time must be set before checking night."
+        )
+        is_night = (
+            self.env_local_time.hour >= self.end_hour
+            or self.env_local_time.hour < self.start_hour
+            or (
+                self.env_local_time.hour == self.start_hour
+                and self.env_local_time.minute < self.start_min
+            )
+        )
+        return is_night
+
+    def is_zeroth_tod(self) -> bool:
+        assert self.env_local_time is not None, (
+            "Environment local time must be set before checking is_zeroth_tod."
+        )
+        is_zeroth_tod = (
+            self.env_local_time.hour == self.start_hour
+            and self.env_local_time.minute == self.start_min
+        )
+        return is_zeroth_tod
