@@ -15,7 +15,7 @@ class CVPlantGrowthChamberIntensity(PlantGrowthChamberIntensity):
 class CVPlantGrowthChamberIntensity_MotionTracking(CVPlantGrowthChamberIntensity):
     def __init__(self, **kwargs):
         CVPlantGrowthChamberIntensity.__init__(self, **kwargs)
-        self.duration = timedelta(minutes=1)
+        self.duration = timedelta(minutes=5)
 
     async def get_observation(self):  # type: ignore
         epoch_time, _, df = await super().get_observation()

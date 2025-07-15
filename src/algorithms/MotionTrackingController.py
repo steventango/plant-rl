@@ -13,7 +13,7 @@ logger = logging.getLogger("plant_rl.MotionTrackingController")
 logger.setLevel(logging.DEBUG)
 
 
-@checkpointable(("mean_areas", "openness_record", "sensitivity"))
+@checkpointable(("mean_areas", "openness_record", "openness_trace", "sensitivity"))
 class MotionTrackingController(BaseAgent):
     def __init__(
         self,
@@ -24,19 +24,19 @@ class MotionTrackingController(BaseAgent):
         seed: int,
     ):
         super().__init__(observations, actions, params, collector, seed)
-        self.start_hour = 11
-        self.start_min = 13
+        self.start_hour = 9
+        self.start_min = 0
         self.end_hour = 21  # excluded in daytime
-        self.time_step = 1  # minutes
+        self.time_step = 5  # minutes
 
         self.env_local_time = None
         self.mean_areas = defaultdict(float)
-        self.openness_trace = uema(alpha=0.1)
         self.openness_record = []
+        self.openness_trace = uema(alpha=0.1)
 
         self.Imin = 0.5  # Lowest intensity. Fixed at a dim level at which CV still functions well.
-        self.Imax = 1.1  # Highest intensity. Its optimal value depends on plant species, developmental stage, and environmental factors. Can be tuned by a higher-level RL agent
-        self.sensitivity = 5.0  # = (change in intensity) / (change in plants openness). Adjusted daily to attempt to reach Imax when openness is the largest.
+        self.Imax = 1.0  # Highest intensity. Its optimal value depends on plant species, developmental stage, and environmental factors. Can be tuned by a higher-level RL agent
+        self.sensitivity = 5  # = (change in intensity) / (change in plants openness). Adjusted daily to attempt to reach Imax when openness is the largest.
 
     def get_action(self) -> float:
         openness = self.openness_trace.compute().item()
@@ -72,13 +72,6 @@ class MotionTrackingController(BaseAgent):
 
     def step(self, reward: float, observation: np.ndarray, extra: Dict[str, Any]):
         self.env_local_time = observation[0]
-
-        logger.debug(f"mean_areas={self.mean_areas}")
-        logger.debug(f"openness_trace={self.openness_trace}")
-        logger.debug(f"openness_trace.compute()={self.openness_trace.compute().item()}")
-        logger.debug(f"openness_record={self.openness_record}")
-        logger.debug(f"sensitivity={self.sensitivity}")
-
         mean_area = observation[1]
         self.mean_areas[self.env_local_time.replace(second=0, microsecond=0)] = float(
             mean_area
