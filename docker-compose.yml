@@ -177,7 +177,7 @@ services:
       - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/A0/P0/MotionTrackingController12.json -i 7 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E10/P0/Spreadsheet7.json -i 7 --deploy
     deploy:
       resources:
         reservations:
