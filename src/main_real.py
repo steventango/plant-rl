@@ -112,7 +112,7 @@ async def main():
             chk = Checkpoint(exp, idx, base_path=args.checkpoint_path)
             loaded = chk.load_if_exists()
             if loaded:
-                logger.info(f"Loaded checkpoint from {chk._ctx.resolve()}")
+                logger.info("Loaded checkpoint")
             timeout_handler.before_cancel(chk.save)
 
             run = exp.getRun(idx)
@@ -285,7 +285,11 @@ async def main():
             if env is not None and hasattr(env, "close"):
                 await env.close()
             if chk is not None:
-                chk.save()
+                try:
+                    chk.save()
+                except Exception:
+                    logger.exception("Failed to save checkpoint")
+                    raise
         wandb_run.finish()
 
 

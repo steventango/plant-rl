@@ -1,8 +1,8 @@
 {
     "zone": {
         "identifier": "alliance-zone12",
-        "camera_left_url": null,
-        "camera_right_url": "http://alliance-zone12-camera02.ccis.ualberta.ca:8080/observation",
+        "camera_left_url": "http://alliance-zone12-camera01.ccis.ualberta.ca:8080/observation",
+        "camera_right_url": null,
         "lightbar_url": "http://142.244.191.37:8080/action",
         "calibration": {
             "action": [
@@ -117,42 +117,20 @@
                 "n_tall": 3,
                 "rect": {
                     "top_left": [
-                        230,
-                        381
+                        571,
+                        974
                     ],
                     "top_right": [
-                        1504,
-                        298
+                        1956,
+                        860
                     ],
                     "bottom_left": [
-                        218,
-                        1006
+                        639,
+                        1654
                     ],
                     "bottom_right": [
-                        1528,
-                        976
-                    ]
-                }
-            },
-            {
-                "n_wide": 6,
-                "n_tall": 3,
-                "rect": {
-                    "top_left": [
-                        204,
-                        1081
-                    ],
-                    "top_right": [
-                        1509,
-                        1049
-                    ],
-                    "bottom_left": [
-                        269,
-                        1713
-                    ],
-                    "bottom_right": [
-                        1526,
-                        1710
+                        2009,
+                        1572
                     ]
                 }
             }

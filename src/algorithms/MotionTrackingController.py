@@ -13,7 +13,7 @@ logger = logging.getLogger("plant_rl.MotionTrackingController")
 logger.setLevel(logging.DEBUG)
 
 
-@checkpointable(("mean_areas", "openness_trace", "openness_record", "sensitivity"))
+@checkpointable(("mean_areas", "openness_record", "openness_trace", "sensitivity"))
 class MotionTrackingController(BaseAgent):
     def __init__(
         self,
@@ -24,19 +24,19 @@ class MotionTrackingController(BaseAgent):
         seed: int,
     ):
         super().__init__(observations, actions, params, collector, seed)
-        self.start_hour = 10
-        self.start_min = 30
+        self.start_hour = 9
+        self.start_min = 0
         self.end_hour = 21  # excluded in daytime
-        self.time_step = 1  # minutes
+        self.time_step = 5  # minutes
 
         self.env_local_time = None
         self.mean_areas = defaultdict(float)
-        self.openness_trace = uema(alpha=0.1)
         self.openness_record = []
+        self.openness_trace = uema(alpha=0.1)
 
         self.Imin = 0.5  # Lowest intensity. Fixed at a dim level at which CV still functions well.
-        self.Imax = 1.1  # Highest intensity. Its optimal value depends on plant species, developmental stage, and environmental factors. Can be tuned by a higher-level RL agent
-        self.sensitivity = 5.0  # = (change in intensity) / (change in plants openness). Adjusted daily to attempt to reach Imax when openness is the largest.
+        self.Imax = 1.0  # Highest intensity. Its optimal value depends on plant species, developmental stage, and environmental factors. Can be tuned by a higher-level RL agent
+        self.sensitivity = 5  # = (change in intensity) / (change in plants openness). Adjusted daily to attempt to reach Imax when openness is the largest.
 
     def get_action(self) -> float:
         openness = self.openness_trace.compute().item()
@@ -46,7 +46,7 @@ class MotionTrackingController(BaseAgent):
         if self.openness_record != []:
             max_openness = np.mean(np.sort(self.openness_record)[-5:])
             self.sensitivity = (self.Imax - self.Imin) / max_openness
-            logger.debug(f"Adjusted sensitivity = {self.sensitivity:.2f}")
+            logger.info(f"Adjusted sensitivity = {self.sensitivity:.2f}")
 
     def start(self, observation: np.ndarray, extra: Dict[str, Any]):  # type: ignore
         self.openness_trace.reset()
@@ -71,11 +71,6 @@ class MotionTrackingController(BaseAgent):
         return action, {}
 
     def step(self, reward: float, observation: np.ndarray, extra: Dict[str, Any]):
-        logger.info(self.mean_areas)
-        logger.info(self.openness_trace)
-        logger.info(self.openness_record)
-        logger.info(self.sensitivity)
-
         self.env_local_time = observation[0]
         mean_area = observation[1]
         self.mean_areas[self.env_local_time.replace(second=0, microsecond=0)] = float(
