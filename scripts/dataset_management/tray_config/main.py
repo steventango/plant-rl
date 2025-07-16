@@ -1,4 +1,5 @@
 import tkinter as tk
+from itertools import chain
 from pathlib import Path
 
 from app import TrayConfigApp
@@ -7,7 +8,10 @@ from app import TrayConfigApp
 UPDATE_CONFIG = True  # When True, updates configs in PlantGrowthChamber directory
 
 # Base directories containing the datasets
-BASE_DIRS = Path("/data/online/E10/P0").rglob("*")
+BASE_DIRS = chain(
+    Path("/data/online/E10/P0").rglob("*"),
+    [Path("/data/online/A0/P0/MotionTrackingControllerExp6")],
+)
 
 
 def main():
