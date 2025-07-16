@@ -208,6 +208,9 @@ def log(
     logger.debug(f"Logging data to wandb took {log_time:.4f} seconds")
 
 
+MAX_TITLE_LENGTH = 64
+
+
 class WandbAlertHandler(logging.Handler):
     def __init__(self, run: Run, *args, **kwargs):
         super().__init__(*args, **kwargs)
