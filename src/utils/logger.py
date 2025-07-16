@@ -225,7 +225,9 @@ class WandbAlertHandler(logging.Handler):
                 level = AlertLevel.INFO
             else:
                 return
-            title, text = str(msg).split("\n", 1)
+            parts = str(msg).split("\n", 1)
+            title = parts[0]
+            text = parts[1] if len(parts) > 1 else ""
             if len(title) > 64:
                 text = f"{title[64:]}\n{text}"
                 title = title[:64]
