@@ -65,9 +65,9 @@ def find_all_datasets(base_dirs):
                 if (dir_path / "images").exists():
                     dataset_dirs.append(dir_path)
 
-    print(f"Found {len(dataset_dirs)} datasets")
+    logger.info(f"Found {len(dataset_dirs)} datasets")
     for idx, dataset in enumerate(dataset_dirs):
-        print(f"{idx + 1}. {dataset}")
+        logger.info(f"{idx + 1}. {dataset}")
 
     return dataset_dirs
 
