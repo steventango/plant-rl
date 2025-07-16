@@ -6,7 +6,7 @@
     "metaParameters": {
         "environment": {
             "zone": "alliance-zone07",
-            "timezone": "Asia/Dubai",
+            "timezone": "Asia/Dhaka",
             "normalize_reward": true,
             "sparse_reward": true
         },
@@ -38,7 +38,7 @@
             "tiles": 11,
             "tilings": 1
         },
-        "timezone": "Asia/Dubai",
+        "timezone": "Asia/Dhaka",
         "use_planning": true
     }
 }
