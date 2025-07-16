@@ -228,9 +228,9 @@ class WandbAlertHandler(logging.Handler):
             parts = str(msg).split("\n", 1)
             title = parts[0]
             text = parts[1] if len(parts) > 1 else ""
-            if len(title) > 64:
-                text = f"{title[64:]}\n{text}"
-                title = title[:64]
+            if len(title) > MAX_TITLE_LENGTH:
+                text = f"{title[MAX_TITLE_LENGTH:]}\n{text}"
+                title = title[:MAX_TITLE_LENGTH]
             if record.exc_info:
                 text = f"```{text}```"
             self.run.alert(
