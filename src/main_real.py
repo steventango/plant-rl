@@ -287,9 +287,9 @@ async def main():
             if chk is not None:
                 try:
                     chk.save()
-                except Exception as e:
+                except Exception:
                     logger.exception("Failed to save checkpoint")
-                    raise e
+                    raise
         wandb_run.finish()
 
 
