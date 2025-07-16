@@ -1,12 +1,12 @@
 {
-    "agent": "BatchQLearning8",
+    "agent": "BatchQLearning7",
     "problem": "TimeDLIPlantGrowthChamberDiscrete",
     "total_steps": 40320,
     "episode_cutoff": -1,
     "metaParameters": {
         "environment": {
             "zone": "alliance-zone07",
-            "timezone": "America/Edmonton",
+            "timezone": "Asia/Dubai",
             "normalize_reward": true,
             "sparse_reward": true
         },
@@ -38,7 +38,7 @@
             "tiles": 11,
             "tilings": 1
         },
-        "timezone": "America/Edmonton",
+        "timezone": "Asia/Dubai",
         "use_planning": true
     }
 }
