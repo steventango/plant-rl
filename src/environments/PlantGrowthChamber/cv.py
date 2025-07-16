@@ -1,6 +1,7 @@
 import base64  # type: ignore
 import io
 import json
+import logging
 from math import ceil
 
 import cv2
@@ -16,6 +17,9 @@ from skimage.filters import threshold_otsu
 from supervision.draw.color import DEFAULT_COLOR_PALETTE, ColorPalette
 
 from .zones import POT_HEIGHT, POT_WIDTH, SCALE, Tray
+
+logger = logging.getLogger("plant_rl.cv")
+
 
 CUSTOM_COLOR_PALETTE = (
     DEFAULT_COLOR_PALETTE * ceil(128 / len(DEFAULT_COLOR_PALETTE)) + ["#808080"] * 1000
@@ -385,10 +389,31 @@ def process_image(
 
     params.line_thickness = 1
 
-    shape_image = pcv.analyze.size(
-        img=warped_image, labeled_mask=labeled_mask, n_labels=num_plants
-    )
-    debug_images["shape_image"] = Image.fromarray(shape_image)
+    # Check if we have valid masks before analysis
+    if np.any(labeled_mask > 0):
+        try:
+            shape_image = pcv.analyze.size(
+                img=warped_image, labeled_mask=labeled_mask, n_labels=num_plants
+            )
+            debug_images["shape_image"] = Image.fromarray(shape_image)
+        except IndexError:
+            logger.debug("analyze.size failed", exc_info=True)
+            logger.debug(labeled_mask)
+            debug_images["shape_image"] = Image.fromarray(warped_image.copy())
+            return pd.DataFrame(
+                [
+                    {**{col: 0 for col in plant_df_columns}, "plant_id": i + 1}
+                    for i in range(num_plants)
+                ]
+            ), sv.Detections(np.zeros((0, 4)))  # type: ignore
+    else:
+        logger.debug("no valid masks")
+        return pd.DataFrame(
+            [
+                {**{col: 0 for col in plant_df_columns}, "plant_id": i + 1}
+                for i in range(num_plants)
+            ]
+        ), sv.Detections(np.zeros((0, 4)))  # type: ignore
 
     stats = []
     area_map = {}
@@ -410,7 +435,6 @@ def process_image(
 
     # convert all_plant_stats to pandas dataframe
     df = pd.DataFrame(stats)
-    df = df[plant_df_columns]
 
     # annotate with area
     labels = [
