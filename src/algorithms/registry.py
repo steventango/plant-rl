@@ -20,6 +20,7 @@ from algorithms.tc.ESARSA import ESARSA
 from algorithms.tc.QL import QL
 from algorithms.tc.SoftmaxAC import SoftmaxAC
 from algorithms.tc.batch.ESARSA import ESARSA as BatchESARSA
+from algorithms.tc.batch.QL import QL as BatchQL
 from algorithms.tc.tc_replay.ESARSA import ESARSA as ReplayESARSA
 from algorithms.tc.tc_replay.QL import QL as QLReplay
 
@@ -60,6 +61,9 @@ def getAgent(name) -> Type[BaseAgent]:
 
     if name.startswith("BatchESARSA"):
         return BatchESARSA
+
+    if name.startswith("BatchQL"):
+        return BatchQL
 
     if name == "LinearQL":
         return LinearQL
