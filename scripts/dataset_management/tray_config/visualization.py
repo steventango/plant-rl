@@ -67,26 +67,29 @@ def visualize_tray(canvas, tray, scale_factor, label=None, tray_markers_count=0)
 
 
 def load_and_prepare_image(image_path, max_height=800):
-    """Load and prepare an image for display on canvas"""
+    """Load and prepare an image for display on canvas with optimized performance"""
     try:
-        image = cv2.imread(str(image_path))
-        if image is None:
+        # Use PIL directly for faster loading instead of cv2
+        image = Image.open(str(image_path))
+        if not image:
             raise IOError("Could not read image file")
 
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        original_height, original_width, _ = image.shape
+        # Get original dimensions
+        original_width, original_height = image.size
 
-        # Resize for display
+        # Calculate scale factor
         scale_factor = max_height / original_height
         display_width = int(original_width * scale_factor)
         display_height = int(original_height * scale_factor)
 
-        # Create PhotoImage
-        img_pil = Image.fromarray(image)
-        img_pil = img_pil.resize(
-            (display_width, display_height), Image.Resampling.LANCZOS
+        # Resize image using more efficient BILINEAR resampling instead of LANCZOS
+        # LANCZOS is higher quality but much slower, and for this UI we need speed
+        img_resized = image.resize(
+            (display_width, display_height), Image.Resampling.BILINEAR
         )
-        tk_image = ImageTk.PhotoImage(img_pil)
+
+        # Convert to Tkinter PhotoImage
+        tk_image = ImageTk.PhotoImage(img_resized)
 
         return (
             tk_image,
@@ -96,7 +99,6 @@ def load_and_prepare_image(image_path, max_height=800):
             display_width,
             display_height,
         )
-
     except Exception as e:
         raise Exception(f"Could not load image: {e}") from e
 
