@@ -2,7 +2,6 @@ import json
 import logging
 import re
 import tkinter as tk
-from itertools import chain
 from pathlib import Path
 from tkinter import messagebox, ttk
 
@@ -33,15 +32,7 @@ logger = logging.getLogger("TrayConfigApp")
 UPDATE_CONFIG = True  # When True, updates configs in PlantGrowthChamber directory
 
 # Base directories containing the datasets
-BASE_DIRS = [
-    # Path("/data/phytochrome_exp"),
-    # Path("/data/nazmus_exp"),
-]
-BASE_DIRS.extend(
-    chain(
-        Path("/data/online/E9/P0").rglob("*"),
-    )
-)
+BASE_DIRS = Path("/data/online/E10/P0").rglob("*")
 
 
 class TrayConfigApp:
