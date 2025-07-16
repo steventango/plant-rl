@@ -1,0 +1,14 @@
+{
+    "agent": "Constant10",
+    "problem": "MaybeTwilightPlantGrowthChamberDiscrete",
+    "total_steps": 40320,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": "alliance-zone10",
+            "timezone": "America/Edmonton",
+            "twilight_type": "bright"
+        },
+        "timezone": "America/Edmonton"
+    }
+}

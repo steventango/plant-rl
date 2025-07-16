@@ -1,0 +1,15 @@
+{
+    "agent": "Poisson4",
+    "problem": "CVPlantGrowthChamberColor",
+    "total_steps": 40320,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": "alliance-zone04",
+            "timezone": "America/Edmonton"
+        },
+        "lam": 3.0,
+        "max_repeat": 6,
+        "timezone": "America/Edmonton"
+    }
+}

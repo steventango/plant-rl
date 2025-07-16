@@ -1,0 +1,44 @@
+{
+    "agent": "BatchQLearning8",
+    "problem": "TimeDLIPlantGrowthChamberDiscrete",
+    "total_steps": 40320,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": "alliance-zone08",
+            "timezone": "America/Edmonton",
+            "normalize_reward": true,
+            "sparse_reward": true
+        },
+        "experiment": {
+            "load": {
+                "path": "results/offline/S7/P1/BatchESARSA",
+                "config": {
+                    "a": {
+                        "buffer": true,
+                        "w": true,
+                        "tile_coder": true
+                    }
+                }
+            }
+        },
+        "alpha": 0.001,
+        "alpha_decay": false,
+        "epsilon": 0.1,
+        "w0": 0.0,
+        "buffer_type": "uniform",
+        "buffer_size": 100000,
+        "batch": 256,
+        "replay_ratio": 1,
+        "gamma": 0.99,
+        "n_step": 66,
+        "representation": {
+            "which_tc": "RichTileCoder",
+            "strategy": -1,
+            "tiles": 11,
+            "tilings": 1
+        },
+        "timezone": "America/Edmonton",
+        "use_planning": true
+    }
+}
