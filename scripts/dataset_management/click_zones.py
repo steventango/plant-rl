@@ -397,8 +397,18 @@ class TrayConfigApp:
                 self.canvas.delete(old_tag)
 
                 # Create new visualization
+                tray = Tray(
+                    n_tall=tray_config["n_tall"],
+                    n_wide=tray_config["n_wide"],
+                    rect=Rect(
+                        top_left=tuple(tray_config["rect"]["top_left"]),
+                        top_right=tuple(tray_config["rect"]["top_right"]),
+                        bottom_left=tuple(tray_config["rect"]["bottom_left"]),
+                        bottom_right=tuple(tray_config["rect"]["bottom_right"]),
+                    ),
+                )
                 marker_id = self.visualize_tray(
-                    self.points, f"Tray {old_index + 1}: {n_tall}×{n_wide}"
+                    tray, f"Tray {old_index + 1}: {n_tall}×{n_wide}"
                 )
                 self.tray_markers[old_index] = marker_id
 
@@ -413,9 +423,19 @@ class TrayConfigApp:
                 # Add new tray
                 self.tray_configs.append(tray_config)
 
+                tray = Tray(
+                    n_tall=tray_config["n_tall"],
+                    n_wide=tray_config["n_wide"],
+                    rect=Rect(
+                        top_left=tuple(tray_config["rect"]["top_left"]),
+                        top_right=tuple(tray_config["rect"]["top_right"]),
+                        bottom_left=tuple(tray_config["rect"]["bottom_left"]),
+                        bottom_right=tuple(tray_config["rect"]["bottom_right"]),
+                    ),
+                )
                 # Visualize the tray with a permanent marker
                 marker_id = self.visualize_tray(
-                    self.points, f"Tray {len(self.tray_configs)}: {n_tall}×{n_wide}"
+                    tray, f"Tray {len(self.tray_configs)}: {n_tall}×{n_wide}"
                 )
                 self.tray_markers.append(marker_id)
 
@@ -434,13 +454,18 @@ class TrayConfigApp:
         else:
             print(f"Please select exactly 4 points. Current: {len(self.points)}")
 
-    def visualize_tray(self, points, label=None):
+    def visualize_tray(self, tray: Tray, label=None):
         """Draw a permanent visualization of a tray on the canvas"""
-        if len(points) != 4:
-            return None
+        # Scale points to display coordinates
+        points = [
+            self.scale_point_to_display(tray.rect.top_left),
+            self.scale_point_to_display(tray.rect.top_right),
+            self.scale_point_to_display(tray.rect.bottom_right),
+            self.scale_point_to_display(tray.rect.bottom_left),
+        ]
 
         # Create a unique tag for this tray
-        tag = f"tray_{len(self.tray_configs)}"
+        tag = f"tray_{len(self.tray_markers)}"
 
         # Draw polygon connecting the points with semi-transparent fill
         self.canvas.create_polygon(
@@ -448,10 +473,10 @@ class TrayConfigApp:
             points[0][1],  # top-left
             points[1][0],
             points[1][1],  # top-right
-            points[3][0],
-            points[3][1],  # bottom-right
             points[2][0],
-            points[2][1],  # bottom-left
+            points[2][1],  # bottom-right
+            points[3][0],
+            points[3][1],  # bottom-left
             fill="",
             outline="green",
             width=2,
@@ -633,18 +658,18 @@ class TrayConfigApp:
         """Draw visualizations for trays that already exist in the config"""
         for i, tray_config in enumerate(self.tray_configs):
             rect = tray_config["rect"]
-            points = [
-                self.scale_point_to_display(rect["top_left"]),
-                self.scale_point_to_display(rect["top_right"]),
-                self.scale_point_to_display(rect["bottom_left"]),
-                self.scale_point_to_display(rect["bottom_right"]),
-            ]
-
-            # Reorder for polygon drawing
-            poly_points = [points[0], points[1], points[3], points[2]]
-
+            tray = Tray(
+                n_tall=tray_config["n_tall"],
+                n_wide=tray_config["n_wide"],
+                rect=Rect(
+                    top_left=tuple(rect["top_left"]),
+                    top_right=tuple(rect["top_right"]),
+                    bottom_left=tuple(rect["bottom_left"]),
+                    bottom_right=tuple(rect["bottom_right"]),
+                ),
+            )
             label = f"Tray {i + 1}: {tray_config['n_tall']}×{tray_config['n_wide']}"
-            marker_id = self.visualize_tray(poly_points, label)
+            marker_id = self.visualize_tray(tray, label)
             if marker_id:
                 self.tray_markers.append(marker_id)
 
@@ -653,7 +678,6 @@ class TrayConfigApp:
         if not self.tray_configs:
             return
 
-        # Find the tray that was clicked
         for i, tray_config in enumerate(self.tray_configs):
             rect = tray_config["rect"]
             points = [
@@ -662,9 +686,8 @@ class TrayConfigApp:
                 self.scale_point_to_display(rect["bottom_left"]),
                 self.scale_point_to_display(rect["bottom_right"]),
             ]
-
-            # Create a polygon to check if the click is inside
-            poly = np.array([points[0], points[1], points[3], points[2]])
+            # Correct order for hit-testing
+            poly = np.array([points[0], points[2], points[3], points[1]])
             if cv2.pointPolygonTest(poly, (event.x, event.y), False) >= 0:
                 self.selected_tray_index = i
                 self.edit_status_label.config(text=f"Editing Tray {i + 1}", fg="blue")
