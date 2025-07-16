@@ -225,8 +225,10 @@ class WandbAlertHandler(logging.Handler):
                 level = AlertLevel.INFO
             else:
                 return
-            title = str(msg).split("\n")[0]
-            text = "\n".join(str(msg).split("\n")[1:]) if "\n" in str(msg) else ""
+            title, text = str(msg).split("\n", 1)
+            if len(title) > 64:
+                text = f"{title[64:]}\n{text}"
+                title = title[:64]
             if record.exc_info:
                 text = f"```{text}```"
             self.run.alert(
