@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
 
-from .utils import (
+from tray_config_utils import (
     extract_zone_identifier,
     load_existing_config,
     logger,
