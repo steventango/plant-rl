@@ -65,10 +65,6 @@ def main():
         cols_to_drop.remove("frame")
         cols_to_drop.remove("plant_id")
         raw_df = raw_df.drop(columns=cols_to_drop)
-        # TODO: temporary
-        # if min plant_id is 0, add 1 to all plant_ids
-        if raw_df["plant_id"].min() == 0:
-            raw_df["plant_id"] += 1
         df = pd.merge(
             raw_df,
             new_df,
