@@ -209,6 +209,7 @@ def log(
 
 
 MAX_TITLE_LENGTH = 64
+MAX_TEXT_LENGTH = 4048
 
 
 class WandbAlertHandler(logging.Handler):
@@ -236,6 +237,9 @@ class WandbAlertHandler(logging.Handler):
                 title = title[:MAX_TITLE_LENGTH]
             if record.exc_info:
                 text = f"```{text}```"
+            if len(text) > MAX_TEXT_LENGTH:
+                half_length = (MAX_TEXT_LENGTH) // 2 - 3
+                text = text[:half_length] + "..." + text[-half_length:]
             self.run.alert(
                 title=title,
                 text=text,
