@@ -113,8 +113,8 @@ def annotate_image(timestamp, out_dir_images, pivot_df, image_names):
         start_idx = 0
         end_idx = 2 * window_size
     elif current_time_idx + window_size >= len(pivot_df.index):
+        start_idx = len(pivot_df.index) - 2 * window_size
         end_idx = current_time_idx + window_size + 1
-        start_idx = end_idx - 2 * window_size
     else:
         start_idx = current_time_idx - window_size
         end_idx = current_time_idx + window_size + 1
