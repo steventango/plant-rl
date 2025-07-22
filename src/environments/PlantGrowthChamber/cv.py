@@ -438,7 +438,7 @@ def process_image(
 
     # annotate with area
     labels = [
-        f"{plant_id}: {area_map.get(plant_id, 0):.2f} mm²"
+        f"{plant_id}: {area_map.get(plant_id, 0):.1f} mm²"
         for plant_id in annotate_detections.class_id  # type: ignore
     ]
     label_annotator = sv.RichLabelAnnotator(  # type: ignore

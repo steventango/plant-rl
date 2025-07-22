@@ -7,43 +7,22 @@ from PIL import Image
 from tqdm.contrib.concurrent import process_map
 
 from environments.PlantGrowthChamber.cv import process_image
-from environments.PlantGrowthChamber.zones import Rect, Tray, Zone
+from environments.PlantGrowthChamber.zones import Zone, deserialize_zone
 
 
-def get_zone_from_config(config):
-    config_zone = config["zone"]
-    zone = Zone(
-        identifier=config_zone["identifier"],
-        camera_left_url=config_zone.get("camera_left_url"),
-        camera_right_url=config_zone.get("camera_right_url"),
-        lightbar_url=config_zone.get("lightbar_url"),
-        calibration=None,
-        trays=[
-            Tray(
-                n_wide=tray["n_wide"],
-                n_tall=tray["n_tall"],
-                rect=Rect(
-                    top_left=tuple(tray["rect"]["top_left"]),
-                    top_right=tuple(tray["rect"]["top_right"]),
-                    bottom_left=tuple(tray["rect"]["bottom_left"]),
-                    bottom_right=tuple(tray["rect"]["bottom_right"]),
-                ),
-            )
-            for tray in config_zone["trays"]
-        ],
-    )
-    return zone
+def get_zone_from_config(config: dict) -> Zone:
+    return deserialize_zone(config)
 
 
 def main():
-    datasets = Path("/data").glob("nazmus_exp/z11c1")
+    datasets = Path("/data/online/E10/P1").glob("**/alliance-zone*")
     datasets = sorted(datasets)
 
-    pipeline_version = "v3.6.0"
+    pipeline_version = "v3.6.1"
     for dataset in datasets:
         with open(next(dataset.rglob("config.json"))) as f:
             config = json.load(f)
-            zone = get_zone_from_config(config)
+            zone = get_zone_from_config(config["zone"])
         try:
             raw_df = pd.read_csv(dataset / "raw.csv")
         except FileNotFoundError:
@@ -52,7 +31,7 @@ def main():
         out_dir = dataset / "processed" / pipeline_version
         out_dir_images = out_dir / "images"
         out_dir_images.mkdir(exist_ok=True, parents=True)
-        paths = sorted((dataset / "images").glob("*.jpg"))[::2]
+        paths = sorted((dataset / "images").glob("*.jpg"))
 
         # Create list of arguments for parallel processing
         process_args = [(zone, out_dir_images, path, i) for i, path in enumerate(paths)]
@@ -86,10 +65,6 @@ def main():
         cols_to_drop.remove("frame")
         cols_to_drop.remove("plant_id")
         raw_df = raw_df.drop(columns=cols_to_drop)
-        # TODO: temporary
-        # if min plant_id is 0, add 1 to all plant_ids
-        if raw_df["plant_id"].min() == 0:
-            raw_df["plant_id"] += 1
         df = pd.merge(
             raw_df,
             new_df,
