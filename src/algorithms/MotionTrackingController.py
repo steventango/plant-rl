@@ -44,7 +44,7 @@ class MotionTrackingController(BaseAgent):
 
     def adjust_sensitivity(self):
         if self.openness_record != []:
-            max_openness = np.mean(np.sort(self.openness_record)[-5:])
+            max_openness = np.percentile(self.openness_record, 75)
             self.sensitivity = (self.Imax - self.Imin) / max_openness
             logger.info(f"Adjusted sensitivity = {self.sensitivity:.2f}")
 
