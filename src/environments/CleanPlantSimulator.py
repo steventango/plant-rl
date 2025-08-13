@@ -34,10 +34,14 @@ class CleanPlantSimulator(BaseEnvironment):
         # Agent must keep light off outside this time range
         self.sim_start_hour = 9
         self.sim_end_hour = 21
-        self.sim_steps_per_day = int((self.sim_end_hour - self.sim_start_hour) * 60 / self.time_step)
+        self.sim_steps_per_day = int(
+            (self.sim_end_hour - self.sim_start_hour) * 60 / self.time_step
+        )
 
         self.steps = 0
-        self.start_time = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) 
+        self.start_time = datetime.datetime.now().replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
 
         self.min_ppfd = 0
         self.max_ppfd = 150
@@ -49,34 +53,42 @@ class CleanPlantSimulator(BaseEnvironment):
         self.dli = 0
 
         self.gamma = 0.99
-    
+
     def get_tod(self):
         day = self.steps // self.steps_per_day
         minutes_today = (self.steps % self.steps_per_day) * self.time_step
-        hour = minutes_today // 60 
+        hour = minutes_today // 60
         minute = minutes_today % 60
-        tod = self.start_time.replace(hour=hour, minute=minute) + datetime.timedelta(days=day)
+        tod = self.start_time.replace(hour=hour, minute=minute) + datetime.timedelta(
+            days=day
+        )
         return tod
-    
+
     def get_area(self, tod, action):
         # If morning, increase area by overnight growth
-        if self.is_first_tod(tod): 
+        if self.is_first_tod(tod):
             daily_optimal_ppfd = self.sim_steps_per_day * self.optimal_ppfd
             if self.dli <= daily_optimal_ppfd:
                 percent_overnight_growth = 0.2 * (self.dli / daily_optimal_ppfd)
             else:
-                percent_overnight_growth = 0.2 * ((2 * daily_optimal_ppfd - self.dli) / daily_optimal_ppfd)
+                percent_overnight_growth = 0.2 * (
+                    (2 * daily_optimal_ppfd - self.dli) / daily_optimal_ppfd
+                )
             self.current_morning_size += (
                 self.current_morning_size * percent_overnight_growth
             )
             self.dli = 0  # Reset daily light integral
-        
-        if action == 0: 
+
+        if action == 0:
             area = 0
-        else: 
+        else:
             steps_since_midnight = self.steps % self.steps_per_day
-            steps_since_morning = steps_since_midnight - self.sim_start_hour * 60 / self.time_step
-            area = self.current_morning_size * (1 + self.daily_area_curve(steps_since_morning))
+            steps_since_morning = (
+                steps_since_midnight - self.sim_start_hour * 60 / self.time_step
+            )
+            area = self.current_morning_size * (
+                1 + self.daily_area_curve(steps_since_morning)
+            )
         return area
 
     def reward_function(self, tod):
@@ -87,12 +99,12 @@ class CleanPlantSimulator(BaseEnvironment):
 
             if yesterday_area == 0.0:
                 return 0
-            
+
             if self.percent_reward:
                 return current_area / yesterday_area - 1
             else:
                 return current_area - yesterday_area
-        else: 
+        else:
             return 0
 
     def start(self):
@@ -102,7 +114,7 @@ class CleanPlantSimulator(BaseEnvironment):
         action = 0
         self.dli = 0
 
-        tod = self.get_tod()        
+        tod = self.get_tod()
         area = self.get_area(tod, action)
         self.area_record[tod] = area
 
@@ -112,18 +124,20 @@ class CleanPlantSimulator(BaseEnvironment):
 
     def step(self, action):
         # Make sure the agent turns off light at night
-        last_tod = self.get_tod()   
+        last_tod = self.get_tod()
         if self.is_night(last_tod) and action != 0:
             raise Exception("Your agent didn't turn off light at night.")
 
         # Make sure the agent selects a valid action
         if action < self.min_ppfd or action > self.max_ppfd:
-            raise Exception(f"Invalid action: {action} ppfd. Action must be between {self.min_ppfd} ppfd and {self.max_ppfd} ppfd.")
+            raise Exception(
+                f"Invalid action: {action} ppfd. Action must be between {self.min_ppfd} ppfd and {self.max_ppfd} ppfd."
+            )
 
         self.steps += 1
         self.dli += action
 
-        tod = self.get_tod()        
+        tod = self.get_tod()
         area = self.get_area(tod, action)
         self.area_record[tod] = area
 
@@ -149,20 +163,14 @@ class CleanPlantSimulator(BaseEnvironment):
         gaussian = np.exp(-0.5 * ((x - mu) / stdev) ** 2)
         shift = np.exp(-0.5 * ((0 - mu) / stdev) ** 2)
         return gaussian - shift
-    
+
     def is_night(self, tod) -> bool:
-        is_night = (
-            tod.hour >= self.sim_end_hour
-            or tod.hour < self.sim_start_hour
-        )
+        is_night = tod.hour >= self.sim_end_hour or tod.hour < self.sim_start_hour
         return is_night
-    
+
     def is_first_tod(self, tod) -> bool:
-        is_first_tod = (
-            tod.hour == self.sim_start_hour
-            and tod.minute == 5
-        )
+        is_first_tod = tod.hour == self.sim_start_hour and tod.minute == 5
         return is_first_tod
-    
+
     def get_info(self):
         return {"gamma": self.gamma}
