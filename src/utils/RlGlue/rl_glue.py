@@ -221,7 +221,9 @@ class AsyncRLGlue:
     def log(self):
         if self.is_mock_env:
             return
-
+        # Only execute the rest if minutes are divisible by 5
+        if self.environment.time.minute % 5 != 0:  # type: ignore
+            return
         img_name = self.save_images(self.dataset_path, self.images_save_keys)
         raw_csv_path = self.dataset_path / "raw.csv"
         self.append_csv(None, raw_csv_path, img_name, self.last_interaction)  # type: ignore
