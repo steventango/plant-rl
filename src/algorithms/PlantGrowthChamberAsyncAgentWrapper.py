@@ -17,7 +17,7 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
     def __init__(self, agent: BaseAgent):
         super().__init__(agent)
         self.action_timestep = timedelta(
-            minutes=agent.params.get("action_timestep", 10)
+            minutes=agent.params.get("action_timestep", 660)
         )
         self.agent_started = False
         self.enforce_night = agent.params.get("enforce_night", True)
@@ -169,7 +169,10 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
         assert self.env_local_time is not None, (
             "Environment local time must be set before checking action timestep."
         )
-        should_poll = self.env_local_time.minute % action_timestep_minutes == 0
+        # Will have to change again if we go longer than a day
+        should_poll = (
+            self.env_local_time.hour * 60 + self.env_local_time.minute
+        ) % action_timestep_minutes == 0
 
         if time_since_last_action >= self.action_timestep or should_poll:
             logger.debug(
