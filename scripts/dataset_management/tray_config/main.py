@@ -9,8 +9,7 @@ UPDATE_CONFIG = True  # When True, updates configs in PlantGrowthChamber directo
 
 # Base directories containing the datasets
 BASE_DIRS = chain(
-    Path("/data/online/E10/P0").rglob("*"),
-    [Path("/data/online/A0/P0/MotionTrackingControllerExp6")],
+    Path("/data/online/E11/P0").rglob("*"),
 )
 
 
