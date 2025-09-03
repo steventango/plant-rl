@@ -1,7 +1,6 @@
 import logging
 
 import numpy as np
-from RlGlue.environment import BaseEnvironment
 import datetime
 from collections import defaultdict
 from utils.RlGlue.environment import BaseAsyncEnvironment
