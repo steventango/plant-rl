@@ -408,9 +408,9 @@ class TrayConfigApp:
         # ]
         # image_path = sorted_images[19] if len(sorted_images) > 19 else None
 
-        # if image_path is None:
-        #     messagebox.showerror("Error", f"No images found in {image_dir}")
-        #     return
+        if image_path is None:
+            messagebox.showerror("Error", f"No images found in {image_dir}")
+            return
 
         # Load image
         try:
