@@ -2,6 +2,8 @@ import logging
 
 import numpy as np
 from RlGlue.environment import BaseEnvironment
+import datetime
+from collections import defaultdict
 
 logger = logging.getLogger("rlglue")
 logger.setLevel(logging.DEBUG)
@@ -9,119 +11,166 @@ logger.setLevel(logging.DEBUG)
 
 class CleanPlantSimulator(BaseEnvironment):
     """
-    Simulate the evolution of plant area based on lighting conditions.
+    Simulate the dynamics of plant area under changing lighting condition.
     Assumptions: (i) Plant motion throughout each day is modeled by a gaussian curve.
-                 (ii) Growth only occurs at night. Overnight growth is 20% if lighting is standard.
-                 (iii) Poor lighting reduces overnight growth and affects the shape of the gaussian curve.
-    State = [time of day,
-             plant area,
-             plant openness,
-             daily light integral (dli)] (all normalized to [0,1])
-    Action = 1D continuous intensity. 0 is off. 1 is standard.
+                 (ii) Growth only occurs at night. Overnight growth is 20% if lighting is optimal.
+                 (iii) Suboptimal lighting reduces overnight growth and affects the shape of the gaussian curve.
+    State = [local time, mean plant area]
+    Action = intensity in the range [0 ppfd, 150 ppfd]. 100 ppfd is optimal. Spectral composition is standard.
     Reward = percentage or raw overnight growth assigned to last time stamp of each day
     """
 
     def __init__(self, **kwargs):
-        self.state_dim = (4,)
-        self.current_state = np.empty(4)
+        self.state_dim = (2,)
+        self.current_state = np.empty(2)
+
+        self.percent_reward = kwargs.get("percent_reward", True)
 
         self.time_step = 5  # minutes
-        self.duration = 14  # days
-        self.steps_per_day = int(12 * 60 / self.time_step)
-        self.total_steps = int(self.steps_per_day * self.duration)
+        self.run_duration = 14  # days
+        self.steps_per_day = int(24 * 60 / self.time_step)
+        self.total_steps = int(self.steps_per_day * self.run_duration)
 
-        self.steps = 0
-        self.dli = 0
-        self.current_morning_size = 1
-
-        self.gamma = 1.0
-
-        self.daily_reward = kwargs.get("daily_reward", True)
-
-    def get_observation(self):
-        area = self.current_morning_size + self.daily_area_curve(
-            self.steps % self.steps_per_day
+        # Agent must keep light off outside this time range
+        self.sim_start_hour = 9
+        self.sim_end_hour = 21
+        self.sim_steps_per_day = int(
+            (self.sim_end_hour - self.sim_start_hour) * 60 / self.time_step
         )
 
-        tod = self.steps % self.steps_per_day
-        daily_light_integral = self.dli
-        openness = area / self.current_morning_size
-
-        observation = np.hstack(
-            [
-                self.normalize(tod, 0, self.steps_per_day),
-                self.normalize(area, 0.5, 14),
-                self.normalize(openness, 0.97, 1.15),
-                self.normalize(daily_light_integral, 0, self.steps_per_day),
-            ]
+        self.steps = 0
+        self.start_time = datetime.datetime.now().replace(
+            hour=0, minute=0, second=0, microsecond=0
         )
 
-        return observation
+        self.min_ppfd = 0
+        self.max_ppfd = 150
+        self.optimal_ppfd = 100
 
-    def get_reward(self, percent_overnight_growth):
-        if self.daily_reward:
-            return self.normalize(percent_overnight_growth, 0, 0.2)
-        else:
-            return self.normalize(
-                self.current_morning_size * percent_overnight_growth, 0, 2
-            )
-
-    def get_light_amount(self, action):
-        return action
-
-    def start(self):
-        self.steps = 0
-        self.current_morning_size = 1
+        self.initial_size = 300  # mm^2
+        self.area_record = defaultdict(float)
+        self.last_action = 0
         self.dli = 0
 
-        self.current_state = self.get_observation()
+        self.gamma = 0.99
 
-        return self.current_state, self.get_info()
+    def get_tod(self):
+        day = self.steps // self.steps_per_day
+        minutes_today = (self.steps % self.steps_per_day) * self.time_step
+        hour = minutes_today // 60
+        minute = minutes_today % 60
+        tod = self.start_time.replace(hour=hour, minute=minute) + datetime.timedelta(
+            days=day
+        )
+        return tod
 
-    def step(self, action):
-        self.steps += 1
-        self.dli += self.get_light_amount(action)
-
-        if self.steps % self.steps_per_day == 0:  # if transitioning overnight
-            if self.dli <= self.steps_per_day:
-                percent_overnight_growth = 0.2 * self.normalize(
-                    self.dli, 0, self.steps_per_day
-                )
+    def get_area(self, tod, action):
+        # If morning, increase area by overnight growth
+        if self.is_first_tod(tod):
+            daily_optimal_ppfd = self.sim_steps_per_day * self.optimal_ppfd
+            if self.dli <= daily_optimal_ppfd:
+                percent_overnight_growth = 0.2 * (self.dli / daily_optimal_ppfd)
             else:
-                percent_overnight_growth = 0.2 * self.normalize(
-                    2 * self.steps_per_day - self.dli, 0, self.steps_per_day
+                percent_overnight_growth = 0.2 * (
+                    (2 * daily_optimal_ppfd - self.dli) / daily_optimal_ppfd
                 )
-            self.reward = self.get_reward(percent_overnight_growth)
             self.current_morning_size += (
                 self.current_morning_size * percent_overnight_growth
             )
-            self.dli = 0
-        else:
-            self.reward = 0
+            self.dli = 0  # Reset daily light integral
 
-        self.current_state = self.get_observation()
+        if action == 0:
+            area = 0
+        else:
+            steps_since_midnight = self.steps % self.steps_per_day
+            steps_since_morning = (
+                steps_since_midnight - self.sim_start_hour * 60 / self.time_step
+            )
+            area = self.current_morning_size * (
+                1 + self.daily_area_curve(steps_since_morning)
+            )
+        return area
+
+    def reward_function(self, tod):
+        if self.is_first_tod(tod):
+            yesterday_first_tod = tod - datetime.timedelta(days=1)
+            current_area = self.area_record[tod]
+            yesterday_area = self.area_record.get(yesterday_first_tod, 0.0)
+
+            if yesterday_area == 0.0:
+                return 0
+
+            if self.percent_reward:
+                return current_area / yesterday_area - 1
+            else:
+                return current_area - yesterday_area
+        else:
+            return 0
+
+    def start(self):
+        self.steps = 0
+        self.current_morning_size = self.initial_size
+        self.area_record = defaultdict(float)
+        action = 0
+        self.dli = 0
+
+        tod = self.get_tod()
+        area = self.get_area(tod, action)
+        self.area_record[tod] = area
+
+        state = np.array([tod, area])
+
+        return state, self.get_info()
+
+    def step(self, action):
+        # Make sure the agent turns off light at night
+        last_tod = self.get_tod()
+        if self.is_night(last_tod) and action != 0:
+            raise Exception("Your agent didn't turn off light at night.")
+
+        # Make sure the agent selects a valid action
+        if action < self.min_ppfd or action > self.max_ppfd:
+            raise Exception(
+                f"Invalid action: {action} ppfd. Action must be between {self.min_ppfd} ppfd and {self.max_ppfd} ppfd."
+            )
+
+        self.steps += 1
+        self.dli += action
+
+        tod = self.get_tod()
+        area = self.get_area(tod, action)
+        self.area_record[tod] = area
+
+        state = np.array([tod, area])
+        reward = self.reward_function(tod)
 
         if self.steps == self.total_steps:
-            return self.reward, self.current_state, True, self.get_info()
+            return reward, state, True, self.get_info()
         else:
-            return self.reward, self.current_state, False, self.get_info()
-
-    def get_info(self):
-        return {"gamma": self.gamma}
-
-    def normalize(self, x, lower, upper):
-        return (x - lower) / (upper - lower)
+            return reward, state, False, self.get_info()
 
     def daily_area_curve(self, x):
         """
         Model the daily area curve by a Gaussian curve.
         Input: x is the number of steps so far today.
         """
-        slowing = 1 + (x - self.dli) / self.steps_per_day
+        normalized_dli = self.dli / self.optimal_ppfd
+        slowing = 1 + (x - normalized_dli) / self.sim_steps_per_day
         x = x / slowing
 
-        stdev = self.steps_per_day
-        mu = self.steps_per_day / 2
-        gaussian = self.current_morning_size * np.exp(-0.5 * ((x - mu) / stdev) ** 2)
-        shift = self.current_morning_size * np.exp(-0.5 * ((0 - mu) / stdev) ** 2)
+        stdev = self.sim_steps_per_day
+        mu = self.sim_steps_per_day / 2
+        gaussian = np.exp(-0.5 * ((x - mu) / stdev) ** 2)
+        shift = np.exp(-0.5 * ((0 - mu) / stdev) ** 2)
         return gaussian - shift
+
+    def is_night(self, tod) -> bool:
+        is_night = tod.hour >= self.sim_end_hour or tod.hour < self.sim_start_hour
+        return is_night
+
+    def is_first_tod(self, tod) -> bool:
+        is_first_tod = tod.hour == self.sim_start_hour and tod.minute == 5
+        return is_first_tod
+
+    def get_info(self):
+        return {"gamma": self.gamma}
