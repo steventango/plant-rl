@@ -165,14 +165,11 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
         )
         time_since_last_action = self.env_time - self.last_action_time
 
-        action_timestep_minutes = self.action_timestep.total_seconds() / 60
         assert self.env_local_time is not None, (
             "Environment local time must be set before checking action timestep."
         )
         # Will have to change again if we go longer than a day
-        should_poll = (
-            self.env_local_time.hour * 60 + self.env_local_time.minute
-        ) % action_timestep_minutes == 0
+        should_poll = self.env_local_time.hour == 9 and self.env_local_time.minute == 30
 
         if time_since_last_action >= self.action_timestep or should_poll:
             logger.debug(
