@@ -12,8 +12,9 @@ results.tar*
 *.out
 images/
 
-# ignore some notebooks
-analysis/test_notebooks/
+# ignore some personal work
+test_notebooks/
+old_work
 
 # ignore checkpoints
 checkpoints

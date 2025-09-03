@@ -30,15 +30,19 @@ class AsyncRLGlue:
         self,
         agent: BaseAsyncAgent,
         env: BaseAsyncEnvironment,
-        dataset_path: Path,
+        dataset_path: Path | None,
         images_save_keys: set[str] | None,
     ):
         self.environment = env
         self.agent = agent
 
-        self.dataset_path = dataset_path
-        self.is_mock_env = self.environment.__class__.__name__.startswith("Mock")
-        if not self.is_mock_env:
+        self.dataset_path = (
+            dataset_path if dataset_path is not None else Path("/data/temp")
+        )
+        self.is_mock_env = self.environment.__class__.__name__.startswith(
+            "Mock"
+        ) or self.environment.__class__.__name__.endswith("Simulator")
+        if not self.is_mock_env and dataset_path is not None:
             dataset_path.mkdir(parents=True, exist_ok=True)
         if images_save_keys is None:
             self.images_save_keys = default_save_keys
