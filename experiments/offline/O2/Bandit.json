@@ -5,7 +5,7 @@
     "episode_cutoff": -1,
     "metaParameters": {
         "environment":{
-            "dataset_path": "/data/nazmus_exp/z11c1",
+            "dataset_path": "/data/online/E9/P1/Poisson1/alliance-zone01/",
             "timezone": "America/Edmonton",
             "mock_area": true,
             "simulate": true

@@ -400,6 +400,13 @@ class TrayConfigApp:
             ),
             None,
         )
+        # # Find the 20th most recent image file (e.g., .png, .jpg)
+        # sorted_images = [
+        #     image_file
+        #     for image_file in sorted(image_dir.glob("*"), reverse=True)
+        #     if image_file.suffix.lower() in {".png", ".jpg", ".jpeg"}
+        # ]
+        # image_path = sorted_images[19] if len(sorted_images) > 19 else None
 
         if image_path is None:
             messagebox.showerror("Error", f"No images found in {image_dir}")
