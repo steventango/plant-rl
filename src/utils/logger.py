@@ -205,7 +205,8 @@ def log(
 
     end_time = time.time()
     log_time = end_time - start_time
-    logger.debug(f"Logging data to wandb took {log_time:.4f} seconds")
+    if not is_mock_env:
+        logger.debug(f"Logging data to wandb took {log_time:.4f} seconds")
 
 
 MAX_TITLE_LENGTH = 64

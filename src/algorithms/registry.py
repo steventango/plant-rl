@@ -9,7 +9,7 @@ from algorithms.PoissonAgent import PoissonAgent
 from algorithms.linear.ESARSA import ESARSA as LinearESARSA
 from algorithms.linear.linearDQN.LinearDynamicBatchDQN import LinearDynamicBatchDQN
 from algorithms.linear.LinearQL import LinearQL
-from algorithms.MotionTrackingController import MotionTrackingController
+from algorithms.motion_tracking.MotionTrackingController import MotionTrackingController
 from algorithms.nn.DQN import DQN
 from algorithms.nn.DynamicBatchDQN import DynamicBatchDQN
 from algorithms.nn.EQRC import EQRC

@@ -1,5 +1,6 @@
 import os
 import sys
+import asyncio
 
 sys.path.append(os.getcwd())
 import argparse
@@ -22,160 +23,180 @@ from problems.registry import getProblem
 from utils.checkpoint import Checkpoint
 from utils.logger import log
 from utils.preempt import TimeoutHandler
-from utils.RlGlue.rl_glue import LoggingRlGlue
-
-# ------------------
-# -- Command Args --
-# ------------------
-parser = argparse.ArgumentParser()
-parser.add_argument("-e", "--exp", type=str, required=True)
-parser.add_argument("-i", "--idxs", nargs="+", type=int, required=True)
-parser.add_argument("--save_path", type=str, default="./")
-parser.add_argument("--checkpoint_path", type=str, default="./checkpoints/")
-parser.add_argument("--silent", action="store_true", default=False)
-parser.add_argument("--gpu", action="store_true", default=False)
-
-args = parser.parse_args()
-
-# ---------------------------
-# -- Library Configuration --
-# ---------------------------
+from utils.RlGlue.rl_glue import AsyncRLGlue
 
 
-device = "gpu" if args.gpu else "cpu"
-jax.config.update("jax_platform_name", device)
+async def main():
+    # ------------------
+    # -- Command Args --
+    # ------------------
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-e", "--exp", type=str, required=True)
+    parser.add_argument("-i", "--idxs", nargs="+", type=int, required=True)
+    parser.add_argument("--save_path", type=str, default="./")
+    parser.add_argument("--checkpoint_path", type=str, default="./checkpoints/")
+    parser.add_argument("--silent", action="store_true", default=False)
+    parser.add_argument("--gpu", action="store_true", default=False)
+    args = parser.parse_args()
+    # ---------------------------
+    # -- Library Configuration --
+    # ---------------------------
+    device = "gpu" if args.gpu else "cpu"
+    jax.config.update("jax_platform_name", device)
 
-logging.basicConfig(level=logging.ERROR)
-logger = logging.getLogger("exp")
-prod = "cdr" in socket.gethostname() or args.silent
-if not prod:
-    logger.setLevel(logging.DEBUG)
+    logging.basicConfig(level=logging.ERROR)
+    logger = logging.getLogger("exp")
+    prod = "cdr" in socket.gethostname() or args.silent
+    if not prod:
+        logger.setLevel(logging.DEBUG)
+    # ----------------------
+    # -- Experiment Def'n --
+    # ----------------------
+    timeout_handler = TimeoutHandler()
 
-# ----------------------
-# -- Experiment Def'n --
-# ----------------------
-timeout_handler = TimeoutHandler()
+    exp = ExperimentModel.load(args.exp)
+    indices = args.idxs
 
-exp = ExperimentModel.load(args.exp)
-indices = args.idxs
+    Problem = getProblem(exp.problem)
+    for idx in indices:
+        chk = Checkpoint(exp, idx, base_path=args.checkpoint_path)
+        chk.load_if_exists()
+        timeout_handler.before_cancel(chk.save)
 
-Problem = getProblem(exp.problem)
-for idx in indices:
-    chk = Checkpoint(exp, idx, base_path=args.checkpoint_path)
-    chk.load_if_exists()
-    timeout_handler.before_cancel(chk.save)
-
-    collector = chk.build(
-        "collector",
-        lambda: Collector(
-            # specify which keys to actually store and ultimately save
-            # Options are:
-            #  - Identity() (save everything)
-            #  - Window(n)  take a window average of size n
-            #  - Subsample(n) save one of every n elements
-            config={
-                "return": Identity(),  # total reward at the end of episode
-                "reward": Identity(),  # reward at each step
-                "episode": Identity(),
-                "steps": Identity(),
-                "action": Identity(),
-            },
-            default=Ignore(),
-        ),
-    )
-    collector.setIdx(idx)
-    run = exp.getRun(idx)
-
-    # set random seeds accordingly, with optional offset
-    params = exp.get_hypers(idx)
-    seed = run + params.get("experiment", {}).get("seed_offset", 0)
-
-    # Seed various modules
-    np.random.seed(seed)
-    random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.backends.cudnn.deterministic = True
-
-    # build stateful things and attach to checkpoint
-    problem = chk.build("p", lambda: Problem(exp, idx, collector))
-    agent = chk.build("a", problem.getAgent)
-    env = chk.build("e", problem.getEnvironment)
-
-    glue = chk.build("glue", lambda: LoggingRlGlue(agent, env))
-    chk.initial_value("episode", 0)
-
-    context = exp.buildSaveContext(idx, base=args.save_path)
-    agent_path = Path(context.resolve()).relative_to("results")
-
-    config = {**problem.params, "context": str(agent_path)}
-
-    wandb_run = wandb.init(
-        entity="plant-rl",
-        project="sim",
-        notes=str(agent_path),
-        config=config,
-        settings=wandb.Settings(
-            x_stats_disk_paths=("/", "/data"),
-        ),
-    )
-
-    # Run the experiment
-    start_time = time.time()
-
-    # if we haven't started yet, then make the first interaction
-    if glue.total_steps == 0:
-        s, a, info = glue.start()
-        log(env, glue, wandb_run, s, a, info)
-
-    for step in range(glue.total_steps, exp.total_steps):
-        collector.next_frame()
-        chk.maybe_save()
-        interaction = glue.step()
-        log(
-            env,
-            glue,
-            wandb_run,
-            interaction.o,
-            interaction.a,
-            interaction.extra,
-            r=interaction.r,
+        collector = chk.build(
+            "collector",
+            lambda: Collector(
+                # specify which keys to actually store and ultimately save
+                # Options are:
+                #  - Identity() (save everything)
+                #  - Window(n)  take a window average of size n
+                #  - Subsample(n) save one of every n elements
+                config={
+                    "return": Identity(),  # total reward at the end of episode
+                    "reward": Identity(),  # reward at each step
+                    "episode": Identity(),
+                    "steps": Identity(),
+                    "action": Identity(),
+                },
+                default=Ignore(),
+            ),
         )
+        collector.setIdx(idx)
+        run = exp.getRun(idx)
 
-        collector.collect("reward", interaction.r)
-        collector.collect("episode", chk["episode"])
-        collector.collect("steps", glue.num_steps)
-        collector.collect(
-            "action", interaction.a
-        )  # or int.from_bytes(glue.last_action, byteorder='little') for GAC
+        # set random seeds accordingly, with optional offset
+        params = exp.get_hypers(idx)
+        seed = run + params.get("experiment", {}).get("seed_offset", 0)
 
-        if interaction.t or (
-            exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff
-        ):
-            # allow agent to cleanup traces or other stateful episodic info
-            agent.cleanup()
+        # Seed various modules
+        np.random.seed(seed)
+        random.seed(seed)
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed(seed)
+        torch.backends.cudnn.deterministic = True
 
-            # Collect total reward
-            collector.collect("return", glue.total_reward)
+        # build stateful things and attach to checkpoint
+        problem = chk.build("p", lambda: Problem(exp, idx, collector))
+        agent = chk.build("a", problem.getAgent)
+        env = chk.build("e", problem.getEnvironment)
 
-            # track how many episodes are completed (cutoff is counted as termination for this count)
-            chk["episode"] += 1
-
-            # compute the average time-per-step in ms
-            avg_time = 1000 * (time.time() - start_time) / (step + 1)
-            fps = step / (time.time() - start_time)
-
-            episode = chk["episode"]
-            logger.debug(
-                f"{episode} {step} {glue.total_reward} {avg_time:.4}ms {int(fps)}"
+        # glue = chk.build("glue", lambda: LoggingRlGlue(agent, env))
+        def glue_builder():
+            assert env is not None, (
+                "Environment must be initialized before creating glue."
+            )
+            return AsyncRLGlue(
+                agent,
+                env,
+                dataset_path=None,
+                images_save_keys=None,
             )
 
-            glue.start()
+        glue = chk.build("glue", glue_builder)
+        chk.initial_value("episode", 0)
 
-    collector.reset()
+        context = exp.buildSaveContext(idx, base=args.save_path)
+        agent_path = Path(context.resolve()).relative_to("results")
 
-    # ------------
-    # -- Saving --
-    # ------------
-    saveCollector(exp, collector, base=args.save_path)
-    chk.delete()
+        config = {**problem.params, "context": str(agent_path)}
+
+        wandb_run = wandb.init(
+            entity="plant-rl",
+            project="sim",
+            notes=str(agent_path),
+            config=config,
+            settings=wandb.Settings(
+                x_stats_disk_paths=("/", "/data"),
+            ),
+        )
+
+        # Run the experiment
+        start_time = time.time()
+        is_mock_env = True
+
+        # if we haven't started yet, then make the first interaction
+        if glue.total_steps == 0:
+            interaction = await glue.start()
+            log(
+                env,
+                glue,
+                wandb_run,
+                interaction.o,
+                interaction.a,
+                interaction.extra,
+                is_mock_env,
+            )
+
+        for step in range(glue.total_steps, exp.total_steps):
+            collector.next_frame()
+            chk.maybe_save()
+            interaction = await glue.step()
+            log(
+                env,
+                glue,
+                wandb_run,
+                interaction.o,
+                interaction.a,
+                interaction.extra,
+                is_mock_env,
+                r=interaction.r,
+            )
+
+            collector.collect("reward", interaction.r)
+            collector.collect("episode", chk["episode"])
+            collector.collect("steps", glue.num_steps)
+            collector.collect(
+                "action", interaction.a
+            )  # or int.from_bytes(glue.last_action, byteorder='little') for GAC
+
+            if interaction.t or (
+                exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff
+            ):
+                # Collect total reward
+                collector.collect("return", glue.total_reward)
+
+                # track how many episodes are completed (cutoff is counted as termination for this count)
+                chk["episode"] += 1
+
+                # compute the average time-per-step in ms
+                avg_time = 1000 * (time.time() - start_time) / (step + 1)
+                fps = step / (time.time() - start_time)
+
+                episode = chk["episode"]
+                logger.debug(
+                    f"{episode} {step} {glue.total_reward} {avg_time:.4}ms {int(fps)}"
+                )
+
+                await glue.start()
+
+        collector.reset()
+
+        # ------------
+        # -- Saving --
+        # ------------
+        saveCollector(exp, collector, base=args.save_path)
+        chk.delete()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
