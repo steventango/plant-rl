@@ -4,6 +4,7 @@ from datetime import timedelta
 from collections import defaultdict
 from typing import Any, Dict
 import numpy as np
+# import matplotlib.pyplot as plt
 
 from algorithms.BaseAgent import BaseAgent
 from utils.RlGlue.agent import AsyncAgentWrapper
@@ -18,40 +19,43 @@ logger.setLevel(logging.DEBUG)
 class MotionTrackingWrapper(AsyncAgentWrapper):
     def __init__(self, agent: BaseAgent):
         super().__init__(agent)
-        self.env_local_time = None
+        # Wrapper params
         self.start_hour = 9
         self.end_hour = 21  # excluded in daytime
         self.time_step = 5  # minutes
-        self.is_first_day = True
-
         self.morning_intensity = (
-            50.0  # Fixed at a dim level at which CV still functions well.
+            50.0  # Fixed at a dim level at which CV still functions well
         )
-        self.target_intensity = 110.0  # Its optimal value depends on plant species, developmental stage, and environmental factors. Tuned by the RL agent daily.
+        self.target_intensity = 100.0  # Its optimal value depends on plant species, developmental stage, and environmental factors. Tuned by the RL agent daily.
+
+        # Agent params
+        self.agent_Imax = 150.0
+        self.agent_increment = 50
+        self.actions = [-1, 0, 1]
+
+        self.is_first_day = True
+        self.agent_started = False
+
         self.sensitivity = uema(
             alpha=0.1
         )  # = (change in intensity) / (change in plants openness). Adjusted daily by motion tracker to attempt to reach target_intensity at max openness.
-
         self.mean_areas = defaultdict(float)
         self.openness_record = []
         self.openness_trace = uema(alpha=0.1)
-
-        # RL agent stuff
-        self.agent_started = False
-        self.agent_Imin = 50.0
-        self.agent_Imax = 150.0
-        self.agent_increment = 10.0
 
     def get_action(self) -> float:
         if self.is_first_day:
             return self.target_intensity
         else:
             openness = self.openness_trace.compute().item()
-            proposed_action = (
-                self.morning_intensity
-                + self.sensitivity.compute().item() * np.log(100 * openness + 1)
-            )
-            return max(min(proposed_action, self.agent_Imax), self.agent_Imin)
+            if openness < 0:
+                return self.morning_intensity
+            else:
+                proposed_action = (
+                    self.morning_intensity
+                    + self.sensitivity.compute().item() * np.log(100 * openness + 1)
+                )
+                return min(proposed_action, self.agent_Imax)
 
     def adjust_sensitivity(self):
         max_openness = np.mean(np.sort(self.openness_record)[-5:])
@@ -60,21 +64,25 @@ class MotionTrackingWrapper(AsyncAgentWrapper):
         ) / np.log(100 * max_openness + 1)
         self.sensitivity.update(proposed_sensitivity)
         logger.info(
-            f"Set target_intensity = {self.target_intensity}. Set sensitivity = {self.sensitivity.compute().item():.2f}."
-        )
+            f"Set target_intensity = {self.target_intensity}"
+        )  # Set sensitivity = {self.sensitivity.compute().item():.2f}."
 
     def reward(self):
-        if self.env_local_time is not None:
-            current_time = self.env_local_time.replace(second=0, microsecond=0)
-            current_area = self.mean_areas.get(current_time, -1)
-            yesterday_area = self.mean_areas.get(current_time - timedelta(days=1), -1)
-            return current_area / yesterday_area - 1
-        else:
+        current_time = self.env_local_time.replace(second=0, microsecond=0)
+        current_area = self.mean_areas.get(current_time, -1)
+        yesterday_area = self.mean_areas.get(current_time - timedelta(days=1), -1)
+        if yesterday_area == -1 or current_area == -1:
             return 0.0
+        else:
+            return 100 * (current_area / yesterday_area - 1)
 
     async def start(self, observation: np.ndarray, extra: Dict[str, Any]):  # type: ignore
+        self.agent_started = False
+        self.is_first_day = True
+        self.mean_areas = defaultdict(float)
         self.openness_trace.reset()
         self.openness_record = []
+        self.sensitivity.reset()
 
         self.env_local_time = observation[0]
         mean_area = observation[1]
@@ -95,49 +103,18 @@ class MotionTrackingWrapper(AsyncAgentWrapper):
         return action, {}
 
     async def step(self, reward: float, observation: np.ndarray, extra: Dict[str, Any]):
+        # Get observations
         self.env_local_time = observation[0]
         mean_area = observation[1]
         self.mean_areas[self.env_local_time.replace(second=0, microsecond=0)] = float(
             mean_area
         )
 
-        # Poll RL agent every morning (starting on day 2)
-        if (
-            self.is_first_tod()
-            and len(self.openness_record)
-            == (self.end_hour - self.start_hour) * 60 / self.time_step - 1
-        ):
-            if not self.agent_started:
-                logger.info(f"Starting RL agent at {self.env_local_time}")
-                agent_action, _ = await asyncio.to_thread(
-                    self.agent.start,
-                    np.hstack([self.openness_record, self.target_intensity]),
-                    extra,
-                )
-                logger.debug(f"agent starts, agent_action={agent_action}")
-                tune_target = agent_action * self.agent_increment
-                self.agent_started = True
-                self.is_first_day = False
-            else:
-                logger.info(f"Polling RL agent at {self.env_local_time}.")
-                agent_action, _ = await asyncio.to_thread(
-                    self.agent.step,
-                    self.reward(),
-                    np.hstack([self.openness_record, self.target_intensity]),
-                    extra,
-                )
-                logger.debug(f"agent steps, agent_action={agent_action}")
-                tune_target = agent_action * self.agent_increment
+        # Poll RL agent every morning
+        if self.is_first_tod():
+            await self.poll_agent(extra)
 
-            self.target_intensity = min(
-                max(self.target_intensity + tune_target, self.agent_Imin),
-                self.agent_Imax,
-            )
-            self.adjust_sensitivity()
-
-            self.openness_record = []
-            self.openness_trace.reset()
-
+        # Return next intensity in ppfd
         if self.is_night():
             action = 0.0
         elif self.is_zeroth_tod():
@@ -174,6 +151,56 @@ class MotionTrackingWrapper(AsyncAgentWrapper):
 
     async def end(self, reward: float, extra: Dict[str, Any]):
         return {}
+
+    async def poll_agent(self, extra):
+        # if just starting new run, the previous day was the terminal day
+        if (
+            len(self.openness_record)
+            != (self.end_hour - self.start_hour) * 60 / self.time_step - 1
+        ):
+            _ = await asyncio.to_thread(
+                self.agent.end,
+                0.0,
+                extra,
+            )
+            return
+
+        # Use daily openness curve as state
+        ob = np.array(self.openness_record)
+        ob = ob / np.max(ob)
+
+        if not self.agent_started:
+            # logger.info(f"Starting RL agent at {self.env_local_time}")
+            agent_action, _ = await asyncio.to_thread(
+                self.agent.start,
+                ob,
+                extra,
+            )
+            change_target_intensity = self.actions[agent_action] * self.agent_increment
+            self.agent_started = True
+            self.is_first_day = False
+        else:
+            # logger.info(f"Polling RL agent at {self.env_local_time}.")
+            agent_action, _ = await asyncio.to_thread(
+                self.agent.step,
+                self.reward(),
+                ob,
+                extra,
+            )
+
+            change_target_intensity = self.actions[agent_action] * self.agent_increment
+
+        self.target_intensity = min(
+            max(
+                self.target_intensity + change_target_intensity, self.morning_intensity
+            ),
+            self.agent_Imax,
+        )
+
+        self.adjust_sensitivity()
+
+        self.openness_record = []
+        self.openness_trace.reset()
 
     def is_night(self) -> bool:
         assert self.env_local_time is not None, (

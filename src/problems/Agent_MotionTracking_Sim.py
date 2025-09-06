@@ -14,13 +14,13 @@ from PyExpUtils.collection.Collector import Collector
 from environments.Simulator.CleanPlantSimulator import CleanPlantSimulator as Env
 
 
-class ConstantAgent_MotionTracking(BaseAsyncProblem):
+class Agent_MotionTracking_Sim(BaseAsyncProblem):
     def __init__(self, exp: ExperimentModel, idx: int, collector: Collector):
         super().__init__(exp, idx, collector)
 
         self.env = Env(**self.env_params)
-        self.actions = 1
-        self.observations = (2,)
+        self.actions = 3
+        self.observations = (143,)
 
     def getAgent(self):
         if self.agent is not None:

@@ -16,7 +16,7 @@ class CleanPlantSimulator(BaseAsyncEnvironment):
                  (ii) Growth only occurs at night. Overnight growth is 20% if lighting is optimal.
                  (iii) Suboptimal lighting reduces overnight growth and affects the shape of the gaussian curve.
     State = [local time, mean plant area]
-    Action = intensity in the range [0 ppfd, 150 ppfd]. 100 ppfd is optimal. Spectral composition is standard.
+    Action = intensity in the range [0 ppfd, 150 ppfd]. 100 ppfd (on average) is optimal. Spectral composition is standard.
     Reward = percentage or raw overnight growth assigned to last time stamp of each day
     """
 
@@ -51,8 +51,6 @@ class CleanPlantSimulator(BaseAsyncEnvironment):
         self.area_record = defaultdict(float)
         self.last_action = 0
         self.dli = 0
-
-        self.gamma = 0.99
 
     def get_tod(self):
         day = self.steps // self.steps_per_day
@@ -172,4 +170,4 @@ class CleanPlantSimulator(BaseAsyncEnvironment):
         return is_first_tod
 
     def get_info(self):
-        return {"gamma": self.gamma}
+        return {}

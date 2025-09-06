@@ -1,12 +1,12 @@
 {
     "agent": "ConstantAgent",
-    "problem": "ConstantAgent_MotionTracking",
+    "problem": "Agent_MotionTracking_Sim",
     "total_steps": 4032,
     "episode_cutoff": -1,
     "metaParameters":{
         "environment":{
             "should_track": true
         },
-        "constant_action": 0
+        "constant_action": 0.5
     }
 }

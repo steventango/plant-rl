@@ -120,7 +120,8 @@ class NNAgent(BaseAgent):
         # at the start as if we were passing a tensor, otherwise modules
         # after the FTA application (i.e flatten) will think the (n_hidden x n_tiles)
         # tensor is (n_batch x n_hidden) and not behave correctly.
-        if len(x.shape) > 1 or self.rep_params.get("type", None) == "FTA":
+        rep_type = self.rep_params.get("type", None)
+        if len(x.shape) > 1 or rep_type == "FTA" or rep_type == "1dCNN":
             x = np.expand_dims(x, 0)
             q = self._values(self.state, x)[0]
 

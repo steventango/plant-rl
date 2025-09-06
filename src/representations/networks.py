@@ -109,6 +109,18 @@ def buildFeatureNetwork(inputs: Tuple, params: Dict[str, Any], rng: Any):
                 hk.Flatten(name="phi"),
             ]
 
+        elif name == "1dCNN":
+            kernel_num = params["kernel_num"]
+            kernel_size = params["kernel_size"]
+            stride = params["stride"]
+            w_init = hk.initializers.Orthogonal(np.sqrt(2))
+            layers = [
+                hk.Conv1D(kernel_num, kernel_size, stride, w_init=w_init, name="phi"),
+                jax.nn.relu,
+                hk.Flatten(name="phi"),
+            ]
+            layers += reluLayers([hidden], name="phi")
+
         else:
             raise NotImplementedError()
 
