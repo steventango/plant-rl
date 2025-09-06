@@ -1,0 +1,32 @@
+{
+    "agent": "DQN",
+    "problem": "Agent_MotionTracking_Sim",
+    "total_steps": 500000,
+    "episode_cutoff": -1,
+    "metaParameters":{
+        "environment":{
+            "should_track": false
+        },
+        "epsilon": 0.1,
+        "buffer_type": "uniform",
+        "buffer_size": 200000,
+        "batch": 16,
+        "target_refresh": 16,
+        "update_freq": 1,
+        "optimizer": {
+            "name": "ADAM",
+            "alpha": 0.1,
+            "beta1": 0.9,
+            "beta2": 0.999
+        },
+
+        "representation": {
+            "type": "1dCNN",
+            "kernel_num": 4, 
+            "kernel_size": 16,
+            "stride": 1,
+            "hidden": 32
+        },
+        "gamma": 0.0
+    }
+}
