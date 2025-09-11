@@ -195,7 +195,7 @@ for action in action_rewards.index:
         def mean_statistic(x):
             return np.mean(x)
         
-        res = bootstrap((action_data,), mean_statistic, n_resamples=1000, 
+        res = bootstrap((action_data,), mean_statistic, n_resamples=5000, 
                        confidence_level=0.95, random_state=42)
         ci_lower, ci_upper = res.confidence_interval
         mean_val = np.mean(action_data)
@@ -271,7 +271,7 @@ for i, day in enumerate(unique_days):
                     def mean_statistic(x):
                         return np.mean(x)
                     
-                    res = bootstrap((action_data,), mean_statistic, n_resamples=1000, 
+                    res = bootstrap((action_data,), mean_statistic, n_resamples=5000, 
                                    confidence_level=0.95, random_state=42)
                     ci_lower, ci_upper = res.confidence_interval
                     mean_val = np.mean(action_data)
@@ -317,6 +317,113 @@ plt.suptitle('Average Daily Change in Area by Action - Split by Day\n(with 95% B
              fontsize=14, y=0.98)
 plt.tight_layout()
 plt.savefig("plots/average_reward_by_action_by_day_E11.png", dpi=300, bbox_inches="tight")
+
+# Create plot grouped by first 6 days vs last 6 days
+unique_days = sorted(reward_df_filtered['day'].unique())
+n_total_days = len(unique_days)
+print(f"Total unique days: {n_total_days}")
+
+# Split into first 6 and last 6 days
+first_6_days = unique_days[:6]
+last_6_days = unique_days[-4:]
+
+# Create data groups
+first_6_data = reward_df_filtered[reward_df_filtered['day'].isin(first_6_days)]
+last_6_data = reward_df_filtered[reward_df_filtered['day'].isin(last_6_days)]
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+
+# Plot for first 6 days
+if not first_6_data.empty:
+    first_action_rewards = first_6_data.groupby('action')['reward'].mean()
+    first_action_counts = first_6_data.groupby('action').size()
+    
+    first_confidence_intervals = []
+    for action in first_action_rewards.index:
+        action_data = first_6_data[first_6_data['action'] == action]['reward'].values
+        if len(action_data) > 1:
+            def mean_statistic(x):
+                return np.mean(x)
+            
+            res = bootstrap((action_data,), mean_statistic, n_resamples=5000, 
+                           confidence_level=0.95, random_state=42)
+            ci_lower, ci_upper = res.confidence_interval
+            ci = (ci_upper - ci_lower) / 2
+        else:
+            ci = 0
+        first_confidence_intervals.append(ci)
+    
+    first_actions = list(first_action_rewards.index)
+    first_avg_rewards = list(first_action_rewards.values)
+    first_colors = [action_colors.get(action, 'gray') for action in first_actions]
+    
+    bars1 = ax1.bar(first_actions, first_avg_rewards, color=first_colors, 
+                   yerr=first_confidence_intervals, capsize=5, 
+                   error_kw={'elinewidth': 2, 'capthick': 2})
+    
+    # Add sample size labels
+    for i, (action, bar) in enumerate(zip(first_actions, bars1)):
+        sample_size = first_action_counts[action]
+        bar_height = bar.get_height()
+        ci = first_confidence_intervals[i]
+        ax1.text(bar.get_x() + bar.get_width()/2, bar_height + ci + 0.005, 
+                f'n={sample_size}', ha='center', va='bottom', fontsize=10)
+
+ax1.set_title(f'First 6 Days', fontsize=12)
+ax1.set_xlabel('Action', fontsize=11)
+ax1.set_ylabel('Average Reward', fontsize=11)
+
+# Plot for last 6 days
+if not last_6_data.empty:
+    last_action_rewards = last_6_data.groupby('action')['reward'].mean()
+    last_action_counts = last_6_data.groupby('action').size()
+    
+    last_confidence_intervals = []
+    for action in last_action_rewards.index:
+        action_data = last_6_data[last_6_data['action'] == action]['reward'].values
+        if len(action_data) > 1:
+            def mean_statistic(x):
+                return np.mean(x)
+            
+            res = bootstrap((action_data,), mean_statistic, n_resamples=5000, 
+                           confidence_level=0.95, random_state=42)
+            ci_lower, ci_upper = res.confidence_interval
+            ci = (ci_upper - ci_lower) / 2
+        else:
+            ci = 0
+        last_confidence_intervals.append(ci)
+    
+    last_actions = list(last_action_rewards.index)
+    last_avg_rewards = list(last_action_rewards.values)
+    last_colors = [action_colors.get(action, 'gray') for action in last_actions]
+    
+    bars2 = ax2.bar(last_actions, last_avg_rewards, color=last_colors, 
+                   yerr=last_confidence_intervals, capsize=5, 
+                   error_kw={'elinewidth': 2, 'capthick': 2})
+    
+    # Add sample size labels
+    for i, (action, bar) in enumerate(zip(last_actions, bars2)):
+        sample_size = last_action_counts[action]
+        bar_height = bar.get_height()
+        ci = last_confidence_intervals[i]
+        ax2.text(bar.get_x() + bar.get_width()/2, bar_height + ci + 0.005, 
+                f'n={sample_size}', ha='center', va='bottom', fontsize=10)
+
+ax2.set_title(f'Last 4 days', fontsize=12)
+ax2.set_xlabel('Action', fontsize=11)
+ax2.set_ylabel('Average Reward', fontsize=11)
+
+# Set consistent y-axis limits across both subplots
+all_rewards = reward_df_filtered['reward'].values
+y_min = np.min(all_rewards)
+y_max = np.max(all_rewards) + 0.05
+ax1.set_ylim(y_min, y_max)
+ax2.set_ylim(y_min, y_max)
+
+plt.suptitle('Average Daily Change in Area by Action - First vs Last 6 Days\n(with 95% Bootstrapped Confidence Intervals)', 
+             fontsize=14)
+plt.tight_layout()
+plt.savefig("plots/average_reward_by_action_first_vs_last_6_days_E11.png", dpi=300, bbox_inches="tight")
 
 # plt.show()
 
