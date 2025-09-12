@@ -1,0 +1,13 @@
+{
+    "agent": "DiscreteRandom4",
+    "problem": "CVPlantGrowthChamberColor",
+    "total_steps": 40320,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": "alliance-zone04",
+            "timezone": "America/Edmonton"
+        },
+        "timezone": "America/Edmonton"
+    }
+}
