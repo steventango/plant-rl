@@ -1,4 +1,3 @@
-import numpy as np  # type: ignore
 from datetime import timedelta
 from utils.constants import BALANCED_ACTION_100
 
