@@ -28,4 +28,4 @@ class CVPlantGrowthChamberIntensity_MotionTracking(CVPlantGrowthChamberIntensity
         else:
             mean_area = 0.0
 
-        return np.array([local_time, mean_area])
+        return [local_time, mean_area]
