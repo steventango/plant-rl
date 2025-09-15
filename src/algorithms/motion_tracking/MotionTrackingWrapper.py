@@ -2,14 +2,13 @@ import asyncio
 import logging
 from datetime import timedelta
 from collections import defaultdict
-from typing import Any, Dict, Tuple
+from typing import Any, Dict
 import numpy as np
 
 from algorithms.BaseAgent import BaseAgent
 from utils.RlGlue.agent import AsyncAgentWrapper
 from utils.metrics import UnbiasedExponentialMovingAverage as uema
 from utils.checkpoint import checkpointable
-from PyExpUtils.collection.Collector import Collector
 
 logger = logging.getLogger("plant_rl.MotionTrackingWrapper")
 logger.setLevel(logging.DEBUG)
@@ -27,16 +26,9 @@ logger.setLevel(logging.DEBUG)
     )
 )
 class MotionTrackingWrapper(AsyncAgentWrapper):
-    def __init__(
-        self,
-        observations: Tuple[int, ...],
-        actions: int,
-        params: Dict,
-        collector: Collector,
-        seed: int,
-        agent: BaseAgent,
-    ):
-        super().__init__(observations, actions, params, collector, seed, agent)
+    def __init__(self, agent: BaseAgent):
+        super().__init__(agent)
+
         # Wrapper params
         self.start_hour = 9
         self.end_hour = 21  # excluded in daytime

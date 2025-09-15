@@ -4,10 +4,6 @@ from typing import Any
 
 from RlGlue.agent import BaseAgent as RlGlueBaseAgent
 
-from typing import Dict, Tuple
-import numpy as np
-from PyExpUtils.collection.Collector import Collector
-
 
 class BaseAgent(RlGlueBaseAgent):
     @abstractmethod
@@ -56,22 +52,7 @@ class BaseAsyncAgent:
 
 
 class AsyncAgentWrapper(BaseAsyncAgent):
-    def __init__(
-        self,
-        observations: Tuple[int, ...],
-        actions: int,
-        params: Dict,
-        collector: Collector | None,
-        seed: int,
-        agent: BaseAgent,
-    ):
-        self.observations = observations
-        self.actions = actions
-        self.params = params
-        self.collector = collector
-        self.seed = seed
-        self.rng = np.random.default_rng(seed)
-
+    def __init__(self, agent: BaseAgent):
         self.agent = agent
 
     async def start(
@@ -98,18 +79,7 @@ class AsyncAgentWrapper(BaseAsyncAgent):
     # -- Checkpointing --
     # -------------------
     def __getstate__(self):
-        return {
-            "__args": (
-                self.observations,
-                self.actions,
-                self.params,
-                self.collector,
-                self.seed,
-                self.agent,
-            ),
-            "rng": self.rng,
-        }
+        return {"__args": (self.agent,)}
 
     def __setstate__(self, state):
         self.__init__(*state["__args"])
-        self.rng = state["rng"]
