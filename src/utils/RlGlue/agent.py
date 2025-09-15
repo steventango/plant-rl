@@ -63,7 +63,7 @@ class AsyncAgentWrapper(BaseAsyncAgent):
         params: Dict,
         collector: Collector | None,
         seed: int,
-        agent: BaseAgent
+        agent: BaseAgent,
     ):
         self.observations = observations
         self.actions = actions
@@ -105,7 +105,7 @@ class AsyncAgentWrapper(BaseAsyncAgent):
                 self.params,
                 self.collector,
                 self.seed,
-                self.agent
+                self.agent,
             ),
             "rng": self.rng,
         }

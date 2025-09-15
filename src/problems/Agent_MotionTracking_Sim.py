@@ -35,11 +35,17 @@ class Agent_MotionTracking_Sim(BaseAsyncProblem):
         )
         if not isinstance(agent, BaseAsyncAgent):
             if "should_track" not in self.params:
-                agent = MotionTrackingWrapper((2,), 1, self.params, self.collector, self.seed, agent)
+                agent = MotionTrackingWrapper(
+                    (2,), 1, self.params, self.collector, self.seed, agent
+                )
             elif self.params["should_track"]:
-                agent = MotionTrackingWrapper((2,), 1, self.params, self.collector, self.seed, agent)
+                agent = MotionTrackingWrapper(
+                    (2,), 1, self.params, self.collector, self.seed, agent
+                )
             elif not self.params["should_track"]:
-                agent = MotionTrackingWrapper_NoTracking((2,), 1, self.params, self.collector, self.seed, agent)
+                agent = MotionTrackingWrapper_NoTracking(
+                    (2,), 1, self.params, self.collector, self.seed, agent
+                )
             else:
                 raise ValueError("Invalid input for should_track.")
 

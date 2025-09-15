@@ -15,22 +15,35 @@ logger = logging.getLogger("plant_rl.MotionTrackingWrapper")
 logger.setLevel(logging.DEBUG)
 
 
-@checkpointable(("target_intensity", "is_first_day", "agent_started", "sensitivity", "mean_areas", "openness_record", "openness_trace"))
+@checkpointable(
+    (
+        "target_intensity",
+        "is_first_day",
+        "agent_started",
+        "sensitivity",
+        "mean_areas",
+        "openness_record",
+        "openness_trace",
+    )
+)
 class MotionTrackingWrapper(AsyncAgentWrapper):
-    def __init__(self,
+    def __init__(
+        self,
         observations: Tuple[int, ...],
         actions: int,
         params: Dict,
         collector: Collector,
         seed: int,
-        agent: BaseAgent
-        ):
+        agent: BaseAgent,
+    ):
         super().__init__(observations, actions, params, collector, seed, agent)
         # Wrapper params
         self.start_hour = 9
         self.end_hour = 21  # excluded in daytime
         self.time_step = 5  # minutes
-        self.morning_intensity = 50.0  # Fixed at a dim level at which CV still functions well
+        self.morning_intensity = (
+            50.0  # Fixed at a dim level at which CV still functions well
+        )
         self.target_intensity = 100.0  # Its optimal value depends on plant species, developmental stage, and environmental factors. Tuned by the RL agent daily.
 
         # Agent params
