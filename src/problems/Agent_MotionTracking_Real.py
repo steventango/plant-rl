@@ -8,16 +8,22 @@ from utils.RlGlue.agent import BaseAsyncAgent
 from experiment.ExperimentModel import ExperimentModel
 from PyExpUtils.collection.Collector import Collector
 
-from environments.Simulator.CleanPlantSimulator import CleanPlantSimulator as Env
+from environments.PlantGrowthChamber.CVPlantGrowthChamberIntensity import (
+    CVPlantGrowthChamberIntensity_MotionTracking as Env,
+)
 
 
-class Agent_MotionTracking_Sim(BaseAsyncProblem):
+class Agent_MotionTracking_Real(BaseAsyncProblem):
     def __init__(self, exp: ExperimentModel, idx: int, collector: Collector):
         super().__init__(exp, idx, collector)
 
         self.env = Env(**self.env_params)
-        self.actions = 3
-        self.observations = (143,)
+        self.actions = (
+            3  # RL agent's action space = [decrease, keep, increase] intensity
+        )
+        self.observations = (
+            143,
+        )  # RL agent's state space = whole day's area measurements
 
     def getAgent(self):
         if self.agent is not None:

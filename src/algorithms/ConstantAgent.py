@@ -4,8 +4,10 @@ import numpy as np
 from PyExpUtils.collection.Collector import Collector
 
 from algorithms.BaseAgent import BaseAgent
+from utils.checkpoint import checkpointable
 
 
+@checkpointable(("steps",))
 class ConstantAgent(BaseAgent):
     def __init__(
         self,
@@ -31,6 +33,7 @@ class ConstantAgent(BaseAgent):
     def step(
         self, reward: float, observation: np.ndarray | None, extra: Dict[str, Any]
     ):
+        self.steps += 1
         return self.action, {}
 
     def end(self, reward: float, extra: Dict[str, Any]):

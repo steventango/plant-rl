@@ -1,0 +1,15 @@
+{
+    "agent": "ConstantAgent",
+    "problem": "Agent_MotionTracking_Real",
+    "total_steps": 20000,
+    "episode_cutoff": -1,
+    "metaParameters":{
+        "environment":{
+            "zone": "alliance-zone7",
+            "timezone": "America/Edmonton"
+        },
+        "timezone": "America/Edmonton",
+        "constant_action": 1,
+        "should_track": true
+    }
+}

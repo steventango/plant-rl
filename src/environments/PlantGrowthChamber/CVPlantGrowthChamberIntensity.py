@@ -1,4 +1,3 @@
-import numpy as np  # type: ignore
 from datetime import timedelta
 from utils.constants import BALANCED_ACTION_100
 
@@ -28,4 +27,4 @@ class CVPlantGrowthChamberIntensity_MotionTracking(CVPlantGrowthChamberIntensity
         else:
             mean_area = 0.0
 
-        return np.array([local_time, mean_area])
+        return [local_time, mean_area]
