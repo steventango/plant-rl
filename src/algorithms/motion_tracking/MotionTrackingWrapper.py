@@ -74,7 +74,8 @@ class MotionTrackingWrapper(AsyncAgentWrapper):
         ) / np.log(100 * max_openness + 1)
         self.sensitivity.update(proposed_sensitivity)
         logger.info(
-            f"Set target_intensity = {self.target_intensity}. Set sensitivity = {self.sensitivity.compute().item():.2f}.")
+            f"Set target_intensity = {self.target_intensity}. Set sensitivity = {self.sensitivity.compute().item():.2f}."
+        )
 
     def reward(self):
         current_time = self.env_local_time.replace(second=0, microsecond=0)
@@ -167,11 +168,11 @@ class MotionTrackingWrapper(AsyncAgentWrapper):
             len(self.openness_record)
             != (self.end_hour - self.start_hour) * 60 / self.time_step - 1
         ):
-            #_ = await asyncio.to_thread(
+            # _ = await asyncio.to_thread(
             #    self.agent.end,
             #    0.0,
             #    extra,
-            #)
+            # )
             return
 
         # Use daily openness curve as state

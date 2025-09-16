@@ -29,9 +29,13 @@ class CVPlantGrowthChamberIntensity_MotionTracking(CVPlantGrowthChamberIntensity
             mean_area = 0.0
 
         return [local_time, mean_area]
-    
-    async def step(self, action: float | np.ndarray):  # motion-tracking wrapper outputs action in units of ppfd
+
+    async def step(
+        self, action: float | np.ndarray
+    ):  # motion-tracking wrapper outputs action in units of ppfd
         if isinstance(action, np.ndarray):
             return await super().step(action)
-        action = self.reference_spectrum * action / 100   # divide by 100 since the ref spectrum = BALANCED_ACTION_100
+        action = (
+            self.reference_spectrum * action / 100
+        )  # divide by 100 since the ref spectrum = BALANCED_ACTION_100
         return await super().step(action)
