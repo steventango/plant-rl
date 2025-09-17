@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from PIL import Image, ImageTk
+import tkinter as tk
 
 
 def scale_point_to_original(point, scale_factor):
@@ -66,9 +67,24 @@ def visualize_tray(canvas, tray, scale_factor, label=None, tray_markers_count=0)
     return tag
 
 
-def load_and_prepare_image(image_path, max_height=800):
+def load_and_prepare_image(image_path):
     """Load and prepare an image for display on canvas with optimized performance"""
     try:
+        try:
+            # Determine screen dimensions to calculate max window size
+            root = tk.Tk()
+            root.withdraw()  # Hide the root window
+            screen_width = root.winfo_screenwidth()
+            screen_height = root.winfo_screenheight()
+            root.destroy()
+        except Exception:
+            # Fallback to a conservative 720p resolution if screen size detection fails
+            screen_width, screen_height = 1280, 720
+
+        # Set max display size to 80% of the screen dimensions
+        max_display_width = int(screen_width * 0.8)
+        max_display_height = int(screen_height * 0.8)
+
         # Use PIL directly for faster loading instead of cv2
         image = Image.open(str(image_path))
         if not image:
@@ -77,13 +93,19 @@ def load_and_prepare_image(image_path, max_height=800):
         # Get original dimensions
         original_width, original_height = image.size
 
-        # Calculate scale factor
-        scale_factor = max_height / original_height
+        # Calculate scale factor to fit within max dimensions while preserving aspect ratio
+        width_ratio = max_display_width / original_width
+        height_ratio = max_display_height / original_height
+        scale_factor = min(width_ratio, height_ratio)
+
+        # Do not scale up small images
+        if scale_factor > 1.0:
+            scale_factor = 1.0
+
         display_width = int(original_width * scale_factor)
         display_height = int(original_height * scale_factor)
 
         # Resize image using more efficient BILINEAR resampling instead of LANCZOS
-        # LANCZOS is higher quality but much slower, and for this UI we need speed
         img_resized = image.resize(
             (display_width, display_height), Image.Resampling.BILINEAR
         )
