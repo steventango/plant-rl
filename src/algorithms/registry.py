@@ -4,8 +4,8 @@ from algorithms.BaseAgent import BaseAgent
 from algorithms.BernoulliAgent import BernoulliAgent
 from algorithms.ConstantAgent import ConstantAgent
 from algorithms.ContinuousRandomAgent import ContinuousRandomAgent
+from algorithms.DirichletAgent import DirichletAgent
 from algorithms.DiscreteRandomAgent import DiscreteRandomAgent
-from algorithms.PoissonAgent import PoissonAgent
 from algorithms.linear.ESARSA import ESARSA as LinearESARSA
 from algorithms.linear.linearDQN.LinearDynamicBatchDQN import LinearDynamicBatchDQN
 from algorithms.linear.LinearQL import LinearQL
@@ -14,13 +14,14 @@ from algorithms.nn.DQN import DQN
 from algorithms.nn.DynamicBatchDQN import DynamicBatchDQN
 from algorithms.nn.EQRC import EQRC
 from algorithms.nn.GreedyAC.GreedyAC import GreedyAC
+from algorithms.PoissonAgent import PoissonAgent
 from algorithms.SequenceAgent import SequenceAgent
 from algorithms.SpreadsheetAgent import SpreadsheetAgent
+from algorithms.tc.batch.ESARSA import ESARSA as BatchESARSA
+from algorithms.tc.batch.QL import QL as BatchQL
 from algorithms.tc.ESARSA import ESARSA
 from algorithms.tc.QL import QL
 from algorithms.tc.SoftmaxAC import SoftmaxAC
-from algorithms.tc.batch.ESARSA import ESARSA as BatchESARSA
-from algorithms.tc.batch.QL import QL as BatchQL
 from algorithms.tc.tc_replay.ESARSA import ESARSA as ReplayESARSA
 from algorithms.tc.tc_replay.QL import QL as QLReplay
 
@@ -82,6 +83,9 @@ def getAgent(name) -> Type[BaseAgent]:
 
     if name == "ContinuousRandom":
         return ContinuousRandomAgent
+
+    if name.startswith("Dirichlet"):
+        return DirichletAgent
 
     if name.startswith("MotionTrackingController"):
         return MotionTrackingController
