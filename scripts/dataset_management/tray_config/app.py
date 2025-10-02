@@ -1,5 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
+from datetime import datetime
+import pytz
 
 from tray_config_utils import (
     extract_zone_identifier,
@@ -382,7 +384,7 @@ class TrayConfigApp:
             self.tray_count_label.config(text=f"Trays: {len(self.tray_configs)}")
 
     def load_image(self):
-        """Load the first image from the 'images' subdirectory of the current dataset"""
+        """Load the most recent daytime image from the 'images' subdirectory."""
         if self.dataset_dir is None:
             return
 
@@ -391,22 +393,42 @@ class TrayConfigApp:
             messagebox.showerror("Error", f"Image directory not found: {image_dir}")
             return
 
-        # Find the last image file (e.g., .png, .jpg)
-        image_path = next(
+        # Define the desired timezone and daytime hours
+        local_tz = pytz.timezone("America/Edmonton")
+        daytime_start = datetime.strptime("09:30", "%H:%M").time()
+        daytime_end = datetime.strptime("20:30", "%H:%M").time()
+
+        image_path = None
+        sorted_images = sorted(
             (
-                image_file
-                for image_file in sorted(image_dir.glob("*"), reverse=True)
-                if image_file.suffix.lower() in {".png", ".jpg", ".jpeg"}
+                f
+                for f in image_dir.glob("*")
+                if f.suffix.lower() in {".png", ".jpg", ".jpeg"}
             ),
-            None,
+            reverse=True,
         )
-        # # Find the 20th most recent image file (e.g., .png, .jpg)
-        # sorted_images = [
-        #     image_file
-        #     for image_file in sorted(image_dir.glob("*"), reverse=True)
-        #     if image_file.suffix.lower() in {".png", ".jpg", ".jpeg"}
-        # ]
-        # image_path = sorted_images[19] if len(sorted_images) > 19 else None
+
+        for image_file in sorted_images:
+            try:
+                # Extract timestamp from filename, e.g., '2025-09-15T123500+0000_left.jpg'
+                timestamp_str = image_file.name.split("_")[0]
+                utc_time = datetime.fromisoformat(timestamp_str)
+                local_time = utc_time.astimezone(local_tz)
+
+                if daytime_start <= local_time.time() <= daytime_end:
+                    image_path = image_file
+                    logger.info(f"Found daytime image: {image_path}")
+                    break
+            except (ValueError, IndexError) as e:
+                logger.warning(f"Could not parse timestamp from {image_file.name}: {e}")
+                continue
+
+        if image_path is None:
+            logger.warning(
+                "No daytime image found. Falling back to the most recent image."
+            )
+            if sorted_images:
+                image_path = sorted_images[0]
 
         if image_path is None:
             messagebox.showerror("Error", f"No images found in {image_dir}")
@@ -520,6 +542,9 @@ class TrayConfigApp:
         self.points = []
         self.canvas.delete("current_points")
         self.edit_status_label.config(text="")
+        self.delete_tray_button.config(state=tk.DISABLED)
+        self.cancel_edit_button.config(state=tk.DISABLED)
+        self.update_status_bar()
         self.delete_tray_button.config(state=tk.DISABLED)
         self.cancel_edit_button.config(state=tk.DISABLED)
         self.update_status_bar()

@@ -195,7 +195,7 @@ async def main():
         # -- Saving --
         # ------------
         saveCollector(exp, collector, base=args.save_path)
-        chk.delete()
+        chk.save()
 
 
 if __name__ == "__main__":

@@ -74,3 +74,12 @@ class AsyncAgentWrapper(BaseAsyncAgent):
 
     async def end(self, reward: float, extra: dict[str, Any]) -> dict[str, Any]:
         return await asyncio.to_thread(self.agent.end, reward, extra)
+
+    # -------------------
+    # -- Checkpointing --
+    # -------------------
+    def __getstate__(self):
+        return {"__args": (self.agent,)}
+
+    def __setstate__(self, state):
+        self.__init__(*state["__args"])

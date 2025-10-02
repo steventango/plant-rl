@@ -4,21 +4,31 @@ from datetime import timedelta
 from collections import defaultdict
 from typing import Any, Dict
 import numpy as np
-# import matplotlib.pyplot as plt
 
 from algorithms.BaseAgent import BaseAgent
 from utils.RlGlue.agent import AsyncAgentWrapper
 from utils.metrics import UnbiasedExponentialMovingAverage as uema
-# from utils.checkpoint import checkpointable
+from utils.checkpoint import checkpointable
 
 logger = logging.getLogger("plant_rl.MotionTrackingWrapper")
 logger.setLevel(logging.DEBUG)
 
 
-# @checkpointable(("sensitivity", "mean_areas", "openness_record", "openness_trace"))
+@checkpointable(
+    (
+        "target_intensity",
+        "is_first_day",
+        "agent_started",
+        "sensitivity",
+        "mean_areas",
+        "openness_record",
+        "openness_trace",
+    )
+)
 class MotionTrackingWrapper(AsyncAgentWrapper):
     def __init__(self, agent: BaseAgent):
         super().__init__(agent)
+
         # Wrapper params
         self.start_hour = 9
         self.end_hour = 21  # excluded in daytime
@@ -64,8 +74,8 @@ class MotionTrackingWrapper(AsyncAgentWrapper):
         ) / np.log(100 * max_openness + 1)
         self.sensitivity.update(proposed_sensitivity)
         logger.info(
-            f"Set target_intensity = {self.target_intensity}"
-        )  # Set sensitivity = {self.sensitivity.compute().item():.2f}."
+            f"Set target_intensity = {self.target_intensity}. Set sensitivity = {self.sensitivity.compute().item():.2f}."
+        )
 
     def reward(self):
         current_time = self.env_local_time.replace(second=0, microsecond=0)
@@ -158,11 +168,11 @@ class MotionTrackingWrapper(AsyncAgentWrapper):
             len(self.openness_record)
             != (self.end_hour - self.start_hour) * 60 / self.time_step - 1
         ):
-            _ = await asyncio.to_thread(
-                self.agent.end,
-                0.0,
-                extra,
-            )
+            # _ = await asyncio.to_thread(
+            #    self.agent.end,
+            #    0.0,
+            #    extra,
+            # )
             return
 
         # Use daily openness curve as state
@@ -170,7 +180,7 @@ class MotionTrackingWrapper(AsyncAgentWrapper):
         ob = ob / np.max(ob)
 
         if not self.agent_started:
-            # logger.info(f"Starting RL agent at {self.env_local_time}")
+            logger.info(f"Starting RL agent at {self.env_local_time}")
             agent_action, _ = await asyncio.to_thread(
                 self.agent.start,
                 ob,
@@ -180,7 +190,7 @@ class MotionTrackingWrapper(AsyncAgentWrapper):
             self.agent_started = True
             self.is_first_day = False
         else:
-            # logger.info(f"Polling RL agent at {self.env_local_time}.")
+            logger.info(f"Polling RL agent at {self.env_local_time}.")
             agent_action, _ = await asyncio.to_thread(
                 self.agent.step,
                 self.reward(),
