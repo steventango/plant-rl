@@ -50,6 +50,7 @@ dependencies = [
     'aiohttp-retry',
     'scipy<1.16',
     'jinja2',
+    "gpjax>=0.9.5",
 ]
 
 [dependency-groups]

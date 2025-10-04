@@ -1,4 +1,4 @@
-from environments.PlantGrowthChamber.PlantGrowthChamber import PlantGrowthChamber  # type: ignore
+from environments.PlantGrowthChamber.PlantGrowthChamber import PlantGrowthChamber
 from environments.PlantGrowthChamber.utils import get_one_hot_time_observation
 
 
