@@ -21,7 +21,7 @@ class DirichletAgent(BaseAgent):
         self.alpha = np.ones(3)
 
     def sample_action(self) -> np.ndarray:
-        # Sample from Dirichlet(1,1)
+        # Sample from Dirichlet(1,1,1)
         z = self.rng.dirichlet(self.alpha)
         # Compute action: RED*z[0] + WHITE*z[1] + BLUE*z[2]
         action = z[0] * RED_ACTION + z[1] * BALANCED_ACTION_105 + z[2] * BLUE_ACTION
