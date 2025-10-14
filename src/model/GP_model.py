@@ -39,6 +39,12 @@ class GP:
 
         return jnp.vstack(norm_data).T, jnp.array(mean), jnp.array(std)
 
+    def normalize_input(self, x):
+        return (jnp.array(x) - self.input_mean) / self.input_std
+
+    def denormalize_output(self, x):
+        return jnp.array(x) * self.output_std + self.output_mean
+
     def learn(self):
         prior = gpx.gps.Prior(mean_function=self.meanf, kernel=self.kernel)
         likelihood = gpx.likelihoods.Gaussian(num_datapoints=self.D.n)
@@ -49,26 +55,25 @@ class GP:
             train_data=self.D,
         )
 
-    def get_predictive_dist(self, x):
-        latent_dist = self.opt_posterior.predict(x, train_data=self.D)
+    def get_predictive_dist(self, X):
+        latent_dist = self.opt_posterior.predict(X, train_data=self.D)
         predictive_dist = self.opt_posterior.likelihood(latent_dist)
-
         return predictive_dist
 
-    def predict_mean_std(self, x):
-        predictive_dist = self.get_predictive_dist(x)
+    def predict_mean_std(self, X):
+        X = jnp.vstack([self.normalize_input(x) for x in X])
+        predictive_dist = self.get_predictive_dist(X)
         predictive_mean = predictive_dist.mean()
         predictive_std = jnp.sqrt(predictive_dist.variance())
-        return predictive_mean, predictive_std
+        return self.denormalize_output(predictive_mean), jnp.array(
+            predictive_std
+        ) * self.output_std
 
     def sample_output(self, x, N=100):
-        x = (x - self.input_mean) / self.input_std
-        mean, std = self.predict_mean_std(x.reshape(1, -1))
+        mean, std = self.predict_mean_std(x)
         normalized_samples = (
             random.normal(self.key, (mean.shape[0], N)) * std[:, None]
         ) + mean[:, None]
         normalized_samples = normalized_samples.T
-        samples = [
-            sample * self.output_std + self.output_mean for sample in normalized_samples
-        ]
+        samples = [self.denormalize_output(sample) for sample in normalized_samples]
         return samples
