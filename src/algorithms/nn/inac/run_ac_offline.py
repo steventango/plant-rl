@@ -12,9 +12,9 @@ if __name__ == "__main__":
     parser.add_argument("--seed", default=0, type=int)
     parser.add_argument("--env_name", default="Ant", type=str)
     parser.add_argument("--dataset", default="medexp", type=str)
-    parser.add_argument("--discrete_control", default=0, type=int)
-    parser.add_argument("--state_dim", default=1, type=int)
-    parser.add_argument("--action_dim", default=1, type=int)
+    parser.add_argument("--discrete_control", default=True, type=bool)
+    parser.add_argument("--state_dim", default=5, type=int)
+    parser.add_argument("--action_dim", default=3, type=int)
     parser.add_argument("--tau", default=0.1, type=float)
 
     parser.add_argument("--max_steps", default=1000000, type=int)
