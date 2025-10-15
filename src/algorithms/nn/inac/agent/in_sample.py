@@ -270,7 +270,6 @@ def _update(
 CarryType = tuple[
     ActorCritic,
     Optimizers,
-    fbx.trajectory_buffer.TrajectoryBuffer,
     fbx.trajectory_buffer.BufferState,
     Hypers,
     nnx.Rngs,
