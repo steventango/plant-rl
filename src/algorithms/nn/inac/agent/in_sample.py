@@ -298,8 +298,6 @@ def train(
     polyak: float,
     exp_path: Path,
     seed: int,
-    env_fn,
-    timeout: int,
     gamma: float,
     offline_data,
     batch_size,

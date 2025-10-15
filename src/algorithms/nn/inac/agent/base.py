@@ -7,22 +7,32 @@ import jax.numpy as jnp
 import numpy as np
 import orbax.checkpoint as ocp
 from flax import nnx
+from minari import MinariDataset
 
 
-def fill_offline_data_to_buffer(offline_data, batch_size: int):
-    offline_data = next(iter(offline_data.values()))
-    train_s = offline_data["states"]
-    train_a = offline_data["actions"]
-    train_r = offline_data["rewards"]
-    train_t = offline_data["terminations"]
+def fill_offline_data_to_buffer(dataset: MinariDataset, batch_size: int):
+    dataset_size = dataset.total_steps
+    all_obs = []
+    all_actions = []
+    all_rewards = []
+    all_next_obs = []
+    all_terminations = []
 
-    dataset_size = len(train_s)
+    for episode in dataset.iterate_episodes():
+        all_obs.append(episode.observations[:-1])
+        all_actions.append(episode.actions)
+        all_rewards.append(episode.rewards)
+        all_next_obs.append(episode.observations[1:])
+        all_terminations.append(episode.terminations)
+
     dataset_transitions = {
-        "state": train_s,
-        "action": train_a,
-        "reward": train_r,
-        "termination": train_t,
+        "state": jnp.concatenate(all_obs, axis=0),
+        "action": jnp.concatenate(all_actions, axis=0),
+        "reward": jnp.concatenate(all_rewards, axis=0),
+        "next_state": jnp.concatenate(all_next_obs, axis=0),
+        "termination": jnp.concatenate(all_terminations, axis=0),
     }
+
     dummy_transition = jax.tree_util.tree_map(lambda x: x[0], dataset_transitions)
     replay = fbx.make_flat_buffer(
         max_length=dataset_size,
