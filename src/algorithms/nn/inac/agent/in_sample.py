@@ -389,6 +389,13 @@ def train(
         logger.info(
             f"TRAIN LOG: steps {total_steps}, {total_steps * 100 // max_steps}%, {elapsed_time:.2f} steps/s"
         )
+        logger.info(
+            "LOSSES:\n"
+            f"actor {losses['actor'].mean().item():.3f}\n"
+            f"critic {losses['critic'].mean().item():.3f}\n"
+            f"value {losses['value'].mean().item():.3f}\n"
+            f"beta {losses['beta'].mean().item():.3f}"
+        )
 
     np.save(exp_path / "evaluations.npy", np.array(evaluations))
     actor_critic = carry[0]
