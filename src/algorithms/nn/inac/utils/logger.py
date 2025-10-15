@@ -1,12 +1,11 @@
 import logging
 import os
-import sys
 
 
 def log_config(cfg):
     def get_print_attrs(cfg):
         attrs = dict(cfg.__dict__)
-        for k in ["logger", "env_fn", "offline_data"]:
+        for k in ["logger"]:
             del attrs[k]
         return attrs
 
@@ -24,10 +23,6 @@ class Logger:
         formatter = logging.Formatter("%(asctime)s | %(message)s")
         file_handler.setFormatter(formatter)
         self._logger.addHandler(file_handler)
-
-        stream_handler = logging.StreamHandler(sys.stdout)
-        stream_handler.setFormatter(formatter)
-        self._logger.addHandler(stream_handler)
 
         self._logger.setLevel(level=logging.INFO)
 
