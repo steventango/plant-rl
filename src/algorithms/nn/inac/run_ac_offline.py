@@ -13,7 +13,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", default=0, type=int)
     parser.add_argument("--dataset", default="plant-rl/discrete-v4", type=str)
     parser.add_argument("--discrete_control", default=True, type=bool)
-    parser.add_argument("--state_dim", default=5, type=int)
+    parser.add_argument("--state_dim", default=14, type=int)
     parser.add_argument("--action_dim", default=3, type=int)
     parser.add_argument("--tau", default=0.1, type=float)
 
