@@ -17,7 +17,12 @@ def fill_offline_data_to_buffer(offline_data, batch_size: int):
     train_t = offline_data["terminations"]
 
     dataset_size = len(train_s)
-    dataset_transitions = {"state": train_s, "action": train_a, "reward": train_r, "termination": train_t}
+    dataset_transitions = {
+        "state": train_s,
+        "action": train_a,
+        "reward": train_r,
+        "termination": train_t,
+    }
     dummy_transition = jax.tree_util.tree_map(lambda x: x[0], dataset_transitions)
     replay = fbx.make_flat_buffer(
         max_length=dataset_size,
@@ -32,9 +37,7 @@ def fill_offline_data_to_buffer(offline_data, batch_size: int):
         replay_state = add_fn(replay_state, transition)
         return replay_state, None
 
-    replay_state, _ = jax.lax.scan(
-        add_transition, replay_state, dataset_transitions
-    )
+    replay_state, _ = jax.lax.scan(add_transition, replay_state, dataset_transitions)
     return replay, replay_state
 
 
@@ -61,6 +64,7 @@ def eval_episode(eval_env, _policy, pi, timeout: int, rngs):
 
     return total_rewards
 
+
 def log_return(logger, total_steps, returns, name, elapsed_time):
     total_episodes = len(returns)
     mean, median, min_, max_ = (
@@ -75,6 +79,7 @@ def log_return(logger, total_steps, returns, name, elapsed_time):
         f"returns {mean:.2f}/{median:.2f}/{min_:.2f}/{max_:.2f}/{len(returns)} (mean/median/min/max/num), {elapsed_time:.2f} steps/s"
     )
     return mean, median, min_, max_
+
 
 def evaluate(logger, total_steps, eval_env, _policy, pi, timeout, total_ep, rngs):
     t0 = time.time()
@@ -94,6 +99,7 @@ def evaluate(logger, total_steps, eval_env, _policy, pi, timeout, total_ep, rngs
         logger, total_steps, normalized, "Normalized", elapsed_time
     )
     return mean, median, min_, max_
+
 
 def eval_step(_policy, pi, state: np.ndarray, rngs: nnx.Rngs):
     state = jnp.asarray(state)

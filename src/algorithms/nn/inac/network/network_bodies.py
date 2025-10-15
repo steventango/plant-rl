@@ -8,7 +8,7 @@ class FCBody(nnx.Module):
         input_dim,
         hidden_units=(64, 64),
         activation=nnx.relu,
-        init_type='xavier',
+        init_type="xavier",
         info=None,
         *,
         rngs: nnx.Rngs,
@@ -29,11 +29,13 @@ class FCBody(nnx.Module):
             bias_init = initializers.zeros
         elif init_type == "constant":
             if info is None:
-                raise ValueError("Constant value 'info' must be provided for init_type 'constant'")
+                raise ValueError(
+                    "Constant value 'info' must be provided for init_type 'constant'"
+                )
             kernel_init = initializers.constant(info)
             bias_init = initializers.constant(info)
         else:
-            raise ValueError(f'init_type is not defined: {init_type}')
+            raise ValueError(f"init_type is not defined: {init_type}")
 
         self.layers = [
             nnx.Linear(

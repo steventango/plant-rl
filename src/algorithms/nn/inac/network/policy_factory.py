@@ -14,7 +14,7 @@ class MLPCont(nnx.Module):
         act_dim,
         hidden_sizes,
         action_range=1.0,
-        init_type='xavier',
+        init_type="xavier",
         *,
         rngs: nnx.Rngs,
     ):
@@ -75,7 +75,7 @@ class MLPDiscrete(nnx.Module):
         obs_dim,
         act_dim,
         hidden_sizes,
-        init_type='xavier',
+        init_type="xavier",
         *,
         rngs: nnx.Rngs,
     ):

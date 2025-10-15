@@ -18,7 +18,7 @@ class FCNetwork(nnx.Module):
         self.body = network_bodies.FCBody(
             input_dim=input_units,
             hidden_units=tuple(hidden_units),
-            init_type='xavier',
+            init_type="xavier",
             rngs=rngs,
         )
         self.fc_head = nnx.Linear(
@@ -48,12 +48,8 @@ class DoubleCriticDiscrete(nnx.Module):
         *,
         rngs: nnx.Rngs,
     ):
-        self.q1_net = FCNetwork(
-            input_units, hidden_units, output_units, rngs=rngs
-        )
-        self.q2_net = FCNetwork(
-            input_units, hidden_units, output_units, rngs=rngs
-        )
+        self.q1_net = FCNetwork(input_units, hidden_units, output_units, rngs=rngs)
+        self.q2_net = FCNetwork(input_units, hidden_units, output_units, rngs=rngs)
 
     def __call__(self, x, a):
         q1 = self.q1_net(x)
