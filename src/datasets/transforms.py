@@ -96,7 +96,7 @@ def transform_action_traces(df):
         "action.4",
         "action.5",
     ]
-    alphas = [0.3, 0.5, 0.7]
+    alphas = [0.5]
     for col, alpha in product(action_cols, alphas):
         df = df.with_columns(
             pl.col(col)

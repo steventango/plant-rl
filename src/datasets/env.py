@@ -39,7 +39,7 @@ class MockEnv(gym.Env):
         # Set observation space based on include_action_traces
         obs_dim = 5  # clean_area, normalized_day, 3 for one-hot action
         if self.include_action_traces:
-            obs_dim += 9  # 3 traces * 3 values each
+            obs_dim += 3  # 1 trace (0.5) * 3 values
         self.observation_space = spaces.Box(
             low=-np.inf, high=np.inf, shape=(obs_dim,), dtype=np.float32
         )
@@ -50,16 +50,14 @@ class MockEnv(gym.Env):
         # clean_area
         # day (normalized)
         # discrete_action (one-hot encoded, from previous row)
-        # discrete_action_trace_0.3 (one-hot encoded, smoothed) - if include_action_traces
         # discrete_action_trace_0.5 (one-hot encoded, smoothed) - if include_action_traces
-        # discrete_action_trace_0.7 (one-hot encoded, smoothed) - if include_action_traces
         if self.plant_df is None or self.current_row_index >= self.plant_df.height:
-            obs_dim = 5 if not self.include_action_traces else 14
+            obs_dim = 5 if not self.include_action_traces else 8
             return np.zeros((obs_dim,), dtype=np.float32)
 
         row = self.plant_df.slice(self.current_row_index, 1)
         if row.is_empty():
-            obs_dim = 5 if not self.include_action_traces else 14
+            obs_dim = 5 if not self.include_action_traces else 8
             return np.zeros((obs_dim,), dtype=np.float32)
 
         clean_area = row["clean_area"][0] if row["clean_area"][0] is not None else 0.0
@@ -80,26 +78,13 @@ class MockEnv(gym.Env):
 
         # Get discrete_action from the previous row
         discrete_action = None
-        discrete_action_trace_03 = [0.0, 0.0, 0.0]
         discrete_action_trace_05 = [0.0, 0.0, 0.0]
-        discrete_action_trace_07 = [0.0, 0.0, 0.0]
 
         if self.current_row_index > 0:
             prev_row = self.plant_df.slice(self.current_row_index - 1, 1)
             if not prev_row.is_empty():
                 discrete_action = prev_row["discrete_action"][0]
                 if self.include_action_traces:
-                    discrete_action_trace_03 = [
-                        prev_row["discrete_action_trace_0_0.3"][0]
-                        if prev_row["discrete_action_trace_0_0.3"][0] is not None
-                        else 0.0,
-                        prev_row["discrete_action_trace_1_0.3"][0]
-                        if prev_row["discrete_action_trace_1_0.3"][0] is not None
-                        else 0.0,
-                        prev_row["discrete_action_trace_2_0.3"][0]
-                        if prev_row["discrete_action_trace_2_0.3"][0] is not None
-                        else 0.0,
-                    ]
                     discrete_action_trace_05 = [
                         prev_row["discrete_action_trace_0_0.5"][0]
                         if prev_row["discrete_action_trace_0_0.5"][0] is not None
@@ -109,17 +94,6 @@ class MockEnv(gym.Env):
                         else 0.0,
                         prev_row["discrete_action_trace_2_0.5"][0]
                         if prev_row["discrete_action_trace_2_0.5"][0] is not None
-                        else 0.0,
-                    ]
-                    discrete_action_trace_07 = [
-                        prev_row["discrete_action_trace_0_0.7"][0]
-                        if prev_row["discrete_action_trace_0_0.7"][0] is not None
-                        else 0.0,
-                        prev_row["discrete_action_trace_1_0.7"][0]
-                        if prev_row["discrete_action_trace_1_0.7"][0] is not None
-                        else 0.0,
-                        prev_row["discrete_action_trace_2_0.7"][0]
-                        if prev_row["discrete_action_trace_2_0.7"][0] is not None
                         else 0.0,
                     ]
 
@@ -133,11 +107,7 @@ class MockEnv(gym.Env):
             discrete_action_one_hot,
         ]
         if self.include_action_traces:
-            obs_list.extend([
-                discrete_action_trace_03,
-                discrete_action_trace_05,
-                discrete_action_trace_07,
-            ])
+            obs_list.append(discrete_action_trace_05)
 
         obs = np.concatenate(obs_list).astype(np.float32)
         return obs
