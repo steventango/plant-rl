@@ -1,10 +1,10 @@
 from typing import Any, Tuple
 
 import gymnasium as gym
-from gymnasium.core import ObsType
 import numpy as np
 import polars as pl
 from gymnasium import spaces
+from gymnasium.core import ObsType
 
 
 class MockEnv(gym.Env):
