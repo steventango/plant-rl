@@ -37,7 +37,7 @@ class MockEnv(gym.Env):
         self.day_min = float(day_min) if day_min is not None else 0.0  # type: ignore
         self.day_max = float(day_max) if day_max is not None else 1.0  # type: ignore
         # Set observation space based on include_action_traces
-        obs_dim = 5  # clean_area, normalized_day, 3 for one-hot action
+        obs_dim = 4  # clean_area, 3 for one-hot action
         if self.include_action_traces:
             obs_dim += 3  # 1 trace (0.5) * 3 values
         self.observation_space = spaces.Box(
@@ -48,16 +48,15 @@ class MockEnv(gym.Env):
     def _get_observation(self) -> Any:
         # return a vector with the following values:
         # clean_area
-        # day (normalized)
         # discrete_action (one-hot encoded, from previous row)
         # discrete_action_trace_0.5 (one-hot encoded, smoothed) - if include_action_traces
         if self.plant_df is None or self.current_row_index >= self.plant_df.height:
-            obs_dim = 5 if not self.include_action_traces else 8
+            obs_dim = 4 if not self.include_action_traces else 7
             return np.zeros((obs_dim,), dtype=np.float32)
 
         row = self.plant_df.slice(self.current_row_index, 1)
         if row.is_empty():
-            obs_dim = 5 if not self.include_action_traces else 8
+            obs_dim = 4 if not self.include_action_traces else 7
             return np.zeros((obs_dim,), dtype=np.float32)
 
         clean_area = row["clean_area"][0] if row["clean_area"][0] is not None else 0.0
@@ -68,13 +67,6 @@ class MockEnv(gym.Env):
             )
         else:
             clean_area = 0.0  # If min == max, set to 0
-
-        # Get day and normalize it
-        day = row["day"][0] if row["day"][0] is not None else 0.0
-        if self.day_max > self.day_min:
-            normalized_day = (float(day) - self.day_min) / (self.day_max - self.day_min)
-        else:
-            normalized_day = 0.0  # If min == max, set to 0
 
         # Get discrete_action from the previous row
         discrete_action = None
@@ -103,7 +95,6 @@ class MockEnv(gym.Env):
 
         obs_list = [
             [clean_area],
-            [normalized_day],
             discrete_action_one_hot,
         ]
         if self.include_action_traces:
