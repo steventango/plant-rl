@@ -288,7 +288,7 @@ def save(module: nnx.Module, optimizers: nnx.Module, parameters_dir):
         checkpointer.save(os.path.join(parameters_dir, "default"), ckpt, force=True)
 
 
-def load(module: nnx.Module, optimizers: nnx.Module, parameters_dir):
+def load(module: nnx.GraphDef, optimizers: nnx.GraphDef, parameters_dir):
     with ocp.StandardCheckpointer() as checkpointer:
         ckpt = checkpointer.restore(os.path.join(parameters_dir, "default"))
     module = nnx.merge(module, ckpt["module"])
