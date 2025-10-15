@@ -79,7 +79,7 @@ class Hypers:
 
 
 @nnx.jit
-def _update_beta(beh_pi, beh_pi_optimizer, batch):
+def _update_beta(beh_pi, beh_pi_optimizer: nnx.Optimizer, batch):
     def loss_fn(pi):
         log_probs = pi.get_logprob(
             batch.experience.first["state"], batch.experience.first["action"]
@@ -87,12 +87,14 @@ def _update_beta(beh_pi, beh_pi_optimizer, batch):
         return -log_probs.mean()
 
     loss, grads = nnx.value_and_grad(loss_fn)(beh_pi)
-    beh_pi_optimizer.update(grads)
+    beh_pi_optimizer.update(beh_pi, grads)
     return loss
 
 
 @nnx.jit
-def _update_value(value_net, value_optimizer, pi, q_target, tau, batch, rngs: nnx.Rngs):
+def _update_value(
+    value_net, value_optimizer: nnx.Optimizer, pi, q_target, tau, batch, rngs: nnx.Rngs
+):
     def loss_fn(value_net, rngs):
         v_phi = value_net(batch.experience.first["state"]).squeeze(-1)
         actions, log_probs = pi(batch.experience.first["state"], rngs=rngs)
@@ -104,7 +106,7 @@ def _update_value(value_net, value_optimizer, pi, q_target, tau, batch, rngs: nn
     (loss, (v_phi, log_probs)), grads = nnx.value_and_grad(loss_fn, has_aux=True)(
         value_net, rngs
     )
-    value_optimizer.update(grads)
+    value_optimizer.update(value_net, grads)
     return loss, v_phi, log_probs
 
 
@@ -136,14 +138,14 @@ def _update_q(
         return loss_q, min_q
 
     (loss, q_info), grads = nnx.value_and_grad(loss_fn, has_aux=True)(q_net, rngs)
-    q_optimizer.update(grads)
+    q_optimizer.update(q_net, grads)
     return loss, q_info
 
 
 @nnx.jit
 def _update_pi(
     pi,
-    pi_optimizer,
+    pi_optimizer: nnx.Optimizer,
     q,
     value_net,
     beh_pi,
@@ -173,7 +175,7 @@ def _update_pi(
         return pi_loss
 
     loss, grads = nnx.value_and_grad(loss_fn)(pi)
-    pi_optimizer.update(grads)
+    pi_optimizer.update(pi, grads)
     return loss
 
 
@@ -316,10 +318,10 @@ def train(
         rngs=rngs,
     )
     optimizers = Optimizers(
-        pi=nnx.Optimizer(actor_critic.pi, optax.adam(learning_rate)),
-        q=nnx.Optimizer(actor_critic.q, optax.adam(learning_rate)),
-        value=nnx.Optimizer(actor_critic.value_net, optax.adam(learning_rate)),
-        beh_pi=nnx.Optimizer(actor_critic.beh_pi, optax.adam(learning_rate)),
+        pi=nnx.Optimizer(actor_critic.pi, optax.adam(learning_rate), wrt=nnx.Param),
+        q=nnx.Optimizer(actor_critic.q, optax.adam(learning_rate), wrt=nnx.Param),
+        value=nnx.Optimizer(actor_critic.value_net, optax.adam(learning_rate), wrt=nnx.Param),
+        beh_pi=nnx.Optimizer(actor_critic.beh_pi, optax.adam(learning_rate), wrt=nnx.Param),
     )
     hypers = Hypers(
         batch_size=batch_size,
