@@ -22,7 +22,6 @@ if __name__ == "__main__":
     parser.add_argument("--learning_rate", default=3e-4, type=float)
     parser.add_argument("--hidden_units", default=256, type=int)
     parser.add_argument("--batch_size", default=256, type=int)
-    parser.add_argument("--timeout", default=1000, type=int)
     parser.add_argument("--gamma", default=0.99, type=float)
     parser.add_argument("--use_target_network", default=1, type=int)
     parser.add_argument("--target_network_update_freq", default=1, type=int)
