@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 
 from algorithms.nn.inac.agent.in_sample import train
-from algorithms.nn.inac.utils import logger, run_funcs
+from algorithms.nn.inac.utils import logger
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="run_file")
@@ -37,8 +37,6 @@ if __name__ == '__main__':
     exp_path = "data/JAX/output/{}/{}/{}/{}_run".format(cfg.env_name, cfg.dataset, cfg.info, cfg.seed)
     cfg.exp_path = os.path.join(project_root, exp_path)
     os.makedirs(cfg.exp_path, exist_ok=True)
-    cfg.env_fn = environment.EnvFactory.create_env_fn(cfg)
-    cfg.offline_data = run_funcs.load_testset(cfg.env_name, cfg.dataset, cfg.seed)
 
     # Setting up the logger
     cfg.logger = logger.Logger(cfg, cfg.exp_path)
