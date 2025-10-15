@@ -68,7 +68,7 @@ class Optimizers:
 
 @chex.dataclass
 class Hypers:
-    batch_size: float
+    batch_size: int
     eps: float
     exp_threshold: float
     gamma: float
