@@ -29,6 +29,7 @@ if __name__ == "__main__":
     parser.add_argument("--polyak", default=0.995, type=float)
     parser.add_argument("--evaluation_criteria", default="return", type=str)
     parser.add_argument("--info", default="0", type=str)
+    parser.add_argument("--weight_decay", default=1e-4, type=float)
     cfg = parser.parse_args()
 
     np.random.seed(cfg.seed)
@@ -65,4 +66,5 @@ if __name__ == "__main__":
         logger=cfg.logger,
         max_steps=cfg.max_steps,
         log_interval=cfg.log_interval,
+        weight_decay=cfg.weight_decay,
     )

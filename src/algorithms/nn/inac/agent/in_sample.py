@@ -308,6 +308,7 @@ def train(
     logger,
     max_steps,
     log_interval,
+    weight_decay: float,
 ):
     rngs = nnx.Rngs(seed)
     actor_critic = ActorCritic(
@@ -318,10 +319,26 @@ def train(
         rngs=rngs,
     )
     optimizers = Optimizers(
-        pi=nnx.Optimizer(actor_critic.pi, optax.adam(learning_rate), wrt=nnx.Param),
-        q=nnx.Optimizer(actor_critic.q, optax.adam(learning_rate), wrt=nnx.Param),
-        value=nnx.Optimizer(actor_critic.value_net, optax.adam(learning_rate), wrt=nnx.Param),
-        beh_pi=nnx.Optimizer(actor_critic.beh_pi, optax.adam(learning_rate), wrt=nnx.Param),
+        pi=nnx.Optimizer(
+            actor_critic.pi,
+            optax.adamw(learning_rate, weight_decay=weight_decay),
+            wrt=nnx.Param,
+        ),
+        q=nnx.Optimizer(
+            actor_critic.q,
+            optax.adamw(learning_rate, weight_decay=weight_decay),
+            wrt=nnx.Param,
+        ),
+        value=nnx.Optimizer(
+            actor_critic.value_net,
+            optax.adamw(learning_rate, weight_decay=weight_decay),
+            wrt=nnx.Param,
+        ),
+        beh_pi=nnx.Optimizer(
+            actor_critic.beh_pi,
+            optax.adamw(learning_rate, weight_decay=weight_decay),
+            wrt=nnx.Param,
+        ),
     )
     hypers = Hypers(
         batch_size=batch_size,
