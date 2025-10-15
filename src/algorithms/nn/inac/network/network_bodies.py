@@ -37,16 +37,18 @@ class FCBody(nnx.Module):
         else:
             raise ValueError(f"init_type is not defined: {init_type}")
 
-        self.layers = [
-            nnx.Linear(
-                dim_in,
-                dim_out,
-                kernel_init=kernel_init,
-                bias_init=bias_init,
-                rngs=rngs,
-            )
-            for dim_in, dim_out in zip(dims[:-1], dims[1:])
-        ]
+        self.layers = nnx.List(
+            [
+                nnx.Linear(
+                    dim_in,
+                    dim_out,
+                    kernel_init=kernel_init,
+                    bias_init=bias_init,
+                    rngs=rngs,
+                )
+                for dim_in, dim_out in zip(dims[:-1], dims[1:])
+            ]
+        )
         self.activation = activation
         self.feature_dim = dims[-1]
 
