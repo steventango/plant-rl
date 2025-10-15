@@ -10,7 +10,11 @@ import numpy as np
 import optax
 from flax import nnx
 
-from algorithms.nn.inac.agent.base import evaluate, fill_offline_data_to_buffer, save
+from algorithms.nn.inac.agent.base import (
+    evaluate_on_dataset,
+    fill_offline_data_to_buffer,
+    save,
+)
 from algorithms.nn.inac.network.network_architectures import (
     DoubleCriticDiscrete,
     DoubleCriticNetwork,
@@ -355,7 +359,6 @@ def train(
     train_func = get_train_func(log_interval, replay)
 
     carry = (actor_critic, optimizers, replay_state, hypers, rngs)
-    eval_env = env_fn()
 
     total_steps = 0
     i = 0
@@ -363,17 +366,18 @@ def train(
     while True:
         if log_interval and not total_steps % log_interval:
             actor_critic = carry[0]
-            mean, *_ = evaluate(
-                logger,
-                total_steps,
-                eval_env,
-                _policy,
-                actor_critic.pi,
-                timeout,
-                5,
-                rngs,
-            )
-            evaluations[i] = mean
+            if total_steps % (log_interval * 10) == 0:
+                (exp_path / "plots").mkdir(parents=True, exist_ok=True)
+                evaluate_on_dataset(
+                    logger,
+                    total_steps,
+                    offline_data,
+                    actor_critic.pi,
+                    actor_critic.q,
+                    rngs,
+                    num_days=13,
+                    plots_dir=exp_path / "plots",
+                )
             i += 1
 
         if total_steps >= max_steps:

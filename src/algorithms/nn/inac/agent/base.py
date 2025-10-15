@@ -1,12 +1,16 @@
 import os
-import time
+from collections import Counter
+from pathlib import Path
 
 import flashbax as fbx
 import jax
 import jax.numpy as jnp
-import numpy as np
+import matplotlib.pyplot as plt
 import orbax.checkpoint as ocp
+import pandas as pd
+import seaborn as sns
 from flax import nnx
+from gymnasium.spaces import Discrete
 from minari import MinariDataset
 
 
@@ -51,70 +55,225 @@ def fill_offline_data_to_buffer(dataset: MinariDataset, batch_size: int):
     return replay, replay_state
 
 
-def populate_returns(eval_env, _policy, pi, timeout: int, total_ep, rngs: nnx.Rngs):
-    ep_returns = np.zeros(total_ep)
-    for episode in range(total_ep):
-        ep_return = eval_episode(eval_env, _policy, pi, timeout, rngs=rngs)
-        ep_returns[episode] = ep_return
-    return ep_returns
+def evaluate_on_dataset(
+    logger,
+    total_steps: int,
+    dataset: MinariDataset,
+    pi: nnx.Module,
+    q: nnx.Module,
+    rngs: nnx.Rngs,
+    plots_dir: Path,
+    num_days: int,
+):
+    """
+    Evaluate policy and critic on offline dataset by analyzing behavior at different days.
 
+    Args:
+        logger: Logger instance
+        total_steps: Current training step
+        dataset: MinariDataset to evaluate on
+        pi: Policy network
+        q: Q-network
+        rngs: Random number generators
+        num_days: Number of days to analyze
+    """
+    # Collect states from each day across all episodes
+    day_states = [[] for _ in range(num_days)]
+    day_actions = [[] for _ in range(num_days)]
+    day_min_q_dataset = [None] * num_days
+    day_min_q_policy = [None] * num_days
 
-def eval_episode(eval_env, _policy, pi, timeout: int, rngs):
-    state = eval_env.reset()
-    total_rewards = 0
-    ep_steps = 0
-    done = False
-    while True:
-        action = eval_step(_policy, pi, state, rngs=rngs)
-        state, reward, done, _ = eval_env.step([action])
-        total_rewards += reward
-        ep_steps += 1
-        if done or ep_steps == timeout:
-            break
+    for episode in dataset.iterate_episodes():
+        episode_length = len(episode.observations) - 1
+        for t in range(episode_length):
+            observation = episode.observations[t]
+            # Extract normalized day from observation (index 1)
+            normalized_day = observation[1] if len(observation) > 1 else 0.0
+            # Convert normalized day back to day index (assuming day_min=0 for simplicity)
+            day_idx = int(normalized_day * (num_days - 1))
+            day_idx = min(max(day_idx, 0), num_days - 1)  # Clamp to valid range
 
-    return total_rewards
+            day_states[day_idx].append(observation)
+            day_actions[day_idx].append(episode.actions[t])
 
-
-def log_return(logger, total_steps, returns, name, elapsed_time):
-    total_episodes = len(returns)
-    mean, median, min_, max_ = (
-        np.mean(returns),
-        np.median(returns),
-        np.min(returns),
-        np.max(returns),
+    is_discrete = isinstance(dataset.action_space, Discrete)
+    num_actions = dataset.action_space.n if is_discrete else None
+    day_q_per_action = (
+        [[[] for _ in range(num_actions)] for _ in range(num_days)]
+        if is_discrete and num_actions is not None
+        else None
     )
 
-    logger.info(
-        f"{name} LOG: steps {total_steps}, episodes {total_episodes:3d}, "
-        f"returns {mean:.2f}/{median:.2f}/{min_:.2f}/{max_:.2f}/{len(returns)} (mean/median/min/max/num), {elapsed_time:.2f} steps/s"
-    )
-    return mean, median, min_, max_
+    @nnx.jit
+    def compute_evaluation(states, actions, pi, q, rngs):
+        predicted_actions, _ = pi(states, deterministic=True, rngs=rngs)
+        min_q_dataset, q1_dataset, q2_dataset = q(states, actions)
+        min_q_policy, q1_policy, q2_policy = q(states, predicted_actions)
+        return (
+            predicted_actions,
+            min_q_dataset,
+            q1_dataset,
+            q2_dataset,
+            min_q_policy,
+            q1_policy,
+            q2_policy,
+        )
 
+    @nnx.jit
+    def compute_q_min(states, actions, q):
+        min_q, _, _ = q(states, actions)
+        return min_q
 
-def evaluate(logger, total_steps, eval_env, _policy, pi, timeout, total_ep, rngs):
-    t0 = time.time()
-    returns = populate_returns(eval_env, _policy, pi, timeout, total_ep, rngs)
-    elapsed_time = time.time() - t0
-    log_return(
-        logger,
-        total_steps,
-        returns,
-        "TEST",
-        elapsed_time,
-    )
-    normalized = np.array(
-        [eval_env.env.unwrapped.get_normalized_score(ret_) for ret_ in returns]
-    )
-    mean, median, min_, max_ = log_return(
-        logger, total_steps, normalized, "Normalized", elapsed_time
-    )
-    return mean, median, min_, max_
+    logger.info(f"\n{'=' * 60}")
+    logger.info(f"DATASET EVALUATION at step {total_steps}")
+    logger.info(f"{'=' * 60}")
 
+    for d in range(num_days):
+        if not day_states[d]:
+            continue
 
-def eval_step(_policy, pi, state: np.ndarray, rngs: nnx.Rngs):
-    state = jnp.asarray(state)
-    a = _policy(pi, state, deterministic=True, rngs=rngs)
-    return np.asarray(a)
+        states = jnp.array(day_states[d])
+        actions = jnp.array(day_actions[d])
+
+        # Get policy predictions and Q-values (JIT compiled)
+        (
+            predicted_actions,
+            min_q_dataset,
+            q1_dataset,
+            q2_dataset,
+            min_q_policy,
+            q1_policy,
+            q2_policy,
+        ) = compute_evaluation(states, actions, pi, q, rngs)
+
+        # Store Q-values for plotting
+        day_min_q_dataset[d] = min_q_dataset
+        day_min_q_policy[d] = min_q_policy
+
+        # Calculate statistics
+        mean_predicted_action = predicted_actions.mean(axis=0)
+        std_predicted_action = predicted_actions.std(axis=0)
+        mean_dataset_action = actions.mean(axis=0)
+
+        mean_q_dataset = min_q_dataset.mean()
+        mean_q_policy = min_q_policy.mean()
+
+        logger.info(f"Day {d}:")
+        logger.info(f"  Samples: {len(states)}")
+
+        if is_discrete and num_actions is not None:
+            # Squeeze actions if they are in shape (N, 1)
+            if actions.ndim > 1 and actions.shape[1] == 1:
+                actions = actions.squeeze(axis=1)
+            if predicted_actions.ndim > 1 and predicted_actions.shape[1] == 1:
+                predicted_actions = predicted_actions.squeeze(axis=1)
+
+            # Compute Q-values for all actions in all states
+            q_all = jnp.stack(
+                [
+                    compute_q_min(
+                        states, jnp.full((states.shape[0],), i, dtype=jnp.int32), q
+                    )
+                    for i in range(num_actions)
+                ],
+                axis=1,
+            )  # (batch, num_actions)
+            if day_q_per_action is not None:
+                for i in range(num_actions):
+                    day_q_per_action[d][i] = q_all[:, i].tolist()
+
+            # Dataset action proportions
+            unique_dataset, counts_dataset = jnp.unique(
+                actions, return_counts=True, size=num_actions
+            )
+            props_dataset = counts_dataset / len(actions)
+            logger.info("  Dataset action proportions:")
+            for i, prop in enumerate(props_dataset):
+                if counts_dataset[i] > 0:
+                    logger.info(f"    Action {unique_dataset[i]}: {prop:.2f}")
+
+            # Policy action proportions
+            unique_policy, counts_policy = jnp.unique(
+                predicted_actions, return_counts=True, size=num_actions
+            )
+            props_policy = counts_policy / len(predicted_actions)
+            logger.info("  Policy action proportions:")
+            for i, prop in enumerate(props_policy):
+                if counts_policy[i] > 0:
+                    logger.info(f"    Action {unique_policy[i]}: {prop:.2f}")
+
+            # Q-values for each action
+            logger.info("  Q-values (dataset actions):")
+            for i in range(num_actions):
+                if counts_dataset[i] > 0:
+                    action_mask = actions == unique_dataset[i]
+                    q_vals = q_all[action_mask, i]
+                    logger.info(f"    Action {unique_dataset[i]}: {q_vals.mean():.3f}")
+
+        else:  # Continuous actions
+            logger.info(f"  Dataset action mean: {mean_dataset_action}")
+            logger.info(f"  Policy action mean:  {mean_predicted_action}")
+            logger.info(f"  Policy action std:   {std_predicted_action}")
+            logger.info(f"  Q-value (dataset actions): {mean_q_dataset:.3f}")
+            logger.info(f"  Q-value (policy actions):  {mean_q_policy:.3f}")
+            logger.info(
+                f"  Q-value difference:        {(mean_q_policy - mean_q_dataset):.3f}"
+            )
+
+    logger.info(f"{'=' * 60}\n")
+
+    # Generate plots of Q-values per action for discrete actions
+    if is_discrete and num_actions is not None and day_q_per_action is not None:
+        # Bar plots with 95% CI
+        fig, axes = plt.subplots(num_days, 1, figsize=(8, 4 * num_days))
+        if num_days == 1:
+            axes = [axes]
+        for d in range(num_days):
+            data = []
+            for i in range(num_actions):
+                if day_q_per_action[d][i]:  # Check if list is not empty
+                    for val in day_q_per_action[d][i]:
+                        data.append({"action": i, "q": float(val)})
+            if data:
+                df = pd.DataFrame(data)
+                sns.barplot(
+                    data=df,
+                    x="action",
+                    y="q",
+                    ci=95,
+                    capsize=0.1,
+                    palette=["red", "white", "blue"],
+                    ax=axes[d],
+                )
+                # Add border to white bar
+                for patch in axes[d].patches:
+                    if patch.get_facecolor()[:3] == (1.0, 1.0, 1.0):  # white bar
+                        patch.set_edgecolor("black")
+                        patch.set_linewidth(1)
+                axes[d].set_title(
+                    f"Mean Q-values with 95% CI at Day {d} (n={len(day_states[d])})"
+                )
+                axes[d].set_xlabel("Action")
+                axes[d].set_ylabel("Q-value")
+                actions_array = jnp.array(day_actions[d])
+                if actions_array.ndim > 1 and actions_array.shape[1] == 1:
+                    actions_array = actions_array.squeeze(axis=1)
+                action_counts = Counter(actions_array.tolist())
+                counts = [action_counts.get(i, 0) for i in range(num_actions)]
+                labels = [
+                    f"{name} (n={count})"
+                    for name, count in zip(
+                        ["Red", "White", "Blue"], counts, strict=True
+                    )
+                ]
+                axes[d].set_xticklabels(labels)
+            else:
+                axes[d].set_title(f"No data at Day {d}")
+        plt.tight_layout()
+        plt.savefig(os.path.join(plots_dir, f"q_bar_step_{total_steps}.png"))
+        plt.close()
+
+    return None
 
 
 def save(module: nnx.Module, optimizers: nnx.Module, parameters_dir):
