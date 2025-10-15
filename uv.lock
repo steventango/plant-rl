@@ -679,6 +679,24 @@ wheels = [
 ]
 
 [[package]]
+name = "distrax"
+version = "0.1.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "absl-py" },
+    { name = "chex" },
+    { name = "jax" },
+    { name = "jaxlib" },
+    { name = "numpy" },
+    { name = "setuptools", marker = "python_full_version >= '3.12'" },
+    { name = "tensorflow-probability" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/81/a7/d87f5c5caf2ae9e28a9f506274870c25eb7e38c1ce0a1b7b3696afc73ac9/distrax-0.1.5.tar.gz", hash = "sha256:ec41522d389af69efedc8d475a7e6d8f229429c00f2140dcd641feacf7e21948", size = 190162, upload-time = "2023-11-22T12:53:44.836Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d8/42/efa7985eefd516f273bc5557550539ebd687cc6a3a2a176d5e1f5b0398ca/distrax-0.1.5-py3-none-any.whl", hash = "sha256:5020f4b53a9a480d019c12e44292fbacb7de857cce478bc594dacf29519c61b7", size = 319716, upload-time = "2023-11-22T12:53:42.449Z" },
+]
+
+[[package]]
 name = "distributed"
 version = "2025.5.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2995,6 +3013,7 @@ dependencies = [
     { name = "aiohttp-retry" },
     { name = "ale-py" },
     { name = "chex" },
+    { name = "distrax" },
     { name = "dm-haiku" },
     { name = "flashbax" },
     { name = "foragerenv" },
@@ -3045,6 +3064,7 @@ requires-dist = [
     { name = "aiohttp-retry" },
     { name = "ale-py" },
     { name = "chex", specifier = ">=0.1.5" },
+    { name = "distrax", specifier = ">=0.1.5" },
     { name = "dm-haiku", specifier = ">=0.0.4" },
     { name = "foragerenv", git = "https://github.com/andnp/forager" },
     { name = "gpjax", specifier = ">=0.9.5" },

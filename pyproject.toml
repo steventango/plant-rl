@@ -52,6 +52,7 @@ dependencies = [
     'jinja2',
     "gpjax>=0.9.5",
     "flashbax>=0.1.3",
+    "distrax>=0.1.5",
 ]
 
 [dependency-groups]
