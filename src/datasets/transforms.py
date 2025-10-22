@@ -1,8 +1,31 @@
 from itertools import product
 
+import numpy as np
 import polars as pl
 
 from datasets.config import BLUE, RED, WHITE
+
+
+def compute_action_coefficients(action: np.ndarray) -> np.ndarray:
+    """
+    Derive action coefficients by projecting action onto the basis spanned by RED, WHITE, BLUE.
+
+    Solves: action ≈ coef[0] * RED + coef[1] * WHITE + coef[2] * BLUE
+
+    Args:
+        action: Array of shape (6,) representing the action vector
+
+    Returns:
+        coefficients: Array of shape (3,) with [red_coef, white_coef, blue_coef]
+    """
+    # Create basis matrix where each column is a basis vector
+    basis = np.column_stack([RED, WHITE, BLUE])  # Shape: (6, 3)
+
+    # Solve least squares: basis @ coefficients = action
+    # This finds coefficients that minimize ||action - basis @ coefficients||^2
+    coefficients, residuals, rank, s = np.linalg.lstsq(basis, action, rcond=None)
+
+    return coefficients
 
 
 def transform_action(df: pl.DataFrame) -> pl.DataFrame:
@@ -54,6 +77,28 @@ def transform_action(df: pl.DataFrame) -> pl.DataFrame:
         .list.eval(pl.element().abs())
         .list.sum(),
     )
+
+    # Compute continuous action coefficients using least squares projection
+    def compute_coefficients_for_row(action_list):
+        if action_list is None or len(action_list) != 6:
+            return None
+        action = np.array(action_list, dtype=np.float64)
+        coeffs = compute_action_coefficients(action)
+        return coeffs.tolist()
+
+    df2 = df2.with_columns(
+        pl.col("action")
+        .map_elements(compute_coefficients_for_row, return_dtype=pl.List(pl.Float64))
+        .alias("action_coefficients")
+    )
+
+    # Extract individual coefficients
+    df2 = df2.with_columns(
+        pl.col("action_coefficients").list.get(0).alias("red_coef"),
+        pl.col("action_coefficients").list.get(1).alias("white_coef"),
+        pl.col("action_coefficients").list.get(2).alias("blue_coef"),
+    )
+
     eps = 0.1
     df2 = df2.with_columns(
         pl.when(pl.col("red_diff") < eps)
@@ -66,7 +111,15 @@ def transform_action(df: pl.DataFrame) -> pl.DataFrame:
         .alias("discrete_action")
     )
     df = df.join(
-        df2.select(["time", "plant_id", "discrete_action"]),
+        df2.select([
+            "time",
+            "plant_id",
+            "discrete_action",
+            "action_coefficients",
+            "red_coef",
+            "white_coef",
+            "blue_coef"
+        ]),
         on=["time", "plant_id"],
         how="left",
     )
@@ -95,6 +148,9 @@ def transform_action_traces(df):
         "action.3",
         "action.4",
         "action.5",
+        "red_coef",
+        "white_coef",
+        "blue_coef",
     ]
     alphas = [0.5]
     for col, alpha in product(action_cols, alphas):

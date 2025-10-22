@@ -1,3 +1,4 @@
+import glob
 from datetime import datetime, time
 from pathlib import Path
 
@@ -16,7 +17,9 @@ from datasets.transforms import (
 dfs = []
 for exp_id_zone_id, good_days in GOOD_ZONE_DAYS.items():
     exp_id, zone_id = map(int, exp_id_zone_id[1:].split("/zone"))
-    data_path = f"/data/online/E{exp_id}/P1/DiscreteRandom{zone_id}/alliance-zone{zone_id:02}/raw.csv"
+    data_glob = f"/data/online/E{exp_id}/P1/*{zone_id}/alliance-zone{zone_id:02}/raw.csv"
+    data_path = glob.glob(data_glob)[0]  # Take the first matching file
+    # data_path = f
     df = pl.read_csv(data_path, try_parse_dates=True)
     df = df.with_columns(pl.col("time").dt.convert_time_zone(TIMEZONE))
     df = df.with_columns(pl.col("time").dt.replace(second=0, microsecond=0))
@@ -65,13 +68,17 @@ for exp_id_zone_id, good_days in GOOD_ZONE_DAYS.items():
         ),
     )
     df = df.with_columns(pl.col("day").is_in(good_days).alias("is_good_day"))
-    print(df.select("time", "mean_clean_area", "discrete_action", "reward").describe())
+    print(df.select("time", "mean_clean_area", "red_coef", "white_coef", "blue_coef", "reward").describe())
     df = df.with_columns(
-        (pl.col("time") == df["time"].max()).alias("terminal"),
+        (pl.col("time") == df["time"].max()).alias("truncated"),
     )
+    df = df.with_columns(
+        (pl.col("day") == 13).alias("terminal"),
+    )
+    print(f"E{exp_id}/zone{zone_id}: day min {df['day'].min()}, max {df['day'].max()}")
     dfs.append(df)
 
-df = pl.concat(dfs).sort("experiment", "zone", "plant_id", "time")
+df = pl.concat(dfs, how="diagonal_relaxed").sort("experiment", "zone", "plant_id", "time")
 print(df.head())
 df_daily = df.filter(pl.col("time").dt.time() == time(9, 30, tzinfo=tzinfo))
 df_daily = df_daily.filter(pl.col("is_good_day"))
@@ -87,18 +94,20 @@ df_daily = df_daily.with_columns(
     ).alias("reward"),
 )
 df_daily = df_daily.drop("prev_clean_area")
-# drop rows with outlier change outside 5%, 95% percentiles
-percentile = 0.05
-q5 = df_daily["reward"].quantile(percentile)
-q95 = df_daily["reward"].quantile(1 - percentile)
+# compute action traces for daily data
+df_daily = transform_action_traces(df_daily)
+# drop rows with outlier change outside 1%, 99% percentiles
+percentile = 0.01
+ql = df_daily["reward"].quantile(percentile)
+qu = df_daily["reward"].quantile(1 - percentile)
 df_daily_filtered = df_daily.filter(
-    (pl.col("reward") >= q5) & (pl.col("reward") <= q95)
+    (pl.col("reward") >= ql) & (pl.col("reward") <= qu)
 )
 print(
     f"dropped {df_daily.height - df_daily_filtered.height} / {df_daily.height} daily rows as outliers"
 )
 print(df_daily_filtered.select("reward").describe())
-print(df_daily_filtered[["time", "discrete_action", "reward"]])
+print(df_daily_filtered[["time", "red_coef", "white_coef", "blue_coef", "reward"]])
 
 # add terminal flags to daily filtered
 df_daily_filtered = df_daily_filtered.with_columns(
@@ -106,7 +115,8 @@ df_daily_filtered = df_daily_filtered.with_columns(
     .shift(-1)
     .over("experiment", "zone", "plant_id")
     .is_null()
-    .alias("terminal"),
+    # .alias("terminal"),
+    .alias("truncated"),
 )
 
 # add truncated flags for gaps due to outlier removal
@@ -123,19 +133,16 @@ df_daily_filtered = df_daily_filtered.drop("next_time")
 
 # save to parquet
 Path("/data/offline").mkdir(parents=True, exist_ok=True)
-df.write_parquet("/data/offline/cleaned_offline_dataset.parquet")
-df_daily_filtered.write_parquet("/data/offline/cleaned_offline_dataset_daily.parquet")
+df.write_parquet("/data/offline/cleaned_offline_dataset_continuous.parquet")
+df_daily_filtered.write_parquet("/data/offline/cleaned_offline_dataset_daily_continuous.parquet")
 
-mock_env = MockEnv(df_daily_filtered)
+# Create continuous action dataset
+mock_env = MockEnv(df_daily_filtered, use_continuous_actions=True)
 env = DataCollector(mock_env, record_infos=True)
 
 # Run episodes until environment indicates all data has been processed
 while not mock_env.is_done():
     obs, info = env.reset(seed=0)
-
-    # Check if reset indicates we're done
-    if info["done"]:
-        break
 
     while True:
         action = info["action"]
@@ -145,9 +152,15 @@ while not mock_env.is_done():
             break
 
 dataset = env.create_dataset(
-    dataset_id="plant-rl/discrete-v4",
+    dataset_id="plant-rl/continuous-v8",
     algorithm_name="Random-Policy",
     code_permalink="https://github.com/steventango/plant-rl",
     author="Steven Tang",
     author_email="stang5@ualberta.ca",
 )
+
+print(f"Continuous action dataset created: {dataset.id}")
+print(f"Dataset statistics:")
+print(f"  Total episodes: {len(list(dataset.iterate_episodes()))}")
+print(f"  Observation space: {mock_env.observation_space}")
+print(f"  Action space: {mock_env.action_space}")
