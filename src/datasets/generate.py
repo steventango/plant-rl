@@ -160,7 +160,7 @@ dataset = env.create_dataset(
 )
 
 print(f"Continuous action dataset created: {dataset.id}")
-print(f"Dataset statistics:")
+print("Dataset statistics:")
 print(f"  Total episodes: {len(list(dataset.iterate_episodes()))}")
 print(f"  Observation space: {mock_env.observation_space}")
 print(f"  Action space: {mock_env.action_space}")

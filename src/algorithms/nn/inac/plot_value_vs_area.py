@@ -67,7 +67,9 @@ def get_area_normalization_params():
         if clean_area_min is not None and clean_area_max is not None:
             area_min = float(clean_area_min)  # type: ignore[arg-type]
             area_max = float(clean_area_max)  # type: ignore[arg-type]
-            print(f"Loaded normalization params: min={area_min:.3f}, max={area_max:.3f}")
+            print(
+                f"Loaded normalization params: min={area_min:.3f}, max={area_max:.3f}"
+            )
             return area_min, area_max
         else:
             raise ValueError("Min/max values are None")
@@ -76,6 +78,7 @@ def get_area_normalization_params():
         print("Using default normalization parameters")
         # Fallback values if parquet is not available
         return 0.0, 1.0
+
 
 def plot_value_vs_area(
     areas: np.ndarray,
@@ -98,7 +101,6 @@ def plot_value_vs_area(
         bin_size: Size of bins in mm² (default: 10.0)
     """
     action_names = ["Red", "White", "Blue"]
-    action_colors = ["red", "gray", "blue"]
 
     # Unnormalize areas
     areas_unnorm = areas * (area_max - area_min) + area_min
@@ -114,7 +116,9 @@ def plot_value_vs_area(
         next_areas_action = q_values_action * areas_unnorm + areas_unnorm
 
         # Create bins for current area
-        area_bins = np.arange(areas_unnorm.min(), areas_unnorm.max() + bin_size, bin_size)
+        area_bins = np.arange(
+            areas_unnorm.min(), areas_unnorm.max() + bin_size, bin_size
+        )
         bin_centers = area_bins[:-1] + bin_size / 2
 
         # Assign each data point to a bin
@@ -123,17 +127,19 @@ def plot_value_vs_area(
         # Create DataFrame entries
         for i in range(len(areas_unnorm)):
             if 0 <= bin_indices[i] < len(bin_centers):
-                data_list.append({
-                    'Current Area (mm²)': bin_centers[bin_indices[i]],
-                    'Next Area (mm²)': next_areas_action[i],
-                    'Action': action_names[action_idx]
-                })
+                data_list.append(
+                    {
+                        "Current Area (mm²)": bin_centers[bin_indices[i]],
+                        "Next Area (mm²)": next_areas_action[i],
+                        "Action": action_names[action_idx],
+                    }
+                )
 
     df = pd.DataFrame(data_list)
 
     print(f"Created dataframe with {len(df)} rows")
     print(f"Bins: {bin_size} mm² bins")
-    print(f"Data points per action:")
+    print("Data points per action:")
     for action in action_names:
         print(f"  {action}: {len(df[df['Action'] == action])}")
 
@@ -143,12 +149,12 @@ def plot_value_vs_area(
     # Plot with seaborn lineplot (automatically computes bootstrap CI)
     sns.lineplot(
         data=df,
-        x='Current Area (mm²)',
-        y='Next Area (mm²)',
-        hue='Action',
-        palette={'Red': 'red', 'White': 'gray', 'Blue': 'blue'},
-        errorbar=('ci', 95),  # 95% bootstrap confidence interval
-        err_style='band',
+        x="Current Area (mm²)",
+        y="Next Area (mm²)",
+        hue="Action",
+        palette={"Red": "red", "White": "gray", "Blue": "blue"},
+        errorbar=("ci", 95),  # 95% bootstrap confidence interval
+        err_style="band",
         linewidth=2.5,
         ax=ax,
         n_boot=1000,  # Number of bootstrap samples
@@ -156,11 +162,16 @@ def plot_value_vs_area(
 
     # Add identity line (y=x) for reference
     area_range = [areas_unnorm.min(), areas_unnorm.max()]
-    ax.plot(area_range, area_range, 'k--', alpha=0.3, linewidth=1.5, label='No growth (y=x)')
+    ax.plot(
+        area_range, area_range, "k--", alpha=0.3, linewidth=1.5, label="No growth (y=x)"
+    )
 
     ax.set_xlabel("Current Plant Area (mm²)", fontsize=14)
     ax.set_ylabel("Next Plant Area (mm²)", fontsize=14)
-    ax.set_title(f"Predicted Next Plant Area vs Current Plant Area by Action\n(Binned every {bin_size} mm² with 95% Bootstrap CI)", fontsize=16)
+    ax.set_title(
+        f"Predicted Next Plant Area vs Current Plant Area by Action\n(Binned every {bin_size} mm² with 95% Bootstrap CI)",
+        fontsize=16,
+    )
     ax.legend(loc="best", fontsize=12)
     ax.grid(True, alpha=0.3)
 
@@ -168,6 +179,8 @@ def plot_value_vs_area(
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
     print(f"Plot saved to {output_path}")
     plt.close()
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Load checkpoint and plot value as a function of area"
@@ -175,7 +188,7 @@ def main():
     parser.add_argument(
         "--checkpoint_dir",
         type=str,
-        required=True,
+        default="src/algorithms/nn/inac/data/JAX/output/plant-rl/continuous-v3/continuous_v0/0_run",
         help="Path to checkpoint directory (contains 'parameters' subdirectory)",
     )
     parser.add_argument(
@@ -187,24 +200,24 @@ def main():
     parser.add_argument(
         "--dataset",
         type=str,
-        default="plant-rl/discrete-v5",
+        default="plant-rl/continuous-v3",
         help="Dataset name to load observations from",
     )
     parser.add_argument("--seed", type=int, default=0, help="Random seed")
+    parser.add_argument("--state_dim", type=int, default=7, help="State dimension")
+    parser.add_argument("--action_dim", type=int, default=3, help="Action dimension")
+    parser.add_argument("--hidden_units", type=int, default=256, help="Hidden units")
     parser.add_argument(
-        "--state_dim", type=int, default=5, help="State dimension"
+        "--discrete_control",
+        action="store_true",
+        default=True,
+        help="Use discrete control",
     )
     parser.add_argument(
-        "--action_dim", type=int, default=3, help="Action dimension"
-    )
-    parser.add_argument(
-        "--hidden_units", type=int, default=256, help="Hidden units"
-    )
-    parser.add_argument(
-        "--discrete_control", action="store_true", default=True, help="Use discrete control"
-    )
-    parser.add_argument(
-        "--bin_size", type=float, default=10.0, help="Bin size in mm² for aggregating data (default: 10.0)"
+        "--bin_size",
+        type=float,
+        default=10.0,
+        help="Bin size in mm² for aggregating data (default: 10.0)",
     )
 
     args = parser.parse_args()
@@ -266,11 +279,9 @@ def main():
 
         # Load with target structure
         import orbax.checkpoint as ocp
+
         with ocp.StandardCheckpointer() as checkpointer:
-            ckpt = checkpointer.restore(
-                str(parameters_dir / "default"),
-                target
-            )
+            ckpt = checkpointer.restore(str(parameters_dir / "default"), target)
 
         # Merge back
         actor_critic = nnx.merge(ckpt["module_graphdef"], ckpt["module_state"])
@@ -287,7 +298,9 @@ def main():
 
     print(f"Loaded {len(states)} states from dataset")
     print(f"  Normalized area range: {areas.min():.3f} - {areas.max():.3f}")
-    print(f"  Action distribution: Red={np.sum(actions==0)}, White={np.sum(actions==1)}, Blue={np.sum(actions==2)}")
+    print(
+        f"  Action distribution: Red={np.sum(actions == 0)}, White={np.sum(actions == 1)}, Blue={np.sum(actions == 2)}"
+    )
 
     # Get normalization parameters
     print("Getting normalization parameters...")
@@ -312,9 +325,13 @@ def main():
     # Stack Q-values: shape (num_actions, num_states)
     q_values_by_action = np.stack(q_values_by_action, axis=0)
 
-    print(f"Q-value range across all actions: {q_values_by_action.min():.3f} - {q_values_by_action.max():.3f}")
+    print(
+        f"Q-value range across all actions: {q_values_by_action.min():.3f} - {q_values_by_action.max():.3f}"
+    )
     for action_idx in range(num_actions):
-        print(f"  Action {action_idx}: {q_values_by_action[action_idx].min():.3f} - {q_values_by_action[action_idx].max():.3f}")
+        print(
+            f"  Action {action_idx}: {q_values_by_action[action_idx].min():.3f} - {q_values_by_action[action_idx].max():.3f}"
+        )
 
     # Create output directory if needed
     output_path = checkpoint_dir / args.output

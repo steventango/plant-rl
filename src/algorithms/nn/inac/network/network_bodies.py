@@ -46,7 +46,7 @@ class FCBody(nnx.Module):
                     bias_init=bias_init,
                     rngs=rngs,
                 )
-                for dim_in, dim_out in zip(dims[:-1], dims[1:])
+                for dim_in, dim_out in zip(dims[:-1], dims[1:], strict=True)
             ]
         )
         self.activation = activation

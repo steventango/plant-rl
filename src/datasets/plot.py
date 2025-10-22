@@ -84,7 +84,7 @@ def main():
     palette = {"0": "red", "1": "white", "2": "blue", "nan": "gray"}
 
     # boxplot to show distribution per action (use custom palette)
-    ax = sns.violinplot(x=action_col, y=reward_col, data=pdf, palette=palette)
+    sns.violinplot(x=action_col, y=reward_col, data=pdf, palette=palette)
 
     # overlay mean reward per action as a pointplot with 95% CI
     sns.pointplot(
