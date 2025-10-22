@@ -132,7 +132,7 @@ def transform_reward(df):
     )
     df = df.with_columns(
         (
-            (pl.col("clean_area") - pl.col("clean_area")) / pl.col("prev_clean_area")
+            (pl.col("clean_area") - pl.col("prev_clean_area")) / pl.col("prev_clean_area")
         ).alias("reward"),
     )
     df = df.drop("prev_clean_area")
