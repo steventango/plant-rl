@@ -3,12 +3,12 @@
 
 # Array of zones to turn off
 hostnames=(
-  mitacs-zone1.ccis.ualberta.ca
-  mitacs-zone2.ccis.ualberta.ca
-  mitacs-zone3.ccis.ualberta.ca
-  mitacs-zone6.ccis.ualberta.ca
-  mitacs-zone8.ccis.ualberta.ca
-  mitacs-zone9.ccis.ualberta.ca
+  # mitacs-zone1.ccis.ualberta.ca
+  # mitacs-zone2.ccis.ualberta.ca
+  # mitacs-zone3.ccis.ualberta.ca
+  # mitacs-zone6.ccis.ualberta.ca
+  # mitacs-zone8.ccis.ualberta.ca
+  # mitacs-zone9.ccis.ualberta.ca
   42.244.191.26
   42.244.191.27
   42.244.191.28
