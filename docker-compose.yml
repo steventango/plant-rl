@@ -16,7 +16,7 @@ services:
       - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E13/P1/Dirichlet1.json -i 13 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E14/P0/Spreadsheet1.json -i 25 --deploy
     deploy:
       resources:
         reservations:
@@ -42,7 +42,7 @@ services:
       - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E13/P1/Dirichlet2.json -i 14 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E14/P0/Spreadsheet2.json -i 26 --deploy
     deploy:
       resources:
         reservations:
@@ -69,7 +69,7 @@ services:
       - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E13/P1/Dirichlet3.json -i 15 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E14/P0/Spreadsheet3.json -i 27 --deploy
     deploy:
       resources:
         reservations:
@@ -96,7 +96,7 @@ services:
       - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E13/P1/Dirichlet4.json -i 16 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E14/P0/Spreadsheet4.json -i 28 --deploy
     deploy:
       resources:
         reservations:
@@ -123,7 +123,7 @@ services:
       - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E13/P1/Dirichlet5.json -i 17 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E14/P0/Spreadsheet5.json -i 29 --deploy
     deploy:
       resources:
         reservations:
@@ -150,7 +150,7 @@ services:
       - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E13/P1/Dirichlet6.json -i 18 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E14/P0/Spreadsheet6.json -i 30 --deploy
     deploy:
       resources:
         reservations:
@@ -177,7 +177,7 @@ services:
       - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E13/P1/Dirichlet7.json -i 19 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E14/P0/Spreadsheet7.json -i 31 --deploy
     deploy:
       resources:
         reservations:
@@ -204,7 +204,7 @@ services:
       - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E13/P1/Dirichlet8.json -i 20 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E14/P0/Spreadsheet8.json -i 32 --deploy
     deploy:
       resources:
         reservations:
@@ -231,7 +231,7 @@ services:
       - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E13/P1/Dirichlet9.json -i 21 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E14/P0/Spreadsheet9.json -i 33 --deploy
     deploy:
       resources:
         reservations:
@@ -258,7 +258,7 @@ services:
       - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E13/P1/Dirichlet10.json -i 22 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E14/P0/Spreadsheet10.json -i 34 --deploy
     deploy:
       resources:
         reservations:
@@ -285,7 +285,7 @@ services:
       - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E13/P1/Dirichlet11.json -i 23 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E14/P0/Spreadsheet11.json -i 35 --deploy
     deploy:
       resources:
         reservations:
@@ -312,7 +312,7 @@ services:
       - ~/.netrc:/root/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E13/P1/Dirichlet12.json -i 24 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E14/P0/Spreadsheet12.json -i 36 --deploy
     deploy:
       resources:
         reservations:
