@@ -12,7 +12,6 @@ from algorithms.linear.LinearQL import LinearQL
 from algorithms.motion_tracking.MotionTrackingController import MotionTrackingController
 from algorithms.nn.DQN import DQN
 from algorithms.nn.DynamicBatchDQN import DynamicBatchDQN
-from algorithms.nn.EQRC import EQRC
 from algorithms.nn.GreedyAC.GreedyAC import GreedyAC
 from algorithms.PoissonAgent import PoissonAgent
 from algorithms.SequenceAgent import SequenceAgent
@@ -35,9 +34,6 @@ def getAgent(name) -> Type[BaseAgent]:
 
     if name == "LinearDynamicBatchDQN":
         return LinearDynamicBatchDQN
-
-    if name == "EQRC":
-        return EQRC
 
     if name.startswith("ESARSA"):
         return ESARSA
