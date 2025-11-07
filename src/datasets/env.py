@@ -8,7 +8,12 @@ from gymnasium.core import ObsType
 
 
 class MockEnv(gym.Env):
-    def __init__(self, df: pl.DataFrame, include_action_traces: bool = True, use_continuous_actions: bool = False):
+    def __init__(
+        self,
+        df: pl.DataFrame,
+        include_action_traces: bool = True,
+        use_continuous_actions: bool = False,
+    ):
         super().__init__()
         self.df = df.sort("experiment", "zone", "plant_id", "time")
         self.episode_keys = (
@@ -30,8 +35,12 @@ class MockEnv(gym.Env):
         # Compute global min and max for clean_area normalization
         clean_area_min = df["clean_area"].min()
         clean_area_max = df["clean_area"].max()
-        self.clean_area_min = float(clean_area_min) if clean_area_min is not None else 0.0  # type: ignore
-        self.clean_area_max = float(clean_area_max) if clean_area_max is not None else 1.0  # type: ignore
+        self.clean_area_min = (
+            float(clean_area_min) if clean_area_min is not None else 0.0
+        )  # type: ignore
+        self.clean_area_max = (
+            float(clean_area_max) if clean_area_max is not None else 1.0
+        )  # type: ignore
         # Compute global min and max for day normalization
         day_min = df["day"].min()
         day_max = df["day"].max()
@@ -85,9 +94,15 @@ class MockEnv(gym.Env):
                 prev_row = self.plant_df.slice(self.current_row_index - 1, 1)
                 if not prev_row.is_empty():
                     action_values = [
-                        prev_row["red_coef"][0] if prev_row["red_coef"][0] is not None else 0.0,
-                        prev_row["white_coef"][0] if prev_row["white_coef"][0] is not None else 0.0,
-                        prev_row["blue_coef"][0] if prev_row["blue_coef"][0] is not None else 0.0,
+                        prev_row["red_coef"][0]
+                        if prev_row["red_coef"][0] is not None
+                        else 0.0,
+                        prev_row["white_coef"][0]
+                        if prev_row["white_coef"][0] is not None
+                        else 0.0,
+                        prev_row["blue_coef"][0]
+                        if prev_row["blue_coef"][0] is not None
+                        else 0.0,
                     ]
                     if self.include_action_traces:
                         action_trace_05 = [
@@ -158,7 +173,9 @@ class MockEnv(gym.Env):
         if self.use_continuous_actions:
             # Return continuous action coefficients
             red_coef = row["red_coef"][0] if row["red_coef"][0] is not None else 0.0
-            white_coef = row["white_coef"][0] if row["white_coef"][0] is not None else 0.0
+            white_coef = (
+                row["white_coef"][0] if row["white_coef"][0] is not None else 0.0
+            )
             blue_coef = row["blue_coef"][0] if row["blue_coef"][0] is not None else 0.0
             return np.array([red_coef, white_coef, blue_coef], dtype=np.float32)
         else:
@@ -224,7 +241,9 @@ class MockEnv(gym.Env):
 
         reward = float(row["reward"][0]) if row["reward"][0] is not None else 0.0
         terminal = bool(row["terminal"][0]) if row["terminal"][0] is not None else False
-        truncated = bool(row["truncated"][0]) if row["truncated"][0] is not None else False
+        truncated = (
+            bool(row["truncated"][0]) if row["truncated"][0] is not None else False
+        )
 
         # Move to next row
         self.current_row_index += 1
