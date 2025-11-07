@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 """
 Plot reward as a function of discrete action.
-
-Usage:
-  python plot.py --parquet /data/offline/cleaned_offline_dataset_daily.parquet \
-                 --action-col action --reward-col reward --out reward_by_action.png
 """
+
 import argparse
 import logging
 import sys
@@ -26,13 +23,30 @@ def find_column(df: pl.DataFrame, candidates):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Plot reward vs discrete action from a parquet dataset.")
-    parser.add_argument("--parquet", "-p", default="/data/offline/cleaned_offline_dataset_daily.parquet",
-                        help="Path to parquet file (default: %(default)s)")
-    parser.add_argument("--action-col", "-a", default="discrete_action", help="Column name for discrete action")
-    parser.add_argument("--reward-col", "-r", default="reward", help="Column name for reward")
-    parser.add_argument("--out", "-o", default="reward_by_action.png", help="Output image path")
-    parser.add_argument("--show", action="store_true", help="Show the plot interactively")
+    parser = argparse.ArgumentParser(
+        description="Plot reward vs discrete action from a parquet dataset."
+    )
+    parser.add_argument(
+        "--parquet",
+        "-p",
+        default="/data/offline/cleaned_offline_dataset_daily.parquet",
+        help="Path to parquet file (default: %(default)s)",
+    )
+    parser.add_argument(
+        "--action-col",
+        "-a",
+        default="discrete_action",
+        help="Column name for discrete action",
+    )
+    parser.add_argument(
+        "--reward-col", "-r", default="reward", help="Column name for reward"
+    )
+    parser.add_argument(
+        "--out", "-o", default="reward_by_action.png", help="Output image path"
+    )
+    parser.add_argument(
+        "--show", action="store_true", help="Show the plot interactively"
+    )
     args = parser.parse_args()
 
     try:
@@ -43,28 +57,42 @@ def main():
         sys.exit(1)
 
     # detect common column names if not provided
-    action_candidates = ["action", "actions", "discrete_action", "action_id", "action_idx", "act"]
+    action_candidates = [
+        "action",
+        "actions",
+        "discrete_action",
+        "action_id",
+        "action_idx",
+        "act",
+    ]
     reward_candidates = ["reward", "rewards", "return", "score"]
     action_col = args.action_col or find_column(df, action_candidates)
     reward_col = args.reward_col or find_column(df, reward_candidates)
 
     if action_col is None or reward_col is None:
         logging.error("Could not find action or reward columns automatically.")
-        logging.info("Available columns: %s", df.columns)
+        logging.info(f"Available columns: {df.columns}")
         logging.info("Provide --action-col and --reward-col to override.")
         sys.exit(1)
 
-    logging.info("Using action column: %s, reward column: %s", action_col, reward_col)
+    logging.info(f"Using action column: {action_col}, reward column: {reward_col}")
 
     # sort by time to ensure correct shifting
     df = df.sort("time", "experiment", "zone", "plant_id")
-    df = df.with_columns(pl.col(reward_col).shift(-1).over("experiment", "zone", "plant_id").alias(reward_col))
+    df = df.with_columns(
+        pl.col(reward_col)
+        .shift(-1)
+        .over("experiment", "zone", "plant_id")
+        .alias(reward_col)
+    )
     # convert to pandas for seaborn
     pdf = df[[action_col, reward_col]].to_pandas()
 
     # Ensure action is treated as a discrete/categorical variable
     # Convert category values to strings so palette keys match reliably
-    if pd.api.types.is_integer_dtype(pdf[action_col]) or pd.api.types.is_numeric_dtype(pdf[action_col]):
+    if pd.api.types.is_integer_dtype(pdf[action_col]) or pd.api.types.is_numeric_dtype(
+        pdf[action_col]
+    ):
         # If floats but represent discrete integers, convert safely
         if pd.api.types.is_float_dtype(pdf[action_col]):
             # check if values are integers
@@ -78,7 +106,7 @@ def main():
     pdf[action_col] = pdf[action_col].astype(str).astype("category")
 
     plt.figure(figsize=(10, 6))
-    sns.set(style="whitegrid")
+    sns.set_theme(style="whitegrid")
 
     # define palette: 0 -> red, 1 -> white, 2 -> blue
     palette = {"0": "red", "1": "white", "2": "blue", "nan": "gray"}
@@ -92,10 +120,10 @@ def main():
         y=reward_col,
         data=pdf,
         estimator="mean",
-        errorbar=('ci', 95),
+        errorbar=("ci", 95),
         color="black",
         capsize=0.1,
-        errwidth=1
+        errwidth=1,
     )
 
     plt.title("Reward by Discrete Action")
