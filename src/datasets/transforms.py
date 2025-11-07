@@ -111,15 +111,17 @@ def transform_action(df: pl.DataFrame) -> pl.DataFrame:
         .alias("discrete_action")
     )
     df = df.join(
-        df2.select([
+        df2.select(
+            [
             "time",
             "plant_id",
             "discrete_action",
             "action_coefficients",
             "red_coef",
             "white_coef",
-            "blue_coef"
-        ]),
+                "blue_coef",
+            ]
+        ),
         on=["time", "plant_id"],
         how="left",
     )
@@ -132,7 +134,8 @@ def transform_reward(df):
     )
     df = df.with_columns(
         (
-            (pl.col("clean_area") - pl.col("prev_clean_area")) / pl.col("prev_clean_area")
+            (pl.col("clean_area") - pl.col("prev_clean_area"))
+            / pl.col("prev_clean_area")
         ).alias("reward"),
     )
     df = df.drop("prev_clean_area")
