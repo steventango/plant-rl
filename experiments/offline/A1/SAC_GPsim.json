@@ -1,0 +1,23 @@
+{
+    "agent": "Dirichlet",
+    "problem": "GPsim",
+    "total_steps": 10000,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment":{
+            "stochastic_pred": true,
+            "optimism": 1,
+            "episode_length": 13
+        },
+        "alpha": [1e-2, 1e-1, 1e0], 
+        "epsilon": [0.05, 0.10],
+        "lambda": [0.0],
+        
+        "representation": {
+            "which_tc": "RichTileCoder",
+            "strategy": "default",
+            "tiles": 4,
+            "tilings": 16
+        }
+    }
+}
