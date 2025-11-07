@@ -17,7 +17,9 @@ from datasets.transforms import (
 dfs = []
 for exp_id_zone_id, good_days in GOOD_ZONE_DAYS.items():
     exp_id, zone_id = map(int, exp_id_zone_id[1:].split("/zone"))
-    data_glob = f"/data/online/E{exp_id}/P1/*{zone_id}/alliance-zone{zone_id:02}/raw.csv"
+    data_glob = (
+        f"/data/online/E{exp_id}/P1/*{zone_id}/alliance-zone{zone_id:02}/raw.csv"
+    )
     data_path = glob.glob(data_glob)[0]  # Take the first matching file
     # data_path = f
     df = pl.read_csv(data_path, try_parse_dates=True)
@@ -68,17 +70,24 @@ for exp_id_zone_id, good_days in GOOD_ZONE_DAYS.items():
         ),
     )
     df = df.with_columns(pl.col("day").is_in(good_days).alias("is_good_day"))
-    print(df.select("time", "mean_clean_area", "red_coef", "white_coef", "blue_coef", "reward").describe())
+    print(
+        df.select(
+            "time", "mean_clean_area", "red_coef", "white_coef", "blue_coef", "reward"
+        ).describe()
+    )
     df = df.with_columns(
         (pl.col("time") == df["time"].max()).alias("truncated"),
     )
     df = df.with_columns(
         (pl.col("day") == 13).alias("terminal"),
     )
+    df = df.filter(pl.col("day") <= 13)
     print(f"E{exp_id}/zone{zone_id}: day min {df['day'].min()}, max {df['day'].max()}")
     dfs.append(df)
 
-df = pl.concat(dfs, how="diagonal_relaxed").sort("experiment", "zone", "plant_id", "time")
+df = pl.concat(dfs, how="diagonal_relaxed").sort(
+    "experiment", "zone", "plant_id", "time"
+)
 print(df.head())
 df_daily = df.filter(pl.col("time").dt.time() == time(9, 30, tzinfo=tzinfo))
 df_daily = df_daily.filter(pl.col("is_good_day"))
@@ -100,9 +109,7 @@ df_daily = transform_action_traces(df_daily)
 percentile = 0.01
 ql = df_daily["reward"].quantile(percentile)
 qu = df_daily["reward"].quantile(1 - percentile)
-df_daily_filtered = df_daily.filter(
-    (pl.col("reward") >= ql) & (pl.col("reward") <= qu)
-)
+df_daily_filtered = df_daily.filter((pl.col("reward") >= ql) & (pl.col("reward") <= qu))
 print(
     f"dropped {df_daily.height - df_daily_filtered.height} / {df_daily.height} daily rows as outliers"
 )
@@ -121,20 +128,22 @@ df_daily_filtered = df_daily_filtered.with_columns(
 
 # add truncated flags for gaps due to outlier removal
 df_daily_filtered = df_daily_filtered.with_columns(
-    pl.col("time")
-    .shift(-1)
-    .over("experiment", "zone", "plant_id")
-    .alias("next_time"),
+    pl.col("time").shift(-1).over("experiment", "zone", "plant_id").alias("next_time"),
 )
 df_daily_filtered = df_daily_filtered.with_columns(
-    (pl.col("next_time").is_not_null() & (pl.col("next_time") != pl.col("time") + pl.duration(days=1))).alias("truncated")
+    (
+        pl.col("next_time").is_not_null()
+        & (pl.col("next_time") != pl.col("time") + pl.duration(days=1))
+    ).alias("truncated")
 )
 df_daily_filtered = df_daily_filtered.drop("next_time")
 
 # save to parquet
 Path("/data/offline").mkdir(parents=True, exist_ok=True)
 df.write_parquet("/data/offline/cleaned_offline_dataset_continuous.parquet")
-df_daily_filtered.write_parquet("/data/offline/cleaned_offline_dataset_daily_continuous.parquet")
+df_daily_filtered.write_parquet(
+    "/data/offline/cleaned_offline_dataset_daily_continuous.parquet"
+)
 
 # Create continuous action dataset
 mock_env = MockEnv(df_daily_filtered, use_continuous_actions=True)
