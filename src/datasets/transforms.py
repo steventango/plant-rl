@@ -113,12 +113,12 @@ def transform_action(df: pl.DataFrame) -> pl.DataFrame:
     df = df.join(
         df2.select(
             [
-            "time",
-            "plant_id",
-            "discrete_action",
-            "action_coefficients",
-            "red_coef",
-            "white_coef",
+                "time",
+                "plant_id",
+                "discrete_action",
+                "action_coefficients",
+                "red_coef",
+                "white_coef",
                 "blue_coef",
             ]
         ),
@@ -155,12 +155,12 @@ def transform_action_traces(df):
         "white_coef",
         "blue_coef",
     ]
-    alphas = [0.5]
+    alphas = [0.5, 0.7, 0.9]
     for col, alpha in product(action_cols, alphas):
         df = df.with_columns(
             pl.col(col)
             .ewm_mean(alpha=alpha, adjust=True)
-            .over("plant_id")
+            .over("experiment", "zone", "plant_id")
             .alias(f"{col}_trace_{alpha}"),
         )
     # Create one-hot for discrete_action
@@ -182,15 +182,15 @@ def transform_action_traces(df):
         df = df.with_columns(
             pl.col("discrete_action_0")
             .ewm_mean(alpha=alpha, adjust=True)
-            .over("plant_id")
+            .over("experiment", "zone", "plant_id")
             .alias(f"discrete_action_trace_0_{alpha}"),
             pl.col("discrete_action_1")
             .ewm_mean(alpha=alpha, adjust=True)
-            .over("plant_id")
+            .over("experiment", "zone", "plant_id")
             .alias(f"discrete_action_trace_1_{alpha}"),
             pl.col("discrete_action_2")
             .ewm_mean(alpha=alpha, adjust=True)
-            .over("plant_id")
+            .over("experiment", "zone", "plant_id")
             .alias(f"discrete_action_trace_2_{alpha}"),
         )
     return df
@@ -198,6 +198,9 @@ def transform_action_traces(df):
 
 def transform_state(df):
     df = df.with_columns(
-        pl.col("clean_area").mean().over("plant_id").alias("mean_clean_area"),
+        pl.col("clean_area")
+        .mean()
+        .over("experiment", "zone", "time")
+        .alias("mean_clean_area"),
     )
     return df
