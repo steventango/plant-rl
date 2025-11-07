@@ -56,8 +56,8 @@ class SoftmaxAC(TCAgent):
         self.tau = params["tau"]
 
         # create initial weights
-        self.w = np.zeros((self.rep.features()), dtype=np.float32)  # type: ignore
-        self.theta = np.zeros((actions, self.rep.features()), dtype=np.float32)  # type: ignore
+        self.w = np.zeros((self.tile_coder.features()), dtype=np.float32)  # type: ignore
+        self.theta = np.zeros((actions, self.tile_coder.features()), dtype=np.float32)  # type: ignore
 
     def policy(self, x: np.ndarray):  # type: ignore
         logits = compute_logits(self.theta, x)
