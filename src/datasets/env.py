@@ -56,7 +56,7 @@ class MockEnv(gym.Env):
         if use_continuous_actions:
             # Action space: [red_coef, white_coef, blue_coef]
             self.action_space = spaces.Box(
-                low=-np.inf, high=np.inf, shape=(3,), dtype=np.float32
+                low=0, high=1, shape=(3,), dtype=np.float32
             )
         else:
             self.action_space = spaces.Discrete(3)
