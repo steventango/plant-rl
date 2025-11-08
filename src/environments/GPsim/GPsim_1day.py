@@ -33,7 +33,7 @@ class GPsim_1day(BaseEnvironment):
         trace5 = [self.action_trace5[i].compute().item() for i in range(3)]
         input = np.vstack([np.hstack([[self.current_area], action, trace5])])
 
-        if self.stochastic_pred == False:
+        if not self.stochastic_pred:
             predictive_mean, predictive_std = self.GP_model.predict_mean_std(input)
             next_area = (
                 self.current_area + predictive_mean + self.optimism * predictive_std
