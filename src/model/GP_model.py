@@ -11,13 +11,13 @@ class GP:
         self,
         input_data,
         output_data,
-        kernel=gpx.kernels.Matern52(),
-        meanf=gpx.mean_functions.Zero(),
-        key=random.PRNGKey(0),
+        kernel,
+        meanf,
+        key,
     ):
-        self.kernel = kernel
-        self.meanf = meanf
-        self.key = key
+        self.kernel = kernel if kernel is not None else gpx.kernels.Matern52()
+        self.meanf = meanf if meanf is not None else gpx.mean_functions.Zero()
+        self.key = key if key is not None else random.PRNGKey(0)
         X_train, self.input_mean, self.input_std = self.preprocess(input_data)
         Y_train, self.output_mean, self.output_std = self.preprocess(output_data)
         self.D = gpx.Dataset(X=X_train, y=Y_train)
