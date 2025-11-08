@@ -71,7 +71,8 @@ class GP:
 
     def sample_output(self, x, N=100):
         mean, std = self.predict_mean_std(x)
-        samples = (random.normal(self.key, (mean.shape[0], N)) * std[:, None]) + mean[
+        self.key, subkey = random.split(self.key)
+        samples = (random.normal(subkey, (mean.shape[0], N)) * std[:, None]) + mean[
             :, None
         ]
         return samples
