@@ -55,7 +55,7 @@ class GPsim_1day(BaseEnvironment):
 
         return self.current_state, self.get_info()
 
-    def step(self, action):
+    def step(self, action: np.ndarray):  # type:ignore
         self.num_steps += 1
 
         # Convert 6D action space to 3D
