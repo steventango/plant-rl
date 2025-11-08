@@ -24,7 +24,7 @@ class GP:
         self.learn()
 
     def preprocess(self, data):
-        # normalize every intput dimension
+        # normalize every input dimension
         norm_data = []
         mean = []
         std = []
