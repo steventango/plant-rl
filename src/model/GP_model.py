@@ -51,7 +51,7 @@ class GP:
         posterior = prior * likelihood
         self.opt_posterior, _ = gpx.fit_scipy(
             model=posterior,
-            objective=lambda p, d: -gpx.objectives.conjugate_mll(p, d),
+            objective=lambda p, d: -gpx.objectives.conjugate_mll(p, d),  # type: ignore
             train_data=self.D,
         )
 
@@ -64,7 +64,7 @@ class GP:
         X = jnp.vstack([self.normalize_input(x) for x in X])
         predictive_dist = self.get_predictive_dist(X)
         predictive_mean = predictive_dist.mean()
-        predictive_std = jnp.sqrt(predictive_dist.variance())
+        predictive_std = jnp.sqrt(predictive_dist.variance())   # type: ignore
         return self.denormalize_output(predictive_mean), jnp.array(
             predictive_std
         ) * self.output_std
