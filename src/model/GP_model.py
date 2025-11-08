@@ -11,9 +11,9 @@ class GP:
         self,
         input_data,
         output_data,
-        kernel,
-        meanf,
-        key,
+        kernel = None,
+        meanf = None,
+        key = None,
     ):
         self.kernel = kernel if kernel is not None else gpx.kernels.Matern52()
         self.meanf = meanf if meanf is not None else gpx.mean_functions.Zero()

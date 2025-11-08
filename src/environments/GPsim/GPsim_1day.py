@@ -11,10 +11,10 @@ logger.setLevel(logging.DEBUG)
 
 
 class GPsim_1day(BaseEnvironment):
-    def __init__(self, stochastic_pred=True, optimism=0, episode_length=13, **kwargs):
+    def __init__(self, stochastic_pred=False, optimism=0, episode_length=13, **kwargs):
         self.state_dim = (1,)
         self.current_state = np.empty(1)
-        self.action_dim = 3
+        self.action_dim = 6
         self.num_steps = 0
         self.gamma = 0.99
 
@@ -24,19 +24,19 @@ class GPsim_1day(BaseEnvironment):
 
         data_path = (
             os.path.dirname(os.path.abspath(__file__))
-            + "/models/E13_every_size_1day_trace5_delta.pickle"
+            + "/models/E13only_every_day+size_1day_trace5_delta.pickle"
         )
         with open(data_path, "rb") as f:
             self.GP_model = pickle.load(f)
 
     def get_observation(self, action):
         trace5 = [self.action_trace5[i].compute().item() for i in range(3)]
-        input = np.vstack([np.hstack([[self.current_area], action, trace5])])
+        input = np.vstack([np.hstack([[self.num_steps, self.current_area], action, trace5])])
 
         if not self.stochastic_pred:
             predictive_mean, predictive_std = self.GP_model.predict_mean_std(input)
             next_area = (
-                self.current_area + predictive_mean + self.optimism * predictive_std
+                self.current_area + predictive_mean[0] + self.optimism * predictive_std[0]
             )
         else:
             sampled_predictions = self.GP_model.sample_output(input, N=100)
@@ -50,7 +50,7 @@ class GPsim_1day(BaseEnvironment):
     def start(self):
         self.num_steps = 0
         self.action_trace5 = [uema(alpha=0.5), uema(alpha=0.5), uema(alpha=0.5)]
-        self.current_area = np.random.uniform(10, 60)
+        self.current_area = np.random.uniform(30, 90)
         self.current_state = np.array([self.current_area])
 
         return self.current_state, self.get_info()
@@ -59,13 +59,13 @@ class GPsim_1day(BaseEnvironment):
         self.num_steps += 1
 
         # Convert 6D action space to 3D
-        action = self.compute_action_coefficients(action)
+        action_rwb = self.compute_action_coefficients(action)
 
         # Update action traces
         for i in range(3):
-            self.action_trace5[i].update(action[i])
+            self.action_trace5[i].update(action_rwb[i])
 
-        next_area = self.get_observation(action)
+        next_area = self.get_observation(action_rwb)
 
         reward = next_area / self.current_area - 1
 
@@ -100,5 +100,4 @@ class GPsim_1day(BaseEnvironment):
         # Solve least squares: basis @ coefficients = action
         # This finds coefficients that minimize ||action - basis @ coefficients||^2
         coefficients, residuals, rank, s = np.linalg.lstsq(basis, action, rcond=None)
-
         return coefficients
