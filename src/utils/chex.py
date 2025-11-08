@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Any, Callable, Type, TypeVar
+from typing import Type, TypeVar
 
 import chex
 import typing_extensions
@@ -12,5 +12,5 @@ T = TypeVar("T")
     order_default=False,
     field_specifiers=(dataclasses.Field, dataclasses.field),
 )
-def dataclass(cls: Any) -> Callable[[Type[T]], Type[T]]:
-    return chex.dataclass(cls)
+def dataclass(cls: Type[T]) -> Type[T]:
+    return chex.dataclass(cls)  # type: ignore
