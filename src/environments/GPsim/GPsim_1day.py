@@ -31,12 +31,16 @@ class GPsim_1day(BaseEnvironment):
 
     def get_observation(self, action):
         trace5 = [self.action_trace5[i].compute().item() for i in range(3)]
-        input = np.vstack([np.hstack([[self.num_steps, self.current_area], action, trace5])])
+        input = np.vstack(
+            [np.hstack([[self.num_steps, self.current_area], action, trace5])]
+        )
 
         if not self.stochastic_pred:
             predictive_mean, predictive_std = self.GP_model.predict_mean_std(input)
             next_area = (
-                self.current_area + predictive_mean[0] + self.optimism * predictive_std[0]
+                self.current_area
+                + predictive_mean[0]
+                + self.optimism * predictive_std[0]
             )
         else:
             sampled_predictions = self.GP_model.sample_output(input, N=100)

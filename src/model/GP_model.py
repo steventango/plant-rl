@@ -11,9 +11,9 @@ class GP:
         self,
         input_data,
         output_data,
-        kernel = None,
-        meanf = None,
-        key = None,
+        kernel=None,
+        meanf=None,
+        key=None,
     ):
         self.kernel = kernel if kernel is not None else gpx.kernels.Matern52()
         self.meanf = meanf if meanf is not None else gpx.mean_functions.Zero()
@@ -64,7 +64,7 @@ class GP:
         X = jnp.vstack([self.normalize_input(x) for x in X])
         predictive_dist = self.get_predictive_dist(X)
         predictive_mean = predictive_dist.mean()
-        predictive_std = jnp.sqrt(predictive_dist.variance())   # type: ignore
+        predictive_std = jnp.sqrt(predictive_dist.variance())  # type: ignore
         return self.denormalize_output(predictive_mean), jnp.array(
             predictive_std
         ) * self.output_std
