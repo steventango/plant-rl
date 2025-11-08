@@ -49,7 +49,7 @@ class GP:
         prior = gpx.gps.Prior(mean_function=self.meanf, kernel=self.kernel)
         likelihood = gpx.likelihoods.Gaussian(num_datapoints=self.D.n)
         posterior = prior * likelihood
-        self.opt_posterior, history = gpx.fit_scipy(
+        self.opt_posterior, _ = gpx.fit_scipy(
             model=posterior,
             objective=lambda p, d: -gpx.objectives.conjugate_mll(p, d),
             train_data=self.D,
