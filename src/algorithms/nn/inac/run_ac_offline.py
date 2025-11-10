@@ -17,8 +17,7 @@ if __name__ == "__main__":
         "--policy_type",
         default="dirichlet",
         type=str,
-        choices=["normal", "dirichlet"],
-        help="Policy type: 'normal' for Gaussian, 'dirichlet' for Dirichlet",
+        choices=["normal", "dirichlet", "mixture_dirichlet"],
     )
     parser.add_argument("--state_dim", default=7, type=int)
     parser.add_argument("--action_dim", default=3, type=int)

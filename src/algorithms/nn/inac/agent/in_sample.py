@@ -20,7 +20,12 @@ from algorithms.nn.inac.network.network_architectures import (
     DoubleCriticNetwork,
     FCNetwork,
 )
-from algorithms.nn.inac.network.policy_factory import MLPCont, MLPDirichlet, MLPDiscrete
+from algorithms.nn.inac.network.policy_factory import (
+    MLPCont,
+    MLPDirichlet,
+    MLPDiscrete,
+    MLPMixtureDirichlet,
+)
 
 
 @nnx.jit
@@ -62,6 +67,22 @@ class ActorCritic(nnx.Module):
                 self.beh_pi = MLPDirichlet(
                     state_dim, action_dim, [hidden_units] * 2, offset=0, rngs=rngs
                 )
+            elif policy_type == "mixture_dirichlet":
+                self.pi = MLPMixtureDirichlet(
+                    state_dim,
+                    action_dim,
+                    [hidden_units] * 2,
+                    num_components=5,
+                    offset=0,
+                    rngs=rngs,
+                )
+                self.beh_pi = MLPMixtureDirichlet(
+                    state_dim,
+                    action_dim,
+                    [hidden_units] * 2,
+                    num_components=5,
+                    offset=0,
+                    rngs=rngs,
             )
         else:
             self.pi = MLPCont(state_dim, action_dim, [hidden_units] * 2, rngs=rngs)
