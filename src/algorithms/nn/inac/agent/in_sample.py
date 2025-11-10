@@ -349,6 +349,7 @@ def train(
     max_steps,
     log_interval,
     weight_decay: float,
+    clip_grad_norm: Optional[float] = None,
 ):
     rngs = nnx.Rngs(seed)
     actor_critic = ActorCritic(
@@ -359,25 +360,28 @@ def train(
         policy_type=policy_type,
         rngs=rngs,
     )
+    adamw = optax.adamw(learning_rate, weight_decay=weight_decay)
+    if clip_grad_norm is not None:
+        adamw = optax.chain(optax.clip_by_global_norm(clip_grad_norm), adamw)
     optimizers = Optimizers(
         pi=nnx.Optimizer(
             actor_critic.pi,
-            optax.adamw(learning_rate, weight_decay=weight_decay),
+            adamw,
             wrt=nnx.Param,
         ),
         q=nnx.Optimizer(
             actor_critic.q,
-            optax.adamw(learning_rate, weight_decay=weight_decay),
+            adamw,
             wrt=nnx.Param,
         ),
         value=nnx.Optimizer(
             actor_critic.value_net,
-            optax.adamw(learning_rate, weight_decay=weight_decay),
+            adamw,
             wrt=nnx.Param,
         ),
         beh_pi=nnx.Optimizer(
             actor_critic.beh_pi,
-            optax.adamw(learning_rate, weight_decay=weight_decay),
+            adamw,
             wrt=nnx.Param,
         ),
     )
