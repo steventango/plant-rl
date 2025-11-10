@@ -63,10 +63,9 @@ def evaluate_on_dataset(
     q: nnx.Module,
     rngs: nnx.Rngs,
     plots_dir: Path,
-    num_days: int,
 ):
     """
-    Evaluate policy and critic on offline dataset by analyzing behavior at different days.
+    Evaluate policy and critic on offline dataset by analyzing behavior at different area bins.
 
     Args:
         logger: Logger instance
@@ -75,31 +74,40 @@ def evaluate_on_dataset(
         pi: Policy network
         q: Q-network
         rngs: Random number generators
-        num_days: Number of days to analyze
+        plots_dir: Directory to save plots
     """
-    # Collect states from each day across all episodes
-    day_states = [[] for _ in range(num_days)]
-    day_actions = [[] for _ in range(num_days)]
-    day_min_q_dataset = [None] * num_days
-    day_min_q_policy = [None] * num_days
+    # Collect states from each area bin across all episodes
+    num_area_bins = 8
+    bin_states = [[] for _ in range(num_area_bins)]
+    bin_actions = [[] for _ in range(num_area_bins)]
+    bin_min_q_dataset = [None] * num_area_bins
+    bin_min_q_policy = [None] * num_area_bins
 
     for episode in dataset.iterate_episodes():
         episode_length = len(episode.observations) - 1
         for t in range(episode_length):
             observation = episode.observations[t]
-            # Extract normalized day from observation (index 1)
-            normalized_day = observation[1] if len(observation) > 1 else 0.0
-            # Convert normalized day back to day index (assuming day_min=0 for simplicity)
-            day_idx = int(normalized_day * (num_days - 1))
-            day_idx = min(max(day_idx, 0), num_days - 1)  # Clamp to valid range
+            # Extract normalized clean_area from observation (index 0)
+            normalized_area = observation[0] if len(observation) > 0 else 0.0
+            # Denormalize to get actual clean_area
+            clean_area_min = 14.3125
+            clean_area_max = 782.5625
+            actual_area = (
+                normalized_area * (clean_area_max - clean_area_min) + clean_area_min
+            )
+            # Bin by hundreds: 0-100, 100-200, 200-300, 300-400, etc.
+            area_bin_idx = int(actual_area // 100)
+            area_bin_idx = min(
+                max(area_bin_idx, 0), num_area_bins - 1
+            )  # Clamp to valid range
 
-            day_states[day_idx].append(observation)
-            day_actions[day_idx].append(episode.actions[t])
+            bin_states[area_bin_idx].append(observation)
+            bin_actions[area_bin_idx].append(episode.actions[t])
 
     is_discrete = isinstance(dataset.action_space, Discrete)
     num_actions = dataset.action_space.n if is_discrete else None
-    day_q_per_action = (
-        [[[] for _ in range(num_actions)] for _ in range(num_days)]
+    bin_q_per_action = (
+        [[[] for _ in range(num_actions)] for _ in range(num_area_bins)]
         if is_discrete and num_actions is not None
         else None
     )
@@ -128,12 +136,12 @@ def evaluate_on_dataset(
     logger.info(f"DATASET EVALUATION at step {total_steps}")
     logger.info(f"{'=' * 60}")
 
-    for d in range(num_days):
-        if not day_states[d]:
+    for d in range(num_area_bins):
+        if not bin_states[d]:
             continue
 
-        states = jnp.array(day_states[d])
-        actions = jnp.array(day_actions[d])
+        states = jnp.array(bin_states[d])
+        actions = jnp.array(bin_actions[d])
 
         # Get policy predictions and Q-values (JIT compiled)
         (
@@ -147,8 +155,8 @@ def evaluate_on_dataset(
         ) = compute_evaluation(states, actions, pi, q, rngs)
 
         # Store Q-values for plotting
-        day_min_q_dataset[d] = min_q_dataset
-        day_min_q_policy[d] = min_q_policy
+        bin_min_q_dataset[d] = min_q_dataset
+        bin_min_q_policy[d] = min_q_policy
 
         # Calculate statistics
         mean_predicted_action = predicted_actions.mean(axis=0)
@@ -158,7 +166,7 @@ def evaluate_on_dataset(
         mean_q_dataset = min_q_dataset.mean()
         mean_q_policy = min_q_policy.mean()
 
-        logger.info(f"Day {d}:")
+        logger.info(f"Area bin {d}:")
         logger.info(f"  Samples: {len(states)}")
 
         if is_discrete and num_actions is not None:
@@ -178,9 +186,9 @@ def evaluate_on_dataset(
                 ],
                 axis=1,
             )  # (batch, num_actions)
-            if day_q_per_action is not None:
+            if bin_q_per_action is not None:
                 for i in range(num_actions):
-                    day_q_per_action[d][i] = q_all[:, i].tolist()
+                    bin_q_per_action[d][i] = q_all[:, i].tolist()
 
             # Dataset action proportions
             unique_dataset, counts_dataset = jnp.unique(
@@ -217,22 +225,39 @@ def evaluate_on_dataset(
             logger.info(f"  Q-value (dataset actions): {mean_q_dataset:.3f}")
             logger.info(f"  Q-value (policy actions):  {mean_q_policy:.3f}")
             logger.info(
-                f"  Q-value difference:        {(mean_q_policy - mean_q_dataset):.3f}"
+                f"  Q-value difference:        {(min_q_policy - min_q_dataset).mean():.3f}"
             )
+
+            # Log Q-values at simplex vertices
+            red_action = jnp.array([1.0, 0.0, 0.0])
+            white_action = jnp.array([0.0, 1.0, 0.0])
+            blue_action = jnp.array([0.0, 0.0, 1.0])
+
+            red_actions = jnp.tile(red_action, (states.shape[0], 1))
+            white_actions = jnp.tile(white_action, (states.shape[0], 1))
+            blue_actions = jnp.tile(blue_action, (states.shape[0], 1))
+
+            q_red, _, _ = q(states, red_actions)  # type: ignore
+            q_white, _, _ = q(states, white_actions)  # type: ignore
+            q_blue, _, _ = q(states, blue_actions)  # type: ignore
+
+            logger.info(f"  Q-value at [1,0,0] (red):    {q_red.mean():.3f}")
+            logger.info(f"  Q-value at [0,1,0] (white):  {q_white.mean():.3f}")
+            logger.info(f"  Q-value at [0,0,1] (blue):   {q_blue.mean():.3f}")
 
     logger.info(f"{'=' * 60}\n")
 
     # Generate plots of Q-values per action for discrete actions
-    if is_discrete and num_actions is not None and day_q_per_action is not None:
+    if is_discrete and num_actions is not None and bin_q_per_action is not None:
         # Bar plots with 95% CI
-        fig, axes = plt.subplots(num_days, 1, figsize=(8, 4 * num_days))
-        if num_days == 1:
+        fig, axes = plt.subplots(num_area_bins, 1, figsize=(8, 4 * num_area_bins))
+        if num_area_bins == 1:
             axes = [axes]
-        for d in range(num_days):
+        for d in range(num_area_bins):
             data = []
             for i in range(num_actions):
-                if day_q_per_action[d][i]:  # Check if list is not empty
-                    for val in day_q_per_action[d][i]:
+                if bin_q_per_action[d][i]:  # Check if list is not empty
+                    for val in bin_q_per_action[d][i]:
                         data.append({"action": i, "q": float(val)})
             if data:
                 df = pd.DataFrame(data)
@@ -251,11 +276,11 @@ def evaluate_on_dataset(
                         patch.set_edgecolor("black")
                         patch.set_linewidth(1)
                 axes[d].set_title(
-                    f"Mean Q-values with 95% CI at Day {d} (n={len(day_states[d])})"
+                    f"Mean Q-values with 95% CI at Area bin {d} (n={len(bin_states[d])})"
                 )
                 axes[d].set_xlabel("Action")
                 axes[d].set_ylabel("Q-value")
-                actions_array = jnp.array(day_actions[d])
+                actions_array = jnp.array(bin_actions[d])
                 if actions_array.ndim > 1 and actions_array.shape[1] == 1:
                     actions_array = actions_array.squeeze(axis=1)
                 action_counts = Counter(actions_array.tolist())
@@ -268,7 +293,7 @@ def evaluate_on_dataset(
                 ]
                 axes[d].set_xticklabels(labels)
             else:
-                axes[d].set_title(f"No data at Day {d}")
+                axes[d].set_title(f"No data at Area bin {d}")
         plt.tight_layout()
         plt.savefig(os.path.join(plots_dir, f"q_bar_step_{total_steps}.png"))
         plt.close()
