@@ -1,6 +1,7 @@
 import time
 from functools import partial
 from pathlib import Path
+from typing import Optional
 
 import chex
 import flashbax as fbx
@@ -44,7 +45,8 @@ class ActorCritic(nnx.Module):
         action_dim: int,
         hidden_units: int,
         discrete_control: bool,
-        policy_type: str = "normal",
+        policy_type: str,
+        rngs: nnx.Rngs,
     ) -> None:
         if discrete_control:
             self.pi = MLPDiscrete(state_dim, action_dim, [hidden_units] * 2, rngs=rngs)
