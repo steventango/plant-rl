@@ -421,7 +421,6 @@ def train(
                     actor_critic.pi,
                     actor_critic.q,
                     rngs,
-                    num_days=13,
                     plots_dir=exp_path / "plots",
                 )
             i += 1
