@@ -24,7 +24,7 @@ class GPsim_1day(BaseEnvironment):
 
         data_path = (
             os.path.dirname(os.path.abspath(__file__))
-            + "/models/E13only_every_day+size_1day_trace5_delta.pickle"
+            + "/models/E13only_every_day+size_1day_trace5_ratio.pickle"
         )
         with open(data_path, "rb") as f:
             self.GP_model = pickle.load(f)
@@ -37,15 +37,13 @@ class GPsim_1day(BaseEnvironment):
 
         if not self.stochastic_pred:
             predictive_mean, predictive_std = self.GP_model.predict_mean_std(input)
-            next_area = (
-                self.current_area
-                + predictive_mean[0]
-                + self.optimism * predictive_std[0]
+            next_area = self.current_area * (
+                predictive_mean[0] + self.optimism * predictive_std[0]
             )
         else:
             sampled_predictions = self.GP_model.sample_output(input, N=100)
             percentile = 50 + self.optimism * 34.1
-            next_area = self.current_area + np.percentile(
+            next_area = self.current_area * np.percentile(
                 sampled_predictions, percentile
             )
 
