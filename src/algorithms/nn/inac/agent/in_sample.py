@@ -20,7 +20,7 @@ from algorithms.nn.inac.network.network_architectures import (
     DoubleCriticNetwork,
     FCNetwork,
 )
-from algorithms.nn.inac.network.policy_factory import MLPCont, MLPDiscrete
+from algorithms.nn.inac.network.policy_factory import MLPCont, MLPDirichlet, MLPDiscrete
 
 
 @nnx.jit
@@ -39,7 +39,7 @@ class ActorCritic(nnx.Module):
         action_dim: int,
         hidden_units: int,
         discrete_control: bool,
-        rngs: nnx.Rngs,
+        policy_type: str = "normal",
     ) -> None:
         if discrete_control:
             self.pi = MLPDiscrete(state_dim, action_dim, [hidden_units] * 2, rngs=rngs)
@@ -50,8 +50,25 @@ class ActorCritic(nnx.Module):
                 state_dim, [hidden_units] * 2, action_dim, rngs=rngs
             )
         else:
+            # Choose policy based on policy_type
+            if policy_type == "dirichlet":
+                self.pi = MLPDirichlet(
+                    state_dim,
+                    action_dim,
+                    [hidden_units] * 2,
+                    offset=1 + 1e-5,
+                    rngs=rngs,
+                )
+                self.beh_pi = MLPDirichlet(
+                    state_dim, action_dim, [hidden_units] * 2, offset=0, rngs=rngs
+                )
+            )
+        else:
             self.pi = MLPCont(state_dim, action_dim, [hidden_units] * 2, rngs=rngs)
-            self.beh_pi = MLPCont(state_dim, action_dim, [hidden_units] * 2, rngs=rngs)
+                self.beh_pi = MLPCont(
+                    state_dim, action_dim, [hidden_units] * 2, rngs=rngs
+                )
+
             self.q = DoubleCriticNetwork(
                 state_dim, action_dim, [hidden_units] * 2, rngs=rngs
             )
@@ -293,6 +310,7 @@ def get_train_func(max_steps: int, replay: fbx.trajectory_buffer.TrajectoryBuffe
 
 def train(
     discrete_control: bool,
+    policy_type: str,
     state_dim: int,
     action_dim: int,
     hidden_units: int,
@@ -317,6 +335,7 @@ def train(
         action_dim,
         hidden_units,
         discrete_control,
+        policy_type=policy_type,
         rngs=rngs,
     )
     optimizers = Optimizers(

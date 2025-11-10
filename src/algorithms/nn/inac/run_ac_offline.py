@@ -11,15 +11,21 @@ from algorithms.nn.inac.utils import logger
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="run_file")
     parser.add_argument("--seed", default=0, type=int)
-    parser.add_argument("--dataset", default="plant-rl/discrete-v4", type=str)
-    parser.add_argument("--discrete_control", default=True, type=bool)
-    parser.add_argument("--state_dim", default=14, type=int)
+    parser.add_argument("--dataset", default="plant-rl/continuous-v8", type=str)
+    parser.add_argument("--discrete_control", default=False, type=bool)
+    parser.add_argument(
+        "--policy_type",
+        default="dirichlet",
+        type=str,
+        choices=["normal", "dirichlet"],
+        help="Policy type: 'normal' for Gaussian, 'dirichlet' for Dirichlet",
+    )
+    parser.add_argument("--state_dim", default=7, type=int)
     parser.add_argument("--action_dim", default=3, type=int)
-    parser.add_argument("--tau", default=0.1, type=float)
-
-    parser.add_argument("--max_steps", default=1000000, type=int)
+    parser.add_argument("--tau", default=0.001, type=float)
+    parser.add_argument("--max_steps", default=100_000, type=int)
     parser.add_argument("--log_interval", default=10000, type=int)
-    parser.add_argument("--learning_rate", default=3e-4, type=float)
+    parser.add_argument("--learning_rate", default=1e-4, type=float)
     parser.add_argument("--hidden_units", default=256, type=int)
     parser.add_argument("--batch_size", default=256, type=int)
     parser.add_argument("--gamma", default=0.99, type=float)
@@ -48,6 +54,7 @@ if __name__ == "__main__":
     # Initializing the agent and running the experiment
     train(
         discrete_control=cfg.discrete_control,
+        policy_type=cfg.policy_type,
         state_dim=cfg.state_dim,
         action_dim=cfg.action_dim,
         hidden_units=cfg.hidden_units,

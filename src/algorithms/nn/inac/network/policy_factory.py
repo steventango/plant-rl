@@ -69,6 +69,72 @@ class MLPCont(nnx.Module):
         return logp_pi
 
 
+class MLPDirichlet(nnx.Module):
+    def __init__(
+        self,
+        obs_dim,
+        act_dim,
+        hidden_sizes,
+        init_type="xavier",
+        offset=0.0,
+        *,
+        rngs: nnx.Rngs,
+    ):
+        self.body = network_bodies.FCBody(
+            input_dim=obs_dim,
+            hidden_units=tuple(hidden_sizes),
+            init_type=init_type,
+            rngs=rngs,
+        )
+        self.alpha_layer = nnx.Linear(
+            self.body.feature_dim,
+            act_dim,
+            kernel_init=initializers.xavier_uniform(),
+            bias_init=initializers.zeros,
+            rngs=rngs,
+        )
+        self.act_dim = act_dim
+        # Small epsilon to prevent log_prob from returning NaN at the boundaries 0 and 1
+        self.epsilon = 1e-2
+        self.clip_alpha = 15.0
+        self.offset = offset
+
+    def __call__(self, obs, rngs: nnx.Rngs, deterministic=False):
+        alpha = self.get_alpha(obs)
+
+        pi_distribution = distrax.Dirichlet(concentration=alpha)
+
+        if deterministic:
+            pi_action = pi_distribution.mode()
+            pi_action = jnp.where(
+                jnp.isnan(pi_action),
+                pi_distribution.mean(),
+                pi_action,
+            )
+        else:
+            pi_action = pi_distribution.sample(seed=rngs.sample())
+
+        clipped_action = jnp.clip(pi_action, self.epsilon, 1.0 - self.epsilon)
+        clipped_action = clipped_action / jnp.sum(clipped_action, axis=-1, keepdims=True)
+        logp_pi = pi_distribution.log_prob(clipped_action)
+
+        return pi_action, logp_pi
+
+    def get_logprob(self, obs, actions):
+        alpha = self.get_alpha(obs)
+        pi_distribution = distrax.Dirichlet(concentration=alpha)
+        clipped_action = jnp.clip(actions, self.epsilon, 1.0 - self.epsilon)
+        clipped_action = clipped_action / jnp.sum(clipped_action, axis=-1, keepdims=True)
+        logp_pi = pi_distribution.log_prob(clipped_action)
+        return logp_pi
+
+    def get_alpha(self, obs):
+        net_out = self.body(obs)
+        alpha_logits = self.alpha_layer(net_out)
+        alpha = jax.nn.sigmoid(alpha_logits - 2.6392) * self.clip_alpha + self.offset
+        return alpha
+
+
 class MLPDiscrete(nnx.Module):
     def __init__(
         self,
