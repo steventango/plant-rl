@@ -85,9 +85,9 @@ class ActorCritic(nnx.Module):
                     num_components=5,
                     offset=0,
                     rngs=rngs,
-            )
-        else:
-            self.pi = MLPCont(state_dim, action_dim, [hidden_units] * 2, rngs=rngs)
+                )
+            else:
+                self.pi = MLPCont(state_dim, action_dim, [hidden_units] * 2, rngs=rngs)
                 self.beh_pi = MLPCont(
                     state_dim, action_dim, [hidden_units] * 2, rngs=rngs
                 )
