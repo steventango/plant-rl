@@ -124,8 +124,7 @@ df_daily_filtered = df_daily_filtered.with_columns(
     .shift(-1)
     .over("experiment", "zone", "plant_id")
     .is_null()
-    # .alias("terminal"),
-    .alias("truncated"),
+    .alias("terminal"),
 )
 
 # add truncated flags for gaps due to outlier removal
