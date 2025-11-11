@@ -64,7 +64,7 @@ class InAC(BaseAgent):
         self.pretrained_path = params.get("pretrained_path", None)
 
         # Path to offline dataset to load into buffer (optional)
-        self.offline_dataset = params.get("offline_dataset", None)
+        self.offline_dataset_name = params.get("offline_dataset", None)
 
         # Ensure observations is a flat dimension
         if isinstance(observations, tuple):
@@ -182,8 +182,9 @@ class InAC(BaseAgent):
         self.replay_state = self.replay_buffer.init(dummy_transition)
 
         # Load offline dataset into buffer if specified
-        if self.offline_dataset:
-            self._load_offline_dataset(self.offline_dataset)
+        if self.offline_dataset_name:
+            offline_dataset = minari.load_dataset(self.offline_dataset_name)
+            self.load(offline_dataset)
 
     def _load_pretrained(self, path: str):
         """Load pre-trained InAC model from disk."""
@@ -326,10 +327,11 @@ class InAC(BaseAgent):
                 a = int(a)
 
         # Update if enabled
+        info = {}
         if self.updates_per_step > 0:
-            self.update()
+            info = self.update()
 
-        return a, {}
+        return a, info
 
     def end(self, r: float, extra: Dict[str, Any]):  # type: ignore
         """End an episode."""
@@ -342,14 +344,15 @@ class InAC(BaseAgent):
             )
 
         # Update if enabled
+        info = {}
         if self.updates_per_step > 0:
-            self.update()
+            info = self.update()
 
         # Reset episode state
         self.current_state = None
         self.current_action = None
 
-        return {}
+        return info
 
     def _store_transition(
         self,
@@ -383,15 +386,17 @@ class InAC(BaseAgent):
 
         # Only update every `update_freq` steps
         if self.steps % self.update_freq != 0:
-            return
+            return {}
 
         # Skip updates if buffer isn't large enough
         if not self.replay_buffer.can_sample(self.replay_state):
-            return
+            return {}
 
         # Perform multiple updates per step if configured
+        info = {}
         for _ in range(self.updates_per_step):
-            self._update()
+            info = self._update()
+        return info
 
     def _update(self):
         """Perform a single update step using data from the Flashbax buffer."""

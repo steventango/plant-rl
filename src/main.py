@@ -1,6 +1,8 @@
 import os  # type: ignore
 import sys
 
+from tqdm import tqdm
+
 sys.path.append(os.getcwd())
 import argparse
 import logging
@@ -128,7 +130,7 @@ for idx in indices:
         s, a, info = glue.start()
         log(env, glue, wandb_run, s, a, info)
 
-    for step in range(glue.total_steps, exp.total_steps):
+    for step in (pbar := tqdm(range(glue.total_steps, exp.total_steps))):
         collector.next_frame()
         chk.maybe_save()
         interaction = glue.step()
@@ -139,7 +141,10 @@ for idx in indices:
             interaction.o,
             interaction.a,
             interaction.extra,
-            interaction.r,  # type: ignore
+            r=interaction.r,
+            t=interaction.t,
+            episodic_return=glue.total_reward if interaction.t else None,
+            episode=chk["episode"] if interaction.t else None,
         )
 
         collector.collect("reward", interaction.r)
@@ -168,6 +173,9 @@ for idx in indices:
             episode = chk["episode"]
             logger.debug(
                 f"{episode} {step} {glue.total_reward} {avg_time:.4}ms {int(fps)}"
+            )
+            pbar.set_description(
+                f"Episodes: {episode}, Return: {glue.total_reward:.3f}"
             )
 
             glue.start()
