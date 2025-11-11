@@ -25,6 +25,12 @@ def compute_action_coefficients(action: np.ndarray) -> np.ndarray:
     # This finds coefficients that minimize ||action - basis @ coefficients||^2
     coefficients, residuals, rank, s = np.linalg.lstsq(basis, action, rcond=None)
 
+    # Clip coefficients to [0, 1] range
+    coefficients = np.clip(coefficients, 0.0, 1.0)
+
+    # Normalize coefficients to sum to 1
+    coefficients /= np.sum(coefficients)
+
     return coefficients
 
 

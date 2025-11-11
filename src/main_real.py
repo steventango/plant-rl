@@ -123,8 +123,8 @@ async def main():
 
             # build stateful things and attach to checkpoint
             problem = chk.build("p", lambda: Problem(exp, idx, None))
-            agent = chk.build("a", problem.getAgent)
             env = chk.build("e", problem.getEnvironment)
+            agent = chk.build("a", problem.getAgent)
 
             context = exp.buildSaveContext(idx, base=args.save_path)
             agent_path = Path(context.resolve()).relative_to("results")

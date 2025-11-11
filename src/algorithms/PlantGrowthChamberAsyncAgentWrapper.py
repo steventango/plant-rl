@@ -14,8 +14,9 @@ logger = logging.getLogger("plant_rl.PlantGrowthChamberAsyncAgentWrapper")
 
 
 class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
-    def __init__(self, agent: BaseAgent):
+    def __init__(self, agent: BaseAgent, env=None):
         super().__init__(agent)
+        self.env = env
         self.action_timestep = timedelta(
             minutes=agent.params.get("action_timestep", 660)
         )
@@ -116,6 +117,8 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
             )
             self.agent_started = True
             self.last_action_time = self.env_time
+            if self.env and hasattr(self.env, "update_action_trace"):
+                self.env.update_action_trace(self.last_action_info[0])
         return self.last_action_info
 
     def maybe_enforce_action(self):
@@ -179,6 +182,8 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
                 self.agent.step, reward, observation, extra
             )
             self.last_action_time = self.env_time
+            if self.env and hasattr(self.env, "update_action_trace"):
+                self.env.update_action_trace(self.last_action_info[0])
 
         return self.last_action_info
 

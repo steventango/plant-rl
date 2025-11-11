@@ -24,7 +24,9 @@ for exp_id_zone_id, good_days in GOOD_ZONE_DAYS.items():
     # data_path = f
     df = pl.read_csv(data_path, try_parse_dates=True)
     df = df.with_columns(pl.col("time").dt.convert_time_zone(TIMEZONE))
-    df = df.with_columns(pl.col("time").dt.replace(second=0, microsecond=0))
+    df = df.with_columns(
+        pl.col("time").dt.replace(second=0, microsecond=0, ambiguous="earliest")
+    )
     assert df.filter((pl.col("time").dt.minute() % 5 != 0)).is_empty()
     # fill in missing time steps, print how many were missing
     min_time: datetime = df["time"].min()  # type: ignore

@@ -35,6 +35,7 @@ class MockEnv(gym.Env):
         # Compute global min and max for clean_area normalization
         clean_area_min = df["clean_area"].min()
         clean_area_max = df["clean_area"].max()
+        print(f"Global clean_area min: {clean_area_min}, max: {clean_area_max}")
         self.clean_area_min = (
             float(clean_area_min) if clean_area_min is not None else 0.0
         )  # type: ignore
