@@ -71,7 +71,8 @@ dev = [
     'pre-commit',
     'pytest',
     "pytest-asyncio>=1.0.0",
-    'pytest-cov'
+    'pytest-cov',
+    "python-ternary>=1.0.8",
 ]
 
 [tool]
