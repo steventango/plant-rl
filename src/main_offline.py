@@ -11,7 +11,6 @@ from collections import defaultdict
 from pathlib import Path
 
 import jax
-import minari
 import numpy as np
 import torch
 from tqdm import tqdm
@@ -89,13 +88,13 @@ for idx in indices:
     agent_path = Path(context.resolve()).relative_to("results")
     exp_path = Path(context.resolve())
 
-    # Load offline dataset
-    dataset_name = exp_params["dataset"]
-    logger.info(f"Loading offline dataset: {dataset_name}")
-    dataset = minari.load_dataset(dataset_name)
-
     # Build problem to get environment/agent configuration
     problem = chk.build("p", lambda: Problem(exp, idx, None))
+
+    # Get dataset from problem
+    dataset = problem.dataset
+    dataset_name = exp_params["dataset"]
+    logger.info(f"Using offline dataset: {dataset_name}")
 
     # Build agent using problem's getAgent method
     agent = chk.build("a", problem.getAgent)
