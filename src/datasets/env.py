@@ -47,12 +47,9 @@ class MockEnv(gym.Env):
         day_max = df["day"].max()
         self.day_min = float(day_min) if day_min is not None else 0.0  # type: ignore
         self.day_max = float(day_max) if day_max is not None else 1.0  # type: ignore
-        # Set observation space based on include_action_traces
-        obs_dim = 4  # clean_area, 3 for one-hot action
-        if self.include_action_traces:
-            obs_dim += 3  # 1 trace (0.5) * 3 values
+        # Set observation space: DAY (normalized), AREA (normalized), ACTION TRACE 0.5 (3 values)
         self.observation_space = spaces.Box(
-            low=-np.inf, high=np.inf, shape=(obs_dim,), dtype=np.float32
+            low=-np.inf, high=np.inf, shape=(5,), dtype=np.float32
         )
         if use_continuous_actions:
             # Action space: [red_coef, white_coef, blue_coef]
@@ -64,97 +61,67 @@ class MockEnv(gym.Env):
 
     def _get_observation(self) -> Any:
         # return a vector with the following values:
-        # clean_area
-        # action (one-hot encoded for discrete, continuous coefficients for continuous, from previous row)
-        # action_trace_0.5 (one-hot encoded for discrete, continuous for continuous, smoothed) - if include_action_traces
+        # DAY (normalized from 0 to 14)
+        # AREA (normalized)
+        # ACTION TRACE 0.5 (3 values)
         if self.plant_df is None or self.current_row_index >= self.plant_df.height:
-            obs_dim = 4 if not self.include_action_traces else 7
-            return np.zeros((obs_dim,), dtype=np.float32)
+            return np.zeros((5,), dtype=np.float32)
 
         row = self.plant_df.slice(self.current_row_index, 1)
         if row.is_empty():
-            obs_dim = 4 if not self.include_action_traces else 7
-            return np.zeros((obs_dim,), dtype=np.float32)
+            return np.zeros((5,), dtype=np.float32)
 
-        clean_area = row["clean_area"][0] if row["clean_area"][0] is not None else 0.0
-        # Normalize clean_area to [0, 1]
+        # Get day and normalize
+        day = row["day"][0] if row["day"][0] is not None else 0.0
+        if self.day_max > self.day_min:
+            day_norm = (day - self.day_min) / (self.day_max - self.day_min)
+        else:
+            day_norm = 0.0
+
+        # Get area (clean_area) and normalize
+        area = row["clean_area"][0] if row["clean_area"][0] is not None else 0.0
         if self.clean_area_max > self.clean_area_min:
-            clean_area = (clean_area - self.clean_area_min) / (
+            area_norm = (area - self.clean_area_min) / (
                 self.clean_area_max - self.clean_area_min
             )
         else:
-            clean_area = 0.0  # If min == max, set to 0
+            area_norm = 0.0
 
-        # Get action from the previous row
+        # Get action traces from the previous row
         if self.use_continuous_actions:
-            # Use continuous action coefficients
-            action_values = [0.0, 0.0, 0.0]
             action_trace_05 = [0.0, 0.0, 0.0]
-
             if self.current_row_index > 0:
                 prev_row = self.plant_df.slice(self.current_row_index - 1, 1)
                 if not prev_row.is_empty():
-                    action_values = [
-                        prev_row["red_coef"][0]
-                        if prev_row["red_coef"][0] is not None
+                    action_trace_05 = [
+                        prev_row["red_coef_trace_0.5"][0]
+                        if prev_row["red_coef_trace_0.5"][0] is not None
                         else 0.0,
-                        prev_row["white_coef"][0]
-                        if prev_row["white_coef"][0] is not None
+                        prev_row["white_coef_trace_0.5"][0]
+                        if prev_row["white_coef_trace_0.5"][0] is not None
                         else 0.0,
-                        prev_row["blue_coef"][0]
-                        if prev_row["blue_coef"][0] is not None
+                        prev_row["blue_coef_trace_0.5"][0]
+                        if prev_row["blue_coef_trace_0.5"][0] is not None
                         else 0.0,
                     ]
-                    if self.include_action_traces:
-                        action_trace_05 = [
-                            prev_row["red_coef_trace_0.5"][0]
-                            if prev_row["red_coef_trace_0.5"][0] is not None
-                            else 0.0,
-                            prev_row["white_coef_trace_0.5"][0]
-                            if prev_row["white_coef_trace_0.5"][0] is not None
-                            else 0.0,
-                            prev_row["blue_coef_trace_0.5"][0]
-                            if prev_row["blue_coef_trace_0.5"][0] is not None
-                            else 0.0,
-                        ]
-
-            obs_list = [[clean_area], action_values]
-            if self.include_action_traces:
-                obs_list.append(action_trace_05)
         else:
-            # Use discrete action (one-hot encoded)
-            discrete_action = None
-            discrete_action_trace_05 = [0.0, 0.0, 0.0]
-
+            action_trace_05 = [0.0, 0.0, 0.0]
             if self.current_row_index > 0:
                 prev_row = self.plant_df.slice(self.current_row_index - 1, 1)
                 if not prev_row.is_empty():
-                    discrete_action = prev_row["discrete_action"][0]
-                    if self.include_action_traces:
-                        discrete_action_trace_05 = [
-                            prev_row["discrete_action_trace_0_0.5"][0]
-                            if prev_row["discrete_action_trace_0_0.5"][0] is not None
-                            else 0.0,
-                            prev_row["discrete_action_trace_1_0.5"][0]
-                            if prev_row["discrete_action_trace_1_0.5"][0] is not None
-                            else 0.0,
-                            prev_row["discrete_action_trace_2_0.5"][0]
-                            if prev_row["discrete_action_trace_2_0.5"][0] is not None
-                            else 0.0,
-                        ]
+                    action_trace_05 = [
+                        prev_row["discrete_action_trace_0_0.5"][0]
+                        if prev_row["discrete_action_trace_0_0.5"][0] is not None
+                        else 0.0,
+                        prev_row["discrete_action_trace_1_0.5"][0]
+                        if prev_row["discrete_action_trace_1_0.5"][0] is not None
+                        else 0.0,
+                        prev_row["discrete_action_trace_2_0.5"][0]
+                        if prev_row["discrete_action_trace_2_0.5"][0] is not None
+                        else 0.0,
+                    ]
 
-            discrete_action_one_hot = np.zeros((3,), dtype=np.float32)
-            if discrete_action is not None and 0 <= discrete_action < 3:
-                discrete_action_one_hot[int(discrete_action)] = 1.0
-
-            obs_list = [
-                [clean_area],
-                discrete_action_one_hot,
-            ]
-            if self.include_action_traces:
-                obs_list.append(discrete_action_trace_05)
-
-        obs = np.concatenate(obs_list).astype(np.float32)
+        obs = np.array([day_norm, area_norm] + action_trace_05, dtype=np.float32)
         return obs
 
     def _get_action(self) -> int | np.ndarray:
