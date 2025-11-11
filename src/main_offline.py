@@ -228,15 +228,12 @@ for idx in indices:
 
     # Save final model (InAC-specific)
     if hasattr(agent, "actor_critic") and hasattr(agent, "optimizers"):
-        try:
-            from algorithms.nn.inac.agent.base import save
+        from algorithms.nn.inac.agent.base import save
 
-            save_path = exp_path / idx / "parameters"
-            save_path.mkdir(parents=True, exist_ok=True)
-            save(agent.actor_critic, agent.optimizers, save_path)  # type: ignore
-            logger.info(f"Saved final model to {save_path}")
-        except Exception as e:
-            logger.warning(f"Failed to save model parameters: {e}")
+        save_path = exp_path / str(idx) / "parameters"
+        save_path.mkdir(parents=True, exist_ok=True)
+        save(agent.actor_critic, agent.optimizers, save_path)  # type: ignore
+        logger.info(f"Saved final model to {save_path}")
 
     # Save checkpoint
     chk.save()
