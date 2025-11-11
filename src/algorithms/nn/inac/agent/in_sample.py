@@ -63,7 +63,7 @@ class ActorCritic(nnx.Module):
                     state_dim,
                     action_dim,
                     [hidden_units] * 2,
-                    offset=1 + 1e-5,
+                    offset=0,
                     rngs=rngs,
                 )
                 self.beh_pi = MLPDirichlet(
