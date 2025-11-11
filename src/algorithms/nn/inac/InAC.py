@@ -206,7 +206,7 @@ class InAC(BaseAgent):
 
         print(f"Successfully loaded pre-trained model from {path}")
 
-    def _load_offline_dataset(self, dataset: minari.MinariDataset):
+    def load(self, dataset: minari.MinariDataset):
         """
         Load offline dataset into the replay buffer.
 
