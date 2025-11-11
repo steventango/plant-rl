@@ -206,7 +206,7 @@ class InAC(BaseAgent):
 
         print(f"Successfully loaded pre-trained model from {path}")
 
-    def _load_offline_dataset(self, dataset_name: str):
+    def _load_offline_dataset(self, dataset: minari.MinariDataset):
         """
         Load offline dataset into the replay buffer.
 
@@ -214,56 +214,47 @@ class InAC(BaseAgent):
         while also adding new online experiences.
 
         Args:
-            dataset_name: Name of the Minari dataset to load (e.g., "plant-rl/continuous-v8")
+            dataset: MinariDataset to load into the buffer
         """
-        try:
-            print(f"Loading offline dataset: {dataset_name}")
-            dataset = minari.load_dataset(dataset_name)
 
-            # Collect all transitions
-            all_states = []
-            all_actions = []
-            all_rewards = []
-            all_next_states = []
-            all_terminations = []
+        # Collect all transitions
+        all_states = []
+        all_actions = []
+        all_rewards = []
+        all_next_states = []
+        all_terminations = []
 
-            for episode in dataset.iterate_episodes():
-                episode_length = len(episode.observations) - 1
-                for t in range(episode_length):
-                    all_states.append(episode.observations[t])
-                    all_actions.append(episode.actions[t])
-                    all_rewards.append(episode.rewards[t])
-                    all_next_states.append(episode.observations[t + 1])
-                    all_terminations.append(episode.terminations[t])
+        for episode in dataset.iterate_episodes():
+            episode_length = len(episode.observations) - 1
+            for t in range(episode_length):
+                all_states.append(episode.observations[t])
+                all_actions.append(episode.actions[t])
+                all_rewards.append(episode.rewards[t])
+                all_next_states.append(episode.observations[t + 1])
+                all_terminations.append(episode.terminations[t])
 
-            # Convert to JAX arrays
-            dataset_transitions = {
-                "state": jnp.array(all_states, dtype=jnp.float32),
-                "action": jnp.array(
-                    all_actions,
-                    dtype=jnp.float32 if not self.discrete_control else jnp.int32,
-                ),
-                "reward": jnp.array(all_rewards, dtype=jnp.float32),
-                "next_state": jnp.array(all_next_states, dtype=jnp.float32),
-                "termination": jnp.array(all_terminations, dtype=jnp.float32),
-            }
+        # Convert to JAX arrays
+        dataset_transitions = {
+            "state": jnp.array(all_states, dtype=jnp.float32),
+            "action": jnp.array(
+                all_actions,
+                dtype=jnp.float32 if not self.discrete_control else jnp.int32,
+            ),
+            "reward": jnp.array(all_rewards, dtype=jnp.float32),
+            "next_state": jnp.array(all_next_states, dtype=jnp.float32),
+            "termination": jnp.array(all_terminations, dtype=jnp.float32),
+        }
 
-            # Add all transitions to buffer using scan for efficiency
-            def add_transition(replay_state, transition):
-                replay_state = self.replay_buffer.add(replay_state, transition)
-                return replay_state, None
+        # Add all transitions to buffer using scan for efficiency
+        def add_transition(replay_state, transition):
+            replay_state = self.replay_buffer.add(replay_state, transition)
+            return replay_state, None
 
-            self.replay_state, _ = jax.lax.scan(
-                add_transition, self.replay_state, dataset_transitions
-            )
+        self.replay_state, _ = jax.lax.scan(
+            add_transition, self.replay_state, dataset_transitions
+        )
 
-            print(f"Loaded {len(all_states)} transitions from offline dataset")
-
-        except Exception as e:
-            print(f"Warning: Failed to load offline dataset '{dataset_name}': {e}")
-            print(
-                "Continuing with empty buffer - will learn from online experiences only"
-            )
+        print(f"Loaded {len(all_states)} transitions from offline dataset")
 
     def policy(self, obs: np.ndarray) -> np.ndarray:
         """
