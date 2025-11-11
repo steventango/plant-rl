@@ -4,26 +4,20 @@ Visualize simplex policy on a real trajectory from the dataset.
 """
 
 import argparse
-import os
 from pathlib import Path
 
 import jax
 import jax.numpy as jnp
 import matplotlib
-import matplotlib.cm as cm
-import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 import minari
 import numpy as np
-import optax
 import seaborn as sns
 import ternary
 from flax import nnx
-from minari import MinariDataset
 
 from algorithms.nn.inac.agent.base import load
-from algorithms.nn.inac.agent.in_sample import ActorCritic, Optimizers
-from algorithms.nn.inac.utils import logger
+from algorithms.nn.inac.agent.in_sample import ActorCritic
 from utils.metrics import UnbiasedExponentialMovingAverage
 
 matplotlib.use("Agg")
@@ -255,7 +249,6 @@ def plot_episode_comprehensive(
     # Convert to JAX arrays
     states_jax = jnp.array(states)
     dataset_actions_jax = jnp.array(dataset_actions)
-    policy_actions_jax = jnp.array(policy_actions)
 
     # Compute all metrics over the trajectory
     q_values, _, _ = actor_critic.q(states_jax, dataset_actions_jax)
@@ -697,11 +690,11 @@ def plot_ternary_on_axis(
         style="hexagonal", cmap=plt.get_cmap(cmap), colorbar=True, cbarlabel=""
     )
     if vmin is not None:
-        heatmap_kwargs["vmin"] = float(vmin)
+        heatmap_kwargs["vmin"] = float(vmin)  # type: ignore
     if vmax is not None:
-        heatmap_kwargs["vmax"] = float(vmax)
+        heatmap_kwargs["vmax"] = float(vmax)  # type: ignore
 
-    tax.heatmap(data, **heatmap_kwargs)
+    tax.heatmap(data, **heatmap_kwargs)  # type: ignore
 
     # Add corner labels
     tax.right_corner_label("R", fontsize=10)
@@ -869,8 +862,8 @@ def plot_episode_ternary_timeseries(
         vals = [pd["metrics"][m_idx] for pd in per_timestep_data]
         # Stack to compute global min/max
         stacked = np.stack([np.array(v) for v in vals], axis=0)
-        vmins[m_idx] = float(np.nanmin(stacked))
-        vmaxs[m_idx] = float(np.nanmax(stacked))
+        vmins[m_idx] = float(np.nanmin(stacked))  # type: ignore
+        vmaxs[m_idx] = float(np.nanmax(stacked))  # type: ignore
 
     # Second pass: plotting using shared vmin/vmax per row
     for col_idx, pd in enumerate(per_timestep_data):
@@ -1019,7 +1012,7 @@ def plot_q_ternary(actor_critic, state, num_points=64, save_path=None):
 
     # Create data dict for heatmap - use integer coordinates directly
     data = {}
-    for point, q_val in zip(points, q_values):
+    for point, q_val in zip(points, q_values, strict=True):
         # Keep as integers (no normalization back)
         coord = tuple(point.astype(int))
         data[coord] = float(q_val)
@@ -1037,7 +1030,7 @@ def plot_q_ternary(actor_critic, state, num_points=64, save_path=None):
         q, _, _ = actor_critic.q(state_tile, v_jax)
         vertex_q.append(float(q[0]))
 
-    print(f"Q-values at vertices:")
+    print("Q-values at vertices:")
     print(f"Red: {vertex_q[0]:.3f}")
     print(f"White: {vertex_q[1]:.3f}")
     print(f"Blue: {vertex_q[2]:.3f}")
@@ -1048,7 +1041,7 @@ def plot_q_ternary(actor_critic, state, num_points=64, save_path=None):
     tax.left_corner_label(f"Blue\n{vertex_q[2]:.3f}", fontsize=12)
 
     # Adjust title with more padding to avoid label overlap
-    tax.set_title(f"Q-values over Simplex Action Space", fontsize=14, pad=40)
+    tax.set_title("Q-values over Simplex Action Space", fontsize=14, pad=40)
 
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
@@ -1093,7 +1086,7 @@ def plot_advantage_ternary(actor_critic, state, num_points=64, save_path=None):
     cmap = plt.get_cmap("RdBu_r")
 
     data = {}
-    for point, adv_val in zip(points, advantages):
+    for point, adv_val in zip(points, advantages, strict=True):
         coord = tuple(point.astype(int))
         data[coord] = float(adv_val)
 
@@ -1236,7 +1229,7 @@ def plot_clipped_advantage_ternary(
 
     # Create data dict for heatmap - use integer coordinates directly
     data = {}
-    for point, adv_val in zip(points, clipped_advantage):
+    for point, adv_val in zip(points, clipped_advantage, strict=True):
         # Keep as integers (no normalization back)
         coord = tuple(point.astype(int))
         data[coord] = float(adv_val)
@@ -1263,7 +1256,7 @@ def plot_clipped_advantage_ternary(
         )
         vertex_adv.append(float(clipped_adv[0]))
 
-    print(f"Clipped advantage at vertices:")
+    print("Clipped advantage at vertices:")
     print(f"Red: {vertex_adv[0]:.3f}")
     print(f"White: {vertex_adv[1]:.3f}")
     print(f"Blue: {vertex_adv[2]:.3f}")
@@ -1274,7 +1267,7 @@ def plot_clipped_advantage_ternary(
     tax.left_corner_label(f"Blue\n{vertex_adv[2]:.3f}", fontsize=12)
 
     # Adjust title with more padding to avoid label overlap
-    tax.set_title(f"Clipped Advantage over Simplex Action Space", fontsize=14, pad=40)
+    tax.set_title("Clipped Advantage over Simplex Action Space", fontsize=14, pad=40)
 
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches="tight")
@@ -1419,7 +1412,7 @@ def plot_dataset_clipped_advantage_ternary(
 
     # Create data dict for heatmap
     data = {}
-    for point, adv_val in zip(points, clipped_advantages):
+    for point, adv_val in zip(points, clipped_advantages, strict=True):
         coord = tuple(point.astype(int))
         data[coord] = float(adv_val)
 
@@ -1433,7 +1426,7 @@ def plot_dataset_clipped_advantage_ternary(
         coord = tuple(v.astype(int))
         vertex_adv.append(data[coord])
 
-    print(f"\nMean clipped advantage at vertices (over entire dataset):")
+    print("\nMean clipped advantage at vertices (over entire dataset):")
     print(f"Red: {vertex_adv[0]:.3f}")
     print(f"White: {vertex_adv[1]:.3f}")
     print(f"Blue: {vertex_adv[2]:.3f}")
@@ -1610,7 +1603,7 @@ def plot_dataset_metric_ternary(
 
     # Create data dict for heatmap
     data = {}
-    for point, val in zip(points, metric_values):
+    for point, val in zip(points, metric_values, strict=True):
         coord = tuple(point.astype(int))
         data[coord] = float(val)
 
@@ -1835,7 +1828,7 @@ def plot_policy_ternary(
             lp = policy.get_logprob(state_jax, action_batch)
             # Convert to scalar
             lp_val = float(jnp.asarray(lp).flatten()[0])
-        except Exception as e:
+        except Exception:
             # If get_logprob fails, try manual computation for Dirichlet
             try:
                 if hasattr(policy, "body") and hasattr(policy, "alpha_layer"):
@@ -1855,7 +1848,7 @@ def plot_policy_ternary(
                     lp_val = float(jnp.asarray(lp).flatten()[0])
                 else:
                     lp_val = 0.0
-            except Exception as e2:
+            except Exception:
                 lp_val = 0.0
 
         log_probs.append(lp_val)
@@ -1891,7 +1884,7 @@ def plot_policy_ternary(
 
     # Create data dict for heatmap - use integer coordinates directly
     data = {}
-    for point, pdf_val in zip(points, log10_pdf_values):
+    for point, pdf_val in zip(points, log10_pdf_values, strict=True):
         # Keep as integers (no normalization back)
         coord = tuple(point.astype(int))
         data[coord] = float(pdf_val)
@@ -1936,10 +1929,9 @@ def simulate_rollout(
     """
     Simulate a rollout from a start state using the policy.
 
-    State structure (7 dims):
+    State structure (5 dims):
     - state[0]: normalized clean_area
-    - state[1:4]: previous action (red_coef, white_coef, blue_coef)
-    - state[4:7]: action trace (smoothed actions)
+    - state[1:4]: action trace (smoothed actions)
 
     The action trace can be computed as an exponential moving average:
     trace_t = alpha * action_t + (1 - alpha) * trace_{t-1}
@@ -1950,7 +1942,7 @@ def simulate_rollout(
 
     Args:
         actor_critic: The trained model
-        start_state: Initial state (7-dim)
+        start_state: Initial state (5-dim)
         horizon: Number of steps to simulate
         rngs: Random number generator
         deterministic: Whether to use deterministic policy
@@ -2007,10 +1999,9 @@ def simulate_rollout(
         new_trace = trace_ema.compute()
 
         # Create next state
-        next_state = np.zeros(7, dtype=np.float32)
+        next_state = np.zeros(5, dtype=np.float32)
         next_state[0] = new_area_norm  # Updated area
-        next_state[1:4] = action  # Current action becomes previous
-        next_state[4:7] = new_trace  # Updated trace
+        next_state[1:4] = new_trace  # Updated trace
 
         states.append(next_state)
         current_state = next_state
@@ -2189,10 +2180,10 @@ def main():
     parser.add_argument(
         "--exp_path",
         type=str,
-        default="results/offline/InAC/InAC",
+        default="results/offline/S8/P0/InAC/0",
         help="Path to experiment directory with trained model",
     )
-    parser.add_argument("--dataset", default="plant-rl/continuous-v8", type=str)
+    parser.add_argument("--dataset", default="plant-rl/continuous-v9", type=str)
     parser.add_argument(
         "--episodes", default=5, type=int, help="Number of episodes to visualize"
     )
@@ -2256,19 +2247,19 @@ def main():
     all_rewards = []
     for episode in episodes:
         all_rewards.extend(episode.rewards)
-    avg_area_change = np.mean(all_rewards)
+    avg_area_change = float(np.mean(all_rewards))
     print(f"Average relative area change (reward) in dataset: {avg_area_change:.6f}")
 
     # Load model
     exp_path = Path(args.exp_path)
     print(f"Loading model from {exp_path}")
-    actor_critic = load_model(
+    actor_critic: ActorCritic = load_model(
         exp_path=exp_path,
         state_dim=args.state_dim,
         action_dim=args.action_dim,
         hidden_units=args.hidden_units,
         policy_type=args.policy_type,
-    )
+    )  # type: ignore
 
     # Get actions
     rngs = nnx.Rngs(42)  # Fixed seed for reproducibility
