@@ -2180,7 +2180,7 @@ def main():
     parser.add_argument(
         "--exp_path",
         type=str,
-        default="results/offline/S8/P0/InAC/0",
+        default="results/offline/S8/P0/InAC_GPsim0/0",
         help="Path to experiment directory with trained model",
     )
     parser.add_argument("--dataset", default="plant-rl/continuous-v9", type=str)

@@ -1,7 +1,7 @@
 {
     "agent": "InAC_GPsim0",
     "problem": "GPsim",
-    "total_steps": 10000,
+    "total_steps": 1000,
     "episode_cutoff": -1,
     "metaParameters": {
         "environment":{
@@ -13,15 +13,10 @@
             "seed_offset": 0
         },
         "policy_type": "dirichlet",
-        "tau": 0.5,
-        "learning_rate": 3e-4,
+        "discrete_control": false,
         "hidden_units": 256,
-        "batch_size": 256,
-        "gamma": 0.99,
-        "use_target_network": 1,
-        "target_network_update_freq": 1,
-        "polyak": 0.995,
-        "weight_decay": 1e-4,
-        "updates_per_step": 100
+        "deterministic": true,
+        "updates_per_step": 0,
+        "pretrained_path": "results/offline/S8/P0/InAC_GPsim0/0/parameters"
     }
 }
