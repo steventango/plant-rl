@@ -34,6 +34,11 @@ class InAC(BaseAgent):
         collector: Collector,
         seed: int,
     ):
+        # Enable planning by default if not explicitly set
+        # This allows InAC to work with the offline training interface
+        if "use_planning" not in params:
+            params = {**params, "use_planning": True}
+
         super().__init__(observations, actions, params, collector, seed)
 
         # ------------------------------
@@ -389,10 +394,9 @@ class InAC(BaseAgent):
 
         # Perform multiple updates per step if configured
         for _ in range(self.updates_per_step):
-            self._perform_update()
-            self.updates += 1
+            self._update()
 
-    def _perform_update(self):
+    def _update(self):
         """Perform a single update step using data from the Flashbax buffer."""
         # Sample a batch from the Flashbax buffer using JIT-compiled function
         batch = self.replay_buffer.sample(self.replay_state, self.rngs.replay_sample())
@@ -444,12 +448,34 @@ class InAC(BaseAgent):
                 self.actor_critic.q, self.actor_critic.q_target, 1 - self.polyak
             )
 
+        self.updates += 1
+
         # Collect metrics if collector is available
         if self.collector:
             self.collector.collect("beta_loss", float(jax.device_get(loss_beta)))
             self.collector.collect("actor_loss", float(jax.device_get(loss_pi)))
             self.collector.collect("critic_loss", float(jax.device_get(loss_q)))
             self.collector.collect("value_loss", float(jax.device_get(loss_vs)))
+
+        return {
+            "beta": float(jax.device_get(loss_beta)),
+            "actor": float(jax.device_get(loss_pi)),
+            "critic": float(jax.device_get(loss_q)),
+            "value": float(jax.device_get(loss_vs)),
+        }
+
+    def plan(self):  # type: ignore
+        """
+        Perform a single training update step (for offline training).
+        This method fits the RL-Glue interface for planning/updating.
+
+        Returns:
+            Dictionary with loss values: {"beta", "actor", "critic", "value"}
+        """
+        if not self.replay_buffer.can_sample(self.replay_state):
+            return {}
+        return self._update()
+
 
     # -------------------
     # -- Checkpointing --
