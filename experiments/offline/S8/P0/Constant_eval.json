@@ -1,0 +1,14 @@
+{
+    "agent": "Constant1",
+    "problem": "GPsim",
+    "total_steps": 1000,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment":{
+            "stochastic_pred": true,
+            "optimism": 0,
+            "episode_length": 13
+        },
+        "constant_action": [[0, 1, 0]]
+    }
+}
