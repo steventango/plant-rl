@@ -29,7 +29,9 @@ def compute_action_coefficients(action: np.ndarray) -> np.ndarray:
     coefficients = np.clip(coefficients, 0.0, 1.0)
 
     # Normalize coefficients to sum to 1
-    coefficients /= np.sum(coefficients)
+    coefficients_sum = np.sum(coefficients)
+    if coefficients_sum > 0:
+        coefficients /= coefficients_sum
 
     return coefficients
 
