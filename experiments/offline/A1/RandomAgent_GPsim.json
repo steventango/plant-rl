@@ -6,7 +6,7 @@
     "metaParameters": {
         "environment":{
             "stochastic_pred": true,
-            "optimism": 0.5,
+            "optimism": 0.1,
             "episode_length": 13
         }
     }
