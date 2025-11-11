@@ -1,0 +1,19 @@
+{
+    "agent": "InAC6",
+    "problem": "DayAreaTracePlantGrowthChamberColorTriangle",
+    "total_steps": 40320,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": "alliance-zone06",
+            "timezone": "America/Edmonton"
+        },
+        "timezone": "America/Edmonton",
+        "discrete_control": false,
+        "policy_type": "dirichlet",
+        "hidden_units": 256,
+        "deterministic": true,
+        "updates_per_step": 0,
+        "pretrained_path": "/data/models/?"
+    }
+}
