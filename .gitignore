@@ -13,8 +13,9 @@ results.tar*
 images/
 
 # ignore some personal work
-test_notebooks
-old_work
+test_notebooks/
+test_models/
+old_work/
 
 # ignore checkpoints
 checkpoints
