@@ -162,7 +162,7 @@ while not mock_env.is_done():
             break
 
 dataset = env.create_dataset(
-    dataset_id="plant-rl/continuous-v8",
+    dataset_id="plant-rl/continuous-v9",
     algorithm_name="Random-Policy",
     code_permalink="https://github.com/steventango/plant-rl",
     author="Steven Tang",
