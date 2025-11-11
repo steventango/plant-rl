@@ -1,7 +1,7 @@
 import polars as pl
 
-from src.datasets.config import BLUE, RED, WHITE
-from src.datasets.transforms import transform_action, transform_action_traces
+from datasets.config import BLUE, RED, WHITE
+from datasets.transforms import transform_action, transform_action_traces
 
 
 def test_coefficient_traces():
