@@ -1,5 +1,5 @@
 {
-    "agent": "InAC_GPsim0_eval",
+    "agent": "InAC_GPsim0.75_eval",
     "problem": "GPsim",
     "total_steps": 1000,
     "episode_cutoff": -1,
@@ -17,6 +17,6 @@
         "hidden_units": 256,
         "deterministic": true,
         "updates_per_step": 0,
-        "pretrained_path": "results/offline/S8/P0/InAC_GPsim0/0/parameters"
+        "pretrained_path": "results/offline/S8/P0/InAC_GPsim0.75/0/parameters"
     }
 }
