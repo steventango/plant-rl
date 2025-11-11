@@ -232,6 +232,7 @@ class MLPMixtureDirichlet(nnx.Module):
 
         return pi_distribution
 
+
 class MLPDiscrete(nnx.Module):
     def __init__(
         self,

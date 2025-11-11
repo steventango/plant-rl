@@ -478,7 +478,6 @@ class InAC(BaseAgent):
             return {}
         return self._update()
 
-
     # -------------------
     # -- Checkpointing --
     # -------------------
