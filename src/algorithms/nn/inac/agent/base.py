@@ -302,6 +302,7 @@ def evaluate_on_dataset(
 
 
 def save(module: nnx.Module, optimizers: nnx.Module, parameters_dir):
+    parameters_dir = os.path.abspath(parameters_dir)
     module_state = nnx.split(module)[1]
     optimizers_state = nnx.split(optimizers)[1]
 
