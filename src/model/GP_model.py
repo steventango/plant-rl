@@ -63,8 +63,8 @@ class GP:
     def predict_mean_std(self, X):
         X = jnp.vstack([self.normalize_input(x) for x in X])
         predictive_dist = self.get_predictive_dist(X)
-        predictive_mean = predictive_dist.mean()
-        predictive_std = jnp.sqrt(predictive_dist.variance())  # type: ignore
+        predictive_mean = predictive_dist.mean
+        predictive_std = jnp.sqrt(predictive_dist.variance)  # type: ignore
         return self.denormalize_output(predictive_mean), jnp.array(
             predictive_std
         ) * self.output_std
