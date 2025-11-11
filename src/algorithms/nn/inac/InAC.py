@@ -1,3 +1,4 @@
+import dataclasses
 from pathlib import Path
 from typing import Any, Dict, Tuple
 
@@ -171,9 +172,14 @@ class InAC(BaseAgent):
             min_length=self.batch_size,
             sample_batch_size=self.batch_size,
         )
+        self.replay_buffer = dataclasses.replace(
+            self.replay_buffer,
+            init=jax.jit(self.replay_buffer.init),
+            add=jax.jit(self.replay_buffer.add, donate_argnums=0),
+            sample=jax.jit(self.replay_buffer.sample),
+            can_sample=jax.jit(self.replay_buffer.can_sample),
+        )
         self.replay_state = self.replay_buffer.init(dummy_transition)
-        self.replay_buffer.add = jax.jit(self.replay_buffer.add, donate_argnums=(0,))  # type: ignore
-        self.replay_buffer.sample = jax.jit(self.replay_buffer.sample)  # type: ignore
 
         # Load offline dataset into buffer if specified
         if self.offline_dataset:
