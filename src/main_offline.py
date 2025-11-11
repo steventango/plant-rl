@@ -121,11 +121,10 @@ for idx in indices:
     )
 
     # Training configuration
-    max_steps = exp_params.get("max_steps", exp.total_steps)
     log_interval = exp_params.get("log_interval", 10000)
     eval_interval = exp_params.get("eval_interval", 100000)
 
-    logger.info(f"Starting offline training for {max_steps} steps")
+    logger.info(f"Starting offline training for {exp.total_steps} steps")
 
     # Create plots directory
     plots_dir = exp_path / "plots"
@@ -138,14 +137,14 @@ for idx in indices:
 
     # Create progress bar
     pbar = tqdm(
-        total=max_steps,
+        total=exp.total_steps,
         desc="Training",
         unit="step",
         disable=prod,
         dynamic_ncols=True,
     )
 
-    while total_steps < max_steps:
+    while total_steps < exp.total_steps:
         if (
             eval_interval
             and total_steps % eval_interval == 0
@@ -196,7 +195,7 @@ for idx in indices:
 
                 logger.info(
                     f"TRAIN LOG: steps {total_steps}, "
-                    f"{total_steps * 100 // max_steps}%, "
+                    f"{total_steps * 100 // exp.total_steps}%, "
                     f"{elapsed_time:.2f} steps/s"
                 )
 
@@ -216,7 +215,7 @@ for idx in indices:
                 # Just log progress if no losses
                 logger.info(
                     f"TRAIN LOG: steps {total_steps}, "
-                    f"{total_steps * 100 // max_steps}%, "
+                    f"{total_steps * 100 // exp.total_steps}%, "
                     f"{elapsed_time:.2f} steps/s"
                 )
                 wandb_run.log({"steps_per_second": elapsed_time}, step=total_steps)
