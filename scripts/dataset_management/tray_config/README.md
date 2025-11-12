@@ -269,7 +269,7 @@ positional arguments:
 
 optional arguments:
   -h, --help       show this help message and exit
-  --port PORT      Port to run the web server on (default: 5000)
+  --port PORT      Port to run the web server on (default: 5001)
   --host HOST      Host to bind the server to (default: 0.0.0.0)
   --debug          Run server in debug mode
   --local-config   Save configs locally in dataset dirs instead of
