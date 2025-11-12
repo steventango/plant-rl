@@ -26,6 +26,6 @@ Agents trained in sim are trained for 1 k GP simulator steps, 100k updates, for 
 - today the laptop hardware is failing, with both the battery and power cable malfunctioning. we're gonna try to replace them | the issue may have been fixed by a change in BIOS (switching the power settings from adaptive to primarily AC) | also ordered a backup power adaptor just in case, cuz the cable is shredding on the current one | we need that new computer sooner than later.
 - The first 3 hours of data from this morning have been impacted by the battery issue, a checkpointing issue, and wandb network connectivity issues. The main issue is that restarts caused the agent wrapper to lose its state and execute a different action (see figures below). These issues were fixed by 11:36 AM. We also lost the first 20 minutes of twilight. The data for today may still be useable if we assume the agent took the mean of all the actions taken between 9:30 and 20:30 today.
 - malfunctioning action of a stochastic InAC
-![alt text](image.png =250x)
+![alt text](image.png){width=250}
 - malfunctioning action of a deterministic agent
-![alt text](image-1.png =250x)
+![alt text](image-1.png){width=250}
