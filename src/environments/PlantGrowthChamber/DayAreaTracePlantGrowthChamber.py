@@ -9,7 +9,7 @@ class DayAreaTracePlantGrowthChamber(PlantGrowthChamber):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.normalize = kwargs.get("normalize", True)
-        self.action_uema_alpha = kwargs.get("action_uema_alpha", 0.5)
+        self.action_uema_alpha = kwargs.get("action_uema_alpha", 0.9)
         self.action_uema = UnbiasedExponentialMovingAverage(
             shape=(6,), alpha=self.action_uema_alpha
         )

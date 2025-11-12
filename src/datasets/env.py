@@ -87,39 +87,39 @@ class MockEnv(gym.Env):
 
         # Get action traces from the previous row
         if self.use_continuous_actions:
-            action_trace_05 = [0.0, 0.0, 0.0]
+            action_trace = [0.0, 0.0, 0.0]
             if self.current_row_index > 0:
                 prev_row = self.plant_df.slice(self.current_row_index - 1, 1)
                 if not prev_row.is_empty():
-                    action_trace_05 = [
-                        prev_row["red_coef_trace_0.5"][0]
-                        if prev_row["red_coef_trace_0.5"][0] is not None
+                    action_trace = [
+                        prev_row["red_coef_trace_0.9"][0]
+                        if prev_row["red_coef_trace_0.9"][0] is not None
                         else 0.0,
-                        prev_row["white_coef_trace_0.5"][0]
-                        if prev_row["white_coef_trace_0.5"][0] is not None
+                        prev_row["white_coef_trace_0.9"][0]
+                        if prev_row["white_coef_trace_0.9"][0] is not None
                         else 0.0,
-                        prev_row["blue_coef_trace_0.5"][0]
-                        if prev_row["blue_coef_trace_0.5"][0] is not None
+                        prev_row["blue_coef_trace_0.9"][0]
+                        if prev_row["blue_coef_trace_0.9"][0] is not None
                         else 0.0,
                     ]
         else:
-            action_trace_05 = [0.0, 0.0, 0.0]
+            action_trace = [0.0, 0.0, 0.0]
             if self.current_row_index > 0:
                 prev_row = self.plant_df.slice(self.current_row_index - 1, 1)
                 if not prev_row.is_empty():
-                    action_trace_05 = [
-                        prev_row["discrete_action_trace_0_0.5"][0]
-                        if prev_row["discrete_action_trace_0_0.5"][0] is not None
+                    action_trace = [
+                        prev_row["discrete_action_trace_0_0.9"][0]
+                        if prev_row["discrete_action_trace_0_0.9"][0] is not None
                         else 0.0,
-                        prev_row["discrete_action_trace_1_0.5"][0]
-                        if prev_row["discrete_action_trace_1_0.5"][0] is not None
+                        prev_row["discrete_action_trace_1_0.9"][0]
+                        if prev_row["discrete_action_trace_1_0.9"][0] is not None
                         else 0.0,
-                        prev_row["discrete_action_trace_2_0.5"][0]
-                        if prev_row["discrete_action_trace_2_0.5"][0] is not None
+                        prev_row["discrete_action_trace_2_0.9"][0]
+                        if prev_row["discrete_action_trace_2_0.9"][0] is not None
                         else 0.0,
                     ]
 
-        obs = np.array([day_norm, area_norm] + action_trace_05, dtype=np.float32)
+        obs = np.array([day_norm, area_norm] + action_trace, dtype=np.float32)
         return obs
 
     def _get_action(self) -> int | np.ndarray:
