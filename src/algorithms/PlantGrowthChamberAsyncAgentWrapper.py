@@ -27,6 +27,7 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
         self.tz_utc = ZoneInfo("Etc/UTC")
         self.env_time = None
         self.env_local_time = None
+        self.last_action_info = (None, {})
 
     def update_time_from_extra(self, extra: dict[str, Any]) -> None:
         """Extract time from environment info dictionary."""
@@ -186,6 +187,44 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
                 self.env.update_action_trace(self.last_action_info[0])
 
         return self.last_action_info
+
+    # -------------------
+    # -- Checkpointing --
+    # -------------------
+    def __getstate__(self):
+        state = {
+            "__args": (self.agent, self.env),
+            "agent_started": self.agent_started,
+            "last_action_time": self.last_action_time.timestamp()
+            if self.last_action_time
+            else None,
+            "env_time": self.env_time.timestamp() if self.env_time else None,
+            "env_local_time": self.env_local_time.timestamp()
+            if self.env_local_time
+            else None,
+            "last_action_info": self.last_action_info,
+        }
+        return state
+
+    def __setstate__(self, state):
+        self.__init__(*state["__args"])
+        self.agent_started = state.get("agent_started", False)
+
+        # Restore datetime objects from timestamps
+        if state.get("last_action_time") is not None:
+            self.last_action_time = datetime.fromtimestamp(
+                state["last_action_time"], tz=self.tz_utc
+            )
+
+        if state.get("env_time") is not None:
+            self.env_time = datetime.fromtimestamp(state["env_time"], tz=self.tz_utc)
+
+        if state.get("env_local_time") is not None:
+            self.env_local_time = datetime.fromtimestamp(
+                state["env_local_time"], tz=self.tz
+            )
+
+        self.last_action_info = state.get("last_action_info")
 
 
 class PlantGrowthChamberAsyncAgentWrapper_BrightTwilight(
