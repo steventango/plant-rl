@@ -21,6 +21,8 @@ class ConstantAgent(BaseAgent):
         self.steps = 0
         self.updates = 0
         self.action = params.get("constant_action", 1)
+        if isinstance(self.action, list):
+            self.action = np.array(self.action)
 
     # ----------------------
     # -- RLGlue interface --
