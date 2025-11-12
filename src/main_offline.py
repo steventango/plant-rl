@@ -189,7 +189,6 @@ for idx in indices:
 
                 # Update progress bar with loss information
                 postfix_dict = {k: f"{v:.3f}" for k, v in avg_losses.items()}
-                postfix_dict["steps/s"] = f"{elapsed_time:.1f}"
                 pbar.set_postfix(postfix_dict)
 
                 logger.info(
