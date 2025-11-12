@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tray Configuration Tool</title>
+<script src="https://cdn.jsdelivr.net/npm/fabric@6.9.0/dist/index.js"></script>    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .dataset-info {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .controls {
+            background-color: #34495e;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .control-group input {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            width: 70px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .control-group input:focus {
+            outline: 2px solid #3498db;
+        }
+
+        .tray-count {
+            margin-left: auto;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .edit-status {
+            color: #3498db;
+            font-style: italic;
+            font-weight: 500;
+        }
+
+        .canvas-container {
+            flex: 1;
+            position: relative;
+            background-color: #2c3e50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .canvas-wrapper {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .button-bar {
+            background-color: #ecf0f1;
+            padding: 15px 20px;
+            display: flex;
+            gap: 10px;
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background-color: #2980b9;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .btn-danger {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background-color: #c0392b;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .btn-warning {
+            background-color: #f39c12;
+            color: white;
+        }
+
+        .btn-warning:hover:not(:disabled) {
+            background-color: #d68910;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .btn-success {
+            background-color: #27ae60;
+            color: white;
+            flex: 1;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background-color: #229954;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .status-bar {
+            background-color: #95a5a6;
+            color: white;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .complete-message {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: #27ae60;
+            font-weight: 600;
+        }
+
+        .loading {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            color: #3498db;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Tray Configuration Tool</h1>
+        <div class="dataset-info">
+            <span id="datasetName">Loading...</span>
+            <span id="datasetProgress"></span>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="control-group">
+            <label>Rows (n_tall):</label>
+            <input type="number" id="nTall" min="1" max="20" value="3">
+        </div>
+        <div class="control-group">
+            <label>Columns (n_wide):</label>
+            <input type="number" id="nWide" min="1" max="20" value="6">
+        </div>
+        <div class="tray-count">
+            <span>Trays: <span id="trayCount">0</span></span>
+        </div>
+        <div class="edit-status" id="editStatus"></div>
+    </div>
+
+    <div class="canvas-container" id="canvasContainer">
+        <div class="canvas-wrapper">
+            <canvas id="imageCanvas"></canvas>
+        </div>
+    </div>
+
+    <div class="button-bar">
+        <button class="btn-warning" id="prevBtn">← Previous Dataset</button>
+        <button class="btn-success" id="saveNextBtn">Save & Next Dataset →</button>
+    </div>
+
+    <div class="status-bar" id="statusBar">
+        Loading...
+    </div>
+
+    <script>
+        // Application state
+        const state = {
+            points: [],
+            trayPolygons: [],  // Fabric.js polygon objects for trays
+            trayLabels: [], // Fabric.js text objects for tray labels
+            trayConfigs: [],
+            selectedTrayIndex: null,
+            imageWidth: 0,
+            imageHeight: 0,
+            fabricImage: null,
+            isComplete: false,
+            isAddingPoints: false,
+            selectedPolygon: null,
+            tempCircles: [], // Temporary circles for point selection
+            trayGridLines: [], // Array of arrays - grid lines for each tray
+            isSaving: false, // Flag to prevent re-entrant operations during save
+            dimensionUpdateTimeout: null, // Timeout for debouncing dimension updates
+            unsavedChanges: false // Flag to track if there are unsaved changes
+        };
+
+        // DOM elements
+        const datasetName = document.getElementById('datasetName');
+        const datasetProgress = document.getElementById('datasetProgress');
+        const trayCount = document.getElementById('trayCount');
+        const editStatus = document.getElementById('editStatus');
+        const statusBar = document.getElementById('statusBar');
+        const nTallInput = document.getElementById('nTall');
+        const nWideInput = document.getElementById('nWide');
+        const saveNextBtn = document.getElementById('saveNextBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const canvasContainer = document.getElementById('canvasContainer');
+
+        // Initialize Fabric.js canvas
+        let canvas = new fabric.Canvas('imageCanvas', {
+            selection: true,
+            hoverCursor: 'move',
+            defaultCursor: 'default',
+            preserveObjectStacking: true
+        });
+        // Initialize
+        async function init() {
+            console.log('=== INIT START ===');
+            try {
+                const response = await fetch('/api/init');
+                console.log('INIT: API response status:', response.status);
+                const data = await response.json();
+                console.log('INIT: API response data:', data);
+
+                if (data.status === 'complete') {
+                    console.log('INIT: Process complete');
+                    showComplete(data.message);
+                    return;
+                }
+
+                if (data.status === 'ok') {
+                    console.log('INIT: Loading dataset');
+                    loadDataset(data);
+                    updateNavigationButtons(data);
+                    sessionStorage.setItem('trayConfigInitialized', 'true');
+                } else {
+                    console.log('INIT: Error:', data.message);
+                    alert('Error: ' + data.message);
+                }
+            } catch (error) {
+                console.error('INIT: Initialization error:', error);
+                alert('Failed to initialize: ' + error.message);
+            }
+            console.log('=== INIT END ===');
+        }
+
+        function loadDataset(data) {
+            console.log('=== LOAD DATASET START ===');
+            console.log('LOAD: Dataset name:', data.dataset_name);
+            console.log('LOAD: Dataset index:', data.dataset_index);
+            console.log('LOAD: Total datasets:', data.total_datasets);
+            console.log('LOAD: Image dimensions:', data.image_width, 'x', data.image_height);
+            console.log('LOAD: Tray configs:', data.tray_configs);
+
+            // Clear any active selections and editing state before loading new data
+            console.log('LOAD: Clearing active selections and editing state');
+            canvas.discardActiveObject();
+            state.selectedPolygon = null;
+            state.selectedTrayIndex = null;
+            state.points = [];
+            state.isAddingPoints = false;
+            state.isSaving = false; // Reset save flag
+            // Clear any pending dimension updates
+            if (state.dimensionUpdateTimeout) {
+                clearTimeout(state.dimensionUpdateTimeout);
+                state.dimensionUpdateTimeout = null;
+            }
+            editStatus.textContent = '';
+            canvas.getObjects('circle').forEach(c => canvas.remove(c));
+            updateStatusBar();
+
+            datasetName.textContent = data.dataset_name;
+            datasetProgress.textContent = `(${data.dataset_index + 1}/${data.total_datasets})`;
+            state.imageWidth = data.image_width;
+            state.imageHeight = data.image_height;
+            state.trayConfigs = data.tray_configs || [];
+            trayCount.textContent = state.trayConfigs.length;
+            nTallInput.value = data.default_n_tall;
+            nWideInput.value = data.default_n_wide;
+            state.unsavedChanges = false; // Reset unsaved changes flag when loading fresh data
+
+            console.log('LOAD: Loading image');
+            // Load image
+            loadImage();
+
+            // Update status bar
+            updateStatusBar();
+            console.log('=== LOAD DATASET END ===');
+        }
+
+        function loadImage() {
+            console.log('=== LOAD IMAGE START ===');
+            fetch('/api/image?' + new Date().getTime())
+                .then(response => {
+                    console.log('IMAGE: Fetch response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.blob();
+                })
+                .then(blob => {
+                    console.log('IMAGE: Blob received, size:', blob.size);
+                    const url = URL.createObjectURL(blob);
+                    const img = new Image();
+                    img.onload = function() {
+                        console.log('IMAGE: Image loaded, dimensions:', img.width, 'x', img.height);
+                        const fabricImg = new fabric.Image(img);
+                        console.log('IMAGE: Fabric image created');
+                        URL.revokeObjectURL(url); // Clean up
+                        state.fabricImage = fabricImg;
+                        state.imageWidth = img.width;
+                        state.imageHeight = img.height;
+
+                        console.log('IMAGE: Resizing canvas');
+                        resizeCanvas();
+                        console.log('IMAGE: Rendering canvas');
+                        renderCanvas();
+                    };
+                    img.onerror = function() {
+                        console.error('IMAGE: Failed to load image from blob URL');
+                        URL.revokeObjectURL(url);
+                        alert('Failed to load image. Please check the server and dataset.');
+                    };
+                    img.src = url;
+                })
+                .catch(error => {
+                    console.error('IMAGE: Failed to load image:', error);
+                    alert('Failed to load image. Please check the server and dataset.');
+                });
+            console.log('=== LOAD IMAGE END ===');
+        }
+
+        function resizeCanvas() {
+            console.log('=== RESIZE CANVAS START ===');
+            if (!state.fabricImage) {
+                console.log('RESIZE: No fabric image, skipping');
+                return;
+            }
+
+            console.log('RESIZE: Resizing canvas for image:', state.imageWidth, 'x', state.imageHeight);
+
+            // Fit image to container while maintaining aspect ratio
+            const containerWidth = canvasContainer.clientWidth - 40;
+            const containerHeight = canvasContainer.clientHeight - 40;
+            console.log('RESIZE: Container dimensions:', containerWidth, 'x', containerHeight);
+            const imgAspect = state.imageWidth / state.imageHeight;
+            const containerAspect = containerWidth / containerHeight;
+            console.log('RESIZE: Image aspect ratio:', imgAspect, 'Container aspect ratio:', containerAspect);
+
+            let canvasWidth, canvasHeight;
+            if (imgAspect > containerAspect) {
+                canvasWidth = Math.min(containerWidth, state.imageWidth);
+                canvasHeight = canvasWidth / imgAspect;
+            } else {
+                canvasHeight = Math.min(containerHeight, state.imageHeight);
+                canvasWidth = canvasHeight * imgAspect;
+            }
+            console.log('RESIZE: Calculated canvas dimensions:', canvasWidth, 'x', canvasHeight);
+
+            console.log('RESIZE: Setting canvas dimensions');
+            canvas.setDimensions({ width: canvasWidth, height: canvasHeight });
+
+            // Scale the image to fit the canvas
+            const scale = canvasWidth / state.imageWidth;
+            console.log('RESIZE: Image scale factor:', scale);
+            state.fabricImage.scale(scale);
+            state.fabricImage.set({
+                left: 0,
+                top: 0,
+                selectable: false,
+                evented: false
+            });
+            console.log('=== RESIZE CANVAS END ===');
+        }
+
+        function renderCanvas() {
+            console.log('=== RENDER CANVAS START ===');
+            if (!state.fabricImage) {
+                console.log('RENDER: No fabric image, skipping');
+                return;
+            }
+
+            console.log('RENDER: Clearing canvas');
+            // Clear canvas
+            canvas.clear();
+
+            console.log('RENDER: Adding background image');
+            // Add background image
+            canvas.add(state.fabricImage);
+
+            console.log('RENDER: Clearing grid lines');
+            // Clear existing grid lines for all trays
+            state.trayGridLines.forEach(trayLines => {
+                if (trayLines) {
+                    trayLines.forEach(line => canvas.remove(line));
+                }
+            });
+            state.trayGridLines = [];
+
+            console.log('RENDER: Filtering out trays with all corners outside canvas');
+            // Filter out trays where all four corners are outside the canvas
+            const validTrayConfigs = state.trayConfigs.filter((tray, index) => {
+                const rect = tray.rect;
+                const scale = canvas.width / state.imageWidth;
+
+                const points = [
+                    { x: rect.top_left[0] * scale, y: rect.top_left[1] * scale },
+                    { x: rect.top_right[0] * scale, y: rect.top_right[1] * scale },
+                    { x: rect.bottom_right[0] * scale, y: rect.bottom_right[1] * scale },
+                    { x: rect.bottom_left[0] * scale, y: rect.bottom_left[1] * scale }
+                ];
+
+                // Check if at least one point is inside the canvas
+                const hasPointInside = points.some(p =>
+                    p.x >= 0 && p.x <= canvas.width && p.y >= 0 && p.y <= canvas.height
+                );
+
+                if (!hasPointInside) {
+                    console.log(`RENDER: Removing tray ${index + 1} - all corners outside canvas`);
+                }
+
+                return hasPointInside;
+            });
+
+            // Update state if any trays were removed
+            if (validTrayConfigs.length !== state.trayConfigs.length) {
+                const removedCount = state.trayConfigs.length - validTrayConfigs.length;
+                console.log(`RENDER: Removed ${removedCount} tray(s) outside canvas bounds`);
+                state.trayConfigs = validTrayConfigs;
+                state.unsavedChanges = true; // Mark as having unsaved changes
+                trayCount.textContent = state.trayConfigs.length;
+            }
+
+            console.log('RENDER: Drawing trays, count:', state.trayConfigs.length);
+            // Render existing trays
+            state.trayPolygons = [];
+            state.trayLabels = [];
+            state.trayConfigs.forEach((tray, index) => {
+                drawTray(tray, index);
+            });
+
+            console.log('RENDER: Rendering all');
+            canvas.renderAll();
+            console.log('=== RENDER CANVAS END ===');
+        }
+
+        function drawTray(tray, index) {
+            console.log('DRAW TRAY: Drawing tray', index, 'with rect:', tray.rect);
+            const rect = tray.rect;
+            const scale = canvas.width / state.imageWidth;
+
+            // Create polygon points
+            const points = [
+                { x: rect.top_left[0] * scale, y: rect.top_left[1] * scale },
+                { x: rect.top_right[0] * scale, y: rect.top_right[1] * scale },
+                { x: rect.bottom_right[0] * scale, y: rect.bottom_right[1] * scale },
+                { x: rect.bottom_left[0] * scale, y: rect.bottom_left[1] * scale }
+            ];
+
+            console.log('DRAW TRAY: Scaled points:', points);
+
+            // Create polygon with transparent fill and green border
+            const polygon = new fabric.Polygon(points, {
+                fill: 'transparent',
+                stroke: '#27ae60',
+                strokeWidth: 2,
+                selectable: true,
+                evented: true,
+                objectCaching: false,  // Disable caching for accurate transformations
+                perPixelTargetFind: true,
+                hasBorders: true,
+                transparentCorners: false
+            });
+            polygon.trayIndex = index;
+            // Store original canvas coordinates for gridline calculation
+            polygon.originalCanvasPoints = points.slice();
+
+            polygon.on('mouserightclick', function() {
+                if (confirm(`Delete Tray ${index + 1}?`)) {
+                    deleteTrayByIndex(index);
+                }
+            });
+            canvas.add(polygon);
+            state.trayPolygons.push(polygon);
+
+            console.log('DRAW TRAY: Drawing grid lines');
+            // Draw grid lines after polygon is added to canvas
+            updateGridLines(polygon);
+
+            // Calculate center for label
+            const centerX = points.reduce((sum, p) => sum + p.x, 0) / 4;
+            const centerY = points.reduce((sum, p) => sum + p.y, 0) / 4;
+
+            // Create label
+            const label = new fabric.Text(`Tray ${index + 1}`, {
+                left: centerX,
+                top: centerY,
+                fontSize: 14,
+                fontWeight: 'bold',
+                fill: 'white',
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                padding: 4,
+                originX: 'center',
+                originY: 'center',
+                selectable: false,
+                evented: false
+            });
+
+            canvas.add(label);
+            state.trayLabels.push(label);
+            console.log('DRAW TRAY: Finished drawing tray', index);
+        }
+
+        function updateGridLines(polygon) {
+            console.log('=== UPDATE GRID LINES START ===');
+            console.log('GRID: Starting for polygon trayIndex:', polygon ? polygon.trayIndex : 'undefined');
+            if (!polygon || !polygon.points) {
+                console.log('GRID: Invalid polygon or points, skipping');
+                return;
+            }
+
+            const trayIndex = polygon.trayIndex;
+            console.log('GRID: Tray index:', trayIndex);
+            if (trayIndex === undefined || !state.trayConfigs[trayIndex]) {
+                console.log('GRID: Invalid trayIndex or tray config, skipping');
+                return;
+            }
+
+            // Clear existing grid lines for this tray only
+            if (state.trayGridLines[trayIndex]) {
+                console.log('GRID: Clearing existing grid lines for tray', trayIndex, 'count:', state.trayGridLines[trayIndex].length);
+                state.trayGridLines[trayIndex].forEach(line => canvas.remove(line));
+            }
+            state.trayGridLines[trayIndex] = [];
+
+            const nTall = state.trayConfigs[trayIndex].n_tall;
+            const nWide = state.trayConfigs[trayIndex].n_wide;
+            console.log('GRID: Drawing grid for', nWide, 'columns and', nTall, 'rows');
+
+            // Use the original canvas coordinates stored on the polygon
+            // These are the actual corner positions before Fabric.js transforms them
+            let cornerPoints;
+            if (polygon.originalCanvasPoints) {
+                console.log('GRID: Using stored original canvas points');
+                cornerPoints = polygon.originalCanvasPoints;
+
+                // Update these points if the polygon has been transformed
+                if (polygon.__corner) {
+                    // Polygon has been modified via corner dragging, recalculate
+                    console.log('GRID: Polygon modified, recalculating from transformation');
+                    const matrix = polygon.calcTransformMatrix();
+                    cornerPoints = polygon.points.map(p =>
+                        fabric.util.transformPoint(p, matrix)
+                    );
+                    // Update stored points
+                    polygon.originalCanvasPoints = cornerPoints;
+                }
+            } else {
+                // Fallback: calculate from transformation matrix
+                console.log('GRID: No original points, using transformation matrix');
+                const matrix = polygon.calcTransformMatrix();
+                cornerPoints = polygon.points.map(p =>
+                    fabric.util.transformPoint(p, matrix)
+                );
+            }
+
+            console.log('GRID: Corner points:', cornerPoints);
+
+            // The points are ordered as: [top_left, top_right, bottom_right, bottom_left]
+            const topLeft = cornerPoints[0];
+            const topRight = cornerPoints[1];
+            const bottomRight = cornerPoints[2];
+            const bottomLeft = cornerPoints[3];
+
+            // Draw vertical grid lines (columns)
+            console.log('GRID: Drawing vertical grid lines');
+            for (let i = 1; i < nWide; i++) {
+                const t = i / nWide;
+                const topX = topLeft.x * (1 - t) + topRight.x * t;
+                const topY = topLeft.y * (1 - t) + topRight.y * t;
+                const bottomX = bottomLeft.x * (1 - t) + bottomRight.x * t;
+                const bottomY = bottomLeft.y * (1 - t) + bottomRight.y * t;
+
+                const line = new fabric.Line([topX, topY, bottomX, bottomY], {
+                    stroke: '#27ae60',
+                    strokeWidth: 1,
+                    selectable: false,
+                    evented: false
+                });
+                canvas.add(line);
+                state.trayGridLines[trayIndex].push(line);
+            }
+
+            // Draw horizontal grid lines (rows)
+            console.log('GRID: Drawing horizontal grid lines');
+            for (let j = 1; j < nTall; j++) {
+                const t = j / nTall;
+                const leftX = topLeft.x * (1 - t) + bottomLeft.x * t;
+                const leftY = topLeft.y * (1 - t) + bottomLeft.y * t;
+                const rightX = topRight.x * (1 - t) + bottomRight.x * t;
+                const rightY = topRight.y * (1 - t) + bottomRight.y * t;
+
+                const line = new fabric.Line([leftX, leftY, rightX, rightY], {
+                    stroke: '#27ae60',
+                    strokeWidth: 1,
+                    selectable: false,
+                    evented: false
+                });
+                canvas.add(line);
+                state.trayGridLines[trayIndex].push(line);
+            }
+
+            console.log('GRID: Added', (nWide - 1) + (nTall - 1), 'grid lines for tray', trayIndex);
+            canvas.renderAll();
+            console.log('=== UPDATE GRID LINES END ===');
+        }
+
+        function updateTrayDimensions() {
+            console.log('=== UPDATE TRAY DIMENSIONS START ===');
+            if (!state.selectedPolygon || !state.selectedPolygon.editing) {
+                console.log('UPDATE DIMENSIONS: No polygon selected or not editing');
+                return;
+            }
+
+            const nTall = parseInt(nTallInput.value);
+            const nWide = parseInt(nWideInput.value);
+            console.log('UPDATE DIMENSIONS: New dimensions - nTall:', nTall, 'nWide:', nWide);
+
+            if (nTall < 1 || nWide < 1 || isNaN(nTall) || isNaN(nWide)) {
+                console.log('UPDATE DIMENSIONS: Invalid dimensions, skipping');
+                return;
+            }
+
+            // Update the tray config locally
+            const trayIndex = state.selectedPolygon.trayIndex;
+            if (trayIndex !== undefined && state.trayConfigs[trayIndex]) {
+                state.trayConfigs[trayIndex].n_tall = nTall;
+                state.trayConfigs[trayIndex].n_wide = nWide;
+                console.log('UPDATE DIMENSIONS: Updated local tray config for index:', trayIndex);
+            }
+
+            // Update grid lines immediately
+            updateGridLines(state.selectedPolygon);
+            console.log('UPDATE DIMENSIONS: Grid lines updated');
+
+            // Debounce the server save
+            if (state.dimensionUpdateTimeout) {
+                clearTimeout(state.dimensionUpdateTimeout);
+            }
+            state.dimensionUpdateTimeout = setTimeout(() => {
+                console.log('UPDATE DIMENSIONS: Saving to server (debounced)');
+                saveTrayDimensions(trayIndex, nTall, nWide);
+            }, 500); // Wait 500ms after user stops typing
+
+            console.log('=== UPDATE TRAY DIMENSIONS END ===');
+        }
+
+        async function saveTrayDimensions(trayIndex, nTall, nWide) {
+            console.log('=== SAVE TRAY DIMENSIONS START ===');
+            console.log('SAVE DIMENSIONS: trayIndex:', trayIndex, 'nTall:', nTall, 'nWide:', nWide);
+
+            if (!state.selectedPolygon) {
+                console.log('SAVE DIMENSIONS: No selected polygon, cannot get current points');
+                return;
+            }
+
+            try {
+                // Get current points from the polygon
+                const matrix = state.selectedPolygon.calcTransformMatrix();
+                const rawPoints = state.selectedPolygon.points.map(p => {
+                    const transformedPoint = fabric.util.transformPoint(p, matrix);
+                    return unscalePoint(transformedPoint);
+                });
+                console.log('SAVE DIMENSIONS: Current raw points:', rawPoints);
+
+                // Identify corners by position (same logic as saveTray)
+                const sortedByY = rawPoints.slice().sort((a, b) => a[1] - b[1]);
+                const topPoints = sortedByY.slice(0, 2).sort((a, b) => a[0] - b[0]);
+                const bottomPoints = sortedByY.slice(2, 4).sort((a, b) => a[0] - b[0]);
+
+                const topLeft = topPoints[0];
+                const topRight = topPoints[1];
+                const bottomLeft = bottomPoints[0];
+                const bottomRight = bottomPoints[1];
+
+                // Backend expects [top_left, top_right, bottom_left, bottom_right]
+                const points = [topLeft, topRight, bottomLeft, bottomRight];
+                console.log('SAVE DIMENSIONS: Ordered points for backend:', points);
+
+                const response = await fetch('/api/update_tray', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tray_index: trayIndex,
+                        n_tall: nTall,
+                        n_wide: nWide,
+                        points: points
+                    })
+                });
+                console.log('SAVE DIMENSIONS: API response status:', response.status);
+
+                const data = await response.json();
+                console.log('SAVE DIMENSIONS: API response data:', data);
+                if (!response.ok) {
+                    console.log('SAVE DIMENSIONS: Error saving dimensions:', data.error);
+                    alert('Error updating dimensions: ' + data.error);
+                } else {
+                    state.unsavedChanges = true; // Mark as having unsaved changes
+                }
+            } catch (error) {
+                console.error('SAVE DIMENSIONS: Error saving dimensions:', error);
+                alert('Failed to save dimensions: ' + error.message);
+            }
+            console.log('=== SAVE TRAY DIMENSIONS END ===');
+        }
+
+        function enterEditMode(polygon) {
+            console.log('=== ENTER EDIT MODE START ===');
+            console.log('EDIT: Entering edit mode for tray index:', polygon.trayIndex);
+            if (state.isAddingPoints) {
+                console.log('EDIT: Cannot enter edit mode while adding points');
+                return;
+            }
+
+            state.selectedPolygon = polygon;
+            state.selectedTrayIndex = polygon.trayIndex;
+            console.log('EDIT: Selected polygon and tray index set');
+
+            // Enable polygon editing controls
+            polygon.editing = true;
+            polygon.hasControls = true;
+            polygon.lockMovementX = false;
+            polygon.lockMovementY = false;
+            polygon.cornerStyle = 'circle';
+            polygon.cornerColor = 'rgba(0,0,255,0.5)';
+            polygon.controls = fabric.controlsUtils.createPolyControls(polygon, {
+                pointSize: 12
+            });
+            console.log('EDIT: Polygon editing controls enabled');
+
+            canvas.setActiveObject(polygon);
+            console.log('EDIT: Canvas active object set');
+
+            polygon.setCoords();
+            console.log('EDIT: Polygon coordinates set');
+
+            editStatus.textContent = `Editing Tray ${polygon.trayIndex + 1}`;
+            console.log('EDIT: Edit status updated');
+
+            // Load tray dimensions
+            const trayConfig = state.trayConfigs[polygon.trayIndex];
+            if (trayConfig) {
+                nTallInput.value = trayConfig.n_tall;
+                nWideInput.value = trayConfig.n_wide;
+                console.log('EDIT: Tray dimensions loaded from config:', trayConfig.n_tall, 'x', trayConfig.n_wide);
+            } else {
+                // New tray that hasn't been saved yet, use defaults
+                nTallInput.value = 3;
+                nWideInput.value = 6;
+                console.log('EDIT: New tray, using default dimensions: 3x6');
+            }
+
+            // Update grid lines for editing
+            updateGridLines(polygon);
+            console.log('EDIT: Grid lines updated');
+
+            updateStatusBar();
+            canvas.requestRenderAll();
+            console.log('=== ENTER EDIT MODE END ===');
+        }
+
+        function unscalePoint(point) {
+            const scale = canvas.width / state.imageWidth;
+            return [
+                Math.round(point.x / scale),
+                Math.round(point.y / scale)
+            ];
+        }
+
+        async function saveTray() {
+            console.log('=== SAVE TRAY START ===');
+            if (state.isSaving) {
+                console.log('SAVE: Already saving, ignoring duplicate save request');
+                return;
+            }
+            state.isSaving = true;
+
+            // Clear any pending dimension updates since we're saving now
+            if (state.dimensionUpdateTimeout) {
+                clearTimeout(state.dimensionUpdateTimeout);
+                state.dimensionUpdateTimeout = null;
+                console.log('SAVE: Cleared pending dimension update timeout');
+            }
+
+            const nTall = parseInt(nTallInput.value);
+            const nWide = parseInt(nWideInput.value);
+            console.log('SAVE: Parsed dimensions - nTall:', nTall, 'nWide:', nWide);
+
+            if (nTall < 1 || nWide < 1) {
+                console.log('SAVE: Invalid dimensions, alerting user');
+                state.isSaving = false;
+                alert('Rows and columns must be positive integers');
+                return;
+            }
+
+            let points;
+            if (state.selectedPolygon) {
+                console.log('SAVE: Extracting points from selected polygon');
+                // Extract points from the polygon
+                const matrix = state.selectedPolygon.calcTransformMatrix();
+                console.log('SAVE: Transform matrix:', matrix);
+                console.log('SAVE: Polygon left/top:', state.selectedPolygon.left, state.selectedPolygon.top);
+                console.log('SAVE: Polygon scaleX/scaleY:', state.selectedPolygon.scaleX, state.selectedPolygon.scaleY);
+                console.log('SAVE: Polygon original points:', state.selectedPolygon.points);
+
+                const rawPoints = state.selectedPolygon.points.map(p => {
+                    const transformedPoint = fabric.util.transformPoint(p, matrix);
+                    console.log('SAVE: Point', p, '-> transformed:', transformedPoint);
+                    return unscalePoint(transformedPoint);
+                });
+                console.log('SAVE: Raw points extracted:', rawPoints);
+
+                // Identify corners by position (top-left, top-right, bottom-left, bottom-right)
+                // Sort by y-coordinate to separate top and bottom
+                const sortedByY = rawPoints.slice().sort((a, b) => a[1] - b[1]);
+                const topPoints = sortedByY.slice(0, 2).sort((a, b) => a[0] - b[0]); // Top 2 points, sorted left to right
+                const bottomPoints = sortedByY.slice(2, 4).sort((a, b) => a[0] - b[0]); // Bottom 2 points, sorted left to right
+
+                const topLeft = topPoints[0];
+                const topRight = topPoints[1];
+                const bottomLeft = bottomPoints[0];
+                const bottomRight = bottomPoints[1];
+
+                console.log('SAVE: Identified corners - TL:', topLeft, 'TR:', topRight, 'BL:', bottomLeft, 'BR:', bottomRight);
+
+                // Backend expects [top_left, top_right, bottom_left, bottom_right]
+                points = [topLeft, topRight, bottomLeft, bottomRight];
+                console.log('SAVE: Points ordered for backend:', points);
+            } else {
+                console.log('SAVE: No tray selected to save, alerting user');
+                state.isSaving = false;
+                alert('No tray selected to save');
+                return;
+            }
+
+            try {
+                let response;
+                if (state.selectedTrayIndex !== null && state.selectedTrayIndex < state.trayConfigs.length) {
+                    console.log('SAVE: Updating existing tray at index:', state.selectedTrayIndex);
+                    // Update existing tray
+                    response = await fetch('/api/update_tray', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            tray_index: state.selectedTrayIndex,
+                            n_tall: nTall,
+                            n_wide: nWide,
+                            points: points
+                        })
+                    });
+                } else {
+                    console.log('SAVE: Adding new tray');
+                    // Add new tray
+                    response = await fetch('/api/add_tray', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            n_tall: nTall,
+                            n_wide: nWide,
+                            points: points
+                        })
+                    });
+                }
+                console.log('SAVE: API response status:', response.status);
+
+                const data = await response.json();
+                console.log('SAVE: API response data:', data);
+                if (response.ok) {
+                    console.log('SAVE: Tray saved successfully, canceling edit and reloading dataset');
+                    state.unsavedChanges = true; // Mark as having unsaved changes
+                    // Cancel edit immediately to prevent further modifications
+                    cancelEdit();
+                    const initResponse = await fetch('/api/current');
+                    const initData = await initResponse.json();
+                    if (initData.status === 'ok') {
+                        loadDataset(initData);
+                    }
+                } else {
+                    console.log('SAVE: Error saving tray:', data.error);
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                console.error('SAVE: Error saving tray:', error);
+                alert('Failed to save tray: ' + error.message);
+            } finally {
+                state.isSaving = false;
+            }
+            console.log('=== SAVE TRAY END ===');
+        }
+
+        async function deleteTrayByIndex(index) {
+            console.log('=== DELETE TRAY START ===');
+            console.log('DELETE: Deleting tray at index:', index);
+
+            // Check if this is a saved tray (exists in trayConfigs) or a new unsaved tray
+            if (index < state.trayConfigs.length) {
+                // Saved tray, call API
+                try {
+                    const response = await fetch('/api/delete_tray', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            tray_index: index
+                        })
+                    });
+                    console.log('DELETE: API response status:', response.status);
+
+                    const data = await response.json();
+                    console.log('DELETE: API response data:', data);
+                    if (response.ok) {
+                        console.log('DELETE: Tray deleted successfully, reloading dataset');
+                        state.unsavedChanges = true; // Mark as having unsaved changes
+                        const initResponse = await fetch('/api/current');
+                        const initData = await initResponse.json();
+                        if (initData.status === 'ok') {
+                            cancelEdit();
+                            loadDataset(initData);
+                        }
+                    } else {
+                        console.log('DELETE: Error deleting tray:', data.error);
+                        alert('Error: ' + data.error);
+                    }
+                } catch (error) {
+                    console.error('DELETE: Error deleting tray:', error);
+                    alert('Failed to delete tray: ' + error.message);
+                }
+            } else {
+                // New unsaved tray, just remove from canvas
+                console.log('DELETE: Removing unsaved tray from canvas at index:', index);
+                removeTrayFromCanvas(index);
+            }
+            console.log('=== DELETE TRAY END ===');
+        }
+
+        function removeTrayFromCanvas(index) {
+            console.log('=== REMOVE TRAY FROM CANVAS START ===');
+            console.log('REMOVE: Removing tray at index:', index);
+
+            // Find the polygon and label at this index
+            const polygonIndex = state.trayPolygons.findIndex(p => p.trayIndex === index);
+            if (polygonIndex !== -1) {
+                console.log('REMOVE: Found polygon at array index:', polygonIndex);
+                const polygon = state.trayPolygons[polygonIndex];
+                const label = state.trayLabels[polygonIndex];
+
+                // Remove from canvas
+                canvas.remove(polygon);
+                canvas.remove(label);
+
+                // Remove from arrays
+                state.trayPolygons.splice(polygonIndex, 1);
+                state.trayLabels.splice(polygonIndex, 1);
+
+                // Update tray count
+                trayCount.textContent = state.trayPolygons.length;
+
+                // Update tray indices and labels for remaining trays with higher indices
+                for (let i = polygonIndex; i < state.trayPolygons.length; i++) {
+                    const p = state.trayPolygons[i];
+                    const l = state.trayLabels[i];
+                    p.trayIndex = i; // Update index
+                    l.set('text', `Tray ${i + 1}`); // Update label
+                }
+
+                console.log('REMOVE: Tray removed and indices updated');
+                canvas.renderAll();
+            } else {
+                console.log('REMOVE: Polygon not found at index:', index);
+            }
+
+            // Clear selection if it was the deleted tray
+            if (state.selectedPolygon && state.selectedPolygon.trayIndex === index) {
+                cancelEdit();
+            }
+
+            updateStatusBar();
+            console.log('=== REMOVE TRAY FROM CANVAS END ===');
+        }
+
+        function cancelEdit() {
+            console.log('=== CANCEL EDIT START ===');
+            if (state.selectedPolygon) {
+                console.log('CANCEL: Resetting selected polygon to non-editing state');
+                // Reset polygon to non-editing state but keep polycontrols
+                state.selectedPolygon.editing = false;
+                state.selectedPolygon.cornerStyle = 'rect';
+                state.selectedPolygon.cornerColor = 'blue';
+                state.selectedPolygon.hasBorders = true;
+                // Keep polycontrols enabled
+                state.selectedPolygon.controls = fabric.controlsUtils.createPolyControls(state.selectedPolygon);
+                state.selectedPolygon.setCoords();
+                console.log('CANCEL: Polygon reset complete');
+            } else {
+                console.log('CANCEL: No selected polygon to reset');
+            }
+
+            canvas.discardActiveObject();
+            canvas.requestRenderAll();
+            console.log('CANCEL: Canvas active object discarded and render requested');
+
+            state.selectedPolygon = null;
+            state.selectedTrayIndex = null;
+            state.points = [];
+            state.isAddingPoints = false;
+            state.isSaving = false; // Reset save flag
+            // Clear any pending dimension updates
+            if (state.dimensionUpdateTimeout) {
+                clearTimeout(state.dimensionUpdateTimeout);
+                state.dimensionUpdateTimeout = null;
+            }
+            console.log('CANCEL: State variables reset');
+
+            editStatus.textContent = '';
+            console.log('CANCEL: Edit status cleared');
+
+            // Remove temporary points if any
+            canvas.getObjects('circle').forEach(c => canvas.remove(c));
+            console.log('CANCEL: Temporary circles removed');
+
+            updateStatusBar();
+            console.log('=== CANCEL EDIT END ===');
+        }
+
+        function updateStatusBar() {
+            console.log('=== UPDATE STATUS BAR START ===');
+            if (state.isComplete) {
+                statusBar.textContent = 'Process complete';
+                console.log('STATUS: Set to complete');
+            } else if (state.unsavedChanges) {
+                statusBar.textContent = 'Unsaved changes - click "Save & Next Dataset" to persist';
+                console.log('STATUS: Set to unsaved changes');
+            } else if (state.selectedPolygon && state.selectedPolygon.editing) {
+                statusBar.textContent = 'Editing tray - click outside to save';
+                console.log('STATUS: Set to editing mode');
+            } else if (state.isAddingPoints) {
+                statusBar.textContent = `Adding points: ${state.points.length}/4`;
+                console.log('STATUS: Set to adding points mode');
+            } else {
+                statusBar.textContent = 'Click on a tray to edit or click on canvas to add a new tray';
+                console.log('STATUS: Set to default mode');
+            }
+            console.log('=== UPDATE STATUS BAR END ===');
+        }
+
+        function orderPointsConvex(points) {
+            console.log('=== ORDER POINTS CONVEX START ===');
+            console.log('ORDER: Input points:', points);
+
+            // Calculate centroid
+            const centroid = {
+                x: points.reduce((sum, p) => sum + p.x, 0) / points.length,
+                y: points.reduce((sum, p) => sum + p.y, 0) / points.length
+            };
+            console.log('ORDER: Centroid:', centroid);
+
+            // Sort points by polar angle from centroid
+            const sortedPoints = points.slice().sort((a, b) => {
+                const angleA = Math.atan2(a.y - centroid.y, a.x - centroid.x);
+                const angleB = Math.atan2(b.y - centroid.y, b.x - centroid.x);
+                return angleA - angleB;
+            });
+
+            console.log('ORDER: Sorted points:', sortedPoints);
+            console.log('=== ORDER POINTS CONVEX END ===');
+            return sortedPoints;
+        }        function addPoint(x, y) {
+            console.log('=== ADD POINT START ===');
+            console.log('POINT: Adding point at:', x, y);
+            state.points.push({ x, y });
+            console.log('POINT: Current points count:', state.points.length);
+
+            // Create temporary circle
+            const circle = new fabric.Circle({
+                radius: 5,
+                fill: 'red',
+                left: x - 5,
+                top: y - 5,
+                selectable: false,
+                evented: false
+            });
+            canvas.add(circle);
+            state.tempCircles.push(circle);
+            canvas.renderAll();
+            console.log('POINT: Temporary circle added');
+
+            updateStatusBar();
+
+            if (state.points.length >= 4) {
+                console.log('POINT: Enough points collected, creating tray');
+                createTrayFromPoints();
+            } else {
+                console.log('POINT: Need', 4 - state.points.length, 'more points');
+            }
+            console.log('=== ADD POINT END ===');
+        }
+
+        function cancelAddingPoints() {
+            console.log('=== CANCEL ADDING POINTS START ===');
+            console.log('CANCEL_POINTS: Clearing points, current count:', state.points.length);
+            state.points = [];
+            console.log('CANCEL_POINTS: Removing temporary circles, count:', state.tempCircles.length);
+            state.tempCircles.forEach(circle => canvas.remove(circle));
+            state.tempCircles = [];
+            canvas.renderAll();
+            console.log('CANCEL_POINTS: Canvas rendered');
+            updateStatusBar();
+            console.log('=== CANCEL ADDING POINTS END ===');
+        }
+
+        async function createTrayFromPoints() {
+            console.log('=== CREATE TRAY FROM POINTS START ===');
+            let points = state.points.map(p => ({ x: p.x, y: p.y }));
+            console.log('CREATE: Raw points for tray:', points);
+
+            // Order points to form a convex quadrilateral
+            points = orderPointsConvex(points);
+            console.log('CREATE: Ordered points for tray:', points);
+
+            // Create polygon
+            const polygon = new fabric.Polygon(points, {
+                fill: 'transparent',
+                stroke: '#27ae60',
+                strokeWidth: 2,
+                selectable: true,
+                evented: true,
+                objectCaching: false,
+                trayIndex: state.trayConfigs.length,
+                hasBorders: true,
+                transparentCorners: false,
+                cornerColor: 'blue',
+                cornerStyle: 'rect'
+            });
+            polygon.trayIndex = state.trayConfigs.length;
+            console.log('CREATE: Polygon created with trayIndex:', polygon.trayIndex);
+
+            polygon.on('mouserightclick', function() {
+                if (confirm(`Delete Tray ${polygon.trayIndex + 1}?`)) {
+                    deleteTrayByIndex(polygon.trayIndex);
+                }
+            });
+
+            canvas.add(polygon);
+            state.trayPolygons.push(polygon);
+            console.log('CREATE: Polygon added to canvas');
+
+            // Calculate center for label
+            const centerX = points.reduce((sum, p) => sum + p.x, 0) / 4;
+            const centerY = points.reduce((sum, p) => sum + p.y, 0) / 4;
+            console.log('CREATE: Label center calculated:', centerX, centerY);
+
+            // Create label
+            const label = new fabric.Text(`Tray ${state.trayConfigs.length + 1}`, {
+                left: centerX,
+                top: centerY,
+                fontSize: 14,
+                fontWeight: 'bold',
+                fill: '#27ae60',
+                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                padding: 4,
+                originX: 'center',
+                originY: 'center',
+                selectable: false,
+                evented: false
+            });
+
+            canvas.add(label);
+            state.trayLabels.push(label);
+            console.log('CREATE: Label added to canvas');
+
+            // Update tray count display
+            trayCount.textContent = state.trayPolygons.length;
+            console.log('CREATE: Tray count updated to:', state.trayPolygons.length);
+
+            // Clear points and circles
+            const originalPoints = state.points.slice(); // Save original canvas coordinates
+            cancelAddingPoints();
+
+            // Now save the new tray to the backend immediately
+            console.log('CREATE: Saving new tray to backend');
+            await saveNewTray(polygon, originalPoints);
+
+            console.log('=== CREATE TRAY FROM POINTS END ===');
+        }
+
+        async function saveNewTray(polygon, originalPoints) {
+            console.log('=== SAVE NEW TRAY START ===');
+            try {
+                // For newly created trays, use the original canvas coordinates directly
+                // and convert them to image coordinates (unscale them)
+                const rawPoints = originalPoints.map(p => unscalePoint(p));
+                console.log('SAVE_NEW: Raw points extracted:', rawPoints);
+
+                // Identify corners by position
+                const sortedByY = rawPoints.slice().sort((a, b) => a[1] - b[1]);
+                const topPoints = sortedByY.slice(0, 2).sort((a, b) => a[0] - b[0]);
+                const bottomPoints = sortedByY.slice(2, 4).sort((a, b) => a[0] - b[0]);
+
+                const topLeft = topPoints[0];
+                const topRight = topPoints[1];
+                const bottomLeft = bottomPoints[0];
+                const bottomRight = bottomPoints[1];
+
+                // Backend expects [top_left, top_right, bottom_left, bottom_right]
+                const points = [topLeft, topRight, bottomLeft, bottomRight];
+                console.log('SAVE_NEW: Ordered points for backend:', points);
+
+                // Use default dimensions
+                const nTall = parseInt(nTallInput.value) || 3;
+                const nWide = parseInt(nWideInput.value) || 8;
+                console.log('SAVE_NEW: Using dimensions - nTall:', nTall, 'nWide:', nWide);
+
+                const response = await fetch('/api/add_tray', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        n_tall: nTall,
+                        n_wide: nWide,
+                        points: points
+                    })
+                });
+                console.log('SAVE_NEW: API response status:', response.status);
+
+                const data = await response.json();
+                console.log('SAVE_NEW: API response data:', data);
+
+                if (response.ok) {
+                    console.log('SAVE_NEW: New tray saved successfully');
+                    state.unsavedChanges = true; // Mark as having unsaved changes
+                    // Reload the current dataset to get updated config
+                    const initResponse = await fetch('/api/current');
+                    const initData = await initResponse.json();
+                    if (initData.status === 'ok') {
+                        loadDataset(initData);
+                    }
+                } else {
+                    console.log('SAVE_NEW: Error saving new tray:', data.error);
+                    alert('Error saving tray: ' + data.error);
+                    // Remove the polygon from canvas since it wasn't saved
+                    canvas.remove(polygon);
+                    const labelIndex = state.trayPolygons.indexOf(polygon);
+                    if (labelIndex !== -1) {
+                        canvas.remove(state.trayLabels[labelIndex]);
+                        state.trayPolygons.splice(labelIndex, 1);
+                        state.trayLabels.splice(labelIndex, 1);
+                    }
+                    trayCount.textContent = state.trayPolygons.length;
+                }
+            } catch (error) {
+                console.error('SAVE_NEW: Error saving new tray:', error);
+                alert('Failed to save new tray: ' + error.message);
+            }
+            console.log('=== SAVE NEW TRAY END ===');
+        }
+
+        async function saveAndNext() {
+            console.log('=== SAVE AND NEXT START ===');
+
+            // If there's a pending dimension update, execute it now before saving
+            if (state.dimensionUpdateTimeout) {
+                console.log('SAVE_NEXT: Clearing pending dimension update timeout and executing immediately');
+                clearTimeout(state.dimensionUpdateTimeout);
+                state.dimensionUpdateTimeout = null;
+
+                // Execute the pending dimension save synchronously
+                if (state.selectedPolygon && state.selectedPolygon.editing) {
+                    const trayIndex = state.selectedPolygon.trayIndex;
+                    const nTall = parseInt(nTallInput.value);
+                    const nWide = parseInt(nWideInput.value);
+                    console.log('SAVE_NEXT: Executing pending dimension save for tray', trayIndex);
+                    await saveTrayDimensions(trayIndex, nTall, nWide);
+                }
+            }
+
+            try {
+                const response = await fetch('/api/save_and_next', {
+                    method: 'POST'
+                });
+                console.log('SAVE_NEXT: API response status:', response.status);
+                const data = await response.json();
+                console.log('SAVE_NEXT: API response data:', data);
+
+                if (data.status === 'complete') {
+                    console.log('SAVE_NEXT: Process complete, showing complete message');
+                    state.unsavedChanges = false; // Changes are now persisted
+                    showComplete(data.message);
+                } else if (data.status === 'ok') {
+                    console.log('SAVE_NEXT: Loading next dataset');
+                    state.unsavedChanges = false; // Changes are now persisted
+                    cancelEdit();
+                    loadDataset(data);
+                    updateNavigationButtons(data);
+                } else {
+                    console.log('SAVE_NEXT: Error:', data.message);
+                    alert('Error: ' + data.message);
+                }
+            } catch (error) {
+                console.error('SAVE_NEXT: Error saving and loading next:', error);
+                alert('Failed to save and load next: ' + error.message);
+            }
+            console.log('=== SAVE AND NEXT END ===');
+        }
+
+        async function saveAndPrevious() {
+            console.log('=== SAVE AND PREVIOUS START ===');
+
+            // If there's a pending dimension update, execute it now before saving
+            if (state.dimensionUpdateTimeout) {
+                console.log('SAVE_PREV: Clearing pending dimension update timeout and executing immediately');
+                clearTimeout(state.dimensionUpdateTimeout);
+                state.dimensionUpdateTimeout = null;
+
+                // Execute the pending dimension save synchronously
+                if (state.selectedPolygon && state.selectedPolygon.editing) {
+                    const trayIndex = state.selectedPolygon.trayIndex;
+                    const nTall = parseInt(nTallInput.value);
+                    const nWide = parseInt(nWideInput.value);
+                    console.log('SAVE_PREV: Executing pending dimension save for tray', trayIndex);
+                    await saveTrayDimensions(trayIndex, nTall, nWide);
+                }
+            }
+
+            try {
+                const response = await fetch('/api/save_and_previous', {
+                    method: 'POST'
+                });
+                console.log('SAVE_PREV: API response status:', response.status);
+                const data = await response.json();
+                console.log('SAVE_PREV: API response data:', data);
+
+                if (data.status === 'error') {
+                    console.log('SAVE_PREV: Error:', data.message);
+                    alert('Error: ' + data.message);
+                } else if (data.status === 'ok') {
+                    console.log('SAVE_PREV: Loading previous dataset');
+                    state.unsavedChanges = false; // Changes are now persisted
+                    cancelEdit();
+                    loadDataset(data);
+                    updateNavigationButtons(data);
+                } else {
+                    console.log('SAVE_PREV: Unexpected status:', data.status);
+                    alert('Error: ' + data.message);
+                }
+            } catch (error) {
+                console.error('SAVE_PREV: Error saving and loading previous:', error);
+                alert('Failed to save and load previous: ' + error.message);
+            }
+            console.log('=== SAVE AND PREVIOUS END ===');
+        }
+
+        function updateNavigationButtons(data) {
+            console.log('=== UPDATE NAVIGATION BUTTONS START ===');
+            // Enable/disable previous button based on dataset index
+            if (data.dataset_index > 0) {
+                prevBtn.disabled = false;
+                console.log('NAV: Previous button enabled');
+            } else {
+                prevBtn.disabled = true;
+                console.log('NAV: Previous button disabled (at first dataset)');
+            }
+            console.log('=== UPDATE NAVIGATION BUTTONS END ===');
+        }
+
+        function showComplete(message) {
+            console.log('=== SHOW COMPLETE START ===');
+            console.log('COMPLETE: Showing complete message:', message);
+            state.isComplete = true;
+            canvasContainer.innerHTML = `<div class="complete-message">${message}</div>`;
+            saveNextBtn.disabled = true;
+            prevBtn.disabled = true;
+            console.log('COMPLETE: UI updated to show completion');
+            console.log('=== SHOW COMPLETE END ===');
+        }
+
+        // Event listeners
+        canvas.on('selection:cleared', function() {
+            console.log('=== SELECTION CLEARED ===');
+            console.log('SELECTION: Canvas selection cleared, canceling edit');
+            cancelEdit();
+        });
+
+        canvas.on('object:moving', function(e) {
+            console.log('=== OBJECT MOVING ===');
+            if (e.target && e.target.type === 'polygon' && e.target.trayIndex !== undefined) {
+                console.log('MOVING: Updating grid lines for tray', e.target.trayIndex);
+                // Update stored coordinates during movement
+                const matrix = e.target.calcTransformMatrix();
+                e.target.originalCanvasPoints = e.target.points.map(p =>
+                    fabric.util.transformPoint(p, matrix)
+                );
+                updateGridLines(e.target);
+            }
+        });
+
+        canvas.on('object:scaling', function(e) {
+            console.log('=== OBJECT SCALING ===');
+            if (e.target && e.target.type === 'polygon' && e.target.trayIndex !== undefined) {
+                console.log('SCALING: Updating grid lines for tray', e.target.trayIndex);
+                // Update stored coordinates during scaling
+                const matrix = e.target.calcTransformMatrix();
+                e.target.originalCanvasPoints = e.target.points.map(p =>
+                    fabric.util.transformPoint(p, matrix)
+                );
+                updateGridLines(e.target);
+            }
+        });
+
+        canvas.on('object:rotating', function(e) {
+            console.log('=== OBJECT ROTATING ===');
+            if (e.target && e.target.type === 'polygon' && e.target.trayIndex !== undefined) {
+                console.log('ROTATING: Updating grid lines for tray', e.target.trayIndex);
+                // Update stored coordinates during rotation
+                const matrix = e.target.calcTransformMatrix();
+                e.target.originalCanvasPoints = e.target.points.map(p =>
+                    fabric.util.transformPoint(p, matrix)
+                );
+                updateGridLines(e.target);
+            }
+        });
+
+        canvas.on('object:modified', function(e) {
+            console.log('=== OBJECT MODIFIED ===');
+            console.log('MODIFIED: Object modified, target:', e.target);
+            console.log('MODIFIED: isSaving flag:', state.isSaving);
+            console.log('MODIFIED: canvas active object:', canvas.getActiveObject());
+            if (state.isSaving) {
+                console.log('MODIFIED: Ignoring modification during save operation');
+                return;
+            }
+            if (!canvas.getActiveObject()) {
+                console.log('MODIFIED: No active object on canvas, ignoring');
+                return;
+            }
+            if (e.target === state.selectedPolygon && state.selectedPolygon && state.selectedPolygon.editing) {
+                console.log('MODIFIED: Selected polygon modified while editing, updating grid lines');
+                // Update stored coordinates after modification
+                const matrix = e.target.calcTransformMatrix();
+                e.target.originalCanvasPoints = e.target.points.map(p =>
+                    fabric.util.transformPoint(p, matrix)
+                );
+                updateGridLines(e.target);
+            } else {
+                console.log('MODIFIED: Object modified but not the selected editing polygon');
+            }
+        });
+
+        // Handle right-click context menu
+        canvas.wrapperEl.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        });
+
+        // Canvas click for adding points
+        canvas.on('mouse:down', function(options) {
+            console.log('=== MOUSE DOWN START ===');
+            console.log('MOUSE: Mouse down event, isComplete:', state.isComplete);
+            console.log('MOUSE: Target:', options.target);
+            console.log('MOUSE: Selected polygon editing:', state.selectedPolygon && state.selectedPolygon.editing);
+            if (state.isComplete) {
+                console.log('MOUSE: Process complete, ignoring click');
+                return;
+            }
+
+            const pointer = canvas.getPointer(options.e);
+            console.log('MOUSE: Pointer position:', pointer);
+
+            // If in edit mode, check if clicking outside polygon to save
+            if (state.selectedPolygon && state.selectedPolygon.editing) {
+                // Check if the click is outside the polygon bounds
+                const isInsidePolygon = state.selectedPolygon.containsPoint(pointer);
+                console.log('MOUSE: Click inside polygon:', isInsidePolygon);
+                if (!isInsidePolygon) {
+                    console.log('MOUSE: Clicking outside polygon while editing, saving tray');
+                    // Defer save to next tick to allow any pending object modifications to complete
+                    setTimeout(() => {
+                        saveTray();
+                    }, 0);
+                    console.log('=== MOUSE DOWN END (SAVE) ===');
+                    return;
+                } else {
+                    console.log('MOUSE: Clicking inside polygon, allowing normal interaction');
+                    // Allow normal polygon interaction (dragging corners, etc.)
+                }
+            }
+
+            // If clicking on a tray, enter edit mode
+            const target = options.target;
+            if (target && target.type === 'polygon') {
+                console.log('MOUSE: Clicking on polygon tray:', target.trayIndex);
+                enterEditMode(target);
+                console.log('Entered edit mode for tray:', target.trayIndex);
+                console.log('=== MOUSE DOWN END (ENTER EDIT) ===');
+                return;
+            }
+
+            // Otherwise, add point for new tray
+            console.log('MOUSE: Adding point for new tray at:', pointer.x, pointer.y);
+            addPoint(pointer.x, pointer.y);
+            console.log('=== MOUSE DOWN END (ADD POINT) ===');
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            console.log('=== KEY DOWN START ===');
+            console.log('KEY: Key pressed:', e.key);
+            // Don't handle keyboard shortcuts if user is typing in input fields
+            if (e.target.tagName === 'INPUT') {
+                console.log('KEY: Ignoring keyboard shortcut, user is typing in input');
+                return;
+            }
+            if (e.key === 'Escape') {
+                console.log('KEY: Escape pressed, canceling adding points');
+                cancelAddingPoints();
+            } else if (e.key === 'Delete' || e.key === 'Backspace' || e.key === 'd' || e.key === 'D') {
+                console.log('KEY: Delete pressed, selectedPolygon:', state.selectedPolygon);
+                if (state.selectedPolygon && state.selectedPolygon.trayIndex !== undefined) {
+                    console.log('KEY: Deleting tray:', state.selectedPolygon.trayIndex);
+                    if (confirm(`Delete Tray ${state.selectedPolygon.trayIndex + 1}?`)) {
+                        deleteTrayByIndex(state.selectedPolygon.trayIndex);
+                    }
+                } else {
+                    console.log('KEY: No tray selected for deletion');
+                }
+            }
+            console.log('=== KEY DOWN END ===');
+        });
+
+        // Handle input changes for rows and columns
+        nTallInput.addEventListener('input', function(e) {
+            console.log('=== NTALL INPUT CHANGE ===');
+            const value = parseInt(e.target.value);
+            console.log('NTALL: Raw value:', e.target.value, 'Parsed:', value);
+            // Clamp value to valid range
+            if (value < 1) e.target.value = 1;
+            else if (value > 20) e.target.value = 20;
+            else if (isNaN(value)) e.target.value = 1;
+            updateTrayDimensions();
+        });
+
+        nWideInput.addEventListener('input', function(e) {
+            console.log('=== NWIDE INPUT CHANGE ===');
+            const value = parseInt(e.target.value);
+            console.log('NWIDE: Raw value:', e.target.value, 'Parsed:', value);
+            // Clamp value to valid range
+            if (value < 1) e.target.value = 1;
+            else if (value > 20) e.target.value = 20;
+            else if (isNaN(value)) e.target.value = 1;
+            updateTrayDimensions();
+        });
+
+        saveNextBtn.addEventListener('click', saveAndNext);
+        prevBtn.addEventListener('click', saveAndPrevious);
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            console.log('=== WINDOW RESIZE START ===');
+            console.log('RESIZE: Window resized, isComplete:', state.isComplete);
+            if (state.fabricImage && !state.isComplete) {
+                console.log('RESIZE: Resizing canvas and rendering');
+                resizeCanvas();
+                renderCanvas();
+            } else {
+                console.log('RESIZE: Skipping resize (no image or complete)');
+            }
+            console.log('=== WINDOW RESIZE END ===');
+        });
+
+        // Start the application
+        init();
+    </script>
+</body>
+</html>

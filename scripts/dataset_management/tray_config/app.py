@@ -40,8 +40,8 @@ class TrayConfigApp:
         self.zone_identifier = None
 
         # Default tray dimensions
-        self.default_n_tall = 3
-        self.default_n_wide = 6
+        self.default_n_tall = 4
+        self.default_n_wide = 8
 
         # Find all dataset directories
         self.find_all_datasets()
