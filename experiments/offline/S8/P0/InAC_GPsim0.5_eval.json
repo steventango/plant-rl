@@ -1,0 +1,22 @@
+{
+    "agent": "InAC_GPsim0.5_eval",
+    "problem": "GPsim",
+    "total_steps": 1000,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment":{
+            "stochastic_pred": true,
+            "optimism": 0,
+            "episode_length": 13
+        },
+        "experiment": {
+            "seed_offset": 0
+        },
+        "policy_type": "dirichlet",
+        "discrete_control": false,
+        "hidden_units": 256,
+        "deterministic": true,
+        "updates_per_step": 0,
+        "pretrained_path": "results/offline/S8/P0/InAC_GPsim0.5/0/parameters"
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "agent": "Constant1",
+    "problem": "DayAreaTracePlantGrowthChamberColorTriangle",
+    "total_steps": 40320,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": "alliance-zone01",
+            "timezone": "America/Edmonton"
+        },
+        "constant_action": [[0, 1, 0]]
+    }
+}

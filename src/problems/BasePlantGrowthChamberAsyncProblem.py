@@ -19,6 +19,6 @@ class BasePlantGrowthChamberAsyncProblem(BaseAsyncProblem):
             self.observations, self.actions, self.params, self.collector, self.seed
         )
         if not isinstance(agent, BaseAsyncAgent):
-            agent = PlantGrowthChamberAsyncAgentWrapper(agent)
+            agent = PlantGrowthChamberAsyncAgentWrapper(agent, self.env)
         self.agent = agent
         return self.agent

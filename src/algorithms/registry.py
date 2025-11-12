@@ -13,6 +13,7 @@ from algorithms.motion_tracking.MotionTrackingController import MotionTrackingCo
 from algorithms.nn.DQN import DQN
 from algorithms.nn.DynamicBatchDQN import DynamicBatchDQN
 from algorithms.nn.GreedyAC.GreedyAC import GreedyAC
+from algorithms.nn.inac.InAC import InAC
 from algorithms.PoissonAgent import PoissonAgent
 from algorithms.SequenceAgent import SequenceAgent
 from algorithms.SpreadsheetAgent import SpreadsheetAgent
@@ -94,5 +95,8 @@ def getAgent(name) -> Type[BaseAgent]:
 
     if name.startswith("GreedyAC"):
         return GreedyAC
+
+    if name.startswith("InAC"):
+        return InAC
 
     raise Exception("Unknown algorithm")
