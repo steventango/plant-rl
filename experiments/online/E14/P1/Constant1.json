@@ -8,6 +8,7 @@
             "zone": "alliance-zone01",
             "timezone": "America/Edmonton"
         },
+        "timezone": "America/Edmonton",
         "constant_action": [[0, 1, 0]]
     }
 }
