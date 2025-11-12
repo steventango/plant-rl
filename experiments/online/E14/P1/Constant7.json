@@ -6,8 +6,9 @@
     "metaParameters": {
         "environment": {
             "zone": "alliance-zone07",
-            "timezone": "America/Edmonton"
+            "timezone": "Asia/Dhaka"
         },
+        "timezone": "Asia/Dhaka",
         "constant_action": [[0, 1, 0]]
     }
 }

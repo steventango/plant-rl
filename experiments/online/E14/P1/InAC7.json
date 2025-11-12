@@ -8,6 +8,7 @@
             "zone": "alliance-zone07",
             "timezone": "Asia/Dhaka"
         },
+        "action_timestep": 1,
         "timezone": "Asia/Dhaka",
         "discrete_control": false,
         "policy_type": "dirichlet",

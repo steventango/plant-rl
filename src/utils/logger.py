@@ -3,10 +3,11 @@ import time
 
 import numpy as np
 import pandas as pd
-
-import wandb
+import wandb.errors.errors
 from wandb.sdk.wandb_alerts import AlertLevel
 from wandb.sdk.wandb_run import Run
+
+import wandb
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -201,7 +202,13 @@ def log(
         data["return"] = episodic_return
     if episode is not None:
         data["episode"] = episode
-    wandb_run.log(data)
+    try:
+        wandb_run.log(data)
+    except wandb.errors.errors.AuthenticationError as e:
+        try:
+            logger.warning(f"Failed to log data to wandb: {e}")
+        except Exception:
+            pass
 
     end_time = time.time()
     log_time = end_time - start_time

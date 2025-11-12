@@ -25,7 +25,8 @@ services:
               count: 1
               capabilities:
                 - gpu
-
+    ports:
+      - 5001:5001
 
 
 networks:

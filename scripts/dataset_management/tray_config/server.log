@@ -1,0 +1,39 @@
+nohup: ignoring input
+2025-11-12 04:25:46,898 - TrayConfigApp - INFO - Found 12 datasets
+2025-11-12 04:25:46,898 - TrayConfigApp - INFO - 1. /data/online/E14/P0/Spreadsheet1/alliance-zone01
+2025-11-12 04:25:46,898 - TrayConfigApp - INFO - 2. /data/online/E14/P0/Spreadsheet10/alliance-zone10
+2025-11-12 04:25:46,899 - TrayConfigApp - INFO - 3. /data/online/E14/P0/Spreadsheet3/alliance-zone03
+2025-11-12 04:25:46,899 - TrayConfigApp - INFO - 4. /data/online/E14/P0/Spreadsheet11/alliance-zone11
+2025-11-12 04:25:46,899 - TrayConfigApp - INFO - 5. /data/online/E14/P0/Spreadsheet5/alliance-zone05
+2025-11-12 04:25:46,899 - TrayConfigApp - INFO - 6. /data/online/E14/P0/Spreadsheet9/alliance-zone09
+2025-11-12 04:25:46,899 - TrayConfigApp - INFO - 7. /data/online/E14/P0/Spreadsheet2/alliance-zone02
+2025-11-12 04:25:46,899 - TrayConfigApp - INFO - 8. /data/online/E14/P0/Spreadsheet7/alliance-zone07
+2025-11-12 04:25:46,899 - TrayConfigApp - INFO - 9. /data/online/E14/P0/Spreadsheet12/alliance-zone12
+2025-11-12 04:25:46,899 - TrayConfigApp - INFO - 10. /data/online/E14/P0/Spreadsheet4/alliance-zone04
+2025-11-12 04:25:46,899 - TrayConfigApp - INFO - 11. /data/online/E14/P0/Spreadsheet6/alliance-zone06
+2025-11-12 04:25:46,899 - TrayConfigApp - INFO - 12. /data/online/E14/P0/Spreadsheet8/alliance-zone08
+2025-11-12 04:25:46,899 - TrayConfigWebApp - INFO - Initialized with 12 datasets
+2025-11-12 04:25:46,899 - TrayConfigWebApp - INFO - Starting web server on http://0.0.0.0:5001
+============================================================
+Tray Configuration Tool - Web Interface
+============================================================
+
+Using default dataset paths from configuration...
+Config mode: PlantGrowthChamber
+
+Starting web server on http://0.0.0.0:5001
+
+Once started, open your browser to:
+  http://localhost:5001
+
+Press Ctrl+C to stop the server
+============================================================
+ * Serving Flask app 'web_app'
+ * Debug mode: off
+2025-11-12 04:25:46,909 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5001
+ * Running on http://172.19.0.2:5001
+2025-11-12 04:25:46,909 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-11-12 04:30:58,417 - werkzeug - INFO - 127.0.0.1 - - [12/Nov/2025 04:30:58] "GET /api/status HTTP/1.1" 200 -
+2025-11-12 04:31:20,847 - werkzeug - INFO - 127.0.0.1 - - [12/Nov/2025 04:31:20] "HEAD / HTTP/1.1" 200 -
