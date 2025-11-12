@@ -17,7 +17,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--runs", type=int, required=True)
 parser.add_argument("-e", type=str, nargs="+", required=True)
 parser.add_argument("--cpus", type=int, default=8)
-parser.add_argument("--entry", type=str, default="src/main_sim.py")
+parser.add_argument("--entry", type=str, default="src/main_sim_async.py")
 parser.add_argument("--results", type=str, default="./")
 
 
