@@ -57,11 +57,8 @@ class GPsim_1day(BaseEnvironment):
         )
         return self.current_state, self.get_info()
 
-    def step(self, action: np.ndarray):  # type:ignore
+    def step(self, action_rwb: np.ndarray):  # type:ignore
         self.num_steps += 1
-
-        # Convert 6D action space to 3D
-        action_rwb = self.compute_action_coefficients(action)
 
         # Update action traces
         for i in range(3):

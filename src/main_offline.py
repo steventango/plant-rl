@@ -1,14 +1,5 @@
 import os
 import sys
-from collections import defaultdict
-
-import pandas as pd
-
-from utils.plotting import (
-    plot_q_values_and_diff,
-    plot_state_action_distribution,
-    plot_trajectories,
-)
 
 sys.path.append(os.getcwd())
 import argparse
@@ -16,22 +7,19 @@ import logging
 import random
 import socket
 import time
+from collections import defaultdict
 from pathlib import Path
 
 import jax
 import numpy as np
 import torch
-from PyExpUtils.collection.Collector import Collector
-from PyExpUtils.collection.Sampler import Identity, Ignore
-from PyExpUtils.results.sqlite import saveCollector
+from tqdm import tqdm
 
 import wandb
 from experiment import ExperimentModel
 from problems.registry import getProblem
 from utils.checkpoint import Checkpoint
-from utils.logger import expand
 from utils.preempt import TimeoutHandler
-from utils.RlGlue.rl_glue import LoggingRlGlue
 
 # ------------------
 # -- Command Args --
@@ -70,36 +58,21 @@ indices = args.idxs
 
 Problem = getProblem(exp.problem)
 
-
 for idx in indices:
     chk = Checkpoint(exp, idx, base_path=args.checkpoint_path)
-    chk.load_if_exists()
+    loaded = chk.load_if_exists()
+    if loaded:
+        logger.info("Loaded checkpoint")
     timeout_handler.before_cancel(chk.save)
 
-    collector = chk.build(
-        "collector",
-        lambda: Collector(
-            # specify which keys to actually store and ultimately save
-            # Options are:
-            #  - Identity() (save everything)
-            #  - Window(n)  take a window average of size n
-            #  - Subsample(n) save one of every n elements
-            config={
-                "return": Identity(),  # total reward at the end of episode
-                "reward": Identity(),  # reward at each step
-                "episode": Identity(),
-                "steps": Identity(),
-                "action": Identity(),
-            },
-            default=Ignore(),
-        ),
-    )
-    collector.setIdx(idx)
     run = exp.getRun(idx)
 
-    # set random seeds accordingly, with optional offset
+    # Get hyperparameters from experiment
     params = exp.get_hypers(idx)
     exp_params = params.get("experiment", {})
+    agent_params = params.get("agent", {})
+
+    # Set random seeds accordingly, with optional offset
     seed = run + exp_params.get("seed_offset", 0)
 
     # Seed various modules
@@ -109,23 +82,32 @@ for idx in indices:
     torch.cuda.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
 
-    # build stateful things and attach to checkpoint
-    problem = chk.build("p", lambda: Problem(exp, idx, collector))
-    agent = chk.build("a", problem.getAgent)
-    env = chk.build("e", problem.getEnvironment)
-
-    glue = chk.build("glue", lambda: LoggingRlGlue(agent, env))
-    chk.initial_value("episode", 0)
-
+    # Build context for saving results
     context = exp.buildSaveContext(idx, base=args.save_path)
     Path(context.resolve()).mkdir(parents=True, exist_ok=True)
     agent_path = Path(context.resolve()).relative_to("results")
+    exp_path = Path(context.resolve())
 
-    # Create directory for Q-value plots
-    q_plots_dir = Path(context.resolve()) / "q_value_plots"
-    q_plots_dir.mkdir(parents=True, exist_ok=True)
+    # Build problem to get environment/agent configuration
+    problem = chk.build("p", lambda: Problem(exp, idx, None))
 
-    config = {**problem.params, "context": str(agent_path)}
+    # Get dataset from problem
+    dataset = problem.dataset
+    dataset_name = exp_params["dataset"]
+    logger.info(f"Using offline dataset: {dataset_name}")
+
+    # Build agent using problem's getAgent method
+    agent = chk.build("a", problem.getAgent)
+
+    # Load offline data into agent's buffer if agent supports it
+    logger.info("Loading offline dataset into agent buffer...")
+    agent.load(dataset)
+
+    # Setup wandb
+    config = {
+        **problem.params,
+        "context": str(agent_path),
+    }
 
     wandb_run = wandb.init(
         entity="plant-rl",
@@ -137,81 +119,123 @@ for idx in indices:
         ),
     )
 
-    # Run the experiment
+    # Training configuration
+    log_interval = exp_params.get("log_interval", 10000)
+    eval_interval = exp_params.get("eval_interval", 100000)
+
+    logger.info(f"Starting offline training for {exp.total_steps} steps")
+
+    # Create plots directory
+    plots_dir = exp_path / "plots"
+    plots_dir.mkdir(parents=True, exist_ok=True)
+
+    # Training loop
     start_time = time.time()
+    total_steps = 0
+    losses_accumulator = defaultdict(list)
 
-    data = defaultdict(list)
+    # Create progress bar
+    pbar = tqdm(
+        total=exp.total_steps,
+        desc="Training",
+        unit="step",
+        disable=prod,
+        dynamic_ncols=True,
+    )
 
-    # if we haven't started yet, then make the first interaction
-    data_exhausted = False
-    if glue.total_steps == 0:
-        s, env_info = env.start()
-        agent.load_start(s, env_info)
-        data_exhausted = env_info.get("exhausted", False)
-        data["observation"].append(s)
-        data["action"].append(None)
-        data["reward"].append(None)
-        data["terminal"].append(None)
-        data["trajectory_name"].append(env_info.get("trajectory_name", None))
-
-    while not data_exhausted:
-        (reward, s, term, env_info) = env.step(None)
-        data["observation"].append(s)
-        data["action"].append(env_info.get("action", None))
-        data["reward"].append(reward)
-        data["terminal"].append(term)
-        data["trajectory_name"].append(env_info.get("trajectory_name", None))
-        data_exhausted = env_info.get("exhausted", False)
-        if term:
-            agent.load_end(reward, env_info)
-            # allow agent to cleanup traces or other stateful episodic info
-            agent.cleanup()
-            if not data_exhausted:
-                s, env_info = env.start()
-                agent.load_start(s, env_info)
-                data["observation"].append(s)
-                data["action"].append(None)
-                data["reward"].append(None)
-                data["terminal"].append(None)
-                data["trajectory_name"].append(env_info.get("trajectory_name", None))
-                data_exhausted = env_info.get("exhausted", False)
-        else:
-            agent.load_step(reward, s, env_info)
-
-    df = pd.DataFrame(data)
-    df.to_csv(context.resolve("data.csv"), index=False)
-
-    # Plot state-action distribution
-    plot_state_action_distribution(df, q_plots_dir, logger)
-
-    # Plot trajectories
-    plot_trajectories(df, q_plots_dir, logger)
-
-    for step in range(exp.total_steps):
-        info = agent.plan()
-        if step % 1000 == 0:
-            expanded_info = {}
-            for key, value in info.items():
-                expanded_info.update(expand(key, value))
-            wandb_run.log(expanded_info, step=step)
-
+    while total_steps < exp.total_steps:
         if (
-            step == 0
-            or step % 10 ** int(np.log10(step)) == 0
-            or step == exp.total_steps - 1
+            eval_interval
+            and total_steps % eval_interval == 0
+            and hasattr(agent, "actor_critic")
         ):
-            # Plot and save Q-values
-            plot_q_values_and_diff(
-                logger, agent, q_plots_dir, step, df
-            )  # Updated function call
+            logger.info(f"Evaluating at step {total_steps}")
+            pbar.set_description("Evaluating")
+            try:
+                from algorithms.nn.inac.agent.base import evaluate_on_dataset
 
+                evaluate_on_dataset(
+                    logger,
+                    total_steps,
+                    dataset,
+                    agent.actor_critic.pi,
+                    agent.actor_critic.q,
+                    agent.rngs,
+                    plots_dir=plots_dir,
+                )
+            except Exception as e:
+                logger.warning(f"Evaluation failed: {e}")
+            pbar.set_description("Training")
+
+        # Perform update step using the plan() method (RL-Glue interface)
+        t0 = time.time()
+        info = agent.plan()
+
+        # Accumulate losses if info is returned as a dict
+        if isinstance(info, dict):
+            for key, value in info.items():
+                if isinstance(value, (int, float, np.number)):
+                    losses_accumulator[key].append(float(value))
+
+        total_steps += 1
+        pbar.update(1)
+
+        # Log at intervals
+        if log_interval and total_steps % log_interval == 0:
+            elapsed_time = log_interval / (time.time() - start_time)
+
+            if losses_accumulator:
+                avg_losses = {k: np.mean(v) for k, v in losses_accumulator.items()}
+
+                # Update progress bar with loss information
+                postfix_dict = {k: f"{v:.3f}" for k, v in avg_losses.items()}
+                pbar.set_postfix(postfix_dict)
+
+                logger.info(
+                    f"TRAIN LOG: steps {total_steps}, "
+                    f"{total_steps * 100 // exp.total_steps}%, "
+                    f"{elapsed_time:.2f} steps/s"
+                )
+
+                # Log individual losses
+                loss_str = "\nLOSSES:\n" + "\n".join(
+                    f"{k} {v:.3f}" for k, v in avg_losses.items()
+                )
+                logger.info(loss_str)
+
+                # Log to wandb
+                wandb_log = {
+                    **{f"{k}_loss": v for k, v in avg_losses.items()},
+                    "steps_per_second": elapsed_time,
+                }
+                wandb_run.log(wandb_log, step=total_steps)
+            else:
+                # Just log progress if no losses
+                logger.info(
+                    f"TRAIN LOG: steps {total_steps}, "
+                    f"{total_steps * 100 // exp.total_steps}%, "
+                    f"{elapsed_time:.2f} steps/s"
+                )
+                wandb_run.log({"steps_per_second": elapsed_time}, step=total_steps)
+
+            # Reset accumulators and timer
+            losses_accumulator = defaultdict(list)
+            start_time = time.time()
+
+    pbar.close()
+    logger.info("Offline training complete")
+
+    # Save final model (InAC-specific)
+    if hasattr(agent, "actor_critic") and hasattr(agent, "optimizers"):
+        from algorithms.nn.inac.agent.base import save
+
+        save_path = exp_path / str(idx) / "parameters"
+        save_path.mkdir(parents=True, exist_ok=True)
+        save(agent.actor_critic, agent.optimizers, save_path)  # type: ignore
+        logger.info(f"Saved final model to {save_path}")
+
+    # Save checkpoint
     chk.save()
+    logger.info("Checkpoint saved")
 
-    collector.reset()
-
-    # ------------
-    # -- Saving --
-    # ------------
-    saveCollector(exp, collector, base=args.save_path)
-    # -- Saving --
-    # ------------
+    wandb_run.finish()

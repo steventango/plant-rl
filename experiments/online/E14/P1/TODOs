@@ -1,0 +1,7 @@
+1. train InAC in the GPs
+2. Click the zones
+3. Test Constant policy in Zone 7
+4. Test InAC policy deterministic in Zone 7
+5. Test InAC policy stochastic in Zone 7
+6. Test InAC GP policy deterministic in Zone 7
+7. Test InAC GP policy stochastic in Zone 7

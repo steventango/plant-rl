@@ -1,0 +1,20 @@
+{
+    "agent": "InAC7",
+    "problem": "DayAreaTracePlantGrowthChamberColorTriangle",
+    "total_steps": 40320,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": "alliance-zone07",
+            "timezone": "Asia/Dhaka"
+        },
+        "timezone": "Asia/Dhaka",
+        "discrete_control": false,
+        "policy_type": "dirichlet",
+        "hidden_units": 256,
+        "deterministic": true,
+        "updates_per_step": 0,
+        "use_planning": false,
+        "pretrained_path": "/data/models/S8/P0/InAC/0/parameters"
+    }
+}
