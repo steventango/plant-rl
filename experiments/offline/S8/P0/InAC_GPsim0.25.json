@@ -1,7 +1,7 @@
 {
     "agent": "InAC_GPsim0.25",
     "problem": "GPsim",
-    "total_steps": 10000,
+    "total_steps": 1000,
     "episode_cutoff": -1,
     "metaParameters": {
         "environment":{
