@@ -2183,7 +2183,7 @@ def main():
         default="results/offline/S8/P0/InAC_GPsim0/0",
         help="Path to experiment directory with trained model",
     )
-    parser.add_argument("--dataset", default="plant-rl/continuous-v9", type=str)
+    parser.add_argument("--dataset", default="plant-rl/continuous-v10", type=str)
     parser.add_argument(
         "--episodes", default=5, type=int, help="Number of episodes to visualize"
     )
