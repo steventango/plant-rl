@@ -9,4 +9,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["lightning", "deploy", "app/main.py"]
+CMD ["LIGHTNING_USER_ID=abc", "LIGHTNING_API_KEY=123", "lightning", "deploy", "app/main.py"]
