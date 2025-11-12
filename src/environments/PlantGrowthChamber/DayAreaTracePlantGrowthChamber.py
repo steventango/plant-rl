@@ -41,4 +41,4 @@ class DayAreaTracePlantGrowthChamber(PlantGrowthChamber):
         return np.array([normalized_day, normalized_area, *action_trace])
 
     def update_action_trace(self, action):
-        self.action_uema.update(jnp.array(action))
+        self.action_uema.update(jnp.array(action)[None])
