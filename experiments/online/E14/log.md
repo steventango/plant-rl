@@ -1,4 +1,4 @@
-#Experiment description by zones
+# Experiment description by zones
 1. standard white lighting
 2. deterministic policy trained on offline dataset, no online learning
 3. stochastic policy trained on offline dataset, no online learning
@@ -12,8 +12,8 @@
 11. deterministic policy trained on GP, no online learning, optimism = 0.75
 12. deterministic policy trained on GP, no online learning, optimism = 1
 
-#Notes:
-##Day 1 
+# Notes:
+## Day 1 
 - All agents are InAC. Zones 2-6 agents were trained by data replay. Zones 8 - 12 agents were trained by GP sim.
 - State = (day, area, one-hot action, one-hot action trace with beta=0.9)
 Action = (red coeff, white coeff, blue coeff), intensity fixed at 105 ppfd
