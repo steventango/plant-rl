@@ -516,7 +516,7 @@ def api_current():
     )
 
 
-def run_app(base_dirs, update_config=True, host="0.0.0.0", port=5000, debug=False):
+def run_app(base_dirs, update_config=True, host="0.0.0.0", port=5001, debug=False):
     """Run the Flask application"""
     initialize_datasets(base_dirs, update_config)
     logger.info(f"Starting web server on http://{host}:{port}")
