@@ -69,12 +69,12 @@ class UnbiasedExponentialMovingAverage:
         )
 
 
-def iqm(a: jax.Array, q: float) -> float:
+def iqm(a: jax.Array, q1: float, q2: float) -> float:
     """
     Inter quantile mean
     a (ArrayLike) – N-dimensional array input.
-    q (float) – floating-point values between 0.0 and 1.0.
+    q1, q2 (float) – floating-point values between 0.0 and 1.0.
     """
-    lower, upper = jnp.quantile(a, jnp.array([q, 1 - q]))
+    lower, upper = jnp.quantile(a, jnp.array([q1, 1 - q2]))
     b = a[(a >= lower) & (a <= upper)]
     return jnp.mean(b).item() if b.size > 0 else jnp.nan
