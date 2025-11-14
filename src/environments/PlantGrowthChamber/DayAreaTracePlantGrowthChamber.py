@@ -22,8 +22,7 @@ class DayAreaTracePlantGrowthChamber(PlantGrowthChamber):
     async def get_observation(self):  # type: ignore
         epoch_time, _, df = await PlantGrowthChamber.get_observation(self)
         if not df.empty:
-            # mean_clean_area = df["clean_area"].mean() if "clean_area" in df else 0.0
-            mean_clean_area = iqm(jnp.asarray(df["clean_area"]), 0.3, 0.1)
+            mean_clean_area = iqm(jnp.asarray(df["clean_area"]), 0.3, 0.9)
         else:
             mean_clean_area = 0.0
         if self.normalize:
