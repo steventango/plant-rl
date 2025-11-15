@@ -13,7 +13,7 @@
 12. deterministic policy trained on GP, no online learning, optimism = 1
 
 # Notes:
-## Day 1 
+## Day 1 2025-11-12
 - All agents are InAC. Zones 2-6 agents were trained by data replay. Zones 8 - 12 agents were trained by GP sim.
 - State = (day, area, one-hot action, one-hot action trace with beta=0.9)
 Action = (red coeff, white coeff, blue coeff), intensity fixed at 105 ppfd
@@ -29,3 +29,9 @@ Agents trained in sim are trained for 1 k GP simulator steps, 100k updates, for 
 ![alt text](image.png)
 - malfunctioning action of a deterministic agent
 ![alt text](image-1.png)
+
+## Day 3 2025-11-14
+- Noticed that more than half of the deterministic chambers were favoring blue
+- Noticed that in the deterministic chambers, about 5-7 out of 36 plants are dead (for now we're only using the 36 plants in the middle region for the CV)
+- Instead of using the mean of plant areas in the state, we decided to use iqm. We set the iqm to take the values between quantile = 0.25 and 0.9, and average them. 
+- At 9:10pm - 9:45pm, redeployed all the agents (except zone1) with the iqm change. Noted that it took about 135 seconds to docker compose down completely. All zones loaded checkpoints properly. However, zone 8 exceeded time limit when docker down; hopefully the checkpoint it was saving was indeed saved properly. Could check zone 8's action trace tomorrow.
