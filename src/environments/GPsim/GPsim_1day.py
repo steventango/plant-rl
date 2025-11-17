@@ -17,6 +17,7 @@ class GPsim_1day(BaseEnvironment):
         self.action_dim = 6
         self.num_steps = 0
         self.gamma = 0.99
+        self.trace_beta = 0.9
 
         self.stochastic_pred = stochastic_pred
         self.optimism = optimism  # 0 returns mean prediction, 1 predicts mean + 1stdev
@@ -50,7 +51,8 @@ class GPsim_1day(BaseEnvironment):
 
     def start(self):
         self.num_steps = 0
-        self.action_trace9 = [uema(alpha=0.1), uema(alpha=0.1), uema(alpha=0.1)]
+        alpha = 1 - self.trace_beta
+        self.action_trace9 = [uema(alpha=alpha), uema(alpha=alpha), uema(alpha=alpha)]
         self.current_area = np.random.uniform(30, 90)
         self.current_state = np.array(
             [self.num_steps / 14, self.normalize_area(self.current_area), 0, 0, 0]
