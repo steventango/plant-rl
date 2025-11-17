@@ -14,6 +14,8 @@ from datasets.transforms import (
     transform_state,
 )
 
+version = "v11"
+
 dfs = []
 for exp_id_zone_id, good_days in GOOD_ZONE_DAYS.items():
     exp_id, zone_id = map(int, exp_id_zone_id[1:].split("/zone"))
@@ -141,9 +143,9 @@ df_daily_filtered = df_daily_filtered.drop("next_time")
 
 # save to parquet
 Path("/data/offline").mkdir(parents=True, exist_ok=True)
-df.write_parquet("/data/offline/cleaned_offline_dataset_continuous.parquet")
+df.write_parquet(f"/data/offline/cleaned_offline_dataset_continuous_{version}.parquet")
 df_daily_filtered.write_parquet(
-    "/data/offline/cleaned_offline_dataset_daily_continuous.parquet"
+    f"/data/offline/cleaned_offline_dataset_daily_continuous_{version}.parquet"
 )
 
 # Create continuous action dataset
@@ -162,7 +164,7 @@ while not mock_env.is_done():
             break
 
 dataset = env.create_dataset(
-    dataset_id="plant-rl/continuous-v10",
+    dataset_id=f"plant-rl/continuous-{version}",
     algorithm_name="Random-Policy",
     code_permalink="https://github.com/steventango/plant-rl",
     author="Steven Tang",
