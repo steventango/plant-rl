@@ -163,13 +163,14 @@ def transform_action_traces(df):
         "white_coef",
         "blue_coef",
     ]
-    alphas = [0.5, 0.7, 0.9]
-    for col, alpha in product(action_cols, alphas):
+    betas = [0.5, 0.7, 0.9]
+    for col, beta in product(action_cols, betas):
+        alpha = 1 - beta
         df = df.with_columns(
             pl.col(col)
             .ewm_mean(alpha=alpha, adjust=True)
             .over("experiment", "zone", "plant_id")
-            .alias(f"{col}_trace_{alpha}"),
+            .alias(f"{col}_trace_{beta}"),
         )
     # Create one-hot for discrete_action
     df = df.with_columns(
@@ -186,20 +187,21 @@ def transform_action_traces(df):
         .otherwise(0.0)
         .alias("discrete_action_2"),
     )
-    for alpha in alphas:
+    for beta in betas:
+        alpha = 1 - beta
         df = df.with_columns(
             pl.col("discrete_action_0")
             .ewm_mean(alpha=alpha, adjust=True)
             .over("experiment", "zone", "plant_id")
-            .alias(f"discrete_action_trace_0_{alpha}"),
+            .alias(f"discrete_action_trace_0_{beta}"),
             pl.col("discrete_action_1")
             .ewm_mean(alpha=alpha, adjust=True)
             .over("experiment", "zone", "plant_id")
-            .alias(f"discrete_action_trace_1_{alpha}"),
+            .alias(f"discrete_action_trace_1_{beta}"),
             pl.col("discrete_action_2")
             .ewm_mean(alpha=alpha, adjust=True)
             .over("experiment", "zone", "plant_id")
-            .alias(f"discrete_action_trace_2_{alpha}"),
+            .alias(f"discrete_action_trace_2_{beta}"),
         )
     return df
 
