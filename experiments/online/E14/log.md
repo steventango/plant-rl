@@ -74,3 +74,12 @@ Action choices over the last four days: (red, white, blue) coeffs
 - Bug #1 can be fixed relatively easily. But Bug #2 can't be fixed because the action traces have been initialized already. If we want to reinitialize with a different alpha, we will have to delete the checkpoints. 
 - Steven will redeploy zones 8-12 tonight with normalize set to true. But we will leave the wrong traces alone and hope that the agents will be able to generalize to unseen traces, and choose some interesting actions beyond the special points. 
 - Zones 8 - 12 are basically write offs, but the data can be useful for training CV. 
+- (9:41pm) Steven: "i gave up on trying to save the action trace, so it just got rebooted with correct date, normalization, α trace α, but the old action trace is gone. should be fine since the traces are adjusted they’ll be roughly normal in a few days"
+
+## Day 6 2025-11-17
+- Steven made changes to our codebase so that our environments take beta as a param (the uema script remains unchanged)
+- Need to think about what to do when the dirichlet distribution has at least one alpha <= 1. In this case mode() returns nan and the script falls back to using mean() for the next action. Does it make sense to do so? 
+- Steven prepared a new dataset for training GP model, which has the corrected traces (beta=0.5, 0.7, 0.9
+
+## Day 7 2025-11-18
+- laptop drained and died this morning. all experiments were interrupted. the checkpoints were not saved properly. 
