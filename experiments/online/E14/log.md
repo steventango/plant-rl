@@ -79,7 +79,15 @@ Action choices over the last four days: (red, white, blue) coeffs
 ## Day 6 2025-11-17
 - Steven made changes to our codebase so that our environments take beta as a param (the uema script remains unchanged)
 - Need to think about what to do when the dirichlet distribution has at least one alpha <= 1. In this case mode() returns nan and the script falls back to using mean() for the next action. Does it make sense to do so? 
-- Steven prepared a new dataset for training GP model, which has the corrected traces (beta=0.5, 0.7, 0.9
+- Steven prepared a new dataset for training GP model, which has the corrected traces (beta=0.5, 0.7, 0.9)
 
 ## Day 7 2025-11-18
 - laptop drained and died this morning. all experiments were interrupted. the checkpoints were not saved properly. 
+- Adam is looking to get us a desktop
+
+## Day 8 2025-11-19
+Notes during today's group meeting (Adam absent due to sickness)
+- Steven's work on flowering detector is going well. His model can predict whether images are over 16 day to a high accuracy (> 95%). He also may try training a model that maps image embedding to area. He mentions that his new CV and image embedding works are in a different repo.
+- Sam is tasked with making the 10min GP model (action = bright/low) work as well as possible, in two weeks time.
+- I will continue to train the 1day GP, trying a few different things (different ways of packing action history, use the corrected dataset, etc). I will also train the InAC agent in the updated GP sim
+- Oliver contributed helpful discussions and mentioned that he is currently swamped with other projects and will be freer after next jan
