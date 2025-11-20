@@ -17,7 +17,7 @@ class GPsim_1day(BaseEnvironment):
         self.action_dim = 6
         self.num_steps = 0
         self.gamma = 0.99
-        self.trace_beta = 0.9
+        self.trace_beta = 0.5
 
         self.stochastic_pred = stochastic_pred
         self.optimism = optimism  # 0 returns mean prediction, 1 predicts mean + 1stdev
@@ -25,7 +25,7 @@ class GPsim_1day(BaseEnvironment):
 
         data_path = (
             os.path.dirname(os.path.abspath(__file__))
-            + "/models/E13only_every_day+size_1day_trace9_ratio.pickle"
+            + f"/models/E13only_every_day+size_1day_trace{int(self.trace_beta*10)}_ratio.pickle"
         )
         with open(data_path, "rb") as f:
             self.GP_model = pickle.load(f)
@@ -52,7 +52,7 @@ class GPsim_1day(BaseEnvironment):
     def start(self):
         self.num_steps = 0
         alpha = 1 - self.trace_beta
-        self.action_trace9 = [uema(alpha=alpha), uema(alpha=alpha), uema(alpha=alpha)]
+        self.action_trace = [uema(alpha=alpha), uema(alpha=alpha), uema(alpha=alpha)]
         self.current_area = np.random.uniform(30, 90)
         self.current_state = np.array(
             [self.num_steps / 14, self.normalize_area(self.current_area), 0, 0, 0]
@@ -64,16 +64,16 @@ class GPsim_1day(BaseEnvironment):
 
         # Update action traces
         for i in range(3):
-            self.action_trace9[i].update(action_rwb[i])
-        trace9 = [self.action_trace9[i].compute().item() for i in range(3)]
+            self.action_trace[i].update(action_rwb[i])
+        trace = [self.action_trace[i].compute().item() for i in range(3)]
 
-        next_area = self.get_observation(action_rwb, trace9)
+        next_area = self.get_observation(action_rwb, trace)
 
         reward = next_area / self.current_area - 1
 
         self.current_area = next_area
         self.current_state = np.array(
-            [self.num_steps / 14, self.normalize_area(self.current_area)] + trace9
+            [self.num_steps / 14, self.normalize_area(self.current_area)] + trace
         )
 
         if self.num_steps == self.episode_length:
