@@ -10,5 +10,5 @@ class GPsim(BaseProblem):
         super().__init__(exp, idx, collector)
         self.actions = 3
         self.observations = (5,)
-        self.gamma = 0.99
-        self.env = GPsim_1day(**self.env_params)
+        self.gamma = self.params.get("gamma", 0.99)
+        self.env = GPsim_1day(self.env_params.get("stochastic_pred", {}), self.env_params.get("optimism", {}), self.env_params.get("episode_length", {}), self.seed)

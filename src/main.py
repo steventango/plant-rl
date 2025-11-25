@@ -116,7 +116,7 @@ for idx in indices:
 
     wandb_run = wandb.init(
         entity="plant-rl",
-        project="main",
+        project="sim",
         notes=str(agent_path),
         config=config,
         settings=wandb.Settings(
@@ -180,7 +180,8 @@ for idx in indices:
                 f"Episodes: {episode}, Return: {glue.total_reward:.3f}"
             )
 
-            glue.start()
+            s, a, info = glue.start()
+            log(env, glue, wandb_run, s, a, info)
 
     collector.reset()
 

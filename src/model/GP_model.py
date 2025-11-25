@@ -1,7 +1,6 @@
 import gpjax as gpx
 import jax.numpy as jnp
 import jax
-from jax import random
 
 jax.config.update("jax_enable_x64", True)
 
@@ -12,12 +11,10 @@ class GP:
         input_data,
         output_data,
         kernel=None,
-        meanf=None,
-        key=None,
+        meanf=None
     ):
         self.kernel = kernel if kernel is not None else gpx.kernels.Matern52()
         self.meanf = meanf if meanf is not None else gpx.mean_functions.Zero()
-        self.key = key if key is not None else random.PRNGKey(0)
         X_train, self.input_mean, self.input_std = self.preprocess(input_data)
         Y_train, self.output_mean, self.output_std = self.preprocess(output_data)
         self.D = gpx.Dataset(X=X_train, y=Y_train)
@@ -68,11 +65,3 @@ class GP:
         return self.denormalize_output(predictive_mean), jnp.array(
             predictive_std
         ) * self.output_std
-
-    def sample_output(self, x, N=100):
-        mean, std = self.predict_mean_std(x)
-        self.key, subkey = random.split(self.key)
-        samples = (random.normal(subkey, (mean.shape[0], N)) * std[:, None]) + mean[
-            :, None
-        ]
-        return samples

@@ -135,7 +135,8 @@ class MLPDirichlet(nnx.Module):
     def get_alpha(self, obs):
         net_out = self.body(obs)
         alpha_logits = self.alpha_layer(net_out)
-        alpha = jax.nn.sigmoid(alpha_logits - 2.6392) * self.clip_alpha + self.offset
+        alpha = jax.nn.sigmoid(alpha_logits) * self.clip_alpha + self.offset
+        #alpha = jax.nn.relu(alpha_logits) + self.offset
         return alpha
 
 
@@ -220,7 +221,8 @@ class MLPMixtureDirichlet(nnx.Module):
         alpha_logits = alpha_logits.reshape(
             batch_size, self.num_components, self.act_dim
         )
-        alpha = jax.nn.sigmoid(alpha_logits - 2.6392) * self.clip_alpha + self.offset
+        alpha = jax.nn.sigmoid(alpha_logits) * self.clip_alpha + self.offset
+        #alpha = jax.nn.relu(alpha_logits) + self.offset
 
         mixture_dist = distrax.Categorical(logits=mixture_logits)
         components_dist = distrax.Dirichlet(concentration=alpha)

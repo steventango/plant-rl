@@ -91,7 +91,7 @@ def evaluate_on_dataset(
             normalized_area = observation[0] if len(observation) > 0 else 0.0
             # Denormalize to get actual clean_area
             clean_area_min = 14.3125
-            clean_area_max = 782.5625
+            clean_area_max = 1211.0
             actual_area = (
                 normalized_area * (clean_area_max - clean_area_min) + clean_area_min
             )
