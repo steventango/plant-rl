@@ -1,6 +1,7 @@
 import gpjax as gpx
 import jax.numpy as jnp
 import jax
+from jax import jit
 
 jax.config.update("jax_enable_x64", True)
 
@@ -52,6 +53,13 @@ class GP:
             train_data=self.D,
         )
 
+    @staticmethod
+    @jit
+    def _predict_dist_static(posterior, X, train_data):
+        latent_dist = posterior.predict(X, train_data=train_data)
+        predictive_dist = posterior.likelihood(latent_dist)
+        return predictive_dist.mean, predictive_dist.variance
+
     def get_predictive_dist(self, X):
         latent_dist = self.opt_posterior.predict(X, train_data=self.D)
         predictive_dist = self.opt_posterior.likelihood(latent_dist)
@@ -59,9 +67,12 @@ class GP:
 
     def predict_mean_std(self, X):
         X = jnp.vstack([self.normalize_input(x) for x in X])
-        predictive_dist = self.get_predictive_dist(X)
-        predictive_mean = predictive_dist.mean
-        predictive_std = jnp.sqrt(predictive_dist.variance)  # type: ignore
+        
+        predictive_mean, predictive_variance = self._predict_dist_static(
+            self.opt_posterior, X, self.D
+        )
+        predictive_std = jnp.sqrt(predictive_variance)
+        
         return self.denormalize_output(predictive_mean), jnp.array(
             predictive_std
         ) * self.output_std
