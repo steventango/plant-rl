@@ -10,7 +10,7 @@ from wandb.sdk.wandb_run import Run
 import wandb
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+# logger.setLevel(logging.DEBUG)
 
 
 def expand(key, value):

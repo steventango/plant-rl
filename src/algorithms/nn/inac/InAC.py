@@ -95,11 +95,17 @@ class InAC(BaseAgent):
         # -- Optimizer --
         # ---------------
         critic_adamw = optax.adamw(self.learning_rate, weight_decay=self.weight_decay)
-        actor_adamw = optax.adamw(self.actor_lr_scale * self.learning_rate, weight_decay=self.weight_decay)
+        actor_adamw = optax.adamw(
+            self.actor_lr_scale * self.learning_rate, weight_decay=self.weight_decay
+        )
 
         if self.clip_grad_norm is not None:
-            critic_adamw = optax.chain(optax.clip_by_global_norm(self.clip_grad_norm), critic_adamw)
-            actor_adamw = optax.chain(optax.clip_by_global_norm(self.clip_grad_norm), actor_adamw)
+            critic_adamw = optax.chain(
+                optax.clip_by_global_norm(self.clip_grad_norm), critic_adamw
+            )
+            actor_adamw = optax.chain(
+                optax.clip_by_global_norm(self.clip_grad_norm), actor_adamw
+            )
 
         self.optimizers: Optimizers = Optimizers(
             pi=nnx.Optimizer(

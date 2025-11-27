@@ -67,7 +67,11 @@ class ActorCritic(nnx.Module):
                     rngs=rngs,
                 )
                 self.beh_pi = MLPDirichlet(
-                    state_dim, action_dim, [hidden_units] * 2, offset=1.0 + 1e-10, rngs=rngs
+                    state_dim,
+                    action_dim,
+                    [hidden_units] * 2,
+                    offset=1.0 + 1e-10,
+                    rngs=rngs,
                 )
             elif policy_type == "mixture_dirichlet":
                 self.pi = MLPMixtureDirichlet(
@@ -366,8 +370,12 @@ def train(
     critic_adamw = optax.adamw(learning_rate, weight_decay=weight_decay)
     actor_adamw = optax.adamw(actor_lr_scale * learning_rate, weight_decay=weight_decay)
     if clip_grad_norm is not None:
-        critic_adamw = optax.chain(optax.clip_by_global_norm(clip_grad_norm), critic_adamw)
-        actor_adamw = optax.chain(optax.clip_by_global_norm(clip_grad_norm), actor_adamw)
+        critic_adamw = optax.chain(
+            optax.clip_by_global_norm(clip_grad_norm), critic_adamw
+        )
+        actor_adamw = optax.chain(
+            optax.clip_by_global_norm(clip_grad_norm), actor_adamw
+        )
     optimizers = Optimizers(
         pi=nnx.Optimizer(
             actor_critic.pi,

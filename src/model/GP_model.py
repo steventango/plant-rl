@@ -7,13 +7,7 @@ jax.config.update("jax_enable_x64", True)
 
 
 class GP:
-    def __init__(
-        self,
-        input_data,
-        output_data,
-        kernel=None,
-        meanf=None
-    ):
+    def __init__(self, input_data, output_data, kernel=None, meanf=None):
         self.kernel = kernel if kernel is not None else gpx.kernels.Matern52()
         self.meanf = meanf if meanf is not None else gpx.mean_functions.Zero()
         X_train, self.input_mean, self.input_std = self.preprocess(input_data)
@@ -67,12 +61,12 @@ class GP:
 
     def predict_mean_std(self, X):
         X = jnp.vstack([self.normalize_input(x) for x in X])
-        
+
         predictive_mean, predictive_variance = self._predict_dist_static(
             self.opt_posterior, X, self.D
         )
         predictive_std = jnp.sqrt(predictive_variance)
-        
+
         return self.denormalize_output(predictive_mean), jnp.array(
             predictive_std
         ) * self.output_std
