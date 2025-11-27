@@ -1,7 +1,7 @@
 import gpjax as gpx
 import jax.numpy as jnp
 import jax
-from jax import random
+from jax import jit
 
 jax.config.update("jax_enable_x64", True)
 
@@ -12,12 +12,10 @@ class GP:
         input_data,
         output_data,
         kernel=None,
-        meanf=None,
-        key=None,
+        meanf=None
     ):
         self.kernel = kernel if kernel is not None else gpx.kernels.Matern52()
         self.meanf = meanf if meanf is not None else gpx.mean_functions.Zero()
-        self.key = key if key is not None else random.PRNGKey(0)
         X_train, self.input_mean, self.input_std = self.preprocess(input_data)
         Y_train, self.output_mean, self.output_std = self.preprocess(output_data)
         self.D = gpx.Dataset(X=X_train, y=Y_train)
@@ -55,6 +53,13 @@ class GP:
             train_data=self.D,
         )
 
+    @staticmethod
+    @jit
+    def _predict_dist_static(posterior, X, train_data):
+        latent_dist = posterior.predict(X, train_data=train_data)
+        predictive_dist = posterior.likelihood(latent_dist)
+        return predictive_dist.mean, predictive_dist.variance
+
     def get_predictive_dist(self, X):
         latent_dist = self.opt_posterior.predict(X, train_data=self.D)
         predictive_dist = self.opt_posterior.likelihood(latent_dist)
@@ -62,17 +67,12 @@ class GP:
 
     def predict_mean_std(self, X):
         X = jnp.vstack([self.normalize_input(x) for x in X])
-        predictive_dist = self.get_predictive_dist(X)
-        predictive_mean = predictive_dist.mean
-        predictive_std = jnp.sqrt(predictive_dist.variance)  # type: ignore
+        
+        predictive_mean, predictive_variance = self._predict_dist_static(
+            self.opt_posterior, X, self.D
+        )
+        predictive_std = jnp.sqrt(predictive_variance)
+        
         return self.denormalize_output(predictive_mean), jnp.array(
             predictive_std
         ) * self.output_std
-
-    def sample_output(self, x, N=100):
-        mean, std = self.predict_mean_std(x)
-        self.key, subkey = random.split(self.key)
-        samples = (random.normal(subkey, (mean.shape[0], N)) * std[:, None]) + mean[
-            :, None
-        ]
-        return samples
