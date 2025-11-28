@@ -1,0 +1,27 @@
+{
+    "agent": "InAC_GPsim_test",
+    "problem": "GPsim",
+    "total_steps": 10,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment":{
+            "stochastic_pred": true,
+            "episode_length": 13
+        },
+        "experiment": {
+            "seed_offset": 0
+        },
+        "policy_type": "dirichlet",
+        "tau": 1,
+        "learning_rate": 1e-3,
+        "actor_lr_scale": 1,
+        "hidden_units": 256,
+        "batch_size": 4,
+        "gamma": 0.99,
+        "use_target_network": 1,
+        "target_network_update_freq": 1,
+        "polyak": 0.995,
+        "weight_decay": 0,
+        "updates_per_step": 1
+    }
+}
