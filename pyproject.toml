@@ -27,7 +27,7 @@ dependencies = [
     'pillow',
     'numba>=0.55.0',
     'chex>=0.1.5',
-    'jax',
+    'jax>=0.2.14',
     'dm-haiku>=0.0.4',
     'optax>=0.0.8',
     'numpy>=1.22.0',
@@ -61,8 +61,8 @@ dependencies = [
 
 [dependency-groups]
 cuda = [
-    "jax[cuda]==0.8.1",
-    "jaxlib==0.8.1",
+    "jax[cuda]>=0.7.1",
+    "jaxlib>=0.7.1",
 ]
 dev = [
     'pip',
