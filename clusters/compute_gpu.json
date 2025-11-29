@@ -1,9 +1,9 @@
 {
     "type": "single_node",
 
-    "account": "rrg-whitem",
+    "account": "aip-amw8",
     "time": "1:00:00",
-    "gpus": "nvidia_h100_80gb_hbm3_1g.10gb:1",
+    "gpus": 1,
     "cores": 3,
     "mem_per_core": "4G",
     "sequential": 1,

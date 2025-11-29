@@ -160,7 +160,7 @@ for path in missing:
         # build the executable string
         # instead of activating the venv every time, just use its python directly
         gpu_str = "--gpu" if sub.gpus else ""
-        runner = f"{venv}/.venv/bin/python {cmdline.entry} {gpu_str} -e {path} --save_path {cmdline.results} --checkpoint_path=$SCRATCH/checkpoints/{project_name} -i "
+        runner = f"{venv}/.venv/bin/python {cmdline.entry} {gpu_str} -e {path} --save_path {cmdline.results} -i "
 
         # generate the gnu-parallel command for dispatching to many CPUs across server nodes
         parallel = buildParallel(runner, job_indices, sub)

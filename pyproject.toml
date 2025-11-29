@@ -96,16 +96,3 @@ venvPath = '.'
 venv = '.venv'
 typeCheckingMode = 'standard'
 useLibraryCodeForTypes = true
-
-[tool.uv]
-# Tells uv to look in these local Compute Canada directories for wheels first
-find-links = [
-    "/cvmfs/soft.computecanada.ca/custom/python/wheelhouse/gentoo2023/x86-64-v4",
-    "/cvmfs/soft.computecanada.ca/custom/python/wheelhouse/gentoo2023/x86-64-v3",
-    "/cvmfs/soft.computecanada.ca/custom/python/wheelhouse/gentoo2023/generic",
-    "/cvmfs/soft.computecanada.ca/custom/python/wheelhouse/generic"
-]
-
-# Tells uv to fail if it cannot find a binary wheel for these packages
-# (i.e., do not attempt to build them from source)
-no-build-package = ["numpy", "scipy", "mpi4py", "pandas", "h5py", "Cython", "grpcio"]

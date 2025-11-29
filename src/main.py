@@ -134,7 +134,7 @@ for idx in indices:
     if glue.total_steps == 0:
         s, a, info = glue.start()
         if use_wandb:
-            log(env, glue, wandb_run, s, a, info)
+            log(env, glue, wandb_run, s, a, info) # type: ignore
 
     for step in (pbar := tqdm(range(glue.total_steps, exp.total_steps))):
         collector.next_frame()
@@ -144,7 +144,7 @@ for idx in indices:
             log(
                 env,
                 glue,
-                wandb_run,
+                wandb_run, # type: ignore
                 interaction.o,
                 interaction.a,
                 interaction.extra,
@@ -185,7 +185,7 @@ for idx in indices:
 
             s, a, info = glue.start()
             if use_wandb:
-                log(env, glue, wandb_run, s, a, info)
+                log(env, glue, wandb_run, s, a, info) # type: ignore
 
     collector.reset()
 
@@ -208,4 +208,4 @@ for idx in indices:
     logger.info("Checkpoint saved")
 
     if use_wandb:
-        wandb_run.finish()
+        wandb_run.finish() # type: ignore
