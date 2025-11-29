@@ -1,4 +1,3 @@
-
 import json
 import math
 import os
@@ -16,11 +15,13 @@ class SingleNodeOptions(Slurm.SingleNodeOptions):
     tasks_per_core: int = 1
     tasks_per_vmap: int = 1
 
+
 @dataclass
 class MultiNodeOptions(Slurm.MultiNodeOptions):
     gpus: int | str | None = None
     tasks_per_core: int = 1
     tasks_per_vmap: int = 1
+
 
 def check_account(account: str):
     assert (
