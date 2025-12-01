@@ -26,7 +26,7 @@ class GPsim_1day(BaseEnvironment):
 
         data_path = (
             os.path.dirname(os.path.abspath(__file__))
-            + f"/models/E13only_every_day+size_1day_trace{int(self.trace_beta * 10)}_ratio.pickle"
+            + f"/models/vulcan_E13only_every_day+size_1day_trace{int(self.trace_beta * 10)}_ratio.pickle"
         )
         with open(data_path, "rb") as f:
             self.GP_model = pickle.load(f)

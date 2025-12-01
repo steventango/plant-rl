@@ -126,7 +126,9 @@ for idx in indices:
                 x_stats_disk_paths=("/", "/data"),
             ),
         )
+        wandb.define_metric("return", summary="mean", step_metric="steps", overwrite=False)
 
+        
     # Run the experiment
     start_time = time.time()
 
@@ -192,7 +194,7 @@ for idx in indices:
     # ------------
     # -- Saving --
     # ------------
-    saveCollector(exp, collector, base=args.save_path)
+    #saveCollector(exp, collector, base=args.save_path)
 
     # Save final model (InAC-specific)
     if hasattr(agent, "actor_critic") and hasattr(agent, "optimizers"):
