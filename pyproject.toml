@@ -99,13 +99,3 @@ venvPath = '.'
 venv = '.venv'
 typeCheckingMode = 'standard'
 useLibraryCodeForTypes = true
-
-[tool.uv]
-find-links = [
-    "/cvmfs/soft.computecanada.ca/custom/python/wheelhouse/gentoo2023/x86-64-v4",
-    "/cvmfs/soft.computecanada.ca/custom/python/wheelhouse/gentoo2023/x86-64-v3",
-    "/cvmfs/soft.computecanada.ca/custom/python/wheelhouse/gentoo2023/generic",
-    "/cvmfs/soft.computecanada.ca/custom/python/wheelhouse/generic"
-]
-
-no-build-package = ["numpy", "scipy", "mpi4py", "pandas", "h5py", "Cython", "grpcio"]
