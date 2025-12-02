@@ -7,7 +7,7 @@
         "environment": {
             "zone": "alliance-zone09",
             "timezone": "America/Edmonton",
-            "normalize": false
+            "action_uema_alpha": 0.1
         },
         "timezone": "America/Edmonton",
         "discrete_control": false,
