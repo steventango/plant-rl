@@ -12,6 +12,10 @@ results.tar*
 *.out
 images/
 
+# ignore some personal work
+.test*/
+.old/
+
 uv.lock
 
 # ignore checkpoints
