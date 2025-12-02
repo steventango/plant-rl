@@ -26,8 +26,6 @@ from utils.logger import log
 from utils.preempt import TimeoutHandler
 from utils.RlGlue.rl_glue import LoggingRlGlue
 
-use_wandb = True
-
 # ------------------
 # -- Command Args --
 # ------------------
@@ -116,18 +114,15 @@ for idx in indices:
 
     config = {**problem.params, "context": str(agent_path)}
 
-    if use_wandb:
-        wandb_run = wandb.init(
-            entity="plant-rl",
-            project="sim",
-            notes=str(agent_path),
-            config=config,
-            settings=wandb.Settings(
-                x_stats_disk_paths=("/", "/data"),
-            ),
-        )
-        wandb.define_metric("return", summary="mean", step_metric="steps", overwrite=False)
-
+    wandb_run = wandb.init(
+        entity="plant-rl",
+        project="sim",
+        notes=str(agent_path),
+        config=config,
+        settings=wandb.Settings(
+            x_stats_disk_paths=("/", "/data"),
+        ),
+    )
         
     # Run the experiment
     start_time = time.time()
@@ -135,26 +130,24 @@ for idx in indices:
     # if we haven't started yet, then make the first interaction
     if glue.total_steps == 0:
         s, a, info = glue.start()
-        if use_wandb:
-            log(env, glue, wandb_run, s, a, info)  # type: ignore
+        log(env, glue, wandb_run, s, a, info)
 
     for step in (pbar := tqdm(range(glue.total_steps, exp.total_steps))):
         collector.next_frame()
         chk.maybe_save()
         interaction = glue.step()
-        if use_wandb:
-            log(
-                env,
-                glue,
-                wandb_run,  # type: ignore
-                interaction.o,
-                interaction.a,
-                interaction.extra,
-                r=interaction.r,
-                t=interaction.t,
-                episodic_return=glue.total_reward if interaction.t else None,
-                episode=chk["episode"] if interaction.t else None,
-            )
+        log(
+            env,
+            glue,
+            wandb_run,
+            interaction.o,
+            interaction.a,
+            interaction.extra,
+            r=interaction.r,
+            t=interaction.t,
+            episodic_return=glue.total_reward if interaction.t else None,
+            episode=chk["episode"] if interaction.t else None,
+        )
 
         collector.collect("reward", interaction.r)
         collector.collect("episode", chk["episode"])
@@ -186,15 +179,14 @@ for idx in indices:
             )
 
             s, a, info = glue.start()
-            if use_wandb:
-                log(env, glue, wandb_run, s, a, info)  # type: ignore
+            log(env, glue, wandb_run, s, a, info)
 
     collector.reset()
 
     # ------------
     # -- Saving --
     # ------------
-    #saveCollector(exp, collector, base=args.save_path)
+    saveCollector(exp, collector, base=args.save_path)
 
     # Save final model (InAC-specific)
     if hasattr(agent, "actor_critic") and hasattr(agent, "optimizers"):
@@ -208,6 +200,3 @@ for idx in indices:
     # Save checkpoint
     chk.save()
     logger.info("Checkpoint saved")
-
-    if use_wandb:
-        wandb_run.finish()  # type: ignore

@@ -12,10 +12,7 @@ results.tar*
 *.out
 images/
 
-# ignore some personal work
-test_notebooks/
-test_models/
-old_work/
+uv.lock
 
 # ignore checkpoints
 checkpoints
