@@ -110,7 +110,7 @@ def buildParallel(
     executable: str,
     tasks: Iterable[Any],
     opts: SingleNodeOptions | MultiNodeOptions,
-    parallelOpts: Dict[str, Any] = {},
+    parallelOpts: Dict[str, Any] = {},  # type:ignore
 ):
     threads = 1
     tasks_per_core = 1
