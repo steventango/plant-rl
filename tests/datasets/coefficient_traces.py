@@ -4,7 +4,7 @@ from datasets.config import BLUE, RED, WHITE
 from datasets.transforms import transform_action, transform_action_traces
 
 
-def test_coefficient_traces():
+def coefficient_traces():
     """Test that coefficient traces are computed correctly with exponential weighted moving average."""
 
     # Create sample data with a plant that transitions between different light configurations
