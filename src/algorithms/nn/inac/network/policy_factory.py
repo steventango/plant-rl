@@ -136,7 +136,6 @@ class MLPDirichlet(nnx.Module):
         net_out = self.body(obs)
         alpha_logits = self.alpha_layer(net_out)
         alpha = jax.nn.sigmoid(alpha_logits) * self.clip_alpha + self.offset
-        # alpha = jax.nn.relu(alpha_logits) + self.offset
         return alpha
 
 
