@@ -116,7 +116,7 @@ for idx in indices:
 
     wandb_run = wandb.init(
         entity="plant-rl",
-        project="main",
+        project="sim",
         notes=str(agent_path),
         config=config,
         settings=wandb.Settings(
@@ -152,9 +152,7 @@ for idx in indices:
         collector.collect("reward", interaction.r)
         collector.collect("episode", chk["episode"])
         collector.collect("steps", glue.num_steps)
-        collector.collect(
-            "action", interaction.a
-        )  # or int.from_bytes(glue.last_action, byteorder='little') for GAC
+        collector.collect("action", interaction.a)
 
         if interaction.t or (
             exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff
@@ -180,7 +178,8 @@ for idx in indices:
                 f"Episodes: {episode}, Return: {glue.total_reward:.3f}"
             )
 
-            glue.start()
+            s, a, info = glue.start()
+            log(env, glue, wandb_run, s, a, info)
 
     collector.reset()
 
@@ -198,5 +197,6 @@ for idx in indices:
         save(agent.actor_critic, agent.optimizers, save_path)  # type: ignore
         logger.info(f"Saved final model to {save_path}")
 
-    chk.delete()
-    wandb_run.finish()
+    # Save checkpoint
+    chk.save()
+    logger.info("Checkpoint saved")

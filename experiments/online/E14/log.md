@@ -91,3 +91,6 @@ Notes during today's group meeting (Adam absent due to sickness)
 - Sam is tasked with making the 10min GP model (action = bright/low) work as well as possible, in two weeks time.
 - I will continue to train the 1day GP, trying a few different things (different ways of packing action history, use the corrected dataset, etc). I will also train the InAC agent in the updated GP sim
 - Oliver contributed helpful discussions and mentioned that he is currently swamped with other projects and will be freer after next jan
+
+## Day 9 2025-11-20
+- Noticed another problem with our data prep. In the dataset used to train GP model, the action trace includes the current action. In the GPsim, the action trace excludes the current action (as it should). 

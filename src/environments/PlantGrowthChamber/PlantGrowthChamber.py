@@ -1,3 +1,4 @@
+# ruff: noqa
 import asyncio
 import io
 import logging
@@ -14,7 +15,7 @@ from utils.functions import normalize
 from utils.metrics import UnbiasedExponentialMovingAverage as UEMA
 from utils.RlGlue.environment import BaseAsyncEnvironment
 
-from .cv import process_image
+# TODO: Use new vision API
 from .zones import load_zone_from_config
 
 logger = logging.getLogger("plant_rl.PlantGrowthChamber")
