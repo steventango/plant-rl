@@ -63,14 +63,14 @@ class ActorCritic(nnx.Module):
                     state_dim,
                     action_dim,
                     [hidden_units] * 2,
-                    offset=1.0 + 1e-10,
+                    offset=1.0,
                     rngs=rngs,
                 )
                 self.beh_pi = MLPDirichlet(
                     state_dim,
                     action_dim,
                     [hidden_units] * 2,
-                    offset=1.0 + 1e-10,
+                    offset=1.0,
                     rngs=rngs,
                 )
             elif policy_type == "mixture_dirichlet":

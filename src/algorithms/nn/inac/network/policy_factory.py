@@ -97,7 +97,9 @@ class MLPDirichlet(nnx.Module):
         # Small epsilon to prevent log_prob from returning NaN at the boundaries 0 and 1
         self.epsilon = 1e-2
         self.clip_alpha = 15.0
-        self.offset = offset
+        self.offset = (
+            offset + 1e-5
+        )  # the small value prevents distrax.Dirichlet from having nan mode
 
     def __call__(self, obs, rngs: nnx.Rngs, deterministic=False):
         alpha = self.get_alpha(obs)
@@ -136,7 +138,6 @@ class MLPDirichlet(nnx.Module):
         net_out = self.body(obs)
         alpha_logits = self.alpha_layer(net_out)
         alpha = jax.nn.sigmoid(alpha_logits) * self.clip_alpha + self.offset
-        # alpha = jax.nn.relu(alpha_logits) + self.offset
         return alpha
 
 
@@ -222,7 +223,6 @@ class MLPMixtureDirichlet(nnx.Module):
             batch_size, self.num_components, self.act_dim
         )
         alpha = jax.nn.sigmoid(alpha_logits) * self.clip_alpha + self.offset
-        # alpha = jax.nn.relu(alpha_logits) + self.offset
 
         mixture_dist = distrax.Categorical(logits=mixture_logits)
         components_dist = distrax.Dirichlet(concentration=alpha)
