@@ -110,8 +110,12 @@ def buildParallel(
     executable: str,
     tasks: Iterable[Any],
     opts: SingleNodeOptions | MultiNodeOptions,
-    parallelOpts: Dict[str, Any] = {},  # type: ignore
+    parallelOpts: Optional[Dict[str, Any]] = None,
 ):
+    
+    if parallelOpts is None:
+        parallelOpts = {}
+
     threads = 1
     tasks_per_core = 1
     tasks_per_vmap = 1
