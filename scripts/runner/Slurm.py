@@ -112,7 +112,6 @@ def buildParallel(
     opts: SingleNodeOptions | MultiNodeOptions,
     parallelOpts: Optional[Dict[str, Any]] = None,
 ):
-    
     if parallelOpts is None:
         parallelOpts = {}
 
