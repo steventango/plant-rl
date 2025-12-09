@@ -364,9 +364,10 @@ class Gaussian(nn.Module):
         hidden_dim,
         n_hidden,
         activation,
-        action_space,
         clip_stddev=1000,
         init=None,
+        action_min=0.0,
+        action_max=1.0,
     ):
         """
         Constructor
@@ -411,8 +412,8 @@ class Gaussian(nn.Module):
         self.apply(lambda module: weights_init_(module, init, activation))  # type: ignore
 
         # Action rescaling
-        self.action_max = torch.FloatTensor(action_space.high)
-        self.action_min = torch.FloatTensor(action_space.low)
+        self.action_min = torch.ones(action_dim)*action_min
+        self.action_max = torch.ones(action_dim)*action_max
 
         if activation == "relu":
             self.act = F.relu
@@ -560,8 +561,6 @@ class Gaussian(nn.Module):
         nn.Module
             The current network, moved to a new device
         """
-        self.action_max = self.action_max.to(device)
-        self.action_min = self.action_min.to(device)
         return super(Gaussian, self).to(device)
 
 
@@ -634,7 +633,7 @@ class Dirichlet(nn.Module):
         """
         alpha = self.get_alpha(state)
         pi_distribution = distributions.Dirichlet(concentration=alpha)
-        pi_mean = pi_distribution.mode()
+        pi_mean = pi_distribution.mode
         pi_mean = torch.where(
             torch.isnan(pi_mean),
             pi_distribution.mean,
@@ -724,9 +723,6 @@ class Dirichlet(nn.Module):
         nn.Module
             The current network, moved to a new device
         """
-        self.epsilon = self.epsilon.to(device)
-        self.clip_alpha = self.clip_alpha.to(device)
-        self.offset = self.offset.to(device)
         return super(Dirichlet, self).to(device)
 
 

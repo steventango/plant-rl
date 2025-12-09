@@ -40,12 +40,11 @@ class GreedyACContinuous(BaseAgent):
         num_samples,
         beta1,
         beta2,
-        cuda=False,
-        clip_stddev=1000,
-        init=None,
-        entropy_from_single_sample=True,
-        activation="relu",
-        deterministic=False,
+        cuda,
+        clip_stddev,
+        init,
+        entropy_from_single_sample,
+        activation,
     ):
         super().__init__()
 
@@ -70,7 +69,6 @@ class GreedyACContinuous(BaseAgent):
         self.alpha = alpha  # Entropy scale
         self.state_dim = input_dim
         self.action_dim = action_dim
-        self.deterministic = deterministic
 
         self.device = torch.device(
             "cuda:0" if cuda and torch.cuda.is_available() else "cpu"
