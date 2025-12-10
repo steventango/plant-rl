@@ -4,6 +4,7 @@ import logging
 import os
 from pathlib import Path
 
+import asyncio
 import aiohttp
 import numpy as np
 from PIL import Image
@@ -34,10 +35,12 @@ class CVPipelineClient:
             visualize = self.dataset_path is not None
             # Detect
             detect_result = await self._call_pipeline(
-                session, "pot/detect", {
-                "image_data": image_data,
-                "visualize": visualize,
-            }
+                session,
+                "pot/detect",
+                {
+                    "image_data": image_data,
+                    "visualize": visualize,
+                },
             )
             boxes = detect_result["boxes"]
 
@@ -50,11 +53,13 @@ class CVPipelineClient:
 
             # Segment
             segment_result = await self._call_pipeline(
-                session, "pot/segment", {
-                "image_data": image_data,
-                "boxes": boxes,
-                "visualize": visualize,
-            }
+                session,
+                "pot/segment",
+                {
+                    "image_data": image_data,
+                    "boxes": boxes,
+                    "visualize": visualize,
+                },
             )
             masks_b64 = segment_result["masks"]
 
@@ -62,11 +67,15 @@ class CVPipelineClient:
                 self._save_image(segment_result["visualization"], "segment_pots")
 
             # Quad
-            quad_result = await self._call_pipeline(session, "pot/quad", {
-                "masks": masks_b64,
-                "visualize": visualize,
-                "image_data": image_data,
-            })
+            quad_result = await self._call_pipeline(
+                session,
+                "pot/quad",
+                {
+                    "masks": masks_b64,
+                    "visualize": visualize,
+                    "image_data": image_data,
+                },
+            )
 
             if self.dataset_path and "visualization" in quad_result:
                 self._save_image(quad_result["visualization"], "quad_pots")
@@ -94,89 +103,104 @@ class CVPipelineClient:
             image_data = encode_image(image)
 
             # Warp
-            warp_result = await self._call_pipeline(session, "pot/warp", {
-                "image_data": image_data,
-                "quadrilaterals": pot_quads,
-                "margin": 0.25,
-                "output_size": 256,
-            })
+            warp_result = await self._call_pipeline(
+                session,
+                "pot/warp",
+                {
+                    "image_data": image_data,
+                    "quadrilaterals": pot_quads,
+                    "margin": 0.25,
+                    "output_size": 256,
+                },
+            )
             warped_images = warp_result["warped_images"]
 
-            plant_stats_list = []
-
-            for i, warped in enumerate(warped_images):
-                if not warped:
-                    plant_stats_list.append({})
-                    continue
-
-                # Detect Plant
-                detect_result = await self._call_pipeline(
-                    session, "plant/detect", {"image_data": warped}
-                )
-                boxes = detect_result["boxes"]
-
-                stats = None
-                masks_b64 = None
-
-                if boxes:
-                    # Segment Plant
-                    segment_result = await self._call_pipeline(
-                        session, "plant/segment", {
-                        "image_data": warped,
-                        "boxes": boxes,
-                        "confidences": detect_result["confidences"],
-                    }
-                    )
-
-                    if segment_result["success"]:
-                        masks_b64 = segment_result.get("masks")
-                        # Stats
-                        stats_result = await self._call_pipeline(session, "plant/stats", {
-                            "warped_image": warped,
-                            "mask": segment_result["mask"],
-                            "pot_size_mm": 60.0,
-                            "margin": 0.25,
-                        })
-                        stats = stats_result["stats"]
-
-                if stats:
-                    plant_stats_list.append(stats)
-                else:
-                    plant_stats_list.append({})
-
-                # Visualization (only if requested)
-                if self.dataset_path and boxes and timestamp_str:
-                    vis_result = await self._call_pipeline(
-                        session, "plant/visualize",
-                        {
-                            "image_data": warped,
-                            "boxes": boxes,
-                            "confidences": detect_result.get("confidences", []),
-                            "masks": masks_b64,
-                            "stats": stats is not None,
-                            "selected_index": segment_result.get("selected_index")
-                            if boxes
-                            else None,
-                            "mask_scores": segment_result.get("mask_scores")
-                            if boxes
-                            else None,
-                            "combined_scores": segment_result.get("combined_scores")
-                            if boxes
-                            else None,
-                            "pot_size_mm": 60.0,
-                            "margin": 0.25,
-                        }
-                    )
-                    if "visualization" in vis_result:
-                        self._save_image(
-                            vis_result["visualization"], f"{timestamp_str}/{i:02d}"
-                        )
+            tasks = [
+                self._process_single_plant(session, warped, i, timestamp_str)
+                for i, warped in enumerate(warped_images)
+            ]
+            plant_stats_list = await asyncio.gather(*tasks)
 
             return plant_stats_list
 
         except Exception as e:
             logger.exception(f"Error during plant processing: {e}")
             return []
+
+    async def _process_single_plant(self, session, warped, index, timestamp_str):
+        if not warped:
+            return {}
+
+        try:
+            # Detect Plant
+            detect_result = await self._call_pipeline(
+                session, "plant/detect", {"image_data": warped}
+            )
+            boxes = detect_result["boxes"]
+
+            stats = None
+            masks_b64 = None
+
+            if boxes:
+                # Segment Plant
+                segment_result = await self._call_pipeline(
+                    session,
+                    "plant/segment",
+                    {
+                        "image_data": warped,
+                        "boxes": boxes,
+                        "confidences": detect_result["confidences"],
+                    },
+                )
+
+                if segment_result["success"]:
+                    masks_b64 = segment_result.get("masks")
+                    # Stats
+                    stats_result = await self._call_pipeline(
+                        session,
+                        "plant/stats",
+                        {
+                            "warped_image": warped,
+                            "mask": segment_result["mask"],
+                            "pot_size_mm": 60.0,
+                            "margin": 0.25,
+                        },
+                    )
+                    stats = stats_result["stats"]
+
+            # Visualization (only if requested)
+            if self.dataset_path and boxes and timestamp_str:
+                vis_result = await self._call_pipeline(
+                    session,
+                    "plant/visualize",
+                    {
+                        "image_data": warped,
+                        "boxes": boxes,
+                        "confidences": detect_result.get("confidences", []),
+                        "masks": masks_b64,
+                        "stats": stats is not None,
+                        "selected_index": segment_result.get("selected_index")
+                        if boxes
+                        else None,
+                        "mask_scores": segment_result.get("mask_scores")
+                        if boxes
+                        else None,
+                        "combined_scores": segment_result.get("combined_scores")
+                        if boxes
+                        else None,
+                        "pot_size_mm": 60.0,
+                        "margin": 0.25,
+                    },
+                )
+                if "visualization" in vis_result:
+                    self._save_image(
+                        vis_result["visualization"], f"{timestamp_str}/{index:02d}"
+                    )
+
+            return stats if stats else {}
+        except Exception as e:
+            logger.warning(f"Error processing plant {index}: {e}")
+            return {}
 
     async def _call_pipeline(self, session, endpoint, payload):
         async with session.post(f"{PIPELINE_URL}/{endpoint}", json=payload) as resp:
