@@ -51,9 +51,7 @@ class EmbeddingDayStatsTracePlantGrowthChamber(PlantGrowthChamber):
         action_trace = self.action_uema.compute()
 
         # Concatenate: Mean Embedding, Day, Mean Clean Plant Stats, Area Trace
-        return np.concatenate(
-            ([day], [mean_clean_area], action_trace, mean_embedding)
-        )
+        return np.concatenate(([day], [mean_clean_area], action_trace, mean_embedding))
 
     def update_action_trace(self, action):
         self.action_uema.update(jnp.array(action)[None])
