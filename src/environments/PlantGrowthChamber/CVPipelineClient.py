@@ -12,6 +12,7 @@ from PIL import Image
 logger = logging.getLogger("plant_rl.CVPipelineClient")
 
 PIPELINE_URL = os.getenv("PIPELINE_URL", "http://localhost:8800")
+EMBEDDING_URL = os.getenv("EMBEDDING_URL", "http://localhost:8803")
 
 
 class CVPipelineClient:
@@ -168,6 +169,16 @@ class CVPipelineClient:
                     )
                     stats = stats_result["stats"]
 
+                    # Embedding
+                    embed_result = await self._call_pipeline(
+                        session,
+                        "predict",
+                        {"image_data": warped, "embedding_types": ["cls_token"]},
+                        url=EMBEDDING_URL,
+                    )
+                    if "cls_token" in embed_result:
+                        stats["cls_token"] = embed_result["cls_token"]
+
             # Visualization (only if requested)
             if self.dataset_path and boxes and timestamp_str:
                 vis_result = await self._call_pipeline(
@@ -202,8 +213,8 @@ class CVPipelineClient:
             logger.warning(f"Error processing plant {index}: {e}")
             return {}
 
-    async def _call_pipeline(self, session, endpoint, payload):
-        async with session.post(f"{PIPELINE_URL}/{endpoint}", json=payload) as resp:
+    async def _call_pipeline(self, session, endpoint, payload, url=PIPELINE_URL):
+        async with session.post(f"{url}/{endpoint}", json=payload) as resp:
             resp.raise_for_status()
             return await resp.json()
 
