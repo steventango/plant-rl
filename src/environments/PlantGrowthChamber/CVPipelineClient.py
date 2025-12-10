@@ -94,7 +94,7 @@ class CVPipelineClient:
         session: aiohttp.ClientSession,
         image: np.ndarray | Image.Image,
         pot_quads: list,
-        timestamp_str: str | None = "",
+        timestamp_str: str | None = None,
     ):
         """
         Processes plants within the given pot quadrilaterals.
