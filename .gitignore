@@ -46,3 +46,4 @@ build/
 
 *.mp4
 wandb
+.env

@@ -14,8 +14,9 @@ from utils.constants import BALANCED_ACTION_105, DIM_ACTION
 from utils.functions import normalize
 from utils.metrics import UnbiasedExponentialMovingAverage as UEMA
 from utils.RlGlue.environment import BaseAsyncEnvironment
-
-# TODO: Use new vision API
+import pandas as pd
+from pathlib import Path
+from .CVPipelineClient import CVPipelineClient
 from .zones import load_zone_from_config
 
 logger = logging.getLogger("plant_rl.PlantGrowthChamber")
@@ -38,6 +39,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.tz_utc = ZoneInfo("Etc/UTC")
         self.time = self.get_time()
         self.session = None
+        self.pot_quads = None
+        self.dataset_path = None
+        self.cv_client = CVPipelineClient()
 
         self.clean_areas = []
         # i.e. a mapping from datetime to the mean clean area
@@ -64,6 +68,10 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             self.session = await create_session()
         return self.session
 
+    def set_dataset_path(self, path: Path):
+        self.dataset_path = path
+        self.cv_client.set_dataset_path(path)
+
     async def get_observation(self):
         self.time = self.get_time()
 
@@ -77,7 +85,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         elif "right" in self.images:
             self.image = np.array(self.images["right"])
 
-        self.get_plant_stats()
+        await self.get_plant_stats()
 
         if not self.df.empty:
             self.plant_areas = self.df["area"].to_numpy().flatten()  # type: ignore
@@ -94,12 +102,46 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         return self.time, self.image, self.df
 
-    def get_plant_stats(self):
-        assert self.image is not None, "Image must be fetched before processing."
-        self.df, self.detections = process_image(
-            self.image, self.zone.trays, self.images
+    def is_daylight(self):
+        local_time = self.get_local_time()
+        return (
+            local_time.hour > 9 or (local_time.hour == 9 and local_time.minute >= 30)
+        ) and (
+            local_time.hour < 20 or (local_time.hour == 20 and local_time.minute < 30)
         )
-        self.plant_stats = np.array(self.df, dtype=np.float32)
+
+    async def get_plant_stats(self):
+        assert self.image is not None, "Image must be fetched before processing."
+
+        if self.pot_quads is None:
+            if not self.is_daylight():
+                logger.debug("Not daylight, skipping pot detection.")
+                self.df = pd.DataFrame()
+                return
+            logger.debug("Daylight detected, running initial pot detection...")
+            session = await self._ensure_session()
+            self.pot_quads = await self.cv_client.detect_pots(session, self.image)
+            if self.pot_quads:
+                num_plants = len(self.pot_quads)
+                logger.debug(f"Initialized tracking for {num_plants} plants")
+                self.uema_areas = [UEMA(alpha=0.1) for _ in range(num_plants)]
+                self.prev_plant_areas = np.zeros(num_plants)
+
+        if self.pot_quads is None:
+            logger.debug("No pot quads, skipping plant stats.")
+            self.df = pd.DataFrame()
+            return
+
+        session = await self._ensure_session()
+        iso_time = (
+            self.time.isoformat(timespec="seconds").replace(":", "")
+            if self.time.minute % 5 == 0
+            else None
+        )
+        plant_stats = await self.cv_client.process_plants(
+            session, self.image, self.pot_quads, timestamp_str=iso_time
+        )
+        self.df = pd.DataFrame(plant_stats)
 
     def get_clean_area(self, plant_areas):
         if np.sum(self.last_action) == 0:
@@ -107,7 +149,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         else:
             clean_area = plant_areas.copy()
             mean = np.array(
-                [self.uema_areas[i].compute() for i in range(self.zone.num_plants)]
+                [self.uema_areas[i].compute() for i in range(len(self.uema_areas))]
             ).flatten()
             cond = (self.area_count > self.minimum_area_count) & (
                 (plant_areas < (1 - self.clean_area_lower) * mean)

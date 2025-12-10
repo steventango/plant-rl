@@ -1,0 +1,450 @@
+services:
+  zone1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - plant-network
+    user: "${HOST_UID}:${HOST_GID}"
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
+      - /data/plant-rl:/data/plant-rl:cached
+    restart: unless-stopped
+    command: uv run python src/main_real.py -e experiments/online/E14/P1/Constant1.json -i 0 --deploy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+  zone2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - plant-network
+    user: "${HOST_UID}:${HOST_GID}"
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
+      - /data/plant-rl:/data/plant-rl:cached
+    restart: unless-stopped
+    command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC2.json -i 1 --deploy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  zone3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - plant-network
+    user: "${HOST_UID}:${HOST_GID}"
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
+      - /data/plant-rl:/data/plant-rl:cached
+    restart: unless-stopped
+    command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC3.json -i 2 --deploy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  zone4:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - plant-network
+    user: "${HOST_UID}:${HOST_GID}"
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
+      - /data/plant-rl:/data/plant-rl:cached
+    restart: unless-stopped
+    command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC4.json -i 3 --deploy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  zone5:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - plant-network
+    user: "${HOST_UID}:${HOST_GID}"
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
+      - /data/plant-rl:/data/plant-rl:cached
+    restart: unless-stopped
+    command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC5.json -i 4 --deploy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  zone6:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - plant-network
+    user: "${HOST_UID}:${HOST_GID}"
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
+      - /data/plant-rl:/data/plant-rl:cached
+    restart: unless-stopped
+    command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC6.json -i 5 --deploy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  zone7:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - plant-network
+    user: "${HOST_UID}:${HOST_GID}"
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
+      - /data/plant-rl:/data/plant-rl:cached
+    restart: unless-stopped
+    command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC7.json -i 6 --deploy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  zone8:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - plant-network
+    user: "${HOST_UID}:${HOST_GID}"
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
+      - /data/plant-rl:/data/plant-rl:cached
+    restart: unless-stopped
+    command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC8.json -i 7 --deploy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  zone9:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - plant-network
+    user: "${HOST_UID}:${HOST_GID}"
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
+      - /data/plant-rl:/data/plant-rl:cached
+    restart: unless-stopped
+    command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC9.json -i 8 --deploy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  zone10:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - plant-network
+    user: "${HOST_UID}:${HOST_GID}"
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
+      - /data/plant-rl:/data/plant-rl:cached
+    restart: unless-stopped
+    command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC10.json -i 9 --deploy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  zone11:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - plant-network
+    user: "${HOST_UID}:${HOST_GID}"
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
+      - /data/plant-rl:/data/plant-rl:cached
+    restart: unless-stopped
+    command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC11.json -i 10 --deploy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  zone12:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - plant-network
+    user: "${HOST_UID}:${HOST_GID}"
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
+      - /data/plant-rl:/data/plant-rl:cached
+    restart: unless-stopped
+    command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC12.json -i 11 --deploy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - plant-network
+    user: "${HOST_UID}:${HOST_GID}"
+    volumes:
+      - .:/app:cached
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
+      - /data/plant-rl:/data/plant-rl:cached
+    restart: unless-stopped
+    command: uv run python src/monitor.py --interval 300 --memory-threshold 0.9 --disk-threshold 0.9
+
+networks:
+  plant-network:
+    name: plant-network
+    external: true

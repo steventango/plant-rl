@@ -9,4 +9,4 @@ services:
     restart: unless-stopped
     volumes:
       - .:/app
-      - /extra-storage:/data:cached
+      - /data/plant-rl:/data/plant-rl:cached
