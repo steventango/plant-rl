@@ -9,7 +9,6 @@ from algorithms.DiscreteRandomAgent import DiscreteRandomAgent
 from algorithms.linear.ESARSA import ESARSA as LinearESARSA
 from algorithms.linear.linearDQN.LinearDynamicBatchDQN import LinearDynamicBatchDQN
 from algorithms.linear.LinearQL import LinearQL
-from algorithms.motion_tracking.MotionTrackingController import MotionTrackingController
 from algorithms.nn.DQN import DQN
 from algorithms.nn.DynamicBatchDQN import DynamicBatchDQN
 from algorithms.nn.GreedyAC.GreedyAC import GreedyAC
@@ -83,9 +82,6 @@ def getAgent(name) -> Type[BaseAgent]:
 
     if name.startswith("Dirichlet"):
         return DirichletAgent
-
-    if name.startswith("MotionTrackingController"):
-        return MotionTrackingController
 
     if name.startswith("Sequence"):
         return SequenceAgent

@@ -63,11 +63,15 @@ class ActorCritic(nnx.Module):
                     state_dim,
                     action_dim,
                     [hidden_units] * 2,
-                    offset=0,
+                    offset=1.0,
                     rngs=rngs,
                 )
                 self.beh_pi = MLPDirichlet(
-                    state_dim, action_dim, [hidden_units] * 2, offset=0, rngs=rngs
+                    state_dim,
+                    action_dim,
+                    [hidden_units] * 2,
+                    offset=1.0,
+                    rngs=rngs,
                 )
             elif policy_type == "mixture_dirichlet":
                 self.pi = MLPMixtureDirichlet(
@@ -338,6 +342,7 @@ def train(
     action_dim: int,
     hidden_units: int,
     learning_rate: float,
+    actor_lr_scale: float,
     tau: float,
     polyak: float,
     exp_path: Path,
@@ -362,28 +367,34 @@ def train(
         policy_type=policy_type,
         rngs=rngs,
     )
-    adamw = optax.adamw(learning_rate, weight_decay=weight_decay)
+    critic_adamw = optax.adamw(learning_rate, weight_decay=weight_decay)
+    actor_adamw = optax.adamw(actor_lr_scale * learning_rate, weight_decay=weight_decay)
     if clip_grad_norm is not None:
-        adamw = optax.chain(optax.clip_by_global_norm(clip_grad_norm), adamw)
+        critic_adamw = optax.chain(
+            optax.clip_by_global_norm(clip_grad_norm), critic_adamw
+        )
+        actor_adamw = optax.chain(
+            optax.clip_by_global_norm(clip_grad_norm), actor_adamw
+        )
     optimizers = Optimizers(
         pi=nnx.Optimizer(
             actor_critic.pi,
-            adamw,
+            actor_adamw,
             wrt=nnx.Param,
         ),
         q=nnx.Optimizer(
             actor_critic.q,
-            adamw,
+            critic_adamw,
             wrt=nnx.Param,
         ),
         value=nnx.Optimizer(
             actor_critic.value_net,
-            adamw,
+            critic_adamw,
             wrt=nnx.Param,
         ),
         beh_pi=nnx.Optimizer(
             actor_critic.beh_pi,
-            adamw,
+            actor_adamw,
             wrt=nnx.Param,
         ),
     )

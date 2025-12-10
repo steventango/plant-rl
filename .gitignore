@@ -13,9 +13,10 @@ results.tar*
 images/
 
 # ignore some personal work
-test_notebooks/
-test_models/
-old_work/
+.test*/
+.old/
+
+uv.lock
 
 # ignore checkpoints
 checkpoints
@@ -45,3 +46,4 @@ build/
 
 *.mp4
 wandb
+.env

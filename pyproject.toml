@@ -21,20 +21,20 @@ dependencies = [
     # custom minatar with jit compiled environments
     'MinAtar @ git+https://github.com/andnp/MinAtar',
     'foragerenv @ git+https://github.com/andnp/forager',
-    'gymnasium[atari, box2d]>=1.0.0',
+    'gymnasium>=1.0.0',
     'optuna',
     'ale_py',
     'pillow',
     'numba>=0.55.0',
     'chex>=0.1.5',
-    'jax>=0.2.14',
+    "jax>=0.8.1",
     'dm-haiku>=0.0.4',
     'optax>=0.0.8',
     'numpy>=1.22.0',
     'PyFixedReps-andnp~=4.0',
     'PyExpUtils-andnp~=7.0',
     'pyrlenvs-andnp~=2.0',
-    'ReplayTables-andnp~=6.0',
+    'ReplayTables-andnp~=8.0.0',
     'RlGlue-andnp~=1.0',
     'RlEvaluation @ git+https://github.com/rlai-lab/rl-evaluation@ef3a117f7515ba74e7d6ef455e0a2b6a481531b8',
     'PyExpPlotting-andnp',
@@ -55,14 +55,17 @@ dependencies = [
     "polars>=1.34.0",
     "pyarrow>=21.0.0",
     "flashbax>=0.1.3",
-    "distrax>=0.1.5",
+    "distrax>=0.1.7",
     'flask',
+    "flax>=0.12.0",
+    "jaxlib>=0.8.1",
+    "tfp-nightly>=0.26.0.dev20251210",
 ]
 
 [dependency-groups]
 cuda = [
-    "jax[cuda]>=0.7.1",
-    "jaxlib>=0.7.1",
+    "jax[cuda]>=0.8.1",
+    "jaxlib>=0.8.1",
 ]
 dev = [
     'pip',

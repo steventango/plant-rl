@@ -49,6 +49,7 @@ class InAC(BaseAgent):
         self.policy_type = params.get("policy_type", "dirichlet")
         self.hidden_units = params.get("hidden_units", 256)
         self.learning_rate = params.get("learning_rate", 1e-4)
+        self.actor_lr_scale = params.get("actor_lr_scale", 1)
         self.tau = params.get("tau", 0.001)
         self.polyak = params.get("polyak", 0.995)
         self.target_network_update_freq = params.get("target_network_update_freq", 1)
@@ -93,29 +94,38 @@ class InAC(BaseAgent):
         # ---------------
         # -- Optimizer --
         # ---------------
-        adamw = optax.adamw(self.learning_rate, weight_decay=self.weight_decay)
+        critic_adamw = optax.adamw(self.learning_rate, weight_decay=self.weight_decay)
+        actor_adamw = optax.adamw(
+            self.actor_lr_scale * self.learning_rate, weight_decay=self.weight_decay
+        )
+
         if self.clip_grad_norm is not None:
-            adamw = optax.chain(optax.clip_by_global_norm(self.clip_grad_norm), adamw)
+            critic_adamw = optax.chain(
+                optax.clip_by_global_norm(self.clip_grad_norm), critic_adamw
+            )
+            actor_adamw = optax.chain(
+                optax.clip_by_global_norm(self.clip_grad_norm), actor_adamw
+            )
 
         self.optimizers: Optimizers = Optimizers(
             pi=nnx.Optimizer(
                 self.actor_critic.pi,
-                adamw,
+                actor_adamw,
                 wrt=nnx.Param,
             ),
             q=nnx.Optimizer(
                 self.actor_critic.q,
-                adamw,
+                critic_adamw,
                 wrt=nnx.Param,
             ),
             value=nnx.Optimizer(
                 self.actor_critic.value_net,
-                adamw,
+                critic_adamw,
                 wrt=nnx.Param,
             ),
             beh_pi=nnx.Optimizer(
                 self.actor_critic.beh_pi,
-                adamw,
+                actor_adamw,
                 wrt=nnx.Param,
             ),
         )
