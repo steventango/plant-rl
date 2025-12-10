@@ -84,7 +84,7 @@ class CVPipelineClient:
         session: aiohttp.ClientSession,
         image: np.ndarray | Image.Image,
         pot_quads: list,
-        timestamp_str: str = "",
+        timestamp_str: str | None = "",
     ):
         """
         Processes plants within the given pot quadrilaterals.
@@ -145,7 +145,7 @@ class CVPipelineClient:
                     plant_stats_list.append({})
 
                 # Visualization (only if requested)
-                if self.dataset_path and boxes:
+                if self.dataset_path and boxes and timestamp_str:
                     vis_result = await self._call_pipeline(
                         session, "plant/visualize",
                         {

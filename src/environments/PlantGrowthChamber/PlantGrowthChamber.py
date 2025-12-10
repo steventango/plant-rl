@@ -133,7 +133,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             return
 
         session = await self._ensure_session()
-        iso_time = self.get_time().isoformat(timespec="seconds").replace(":", "")
+        iso_time = self.time.isoformat(timespec="seconds").replace(":", "") if self.time.minute % 5 == 0 else None
         plant_stats = await self.cv_client.process_plants(
             session, self.image, self.pot_quads, timestamp_str=iso_time
         )
