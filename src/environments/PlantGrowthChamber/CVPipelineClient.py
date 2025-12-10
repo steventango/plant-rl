@@ -145,7 +145,7 @@ class CVPipelineClient:
                     plant_stats_list.append({})
 
                 # Visualization (only if requested)
-                if self.dataset_path:
+                if self.dataset_path and boxes:
                     vis_result = await self._call_pipeline(
                         session, "plant/visualize",
                         {
