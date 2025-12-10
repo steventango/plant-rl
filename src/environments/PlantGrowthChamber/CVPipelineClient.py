@@ -1,6 +1,7 @@
 import base64
 import io
 import logging
+import os
 from pathlib import Path
 
 import aiohttp
@@ -9,7 +10,7 @@ from PIL import Image
 
 logger = logging.getLogger("plant_rl.CVPipelineClient")
 
-PIPELINE_URL = "http://localhost:8800"
+PIPELINE_URL = os.getenv("PIPELINE_URL", "http://localhost:8800")
 
 
 class CVPipelineClient:

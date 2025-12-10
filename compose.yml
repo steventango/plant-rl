@@ -8,8 +8,10 @@ services:
         USER_UID: ${HOST_UID}
         USER_GID: ${HOST_GID}
     env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
-      - plant-rl
+      - plant-network
     user: "${HOST_UID}:${HOST_GID}"
     volumes:
       - .:/app:cached
@@ -40,8 +42,10 @@ services:
         USER_UID: ${HOST_UID}
         USER_GID: ${HOST_GID}
     env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
-      - plant-rl
+      - plant-network
     user: "${HOST_UID}:${HOST_GID}"
     volumes:
       - .:/app:cached
@@ -73,8 +77,10 @@ services:
         USER_UID: ${HOST_UID}
         USER_GID: ${HOST_GID}
     env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
-      - plant-rl
+      - plant-network
     user: "${HOST_UID}:${HOST_GID}"
     volumes:
       - .:/app:cached
@@ -106,8 +112,10 @@ services:
         USER_UID: ${HOST_UID}
         USER_GID: ${HOST_GID}
     env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
-      - plant-rl
+      - plant-network
     user: "${HOST_UID}:${HOST_GID}"
     volumes:
       - .:/app:cached
@@ -139,8 +147,10 @@ services:
         USER_UID: ${HOST_UID}
         USER_GID: ${HOST_GID}
     env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
-      - plant-rl
+      - plant-network
     user: "${HOST_UID}:${HOST_GID}"
     volumes:
       - .:/app:cached
@@ -172,8 +182,10 @@ services:
         USER_UID: ${HOST_UID}
         USER_GID: ${HOST_GID}
     env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
-      - plant-rl
+      - plant-network
     user: "${HOST_UID}:${HOST_GID}"
     volumes:
       - .:/app:cached
@@ -205,8 +217,10 @@ services:
         USER_UID: ${HOST_UID}
         USER_GID: ${HOST_GID}
     env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
-      - plant-rl
+      - plant-network
     user: "${HOST_UID}:${HOST_GID}"
     volumes:
       - .:/app:cached
@@ -238,8 +252,10 @@ services:
         USER_UID: ${HOST_UID}
         USER_GID: ${HOST_GID}
     env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
-      - plant-rl
+      - plant-network
     user: "${HOST_UID}:${HOST_GID}"
     volumes:
       - .:/app:cached
@@ -271,8 +287,10 @@ services:
         USER_UID: ${HOST_UID}
         USER_GID: ${HOST_GID}
     env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
-      - plant-rl
+      - plant-network
     user: "${HOST_UID}:${HOST_GID}"
     volumes:
       - .:/app:cached
@@ -304,8 +322,10 @@ services:
         USER_UID: ${HOST_UID}
         USER_GID: ${HOST_GID}
     env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
-      - plant-rl
+      - plant-network
     user: "${HOST_UID}:${HOST_GID}"
     volumes:
       - .:/app:cached
@@ -337,8 +357,10 @@ services:
         USER_UID: ${HOST_UID}
         USER_GID: ${HOST_GID}
     env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
-      - plant-rl
+      - plant-network
     user: "${HOST_UID}:${HOST_GID}"
     volumes:
       - .:/app:cached
@@ -370,8 +392,10 @@ services:
         USER_UID: ${HOST_UID}
         USER_GID: ${HOST_GID}
     env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
-      - plant-rl
+      - plant-network
     user: "${HOST_UID}:${HOST_GID}"
     volumes:
       - .:/app:cached
@@ -403,8 +427,10 @@ services:
         USER_UID: ${HOST_UID}
         USER_GID: ${HOST_GID}
     env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
-      - plant-rl
+      - plant-network
     user: "${HOST_UID}:${HOST_GID}"
     volumes:
       - .:/app:cached
@@ -419,5 +445,6 @@ services:
     command: uv run python src/monitor.py --interval 300 --memory-threshold 0.9 --disk-threshold 0.9
 
 networks:
-  plant-rl:
-    name: plant-rl
+  plant-network:
+    name: plant-network
+    external: true

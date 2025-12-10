@@ -113,7 +113,11 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
     async def get_plant_stats(self):
         assert self.image is not None, "Image must be fetched before processing."
 
-        if self.pot_quads is None and self.is_daylight():
+        if self.pot_quads is None:
+            if not self.is_daylight():
+                logger.debug("Not daylight, skipping pot detection.")
+                self.df = pd.DataFrame()
+                return
             logger.debug("Daylight detected, running initial pot detection...")
             session = await self._ensure_session()
             self.pot_quads = await self.cv_client.detect_pots(session, self.image)
@@ -122,10 +126,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 logger.debug(f"Initialized tracking for {num_plants} plants")
                 self.uema_areas = [UEMA(alpha=0.1) for _ in range(num_plants)]
                 self.prev_plant_areas = np.zeros(num_plants)
-        else:
-            logger.debug("Not daylight, skipping pot detection.")
-            self.df = pd.DataFrame()
-            return
 
         if self.pot_quads is None:
             logger.debug("No pot quads, skipping plant stats.")
