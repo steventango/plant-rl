@@ -3,17 +3,23 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
     networks:
       - plant-rl
+    user: "${HOST_UID}:${HOST_GID}"
     volumes:
       - .:/app:cached
       - /var/run/docker.sock:/var/run/docker.sock
-      - ~/.ssh:/root/.ssh:cached
-      - ~/.gitconfig:/root/.gitconfig:cached
-      - ~/.config:/root/.config:cached
-      - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
-      - ~/.cache:/root/.cache:cached
-      - ~/.netrc:/root/.netrc:cached
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E14/P1/Constant1.json -i 0 --deploy
@@ -29,17 +35,23 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
     networks:
       - plant-rl
+    user: "${HOST_UID}:${HOST_GID}"
     volumes:
       - .:/app:cached
       - /var/run/docker.sock:/var/run/docker.sock
-      - ~/.ssh:/root/.ssh:cached
-      - ~/.gitconfig:/root/.gitconfig:cached
-      - ~/.config:/root/.config:cached
-      - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
-      - ~/.cache:/root/.cache:cached
-      - ~/.netrc:/root/.netrc:cached
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC2.json -i 1 --deploy
@@ -56,17 +68,23 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
     networks:
       - plant-rl
+    user: "${HOST_UID}:${HOST_GID}"
     volumes:
       - .:/app:cached
       - /var/run/docker.sock:/var/run/docker.sock
-      - ~/.ssh:/root/.ssh:cached
-      - ~/.gitconfig:/root/.gitconfig:cached
-      - ~/.config:/root/.config:cached
-      - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
-      - ~/.cache:/root/.cache:cached
-      - ~/.netrc:/root/.netrc:cached
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC3.json -i 2 --deploy
@@ -83,17 +101,23 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
     networks:
       - plant-rl
+    user: "${HOST_UID}:${HOST_GID}"
     volumes:
       - .:/app:cached
       - /var/run/docker.sock:/var/run/docker.sock
-      - ~/.ssh:/root/.ssh:cached
-      - ~/.gitconfig:/root/.gitconfig:cached
-      - ~/.config:/root/.config:cached
-      - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
-      - ~/.cache:/root/.cache:cached
-      - ~/.netrc:/root/.netrc:cached
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC4.json -i 3 --deploy
@@ -110,17 +134,23 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
     networks:
       - plant-rl
+    user: "${HOST_UID}:${HOST_GID}"
     volumes:
       - .:/app:cached
       - /var/run/docker.sock:/var/run/docker.sock
-      - ~/.ssh:/root/.ssh:cached
-      - ~/.gitconfig:/root/.gitconfig:cached
-      - ~/.config:/root/.config:cached
-      - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
-      - ~/.cache:/root/.cache:cached
-      - ~/.netrc:/root/.netrc:cached
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC5.json -i 4 --deploy
@@ -137,17 +167,23 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
     networks:
       - plant-rl
+    user: "${HOST_UID}:${HOST_GID}"
     volumes:
       - .:/app:cached
       - /var/run/docker.sock:/var/run/docker.sock
-      - ~/.ssh:/root/.ssh:cached
-      - ~/.gitconfig:/root/.gitconfig:cached
-      - ~/.config:/root/.config:cached
-      - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
-      - ~/.cache:/root/.cache:cached
-      - ~/.netrc:/root/.netrc:cached
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC6.json -i 5 --deploy
@@ -164,17 +200,23 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
     networks:
       - plant-rl
+    user: "${HOST_UID}:${HOST_GID}"
     volumes:
       - .:/app:cached
       - /var/run/docker.sock:/var/run/docker.sock
-      - ~/.ssh:/root/.ssh:cached
-      - ~/.gitconfig:/root/.gitconfig:cached
-      - ~/.config:/root/.config:cached
-      - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
-      - ~/.cache:/root/.cache:cached
-      - ~/.netrc:/root/.netrc:cached
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC7.json -i 6 --deploy
@@ -191,17 +233,23 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
     networks:
       - plant-rl
+    user: "${HOST_UID}:${HOST_GID}"
     volumes:
       - .:/app:cached
       - /var/run/docker.sock:/var/run/docker.sock
-      - ~/.ssh:/root/.ssh:cached
-      - ~/.gitconfig:/root/.gitconfig:cached
-      - ~/.config:/root/.config:cached
-      - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
-      - ~/.cache:/root/.cache:cached
-      - ~/.netrc:/root/.netrc:cached
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC8.json -i 7 --deploy
@@ -218,17 +266,23 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
     networks:
       - plant-rl
+    user: "${HOST_UID}:${HOST_GID}"
     volumes:
       - .:/app:cached
       - /var/run/docker.sock:/var/run/docker.sock
-      - ~/.ssh:/root/.ssh:cached
-      - ~/.gitconfig:/root/.gitconfig:cached
-      - ~/.config:/root/.config:cached
-      - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
-      - ~/.cache:/root/.cache:cached
-      - ~/.netrc:/root/.netrc:cached
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC9.json -i 8 --deploy
@@ -245,17 +299,23 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
     networks:
       - plant-rl
+    user: "${HOST_UID}:${HOST_GID}"
     volumes:
       - .:/app:cached
       - /var/run/docker.sock:/var/run/docker.sock
-      - ~/.ssh:/root/.ssh:cached
-      - ~/.gitconfig:/root/.gitconfig:cached
-      - ~/.config:/root/.config:cached
-      - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
-      - ~/.cache:/root/.cache:cached
-      - ~/.netrc:/root/.netrc:cached
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC10.json -i 9 --deploy
@@ -272,17 +332,23 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
     networks:
       - plant-rl
+    user: "${HOST_UID}:${HOST_GID}"
     volumes:
       - .:/app:cached
       - /var/run/docker.sock:/var/run/docker.sock
-      - ~/.ssh:/root/.ssh:cached
-      - ~/.gitconfig:/root/.gitconfig:cached
-      - ~/.config:/root/.config:cached
-      - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
-      - ~/.cache:/root/.cache:cached
-      - ~/.netrc:/root/.netrc:cached
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC11.json -i 10 --deploy
@@ -299,17 +365,23 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
     networks:
       - plant-rl
+    user: "${HOST_UID}:${HOST_GID}"
     volumes:
       - .:/app:cached
       - /var/run/docker.sock:/var/run/docker.sock
-      - ~/.ssh:/root/.ssh:cached
-      - ~/.gitconfig:/root/.gitconfig:cached
-      - ~/.config:/root/.config:cached
-      - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
-      - ~/.cache:/root/.cache:cached
-      - ~/.netrc:/root/.netrc:cached
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC12.json -i 11 --deploy
@@ -326,16 +398,22 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
     networks:
       - plant-rl
+    user: "${HOST_UID}:${HOST_GID}"
     volumes:
       - .:/app:cached
-      - ~/.ssh:/root/.ssh:cached
-      - ~/.gitconfig:/root/.gitconfig:cached
-      - ~/.config:/root/.config:cached
-      - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
-      - ~/.cache:/root/.cache:cached
-      - ~/.netrc:/root/.netrc:cached
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /extra-storage:/data:cached
     restart: unless-stopped
     command: uv run python src/monitor.py --interval 300 --memory-threshold 0.9 --disk-threshold 0.9
