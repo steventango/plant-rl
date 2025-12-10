@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 DATA_ROOT = Path("/data/plant-rl")
+DATA_ROOT.mkdir(exist_ok=True)
 APP_ROOT = Path(__file__).parent
 
 app = FastAPI()
