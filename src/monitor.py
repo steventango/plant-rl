@@ -9,7 +9,7 @@ import pandas as pd
 import wandb
 from wandb.sdk.wandb_alerts import AlertLevel
 
-log_dir = Path("/data/logs")
+log_dir = Path("/data/plant-rl/logs")
 log_dir.mkdir(parents=True, exist_ok=True)
 
 logging.basicConfig(

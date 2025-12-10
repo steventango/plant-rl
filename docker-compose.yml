@@ -20,7 +20,7 @@ services:
       - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
       - ~/.cache:/home/${USERNAME}/.cache:cached
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
-      - /extra-storage:/data:cached
+      - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E14/P1/Constant1.json -i 0 --deploy
     deploy:
@@ -52,7 +52,7 @@ services:
       - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
       - ~/.cache:/home/${USERNAME}/.cache:cached
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
-      - /extra-storage:/data:cached
+      - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC2.json -i 1 --deploy
     deploy:
@@ -85,7 +85,7 @@ services:
       - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
       - ~/.cache:/home/${USERNAME}/.cache:cached
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
-      - /extra-storage:/data:cached
+      - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC3.json -i 2 --deploy
     deploy:
@@ -118,7 +118,7 @@ services:
       - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
       - ~/.cache:/home/${USERNAME}/.cache:cached
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
-      - /extra-storage:/data:cached
+      - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC4.json -i 3 --deploy
     deploy:
@@ -151,7 +151,7 @@ services:
       - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
       - ~/.cache:/home/${USERNAME}/.cache:cached
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
-      - /extra-storage:/data:cached
+      - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC5.json -i 4 --deploy
     deploy:
@@ -184,7 +184,7 @@ services:
       - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
       - ~/.cache:/home/${USERNAME}/.cache:cached
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
-      - /extra-storage:/data:cached
+      - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC6.json -i 5 --deploy
     deploy:
@@ -217,7 +217,7 @@ services:
       - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
       - ~/.cache:/home/${USERNAME}/.cache:cached
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
-      - /extra-storage:/data:cached
+      - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC7.json -i 6 --deploy
     deploy:
@@ -250,7 +250,7 @@ services:
       - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
       - ~/.cache:/home/${USERNAME}/.cache:cached
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
-      - /extra-storage:/data:cached
+      - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC8.json -i 7 --deploy
     deploy:
@@ -283,7 +283,7 @@ services:
       - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
       - ~/.cache:/home/${USERNAME}/.cache:cached
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
-      - /extra-storage:/data:cached
+      - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC9.json -i 8 --deploy
     deploy:
@@ -316,7 +316,7 @@ services:
       - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
       - ~/.cache:/home/${USERNAME}/.cache:cached
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
-      - /extra-storage:/data:cached
+      - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC10.json -i 9 --deploy
     deploy:
@@ -349,7 +349,7 @@ services:
       - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
       - ~/.cache:/home/${USERNAME}/.cache:cached
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
-      - /extra-storage:/data:cached
+      - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC11.json -i 10 --deploy
     deploy:
@@ -382,7 +382,7 @@ services:
       - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
       - ~/.cache:/home/${USERNAME}/.cache:cached
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
-      - /extra-storage:/data:cached
+      - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E14/P1/InAC12.json -i 11 --deploy
     deploy:
@@ -414,7 +414,7 @@ services:
       - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
       - ~/.cache:/home/${USERNAME}/.cache:cached
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
-      - /extra-storage:/data:cached
+      - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
     command: uv run python src/monitor.py --interval 300 --memory-threshold 0.9 --disk-threshold 0.9
 
