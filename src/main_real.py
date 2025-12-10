@@ -129,6 +129,7 @@ async def main():
             context = exp.buildSaveContext(idx, base=args.save_path)
             agent_path = Path(context.resolve()).relative_to("results")
             dataset_path = Path("/data") / agent_path / env.zone.identifier
+            env.set_dataset_path(dataset_path)
             images_save_keys = problem.exp_params.get("image_save_keys")
 
             config = {
