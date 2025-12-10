@@ -181,9 +181,15 @@ class InAC(BaseAgent):
         )
         self.replay_state = self.replay_buffer.init(dummy_transition)
 
+        # Normalization parameters
+        self.state_min = None
+        self.state_diff = None
+
         # Load offline dataset into buffer if specified
         if self.offline_dataset_name:
             offline_dataset = minari.load_dataset(self.offline_dataset_name)
+            env = offline_dataset.recover_environment()
+            self.load_normalization_params(env)
             self.load(offline_dataset)
 
     def _load_pretrained(self, path: str):
@@ -207,6 +213,32 @@ class InAC(BaseAgent):
 
         print(f"Successfully loaded pre-trained model from {path}")
 
+    def _normalize(self, obs: np.ndarray) -> np.ndarray:
+        """Min-max normalize observations."""
+        if self.state_min is None:
+            return obs
+        return (obs - self.state_min) / self.state_diff
+
+    def load_normalization_params(self, env):
+        observation_space = env.observation_space
+
+        low = observation_space.low
+        high = observation_space.high
+
+        # Start with identity normalization
+        self.state_min = np.zeros_like(low)
+        self.state_diff = np.ones_like(low)
+
+        # Check for finite bounds
+        mask = ~np.logical_or(np.isinf(low), np.isinf(high))
+
+        # For finite dimensions, set min and diff
+        self.state_min[mask] = low[mask]
+        self.state_diff[mask] = high[mask] - low[mask]
+
+        # Avoid division by zero if high == low
+        self.state_diff[self.state_diff == 0] = 1.0
+
     def load(self, dataset: minari.MinariDataset):
         """
         Load offline dataset into the replay buffer.
@@ -228,10 +260,10 @@ class InAC(BaseAgent):
         for episode in dataset.iterate_episodes():
             episode_length = len(episode.observations) - 1
             for t in range(episode_length):
-                all_states.append(episode.observations[t])
+                all_states.append(self._normalize(episode.observations[t]))
                 all_actions.append(episode.actions[t])
                 all_rewards.append(episode.rewards[t])
-                all_next_states.append(episode.observations[t + 1])
+                all_next_states.append(self._normalize(episode.observations[t + 1]))
                 all_terminations.append(episode.terminations[t])
 
         # Convert to JAX arrays
@@ -265,6 +297,7 @@ class InAC(BaseAgent):
         For continuous actions: returns sampled action
         """
         obs = np.asarray(obs)
+        obs = self._normalize(obs)
         if len(obs.shape) == 1:
             obs = np.expand_dims(obs, 0)
 
@@ -289,7 +322,7 @@ class InAC(BaseAgent):
         a = self.policy(x)
 
         # Store for online learning
-        self.current_state = x
+        self.current_state = self._normalize(x)
         self.current_action = a
 
         # For discrete actions, return integer action
@@ -319,7 +352,7 @@ class InAC(BaseAgent):
             a = self.policy(xp)
 
             # Store for next transition
-            self.current_state = xp
+            self.current_state = self._normalize(xp)
             self.current_action = a
 
             # For discrete actions, return integer action
