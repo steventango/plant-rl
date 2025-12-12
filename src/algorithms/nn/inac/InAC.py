@@ -198,8 +198,7 @@ class InAC(BaseAgent):
         # Load offline dataset into buffer if specified
         if self.offline_dataset_name:
             offline_dataset = minari.load_dataset(self.offline_dataset_name)
-            env = offline_dataset.recover_environment()
-            self.load_normalization_params(env)
+            self.load_normalization_params(offline_dataset.observation_space)
             self.load(offline_dataset)
 
     def _load_pretrained(self, path: str):
@@ -229,9 +228,7 @@ class InAC(BaseAgent):
             return obs
         return (obs - self.state_min) / self.state_diff
 
-    def load_normalization_params(self, env):
-        observation_space = env.observation_space
-
+    def load_normalization_params(self, observation_space):
         low = observation_space.low
         high = observation_space.high
 
