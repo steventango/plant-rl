@@ -120,12 +120,16 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 return
             logger.debug("Daylight detected, running initial pot detection...")
             session = await self._ensure_session()
-            self.pot_quads = await self.cv_client.detect_pots(session, self.image)
-            if self.pot_quads:
-                num_plants = len(self.pot_quads)
-                logger.debug(f"Initialized tracking for {num_plants} plants")
-                self.uema_areas = [UEMA(alpha=0.1) for _ in range(num_plants)]
-                self.prev_plant_areas = np.zeros(num_plants)
+            try:
+                self.pot_quads = await self.cv_client.detect_pots(session, self.image)
+                if self.pot_quads:
+                    num_plants = len(self.pot_quads)
+                    logger.debug(f"Initialized tracking for {num_plants} plants")
+                    self.uema_areas = [UEMA(alpha=0.1) for _ in range(num_plants)]
+                    self.prev_plant_areas = np.zeros(num_plants)
+            except Exception:
+                logger.exception("Error during pot detection")
+                self.pot_quads = None
 
         if self.pot_quads is None:
             logger.debug("No pot quads, skipping plant stats.")
@@ -138,10 +142,14 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             if self.time.minute % 5 == 0
             else None
         )
-        plant_stats = await self.cv_client.process_plants(
-            session, self.image, self.pot_quads, timestamp_str=iso_time
-        )
-        self.df = pd.DataFrame(plant_stats)
+        try:
+            plant_stats = await self.cv_client.process_plants(
+                session, self.image, self.pot_quads, timestamp_str=iso_time
+            )
+            self.df = pd.DataFrame(plant_stats)
+        except Exception:
+            logger.exception("Error during plant processing")
+            self.df = pd.DataFrame()
 
     def get_clean_area(self, plant_areas):
         if np.sum(self.last_action) == 0:
