@@ -32,6 +32,8 @@ def load_model(
     policy_type: str,
     learning_rate: float = 3e-4,
     weight_decay: float = 1e-4,
+    actor_lr_scale: float = 0.1,
+    clip_grad_norm: float | None = None,
 ):
     """Load trained model from checkpoint."""
     import optax
@@ -48,25 +50,34 @@ def load_model(
         rngs=rngs,
     )
 
+    critic_adamw = optax.adamw(learning_rate, weight_decay=weight_decay)
+    actor_adamw = optax.adamw(actor_lr_scale * learning_rate, weight_decay=weight_decay)
+    if clip_grad_norm is not None:
+        critic_adamw = optax.chain(
+            optax.clip_by_global_norm(clip_grad_norm), critic_adamw
+        )
+        actor_adamw = optax.chain(
+            optax.clip_by_global_norm(clip_grad_norm), actor_adamw
+        )
     optimizers = Optimizers(
         pi=nnx.Optimizer(
             actor_critic.pi,
-            optax.adamw(learning_rate, weight_decay=weight_decay),
+            actor_adamw,
             wrt=nnx.Param,
         ),
         q=nnx.Optimizer(
             actor_critic.q,
-            optax.adamw(learning_rate, weight_decay=weight_decay),
+            critic_adamw,
             wrt=nnx.Param,
         ),
         value=nnx.Optimizer(
             actor_critic.value_net,
-            optax.adamw(learning_rate, weight_decay=weight_decay),
+            critic_adamw,
             wrt=nnx.Param,
         ),
         beh_pi=nnx.Optimizer(
             actor_critic.beh_pi,
-            optax.adamw(learning_rate, weight_decay=weight_decay),
+            actor_adamw,
             wrt=nnx.Param,
         ),
     )
@@ -86,18 +97,57 @@ def load_model(
     return actor_critic
 
 
-def get_trajectory_actions(episode, pi, beh_pi, rngs):
+def get_normalization_params(dataset):
+    """
+    Get normalization parameters from the dataset environment.
+    Mimics InAC.load_normalization_params logic.
+    """
+    observation_space = dataset.observation_space
+
+    low = observation_space.low
+    high = observation_space.high
+
+    # Start with identity normalization
+    state_min = np.zeros_like(low)
+    state_diff = np.ones_like(low)
+
+    # Check for finite bounds
+    mask = ~np.logical_or(np.isinf(low), np.isinf(high))
+
+    # For finite dimensions, set min and diff
+    state_min[mask] = low[mask]
+    state_diff[mask] = high[mask] - low[mask]
+
+    # Avoid division by zero if high == low
+    state_diff[state_diff == 0] = 1.0
+
+    return state_min, state_diff
+
+
+def normalize_state(obs, state_min, state_diff):
+    """
+    Min-max normalize observations using provided parameters.
+    """
+    if state_min is None or state_diff is None:
+        return obs
+    return (obs - state_min) / state_diff
+
+
+def get_trajectory_actions(episode, pi, beh_pi, rngs, state_min=None, state_diff=None):
     """Get policy actions for each state in the trajectory."""
     states = episode.observations[
         :-1
     ]  # Remove last observation (no action for terminal)
     dataset_actions = episode.actions
 
+    # Normalize states for policy query
+    norm_states = normalize_state(states, state_min, state_diff)
+
     # Get policy actions
-    policy_actions, _ = pi(states, deterministic=True, rngs=rngs)
+    policy_actions, _ = pi(norm_states, deterministic=True, rngs=rngs)
 
     # Get behavior policy actions
-    beh_policy_actions, _ = beh_pi(states, deterministic=True, rngs=rngs)
+    beh_policy_actions, _ = beh_pi(norm_states, deterministic=True, rngs=rngs)
 
     return states, dataset_actions, policy_actions, beh_policy_actions
 
@@ -227,6 +277,8 @@ def plot_episode_comprehensive(
     tau=1.0,
     eps=1e-8,
     exp_threshold=10000,
+    state_min=None,
+    state_diff=None,
     save_path=None,
 ):
     """
@@ -247,7 +299,7 @@ def plot_episode_comprehensive(
     time_steps = np.arange(len(states))
 
     # Convert to JAX arrays
-    states_jax = jnp.array(states)
+    states_jax = jnp.array(normalize_state(states, state_min, state_diff))
     dataset_actions_jax = jnp.array(dataset_actions)
 
     # Compute all metrics over the trajectory
@@ -399,6 +451,8 @@ def plot_episode_comprehensive_ternary(
     eps=1e-8,
     exp_threshold=10000,
     num_points=32,
+    state_min=None,
+    state_diff=None,
     save_path=None,
 ):
     """
@@ -415,7 +469,7 @@ def plot_episode_comprehensive_ternary(
     time_steps = np.arange(len(states))
 
     # Convert to JAX arrays
-    states_jax = jnp.array(states)
+    states_jax = jnp.array(normalize_state(states, state_min, state_diff))
     dataset_actions_jax = jnp.array(dataset_actions)
 
     # Compute all metrics over the trajectory
@@ -530,7 +584,9 @@ def plot_episode_comprehensive_ternary(
 
     # Compute metrics over simplex for middle state
     simplex_actions_jax = jnp.array(simplex_actions)
-    state_mid_jax = jnp.array(state_mid).reshape(1, -1)
+    state_mid_jax = jnp.array(
+        normalize_state(state_mid, state_min, state_diff)
+    ).reshape(1, -1)
     state_mid_tiled = jnp.tile(state_mid_jax, (simplex_actions_jax.shape[0], 1))
 
     q_simplex, _, _ = actor_critic.q(state_mid_tiled, simplex_actions_jax)
@@ -717,6 +773,8 @@ def plot_episode_ternary_timeseries(
     exp_threshold=10000,
     num_points=24,
     num_timesteps=8,
+    state_min=None,
+    state_diff=None,
     save_path=None,
 ):
     """
@@ -781,7 +839,9 @@ def plot_episode_ternary_timeseries(
     per_timestep_data = []
     for t in timestep_indices:
         state = states[t]
-        state_jax = jnp.array(state).reshape(1, -1)
+        state_jax = jnp.array(normalize_state(state, state_min, state_diff)).reshape(
+            1, -1
+        )
         state_tiled = jnp.tile(state_jax, (simplex_actions_jax.shape[0], 1))
 
         # Get dataset action for this timestep
@@ -964,7 +1024,9 @@ def plot_episode_ternary_timeseries(
     plt.close()
 
 
-def plot_q_ternary(actor_critic, state, num_points=64, save_path=None):
+def plot_q_ternary(
+    actor_critic, state, num_points=64, state_min=None, state_diff=None, save_path=None
+):
     """Create a ternary plot of Q-values over the simplex for a fixed state using python-ternary."""
     # Generate ALL points on the simplex grid (including edges and corners)
     points = []
@@ -979,7 +1041,7 @@ def plot_q_ternary(actor_critic, state, num_points=64, save_path=None):
 
     # Convert to JAX array
     actions_jax = jnp.array(actions)
-    state_jax = jnp.array(state).reshape(1, -1)
+    state_jax = jnp.array(normalize_state(state, state_min, state_diff)).reshape(1, -1)
     state_jax = jnp.tile(state_jax, (actions_jax.shape[0], 1))
 
     # Compute Q-values
@@ -1026,7 +1088,9 @@ def plot_q_ternary(actor_critic, state, num_points=64, save_path=None):
     for v in vertices:
         v_norm = v / num_points
         v_jax = jnp.array(v_norm).reshape(1, -1)
-        state_tile = jnp.array(state).reshape(1, -1)
+        state_tile = jnp.array(normalize_state(state, state_min, state_diff)).reshape(
+            1, -1
+        )
         q, _, _ = actor_critic.q(state_tile, v_jax)
         vertex_q.append(float(q[0]))
 
@@ -1051,7 +1115,9 @@ def plot_q_ternary(actor_critic, state, num_points=64, save_path=None):
     plt.close()
 
 
-def plot_advantage_ternary(actor_critic, state, num_points=64, save_path=None):
+def plot_advantage_ternary(
+    actor_critic, state, num_points=64, state_min=None, state_diff=None, save_path=None
+):
     """Create a ternary plot of advantage (Q - V) over the simplex for a fixed state."""
     # Generate ALL points on the simplex grid
     points = []
@@ -1065,7 +1131,7 @@ def plot_advantage_ternary(actor_critic, state, num_points=64, save_path=None):
 
     # Convert to JAX array
     actions_jax = jnp.array(actions)
-    state_jax = jnp.array(state).reshape(1, -1)
+    state_jax = jnp.array(normalize_state(state, state_min, state_diff)).reshape(1, -1)
     state_jax = jnp.tile(state_jax, (actions_jax.shape[0], 1))
 
     # Compute Q-values and value
@@ -1112,7 +1178,9 @@ def plot_advantage_ternary(actor_critic, state, num_points=64, save_path=None):
     plt.close()
 
 
-def plot_value_ternary(actor_critic, state, num_points=64, save_path=None):
+def plot_value_ternary(
+    actor_critic, state, num_points=64, state_min=None, state_diff=None, save_path=None
+):
     """Create a ternary plot showing the value function (constant across actions)."""
     # Generate ALL points on the simplex grid
     points = []
@@ -1124,7 +1192,7 @@ def plot_value_ternary(actor_critic, state, num_points=64, save_path=None):
     points = np.array(points, dtype=float)
 
     # Compute value (independent of action)
-    state_jax = jnp.array(state).reshape(1, -1)
+    state_jax = jnp.array(normalize_state(state, state_min, state_diff)).reshape(1, -1)
     value = actor_critic.value_net(state_jax).squeeze(-1)
     value_scalar = float(value[0])  # Extract the scalar from the batch
 
@@ -1168,6 +1236,8 @@ def plot_clipped_advantage_ternary(
     eps=1e-8,
     exp_threshold=10000,
     num_points=64,
+    state_min=None,
+    state_diff=None,
     save_path=None,
 ):
     """Create a ternary plot of the clipped advantage over the simplex for a fixed state."""
@@ -1184,7 +1254,7 @@ def plot_clipped_advantage_ternary(
 
     # Convert to JAX array
     actions_jax = jnp.array(actions)
-    state_jax = jnp.array(state).reshape(1, -1)
+    state_jax = jnp.array(normalize_state(state, state_min, state_diff)).reshape(1, -1)
     state_jax = jnp.tile(state_jax, (actions_jax.shape[0], 1))
 
     # Compute components for clipped advantage
@@ -1243,7 +1313,9 @@ def plot_clipped_advantage_ternary(
     for v in vertices:
         v_norm = v / num_points
         v_jax = jnp.array(v_norm).reshape(1, -1)
-        state_tile = jnp.array(state).reshape(1, -1)
+        state_tile = jnp.array(normalize_state(state, state_min, state_diff)).reshape(
+            1, -1
+        )
 
         min_Q, _, _ = actor_critic.q(state_tile, v_jax)
         value = actor_critic.value_net(state_tile).squeeze(-1)
@@ -1285,6 +1357,8 @@ def compute_clipped_advantage_over_dataset(
     exp_threshold=10000,
     num_points=64,
     max_transitions=None,
+    state_min=None,
+    state_diff=None,
 ):
     """
     Compute the average clipped advantage over the entire dataset.
@@ -1348,7 +1422,7 @@ def compute_clipped_advantage_over_dataset(
 
         # Tile the simplex action to match all states
         actions_tiled = jnp.tile(simplex_action.reshape(1, -1), (len(all_states), 1))
-        states_jax = jnp.array(all_states)
+        states_jax = jnp.array(normalize_state(all_states, state_min, state_diff))
 
         # Compute components for clipped advantage
         min_Q, _, _ = actor_critic.q(states_jax, actions_tiled)
@@ -1456,6 +1530,8 @@ def compute_dataset_metrics(
     exp_threshold=10000,
     num_points=64,
     max_transitions=None,
+    state_min=None,
+    state_diff=None,
 ):
     """
     Compute various metrics over the entire dataset.
@@ -1522,7 +1598,7 @@ def compute_dataset_metrics(
 
         # Tile the simplex action to match all states
         actions_tiled = jnp.tile(simplex_action.reshape(1, -1), (len(all_states), 1))
-        states_jax = jnp.array(all_states)
+        states_jax = jnp.array(normalize_state(all_states, state_min, state_diff))
 
         # Compute metrics
         action_value, _, _ = actor_critic.q(states_jax, actions_tiled)
@@ -1644,6 +1720,8 @@ def compute_dataset_policy_metrics(
     dataset,
     num_points=64,
     max_transitions=None,
+    state_min=None,
+    state_diff=None,
 ):
     """
     Compute the average policy log probabilities over the entire dataset.
@@ -1699,7 +1777,7 @@ def compute_dataset_policy_metrics(
 
         # Tile the simplex action to match all states
         actions_tiled = jnp.tile(simplex_action.reshape(1, -1), (len(all_states), 1))
-        states_jax = jnp.array(all_states)
+        states_jax = jnp.array(normalize_state(all_states, state_min, state_diff))
 
         # Compute log probabilities
         try:
@@ -1799,7 +1877,14 @@ def plot_dataset_policy_ternary(
 
 
 def plot_policy_ternary(
-    policy, state, rngs, policy_name="pi", num_points=64, save_path=None
+    policy,
+    state,
+    rngs,
+    policy_name="pi",
+    num_points=64,
+    state_min=None,
+    state_diff=None,
+    save_path=None,
 ):
     """Create a ternary plot of policy log10 PDF (Probability Density Function) over the simplex for a fixed state."""
     # Generate ALL points on the simplex grid (including edges and corners)
@@ -1815,7 +1900,7 @@ def plot_policy_ternary(
 
     # Convert to JAX array
     actions_jax = jnp.array(simplex_points)
-    state_jax = jnp.array(state).reshape(1, -1)
+    state_jax = jnp.array(normalize_state(state, state_min, state_diff)).reshape(1, -1)
 
     # Compute log prob for each action on the simplex
     # We need to evaluate the policy's probability density at each action
@@ -1925,6 +2010,8 @@ def simulate_rollout(
     clean_area_min=0.0,
     clean_area_max=1.0,
     avg_area_change=0.0,
+    state_min=None,
+    state_diff=None,
 ):
     """
     Simulate a rollout from a start state using the policy.
@@ -1969,7 +2056,9 @@ def simulate_rollout(
 
     for _ in range(horizon):
         # Get action from policy
-        state_jax = jnp.array(current_state).reshape(1, -1)
+        state_jax = jnp.array(
+            normalize_state(current_state, state_min, state_diff)
+        ).reshape(1, -1)
         action, _ = actor_critic.pi(state_jax, deterministic=deterministic, rngs=rngs)
         action = np.array(action[0])  # Convert to numpy and remove batch dim
 
@@ -2017,6 +2106,8 @@ def plot_imagined_rollouts(
     clean_area_min,
     clean_area_max,
     avg_area_change=0.0,
+    state_min=None,
+    state_diff=None,
     save_path=None,
 ):
     """
@@ -2180,12 +2271,12 @@ def main():
     parser.add_argument(
         "--exp_path",
         type=str,
-        default="results/offline/S8/P0/InAC_GPsim0/0",
+        default="results/offline/S8/P1/InAC/0",
         help="Path to experiment directory with trained model",
     )
-    parser.add_argument("--dataset", default="plant-rl/continuous-v10", type=str)
+    parser.add_argument("--dataset", default="plant-data/mixed-v18", type=str)
     parser.add_argument(
-        "--episodes", default=5, type=int, help="Number of episodes to visualize"
+        "--episodes", default=10, type=int, help="Number of episodes to visualize"
     )
     parser.add_argument(
         "--policy_type",
@@ -2250,6 +2341,12 @@ def main():
     avg_area_change = float(np.mean(all_rewards))
     print(f"Average relative area change (reward) in dataset: {avg_area_change:.6f}")
 
+    # Load normalization params
+    state_min, state_diff = get_normalization_params(dataset)
+    print("Normalization params loaded from dataset environment.")
+    print(f"State min: {state_min}")
+    print(f"State diff: {state_diff}")
+
     # Load model
     exp_path = Path(args.exp_path)
     print(f"Loading model from {exp_path}")
@@ -2272,7 +2369,14 @@ def main():
             f"Selected episode {args.episode_idx} with {len(episode.observations) - 1} steps"
         )
         states, dataset_actions, policy_actions, beh_policy_actions = (
-            get_trajectory_actions(episode, actor_critic.pi, actor_critic.beh_pi, rngs)
+            get_trajectory_actions(
+                episode,
+                actor_critic.pi,
+                actor_critic.beh_pi,
+                rngs,
+                state_min=state_min,
+                state_diff=state_diff,
+            )
         )
 
         # Get rewards from episode
@@ -2293,7 +2397,7 @@ def main():
 
         # Plot trajectory
         trajectory_plot_path = (
-            output_dir / f"simplex_policy_trajectory_ep{args.episode_idx}.png"
+            output_dir / f"simplex_policy_trajectory_ep{args.episode_idx}.pdf"
         )
         plot_trajectory_actions(
             states,
@@ -2306,7 +2410,7 @@ def main():
 
         # Plot comprehensive episode figure
         comprehensive_plot_path = (
-            output_dir / f"episode_comprehensive_ep{args.episode_idx}.png"
+            output_dir / f"episode_comprehensive_ep{args.episode_idx}.pdf"
         )
         plot_episode_comprehensive(
             actor_critic,
@@ -2318,12 +2422,14 @@ def main():
             tau=args.tau,
             eps=args.eps,
             exp_threshold=args.exp_threshold,
+            state_min=state_min,
+            state_diff=state_diff,
             save_path=comprehensive_plot_path,
         )
 
         # Plot comprehensive episode figure with ternary plots
         comprehensive_ternary_plot_path = (
-            output_dir / f"episode_comprehensive_ternary_ep{args.episode_idx}.png"
+            output_dir / f"episode_comprehensive_ternary_ep{args.episode_idx}.pdf"
         )
         plot_episode_comprehensive_ternary(
             actor_critic,
@@ -2336,12 +2442,14 @@ def main():
             eps=args.eps,
             exp_threshold=args.exp_threshold,
             num_points=32,
+            state_min=state_min,
+            state_diff=state_diff,
             save_path=comprehensive_ternary_plot_path,
         )
 
         # Plot ternary timeseries (grid of ternary plots over time)
         ternary_timeseries_plot_path = (
-            output_dir / f"episode_ternary_timeseries_ep{args.episode_idx}.png"
+            output_dir / f"episode_ternary_timeseries_ep{args.episode_idx}.pdf"
         )
         plot_episode_ternary_timeseries(
             actor_critic,
@@ -2354,7 +2462,9 @@ def main():
             eps=args.eps,
             exp_threshold=args.exp_threshold,
             num_points=24,
-            num_timesteps=8,
+            num_timesteps=args.rollout_horizon,
+            state_min=state_min,
+            state_diff=state_diff,
             save_path=ternary_timeseries_plot_path,
         )
 
@@ -2367,7 +2477,7 @@ def main():
 
         #     # Q-values
         #     ternary_plot_path = (
-        #         output_dir / f"simplex_q_ternary_ep{args.episode_idx}_t{t:03d}.png"
+        #         output_dir / f"simplex_q_ternary_ep{args.episode_idx}_t{t:03d}.pdf"
         #     )
         #     plot_q_ternary(actor_critic, state, save_path=ternary_plot_path)
         #     print("    ✓ Q-values")
@@ -2375,14 +2485,14 @@ def main():
         #     # Advantage
         #     advantage_plot_path = (
         #         output_dir
-        #         / f"simplex_advantage_ternary_ep{args.episode_idx}_t{t:03d}.png"
+        #         / f"simplex_advantage_ternary_ep{args.episode_idx}_t{t:03d}.pdf"
         #     )
         #     plot_advantage_ternary(actor_critic, state, save_path=advantage_plot_path)
         #     print("    ✓ Advantage")
 
         #     # Value
         #     value_plot_path = (
-        #         output_dir / f"simplex_value_ternary_ep{args.episode_idx}_t{t:03d}.png"
+        #         output_dir / f"simplex_value_ternary_ep{args.episode_idx}_t{t:03d}.pdf"
         #     )
         #     plot_value_ternary(actor_critic, state, save_path=value_plot_path)
         #     print("    ✓ Value")
@@ -2390,7 +2500,7 @@ def main():
         #     # Clipped Advantage
         #     clipped_adv_plot_path = (
         #         output_dir
-        #         / f"simplex_clipped_adv_ternary_ep{args.episode_idx}_t{t:03d}.png"
+        #         / f"simplex_clipped_adv_ternary_ep{args.episode_idx}_t{t:03d}.pdf"
         #     )
         #     plot_clipped_advantage_ternary(
         #         actor_critic,
@@ -2404,7 +2514,7 @@ def main():
 
         #     # Policy (pi) distribution
         #     pi_plot_path = (
-        #         output_dir / f"simplex_pi_ternary_ep{args.episode_idx}_t{t:03d}.png"
+        #         output_dir / f"simplex_pi_ternary_ep{args.episode_idx}_t{t:03d}.pdf"
         #     )
         #     plot_policy_ternary(
         #         actor_critic.pi, state, rngs, policy_name="pi", save_path=pi_plot_path
@@ -2413,7 +2523,7 @@ def main():
 
         #     # Behavior policy (beh_pi) distribution
         #     beh_pi_plot_path = (
-        #         output_dir / f"simplex_beh_pi_ternary_ep{args.episode_idx}_t{t:03d}.png"
+        #         output_dir / f"simplex_beh_pi_ternary_ep{args.episode_idx}_t{t:03d}.pdf"
         #     )
         #     plot_policy_ternary(
         #         actor_critic.beh_pi,
@@ -2451,7 +2561,7 @@ def main():
     start_states = np.array(start_states)
 
     # Generate and plot rollouts
-    rollouts_plot_path = output_dir / "imagined_rollouts.png"
+    rollouts_plot_path = output_dir / "imagined_rollouts.pdf"
     plot_imagined_rollouts(
         actor_critic,
         start_states,
@@ -2460,6 +2570,8 @@ def main():
         clean_area_min=clean_area_min,
         clean_area_max=clean_area_max,
         avg_area_change=avg_area_change,
+        state_min=state_min,
+        state_diff=state_diff,
         save_path=rollouts_plot_path,
     )
 
@@ -2480,7 +2592,7 @@ def main():
     # )
 
     # # Plot advantage
-    # advantage_plot_path = output_dir / "simplex_advantage_dataset_mean.png"
+    # advantage_plot_path = output_dir / "simplex_advantage_dataset_mean.pdf"
     # plot_dataset_metric_ternary(
     #     dataset_metrics,
     #     "advantages",
@@ -2491,7 +2603,7 @@ def main():
     # )
 
     # # Plot value
-    # value_plot_path = output_dir / "simplex_value_dataset_mean.png"
+    # value_plot_path = output_dir / "simplex_value_dataset_mean.pdf"
     # plot_dataset_metric_ternary(
     #     dataset_metrics,
     #     "values",
@@ -2502,7 +2614,7 @@ def main():
     # )
 
     # # Plot action-value (Q)
-    # action_value_plot_path = output_dir / "simplex_action_value_dataset_mean.png"
+    # action_value_plot_path = output_dir / "simplex_action_value_dataset_mean.pdf"
     # plot_dataset_metric_ternary(
     #     dataset_metrics,
     #     "action_values",
@@ -2513,7 +2625,7 @@ def main():
     # )
 
     # # Plot clipped advantage
-    # clipped_adv_plot_path = output_dir / "simplex_clipped_adv_dataset_mean.png"
+    # clipped_adv_plot_path = output_dir / "simplex_clipped_adv_dataset_mean.pdf"
     # plot_dataset_metric_ternary(
     #     dataset_metrics,
     #     "clipped_advantages",
@@ -2536,7 +2648,7 @@ def main():
     #     num_points=64,
     #     max_transitions=args.max_transitions,
     # )
-    # pi_dataset_plot_path = output_dir / "simplex_pi_dataset_mean.png"
+    # pi_dataset_plot_path = output_dir / "simplex_pi_dataset_mean.pdf"
     # plot_dataset_policy_ternary(
     #     dataset_pi_metrics,
     #     policy_name="Policy (pi)",
@@ -2551,7 +2663,7 @@ def main():
     #     num_points=64,
     #     max_transitions=args.max_transitions,
     # )
-    # beh_pi_dataset_plot_path = output_dir / "simplex_beh_pi_dataset_mean.png"
+    # beh_pi_dataset_plot_path = output_dir / "simplex_beh_pi_dataset_mean.pdf"
     # plot_dataset_policy_ternary(
     #     dataset_beh_pi_metrics,
     #     policy_name="Behavior Policy (beh_pi)",
