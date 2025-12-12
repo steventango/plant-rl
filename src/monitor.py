@@ -284,8 +284,8 @@ def main():
         "--disk-paths",
         type=str,
         nargs="+",
-        default=["/", "/data"],
-        help="Disk paths to monitor (default: / /data)",
+        default=["/", "/data/plant-rl"],
+        help="Disk paths to monitor (default: / /data/plant-rl)",
     )
 
     args = parser.parse_args()
