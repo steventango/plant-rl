@@ -51,6 +51,8 @@ class SystemMonitor:
         self.memory_threshold = memory_threshold
         self.disk_threshold = disk_threshold
         self.disk_paths = disk_paths
+        self.memory_alert_sent = False
+        self.disk_alert_sent = False
 
         # Initialize wandb
         try:
@@ -107,16 +109,21 @@ class SystemMonitor:
             return
 
         if memory_percent is not None and memory_percent >= self.memory_threshold * 100:
-            title = f"High Memory Usage Alert - {memory_percent:.1f}%"
-            text = (
-                f"Memory usage has exceeded {self.memory_threshold * 100:.0f}% threshold.\n"
-                f"Current system memory usage: {memory_percent:.1f}%\n"
-                f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-            )
+            if not self.memory_alert_sent:
+                title = f"High Memory Usage Alert - {memory_percent:.1f}%"
+                text = (
+                    f"Memory usage has exceeded {self.memory_threshold * 100:.0f}% threshold.\n"
+                    f"Current system memory usage: {memory_percent:.1f}%\n"
+                    f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+                )
 
-            self.send_wandb_alert(title, text)
+                self.send_wandb_alert(title, text)
+                self.memory_alert_sent = True
             logger.warning(f"Memory usage high: {memory_percent:.1f}%")
         else:
+            if self.memory_alert_sent:
+                logger.info("Memory usage returned to normal. Resetting alert status.")
+                self.memory_alert_sent = False
             logger.info(f"Memory usage normal: {memory_percent:.1f}%")
 
     def check_disk(self, metrics: pd.Series):
@@ -158,29 +165,35 @@ class SystemMonitor:
 
         # Send alert if any disk exceeds threshold
         if high_usage_disks:
-            # Sort by usage percentage (highest first)
-            high_usage_disks.sort(key=lambda x: x[1], reverse=True)
+            if not self.disk_alert_sent:
+                # Sort by usage percentage (highest first)
+                high_usage_disks.sort(key=lambda x: x[1], reverse=True)
 
-            highest_disk_path, highest_usage = high_usage_disks[0]
+                highest_disk_path, highest_usage = high_usage_disks[0]
 
-            title = f"High Disk Usage Alert - {len(high_usage_disks)} disk(s) above threshold"
+                title = f"High Disk Usage Alert - {len(high_usage_disks)} disk(s) above threshold"
 
-            # Build detailed text with all disk usages
-            all_disk_details = "\n".join(all_disk_status)
-            high_usage_details = "\n".join(
-                [f"{path}: {usage:.1f}%" for path, usage in high_usage_disks]
-            )
+                # Build detailed text with all disk usages
+                all_disk_details = "\n".join(all_disk_status)
+                high_usage_details = "\n".join(
+                    [f"{path}: {usage:.1f}%" for path, usage in high_usage_disks]
+                )
 
-            text = (
-                f"Disk usage has exceeded {self.disk_threshold * 100:.0f}% threshold on {len(high_usage_disks)} disk(s).\n"
-                f"Highest usage: {highest_disk_path} at {highest_usage:.1f}%\n\n"
-                f"Disks above threshold:\n{high_usage_details}\n\n"
-                f"All monitored disks:\n{all_disk_details}\n"
-                f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-            )
+                text = (
+                    f"Disk usage has exceeded {self.disk_threshold * 100:.0f}% threshold on {len(high_usage_disks)} disk(s).\n"
+                    f"Highest usage: {highest_disk_path} at {highest_usage:.1f}%\n\n"
+                    f"Disks above threshold:\n{high_usage_details}\n\n"
+                    f"All monitored disks:\n{all_disk_details}\n"
+                    f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+                )
 
-            self.send_wandb_alert(title, text)
+                self.send_wandb_alert(title, text)
+                self.disk_alert_sent = True
         else:
+            if self.disk_alert_sent:
+                logger.info("Disk usage returned to normal. Resetting alert status.")
+                self.disk_alert_sent = False
+
             # Log summary of all disks when none exceed threshold
             if all_disk_status:
                 max_usage = max(disk_metrics.values())
