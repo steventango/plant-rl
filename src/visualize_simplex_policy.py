@@ -2274,7 +2274,7 @@ def main():
         default="results/offline/S8/P1/InAC/0",
         help="Path to experiment directory with trained model",
     )
-    parser.add_argument("--dataset", default="plant-data/mixed-v18", type=str)
+    parser.add_argument("--dataset", default="plant-data/mixed-v19", type=str)
     parser.add_argument(
         "--episodes", default=10, type=int, help="Number of episodes to visualize"
     )
