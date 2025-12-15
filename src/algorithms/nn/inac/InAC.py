@@ -71,15 +71,6 @@ class InAC(BaseAgent):
         # Path to normalization statistics (optional, for z-score)
         self.normalization_path = params.get("normalization_path", None)
 
-        # Ensure observations is a flat dimension
-        if isinstance(observations, tuple):
-            if len(observations) == 1:
-                self.state_dim = observations[0]
-            else:
-                self.state_dim = int(np.prod(observations))
-        else:
-            self.state_dim = observations
-
         self.action_dim = actions
 
         # -------------------------
@@ -231,7 +222,8 @@ class InAC(BaseAgent):
 
     def _normalize(self, obs: np.ndarray) -> np.ndarray:
         """Normalize observations (Z-score)."""
-        obs = obs.ravel()  # Ensure flat
+        obs = self.process_observation(obs)
+
         if self.state_mean is not None and self.state_std is not None:
             # Z-score normalization
             return (obs - self.state_mean) / (self.state_std + 1e-8)
@@ -266,6 +258,14 @@ class InAC(BaseAgent):
 
         self.state_mean = np.array(means, dtype=np.float32)
         self.state_std = np.array(stds, dtype=np.float32)
+
+        # Slice normalization params if indices are used
+        if self.observation_indices is not None:
+            print(
+                f"Slicing normalization stats with indices: {self.observation_indices}"
+            )
+            self.state_mean = self.state_mean[self.observation_indices]
+            self.state_std = self.state_std[self.observation_indices]
 
         print(f"Loaded z-score normalization stats from {path}")
         print(
