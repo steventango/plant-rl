@@ -87,7 +87,7 @@ def evaluate_on_dataset(
         episode_length = len(episode.observations) - 1
         for t in range(episode_length):
             observation = episode.observations[t]
-            actual_area = observation[0] if len(observation) > 0 else 0.0
+            actual_area = observation[1] if len(observation) > 1 else 0.0
             # Bin by hundreds: 0-100, 100-200, 200-300, 300-400, etc.
             area_bin_idx = int(actual_area // 100)
             area_bin_idx = min(
