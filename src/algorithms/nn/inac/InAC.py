@@ -1,4 +1,5 @@
 import dataclasses
+import json
 from pathlib import Path
 from typing import Any, Dict, Tuple
 
@@ -66,6 +67,9 @@ class InAC(BaseAgent):
 
         # Path to offline dataset to load into buffer (optional)
         self.offline_dataset_name = params.get("offline_dataset", None)
+
+        # Path to normalization statistics (optional, for z-score)
+        self.normalization_path = params.get("normalization_path", None)
 
         # Ensure observations is a flat dimension
         if isinstance(observations, tuple):
@@ -192,13 +196,16 @@ class InAC(BaseAgent):
         self.replay_state = self.replay_buffer.init(dummy_transition)
 
         # Normalization parameters
-        self.state_min = None
-        self.state_diff = None
+        self.state_mean = None
+        self.state_std = None
+
+        # Load normalization stats if provided (Z-score)
+        if self.normalization_path:
+            self.load_z_score_params(self.normalization_path)
 
         # Load offline dataset into buffer if specified
         if self.offline_dataset_name:
             offline_dataset = minari.load_dataset(self.offline_dataset_name)
-            self.load_normalization_params(offline_dataset.observation_space)
             self.load(offline_dataset)
 
     def _load_pretrained(self, path: str):
@@ -223,28 +230,56 @@ class InAC(BaseAgent):
         print(f"Successfully loaded pre-trained model from {path}")
 
     def _normalize(self, obs: np.ndarray) -> np.ndarray:
-        """Min-max normalize observations."""
-        if self.state_min is None:
-            return obs
-        return (obs - self.state_min) / self.state_diff
+        """Normalize observations (Z-score)."""
+        obs = obs.ravel()  # Ensure flat
+        if self.state_mean is not None and self.state_std is not None:
+            # Z-score normalization
+            return (obs - self.state_mean) / (self.state_std + 1e-8)
 
-    def load_normalization_params(self, observation_space):
-        low = observation_space.low
-        high = observation_space.high
+        return obs
 
-        # Start with identity normalization
-        self.state_min = np.zeros_like(low)
-        self.state_diff = np.ones_like(low)
+    def load_z_score_params(self, path: str):
+        """Load mean and standard deviation for z-score normalization."""
+        with open(path, "r") as f:
+            stats = json.load(f)
 
-        # Check for finite bounds
-        mask = ~np.logical_or(np.isinf(low), np.isinf(high))
+        print(f"Loaded normalization stats keys: {list(stats.keys())}")
 
-        # For finite dimensions, set min and diff
-        self.state_min[mask] = low[mask]
-        self.state_diff[mask] = high[mask] - low[mask]
+        means = []
+        stds = []
 
-        # Avoid division by zero if high == low
-        self.state_diff[self.state_diff == 0] = 1.0
+        # Iterate over keys in order
+        for value in stats.values():
+            # Process mean
+            m = value["mean"]
+            if isinstance(m, list):
+                means.extend(m)
+            else:
+                means.append(float(m))
+
+            # Process std
+            s = value["std"]
+            if isinstance(s, list):
+                stds.extend(s)
+            else:
+                stds.append(float(s))
+
+        self.state_mean = np.array(means, dtype=np.float32)
+        self.state_std = np.array(stds, dtype=np.float32)
+
+        print(f"Loaded z-score normalization stats from {path}")
+        print(
+            f"Normalization shapes - Mean: {self.state_mean.shape}, Std: {self.state_std.shape}"
+        )
+
+        if self.state_mean.shape[0] != self.state_dim:
+            print(
+                f"WARNING: Normalization mean shape {self.state_mean.shape} does not match state_dim {self.state_dim}"
+            )
+        if self.state_std.shape[0] != self.state_dim:
+            print(
+                f"WARNING: Normalization std shape {self.state_std.shape} does not match state_dim {self.state_dim}"
+            )
 
     def load(self, dataset: minari.MinariDataset):
         """
