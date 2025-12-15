@@ -95,20 +95,21 @@ for idx in indices:
     # Build problem to get environment/agent configuration
     problem = chk.build("p", lambda: Problem(exp, idx, None))
 
-    # Get dataset from problem
-    dataset = problem.dataset
-    dataset_name = exp_params["dataset"]
-    logger.info(f"Using offline dataset: {dataset_name}")
-
     # Build agent using problem's getAgent method
     agent = chk.build("a", problem.getAgent)
 
-    # Load offline data into agent's buffer if agent supports it
-    logger.info("Loading offline dataset into agent buffer...")
-    agent.load(dataset)
+    dataset_id = exp_params["dataset_id"]
+    if hasattr(problem, "dataset"):
+        # Get dataset from problem
+        dataset = problem.dataset
+        logger.info(f"Using offline dataset: {dataset_id}")
+
+        # Load offline data into agent's buffer if agent supports it
+        logger.info("Loading offline dataset into agent buffer...")
+        agent.load(dataset)
 
     cal_env = PlantCalibrationModel(
-        dataset_id=dataset_name,
+        dataset_id=dataset_id,
         k=3,
         max_state_dist=0.5,
         max_action_dist=0.1,
