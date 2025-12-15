@@ -90,7 +90,9 @@ class MLPDirichlet(nnx.Module):
             self.body.feature_dim,
             act_dim,
             kernel_init=initializers.xavier_uniform(),
-            bias_init=initializers.zeros,
+            bias_init=initializers.constant(
+                -5
+            ),  # bias so alpha is initialized close to 1
             rngs=rngs,
         )
         self.act_dim = act_dim
