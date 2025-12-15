@@ -27,6 +27,29 @@ class BaseAgent(utils.RlGlue.agent.BaseAgent):
         self.n_step = params.get("n_step", 1)
         self.use_planning = params.get("use_planning", False)
 
+        # Observation indices to select specific dimensions
+        self.observation_indices = params.get("observation_indices", None)
+
+        # Ensure observations is a flat dimension
+        if isinstance(observations, tuple):
+            if len(observations) == 1:
+                self.state_dim = observations[0]
+            else:
+                self.state_dim = int(np.prod(observations))
+        else:
+            self.state_dim = observations
+
+        # If observation indices are provided, update state_dim
+        if self.observation_indices is not None:
+            self.state_dim = len(self.observation_indices)
+
+    def process_observation(self, obs: np.ndarray) -> np.ndarray:
+        """Flatten and select specific dimensions of observation."""
+        obs = obs.ravel()
+        if self.observation_indices is not None:
+            obs = obs[self.observation_indices]
+        return obs
+
     def cleanup(self): ...
 
     def plan(self):
