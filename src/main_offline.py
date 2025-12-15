@@ -11,8 +11,12 @@ from collections import defaultdict
 from pathlib import Path
 
 import jax
+import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
 import torch
+from PIL import Image
+from plant_models.calibration import PlantCalibrationModel
 from tqdm import tqdm
 
 import wandb
@@ -103,6 +107,120 @@ for idx in indices:
     logger.info("Loading offline dataset into agent buffer...")
     agent.load(dataset)
 
+    cal_env = PlantCalibrationModel(
+        dataset_id=dataset_name,
+        k=3,
+        max_state_dist=0.5,
+        max_action_dist=0.1,
+        render_mode="rgb_array",
+    )
+
+    def eval_rollouts(n_rollouts, rollout_steps):
+        returns = []
+
+        all_rollouts_actions = []
+
+        for i in range(n_rollouts):
+            obs, info = cal_env.reset(seed=idx * 1000 + total_steps + i)
+            current_return = 0.0
+            rollout_actions = []
+            # Create directory for this rollout's images if it's one of the first 10
+            if i < 10:
+                rollout_dir = plots_dir / "trajectories" / f"rollout_{i}"
+                rollout_dir.mkdir(parents=True, exist_ok=True)
+                # Save image if available and we are tracing this rollout
+                try:
+                    img_array = cal_env.render()
+                    if img_array is not None:
+                        img = Image.fromarray(img_array)
+                        img.save(rollout_dir / "step_0.png")
+                except Exception as e:
+                    logger.warning(f"Failed to save initial image: {e}")
+
+            for t in range(1, rollout_steps + 1):
+                obs_jax = jax.numpy.array([obs])  # Add batch dim
+                action, _ = agent.actor_critic.pi(
+                    obs_jax, deterministic=True, rngs=agent.rngs
+                )
+
+                # Convert action back to numpy/list for env
+                # Action from agent is [batch, action_dim]
+                action_vec = np.array(action)[0]
+                rollout_actions.append(action_vec)
+
+                next_obs, reward, terminated, truncated, info = cal_env.step(action_vec)
+                obs = next_obs
+                current_return += reward
+
+                # Save image if available and we are tracing this rollout
+                if i < 10:
+                    try:
+                        img_array = cal_env.render()
+                        if img_array is not None:
+                            img = Image.fromarray(img_array)
+                            img.save(rollout_dir / f"step_{t}.png")
+                    except Exception as e:
+                        logger.warning(f"Failed to save image at step {t}: {e}")
+
+                if terminated or truncated:
+                    break
+
+            returns.append(current_return)
+            all_rollouts_actions.append(rollout_actions)
+        return returns, all_rollouts_actions
+
+    def plot_actions(all_rollouts_actions):
+        # Handle variable lengths by padding with NaNs
+        max_len = max(len(r) for r in all_rollouts_actions)
+        if max_len > 0 and len(all_rollouts_actions) > 0:
+            action_dim = len(all_rollouts_actions[0][0])
+            action_tensor = np.full((n_rollouts, max_len, action_dim), np.nan)
+
+            for r_idx, r_actions in enumerate(all_rollouts_actions):
+                for step_idx, step_action in enumerate(r_actions):
+                    action_tensor[r_idx, step_idx, :] = step_action
+
+            # Compute mean ignoring NaNs
+            mean_actions = np.nanmean(
+                action_tensor, axis=0
+            )  # Shape: (max_len, action_dim)
+
+            fig, ax = plt.subplots(figsize=(6, 4))
+
+            # Stackplot with specific colors
+            steps = range(mean_actions.shape[0])
+            # Transpose for stackplot (needs y as (M, N))
+            y_data = mean_actions.T
+            colors = ["red", "grey", "blue"]
+
+            ax.stackplot(steps, y_data, colors=colors, alpha=0.7)
+
+            ax.set_xlabel("Step")
+            ax.set_ylabel("Average Action Value (Stacked)")
+            ax.set_title(f"Average Actions over {n_rollouts} Rollouts (Stacked)")
+            # despine
+            ax.spines["top"].set_visible(False)
+            ax.spines["right"].set_visible(False)
+
+            wandb.log(
+                {"eval/mean_actions": wandb.Image(fig)},
+                step=total_steps,
+            )
+            plt.close(fig)
+
+    def plot_returns(returns):
+        # violin plot of returns
+        fig, ax = plt.subplots(figsize=(6, 4))
+        sns.violinplot(data=returns, ax=ax)
+        sns.despine(ax=ax)
+        returns_plot_path = plots_dir / "calibration_returns.png"
+        plt.savefig(returns_plot_path)
+        wandb.log(
+            {"eval/returns_dist": wandb.Image(str(returns_plot_path))},
+            step=total_steps,
+        )
+        plt.close(fig)
+
     # Setup wandb
     config = {
         **problem.params,
@@ -166,6 +284,25 @@ for idx in indices:
             except Exception as e:
                 logger.warning(f"Evaluation failed: {e}")
             pbar.set_description("Training")
+
+            # ---------------------------
+            # -- Calibration Rollouts --
+            # ---------------------------
+            if hasattr(agent, "actor_critic"):
+                logger.info("Running calibration rollouts...")
+
+                n_rollouts = 64
+                rollout_steps = 13
+                returns, all_rollouts_actions = eval_rollouts(
+                    n_rollouts=n_rollouts, rollout_steps=rollout_steps
+                )
+                mean_return = np.mean(returns)
+                logger.info(f"Calibration Eval Return: {mean_return:.3f}")
+                wandb.log({"eval/return": mean_return}, step=total_steps)
+
+                # --- Plots ---
+                plot_actions(all_rollouts_actions)
+                plot_returns(returns)
 
         # Perform update step using the plan() method (RL-Glue interface)
         t0 = time.time()
