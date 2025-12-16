@@ -1,4 +1,5 @@
 import dataclasses
+import json
 from pathlib import Path
 from typing import Any, Dict, Tuple
 
@@ -67,14 +68,8 @@ class InAC(BaseAgent):
         # Path to offline dataset to load into buffer (optional)
         self.offline_dataset_name = params.get("offline_dataset", None)
 
-        # Ensure observations is a flat dimension
-        if isinstance(observations, tuple):
-            if len(observations) == 1:
-                self.state_dim = observations[0]
-            else:
-                self.state_dim = int(np.prod(observations))
-        else:
-            self.state_dim = observations
+        # Path to normalization statistics (optional, for z-score)
+        self.normalization_path = params.get("normalization_path", None)
 
         self.action_dim = actions
 
@@ -191,6 +186,14 @@ class InAC(BaseAgent):
         )
         self.replay_state = self.replay_buffer.init(dummy_transition)
 
+        # Normalization parameters
+        self.state_mean = None
+        self.state_std = None
+
+        # Load normalization stats if provided (Z-score)
+        if self.normalization_path:
+            self.load_z_score_params(self.normalization_path)
+
         # Load offline dataset into buffer if specified
         if self.offline_dataset_name:
             offline_dataset = minari.load_dataset(self.offline_dataset_name)
@@ -217,6 +220,67 @@ class InAC(BaseAgent):
 
         print(f"Successfully loaded pre-trained model from {path}")
 
+    def _normalize(self, obs: np.ndarray) -> np.ndarray:
+        """Normalize observations (Z-score)."""
+        obs = self.process_observation(obs)
+
+        if self.state_mean is not None and self.state_std is not None:
+            # Z-score normalization
+            return (obs - self.state_mean) / (self.state_std + 1e-8)
+
+        return obs
+
+    def load_z_score_params(self, path: str):
+        """Load mean and standard deviation for z-score normalization."""
+        with open(path, "r") as f:
+            stats = json.load(f)
+
+        print(f"Loaded normalization stats keys: {list(stats.keys())}")
+
+        means = []
+        stds = []
+
+        # Iterate over keys in order
+        for value in stats.values():
+            # Process mean
+            m = value["mean"]
+            if isinstance(m, list):
+                means.extend(m)
+            else:
+                means.append(float(m))
+
+            # Process std
+            s = value["std"]
+            if isinstance(s, list):
+                stds.extend(s)
+            else:
+                stds.append(float(s))
+
+        self.state_mean = np.array(means, dtype=np.float32)
+        self.state_std = np.array(stds, dtype=np.float32)
+
+        # Slice normalization params if indices are used
+        if self.observation_indices is not None:
+            print(
+                f"Slicing normalization stats with indices: {self.observation_indices}"
+            )
+            self.state_mean = self.state_mean[self.observation_indices]
+            self.state_std = self.state_std[self.observation_indices]
+
+        print(f"Loaded z-score normalization stats from {path}")
+        print(
+            f"Normalization shapes - Mean: {self.state_mean.shape}, Std: {self.state_std.shape}"
+        )
+
+        if self.state_mean.shape[0] != self.state_dim:
+            print(
+                f"WARNING: Normalization mean shape {self.state_mean.shape} does not match state_dim {self.state_dim}"
+            )
+        if self.state_std.shape[0] != self.state_dim:
+            print(
+                f"WARNING: Normalization std shape {self.state_std.shape} does not match state_dim {self.state_dim}"
+            )
+
     def load(self, dataset: minari.MinariDataset):
         """
         Load offline dataset into the replay buffer.
@@ -238,10 +302,10 @@ class InAC(BaseAgent):
         for episode in dataset.iterate_episodes():
             episode_length = len(episode.observations) - 1
             for t in range(episode_length):
-                all_states.append(episode.observations[t])
+                all_states.append(self._normalize(episode.observations[t]))
                 all_actions.append(episode.actions[t])
                 all_rewards.append(episode.rewards[t])
-                all_next_states.append(episode.observations[t + 1])
+                all_next_states.append(self._normalize(episode.observations[t + 1]))
                 all_terminations.append(episode.terminations[t])
 
         # Convert to JAX arrays
@@ -275,6 +339,7 @@ class InAC(BaseAgent):
         For continuous actions: returns sampled action
         """
         obs = np.asarray(obs)
+        obs = self._normalize(obs)
         if len(obs.shape) == 1:
             obs = np.expand_dims(obs, 0)
 
@@ -299,14 +364,14 @@ class InAC(BaseAgent):
         a = self.policy(x)
 
         # Store for online learning
-        self.current_state = x
+        self.current_state = self._normalize(x)
         self.current_action = a
 
         # For discrete actions, return integer action
         if self.discrete_control:
             a = int(a)
 
-        return a, {}
+        return a, {"agent_state": self.current_state}
 
     def step(self, r: float, xp: np.ndarray | None, extra: Dict[str, Any]):  # type: ignore
         """Take a step in the environment."""
@@ -320,7 +385,7 @@ class InAC(BaseAgent):
         ):
             terminal = False
             self._store_transition(
-                self.current_state, self.current_action, r, xp, terminal
+                self.current_state, self.current_action, r, self._normalize(xp), terminal
             )
 
         # Sample next action
@@ -329,7 +394,7 @@ class InAC(BaseAgent):
             a = self.policy(xp)
 
             # Store for next transition
-            self.current_state = xp
+            self.current_state = self._normalize(xp)
             self.current_action = a
 
             # For discrete actions, return integer action
@@ -341,7 +406,7 @@ class InAC(BaseAgent):
         if self.updates_per_step > 0:
             info = self.update()
 
-        return a, info
+        return a, info | {"agent_state": self.current_state}
 
     def end(self, r: float, extra: Dict[str, Any]):  # type: ignore
         """End an episode."""
@@ -350,7 +415,7 @@ class InAC(BaseAgent):
             terminal = True
             xp = np.zeros(self.observations)
             self._store_transition(
-                self.current_state, self.current_action, r, xp, terminal
+                self.current_state, self.current_action, r, self._normalize(xp), terminal
             )
 
         # Update if enabled
@@ -362,7 +427,7 @@ class InAC(BaseAgent):
         self.current_state = None
         self.current_action = None
 
-        return info
+        return info | {"agent_state": self.current_state}
 
     def _store_transition(
         self,

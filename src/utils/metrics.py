@@ -45,20 +45,18 @@ class UnbiasedExponentialMovingAverage:
     def reset(self) -> None:
         """Reset this ``UnbiasedExponentialMovingAverage``."""
         self.total = jnp.zeros(self.shape, dtype=jnp.float32)
-        self.count_trace = jnp.array(0, dtype=jnp.int32)
+        self.count_trace = jnp.array(0.0, dtype=jnp.float32)
 
     def update(self, values: tp.Union[int, float, jax.Array]) -> None:
-        """In-place update this ``UnbiasedExponentialMovingAverage``. This
-        method will use ``values`` to update the metric.
-
-        Args:
-            values: the values we want to use to update this metric.
-        """
+        """Update each dimension with corresponding value from input array."""
         values = jnp.atleast_1d(values).astype(jnp.float32)
-        for value in values:
-            self.count_trace += self.alpha * (1 - self.count_trace)
-            beta = self.alpha / self.count_trace
-            self.total = (1 - beta) * self.total + beta * value
+
+        # Update count_trace (scalar, shared across all dimensions)
+        self.count_trace = self.count_trace + self.alpha * (1 - self.count_trace)
+        beta = self.alpha / self.count_trace
+
+        # Update each dimension with its corresponding value
+        self.total = (1 - beta) * self.total + beta * values
 
     def compute(self) -> jax.Array:
         """Compute and return the unbiased exponential moving average."""

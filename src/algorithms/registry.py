@@ -11,7 +11,8 @@ from algorithms.linear.linearDQN.LinearDynamicBatchDQN import LinearDynamicBatch
 from algorithms.linear.LinearQL import LinearQL
 from algorithms.nn.DQN import DQN
 from algorithms.nn.DynamicBatchDQN import DynamicBatchDQN
-from algorithms.nn.GreedyAC.GreedyAC import GreedyAC
+from algorithms.nn.GreedyAC.GreedyACDiscrete import GreedyAC as GreedyACDiscrete
+from algorithms.nn.GreedyAC.GreedyACContinuous import GreedyAC as GreedyACContinuous
 from algorithms.nn.inac.InAC import InAC
 from algorithms.PoissonAgent import PoissonAgent
 from algorithms.SequenceAgent import SequenceAgent
@@ -89,8 +90,11 @@ def getAgent(name) -> Type[BaseAgent]:
     if name.startswith("Spreadsheet"):
         return SpreadsheetAgent
 
-    if name.startswith("GreedyAC"):
-        return GreedyAC
+    if name==("GreedyACDiscrete"):
+        return GreedyACDiscrete
+    
+    if name==("GreedyACContinuous"):
+        return GreedyACContinuous
 
     if name.startswith("InAC"):
         return InAC
