@@ -268,7 +268,7 @@ for idx in indices:
             # -- Calibration Rollouts --
             # ---------------------------
             if hasattr(agent, "actor_critic"):
-                n_rollouts = 64
+                n_rollouts = 100
                 rollout_steps = 13
                 returns, all_rollouts_actions = eval_rollouts(
                     n_rollouts=n_rollouts, rollout_steps=rollout_steps
