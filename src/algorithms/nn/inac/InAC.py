@@ -371,7 +371,7 @@ class InAC(BaseAgent):
         if self.discrete_control:
             a = int(a)
 
-        return a, {}
+        return a, {"agent_state": self.current_state}
 
     def step(self, r: float, xp: np.ndarray | None, extra: Dict[str, Any]):  # type: ignore
         """Take a step in the environment."""
@@ -385,7 +385,7 @@ class InAC(BaseAgent):
         ):
             terminal = False
             self._store_transition(
-                self.current_state, self.current_action, r, xp, terminal
+                self.current_state, self.current_action, r, self._normalize(xp), terminal
             )
 
         # Sample next action
@@ -406,7 +406,7 @@ class InAC(BaseAgent):
         if self.updates_per_step > 0:
             info = self.update()
 
-        return a, info
+        return a, info | {"agent_state": self.current_state}
 
     def end(self, r: float, extra: Dict[str, Any]):  # type: ignore
         """End an episode."""
@@ -415,7 +415,7 @@ class InAC(BaseAgent):
             terminal = True
             xp = np.zeros(self.observations)
             self._store_transition(
-                self.current_state, self.current_action, r, xp, terminal
+                self.current_state, self.current_action, r, self._normalize(xp), terminal
             )
 
         # Update if enabled
@@ -427,7 +427,7 @@ class InAC(BaseAgent):
         self.current_state = None
         self.current_action = None
 
-        return info
+        return info | {"agent_state": self.current_state}
 
     def _store_transition(
         self,

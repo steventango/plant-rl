@@ -101,6 +101,18 @@
     "mean": 0.6314967521126924,
     "std": 0.17321858539288634
   },
+  "red_coeff_trace": {
+    "mean": 0.0,
+    "std": 1.0
+  },
+  "white_coeff_trace": {
+    "mean": 0.0,
+    "std": 1.0
+  },
+  "blue_coeff_trace": {
+    "mean": 0.0,
+    "std": 1.0
+  },
   "cls_token": {
     "min": [
       -1.2067053318023682,
