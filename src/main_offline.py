@@ -104,7 +104,7 @@ for idx in indices:
     env = chk.build("e", problem.getEnvironment)
     eval_env = chk.build("ee", problem.getEvalEnvironment)
 
-    dataset_id = exp_params.get("dataset_id")
+    dataset_id = params.get("dataset_id")
     if dataset_id:
         logger.info(f"Loading offline dataset: {dataset_id}")
         dataset = minari.load_dataset(dataset_id)
