@@ -12,7 +12,6 @@ services:
       - ~/.ssh:/root/.ssh:cached
       - ~/.gitconfig:/root/.gitconfig:cached
       - ~/.config:/root/.config:cached
-      - ~/.wakatime.cfg:/root/.wakatime.cfg:cached
       - ~/.cache:/root/.cache:cached
       - ~/.netrc:/root/.netrc:cached
     command: sleep infinity

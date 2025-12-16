@@ -1,0 +1,21 @@
+{
+    "agent": "InAC11",
+    "problem": "DayAreaTracePlantGrowthChamberColorTriangle",
+    "total_steps": 40320,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": "alliance-zone11",
+            "timezone": "America/Edmonton",
+            "action_uema_alpha": 0.1
+        },
+        "timezone": "America/Edmonton",
+        "discrete_control": false,
+        "policy_type": "dirichlet",
+        "hidden_units": 256,
+        "deterministic": true,
+        "updates_per_step": 0,
+        "use_planning": false,
+        "pretrained_path": "/data/models/S8/P0/InAC_GPsim0.25/0/parameters"
+    }
+}
