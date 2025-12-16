@@ -319,12 +319,6 @@ for idx in indices:
                 }
                 wandb_run.log(wandb_log, step=total_steps)
             else:
-                # Just log progress if no losses
-                logger.info(
-                    f"TRAIN LOG: steps {total_steps}, "
-                    f"{total_steps * 100 // exp.total_steps}%, "
-                    f"{elapsed_time:.2f} steps/s"
-                )
                 wandb_run.log({"steps_per_second": elapsed_time}, step=total_steps)
 
             # Reset accumulators and timer
