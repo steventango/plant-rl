@@ -9,14 +9,16 @@
             "k": 10,
             "max_stat_dist": 3.0,
             "max_emb_dist": 1.0,
-            "max_action_dist": 0.816496580927726
+            "max_action_dist": 0.816496580927726,
+            "terminal_episode_steps": 13
         },
         "eval_environment": {
             "dataset_id": "plant-data/mixed-all-v20",
             "k": 10,
             "max_stat_dist": 3.0,
             "max_emb_dist": 1.0,
-            "max_action_dist": 1000.0
+            "max_action_dist": 1000.0,
+            "terminal_episode_steps": 13
         },
         "experiment": {
             "log_interval": 1000,
