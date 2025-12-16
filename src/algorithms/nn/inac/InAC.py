@@ -385,7 +385,11 @@ class InAC(BaseAgent):
         ):
             terminal = False
             self._store_transition(
-                self.current_state, self.current_action, r, xp, terminal
+                self.current_state,
+                self.current_action,
+                r,
+                self._normalize(xp),
+                terminal,
             )
 
         # Sample next action
@@ -415,7 +419,11 @@ class InAC(BaseAgent):
             terminal = True
             xp = np.zeros(self.observations)
             self._store_transition(
-                self.current_state, self.current_action, r, xp, terminal
+                self.current_state,
+                self.current_action,
+                r,
+                self._normalize(xp),
+                terminal,
             )
 
         # Update if enabled
