@@ -21,6 +21,7 @@ def fill_offline_data_to_buffer(dataset: MinariDataset, batch_size: int):
     all_rewards = []
     all_next_obs = []
     all_terminations = []
+    all_truncations = []
 
     for episode in dataset.iterate_episodes():
         all_obs.append(episode.observations[:-1])
@@ -28,13 +29,17 @@ def fill_offline_data_to_buffer(dataset: MinariDataset, batch_size: int):
         all_rewards.append(episode.rewards)
         all_next_obs.append(episode.observations[1:])
         all_terminations.append(episode.terminations)
+        all_truncations.append(episode.truncations)
+
+    truncations = jnp.concatenate(all_truncations, axis=0)
+    valid_mask = ~truncations
 
     dataset_transitions = {
-        "state": jnp.concatenate(all_obs, axis=0),
-        "action": jnp.concatenate(all_actions, axis=0),
-        "reward": jnp.concatenate(all_rewards, axis=0),
-        "next_state": jnp.concatenate(all_next_obs, axis=0),
-        "termination": jnp.concatenate(all_terminations, axis=0),
+        "state": jnp.concatenate(all_obs, axis=0)[valid_mask],
+        "action": jnp.concatenate(all_actions, axis=0)[valid_mask],
+        "reward": jnp.concatenate(all_rewards, axis=0)[valid_mask],
+        "next_state": jnp.concatenate(all_next_obs, axis=0)[valid_mask],
+        "termination": jnp.concatenate(all_terminations, axis=0)[valid_mask],
     }
 
     dummy_transition = jax.tree_util.tree_map(lambda x: x[0], dataset_transitions)
