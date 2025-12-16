@@ -1,7 +1,9 @@
 import asyncio  # type: ignore
 import logging
 import shutil
+import time
 import warnings
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -14,7 +16,6 @@ from RlGlue.rl_glue import Interaction
 from utils.logger import expand
 from utils.RlGlue.agent import BaseAgent, BaseAsyncAgent
 from utils.RlGlue.environment import BaseAsyncEnvironment
-import time
 
 logger = logging.getLogger("rlglue")
 logger.setLevel(logging.DEBUG)
@@ -226,10 +227,13 @@ class AsyncRLGlue:
         if self.is_mock_env:
             return
         # Only execute the rest if minutes are divisible by 5
-        if self.environment.time.minute % 5 != 0:  # type: ignore
+        dt: datetime = self.environment.time
+        if dt.minute % 5 != 0:  # type: ignore
             return
         img_name = self.save_images(self.dataset_path, self.images_save_keys)
-        raw_csv_path = self.dataset_path / "raw.csv"
+        date = dt.date()
+        data_isoformat = date.isoformat()
+        raw_csv_path = self.dataset_path / f"raw_{data_isoformat}.csv"
         self.append_csv(None, raw_csv_path, img_name, self.last_interaction)  # type: ignore
 
 
