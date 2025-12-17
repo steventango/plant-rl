@@ -57,7 +57,7 @@ class WallStatsActionTraceEmbeddingPlantGrowthChamber(PlantGrowthChamber):
 
         # 3. Mean Embedding
         mean_embedding = np.zeros(self.embedding_dim, dtype=np.float32)
-        alive_mask_and_has_embedding = alive_mask & ~np.isnan(df["cls_token"])
+        alive_mask_and_has_embedding = alive_mask & ~df["cls_token"].isna()
         if not df.empty and "cls_token" in df.columns:
             stacked = np.stack(df["cls_token"][alive_mask_and_has_embedding])
             mean_embedding = np.mean(stacked, axis=0)
