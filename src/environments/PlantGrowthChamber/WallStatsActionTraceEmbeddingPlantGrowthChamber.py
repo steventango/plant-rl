@@ -4,7 +4,6 @@ from environments.PlantGrowthChamber.PlantGrowthChamber import PlantGrowthChambe
 from utils.metrics import UnbiasedExponentialMovingAverage
 
 
-
 COLS = [
     # "wall_time",
     "clean_area",
@@ -43,41 +42,33 @@ class WallStatsActionTraceEmbeddingPlantGrowthChamber(PlantGrowthChamber):
         epoch_time, _, df = await PlantGrowthChamber.get_observation(self)
 
         # 1. Wall Time
-        wall_time = (self.get_local_time().date() - self.start_date).total_seconds() / 60 / 60 / 24
+        wall_time = (
+            (self.get_local_time().date() - self.start_date).total_seconds()
+            / 60
+            / 60
+            / 24
+        )
 
-        # TODO: clean the stats
-        # concat df columns into a single array
-        df.drop('area', axis=1, inplace=True)
-        df.columns = ["clean_" + col if not col.startswith("clean_") else col for col in df.columns]
         clean_stats = df[COLS].to_numpy(dtype=np.float32)
-        # take the mean across plants
-        #TODO Mask out dead plants
-        mean_clean_stats = np.nanmean(clean_stats, axis=0)
+
+        # take the mean across alive plants
+        alive_mask = (df["clean_area"] > 0) & ~np.isnan(df["clean_area"])
+        mean_clean_stats = np.nanmean(clean_stats[alive_mask], axis=0)
 
         # 3. Mean Embedding
         mean_embedding = np.zeros(self.embedding_dim, dtype=np.float32)
+        alive_mask_and_has_embedding = alive_mask & ~np.isnan(df["cls_token"])
         if not df.empty and "cls_token" in df.columns:
-            # Filter out valid embeddings (lists/arrays)
-            valid_embeddings = [
-                e
-                for e in df["cls_token"]
-                if e is not None and isinstance(e, (list, np.ndarray)) and len(e) > 0
-            ]
-            if valid_embeddings:
-                # Stack and compute mean
-                stacked = np.stack(valid_embeddings)
-                current_mean = np.mean(stacked, axis=0)
-
-                # Check dimension
-                if current_mean.shape[0] == self.embedding_dim:
-                    mean_embedding = current_mean
+            stacked = np.stack(df["cls_token"][alive_mask_and_has_embedding])
+            mean_embedding = np.mean(stacked, axis=0)
 
         # 4. Action Trace (Area Trace)
         action_trace = self.action_uema.compute().flatten()
 
-        
         # Concatenate
-        observation = np.concatenate(([wall_time], mean_clean_stats, action_trace, mean_embedding))
+        observation = np.concatenate(
+            ([wall_time], mean_clean_stats, action_trace, mean_embedding)
+        )
         return observation
 
     def update_action_trace(self, action):
