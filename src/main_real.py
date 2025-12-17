@@ -10,7 +10,8 @@ import argparse
 import logging
 import socket
 import time
-from datetime import datetime
+import threading
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import jax
@@ -159,6 +160,30 @@ async def main():
             config_path = dataset_path / "config.json"
             with open(config_path, "w") as f:
                 json.dump(config, f, indent=4)
+
+            # Start checkpoint scheduler
+            def schedule_checkpoint():
+                while True:
+                    now = datetime.now()
+                    target = now.replace(minute=7, second=0, microsecond=0)
+                    if target <= now:
+                        target += timedelta(hours=1)
+
+                    sleep_time = (target - now).total_seconds()
+                    logger.debug(
+                        f"Scheduling next checkpoint for {target} (in {sleep_time:.2f}s)"
+                    )
+                    time.sleep(sleep_time)
+
+                    try:
+                        logger.debug("Starting scheduled checkpoint...")
+                        chk.save()
+                        logger.debug("Scheduled checkpoint complete.")
+                    except Exception as e:
+                        logger.warning(f"Scheduled checkpoint failed: {e}", exc_info=True)
+
+            ckpt_thread = threading.Thread(target=schedule_checkpoint, daemon=True)
+            ckpt_thread.start()
 
             # Run the experiment
             start_time = time.time()
