@@ -81,4 +81,4 @@ class WallStatsActionTraceEmbeddingPlantGrowthChamber(PlantGrowthChamber):
         return observation
 
     def update_action_trace(self, action):
-        self.action_uema.update(jnp.array(action)[None])
+        self.action_uema.update(jnp.array(action))
