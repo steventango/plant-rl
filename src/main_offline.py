@@ -246,6 +246,8 @@ for idx in indices:
     start_time = time.time()
     total_steps = 0
     losses_accumulator = defaultdict(list)
+    eval_history_steps = []
+    eval_history_returns = []
 
     glue = chk.build("glue", lambda: LoggingRlGlue(agent, env))
 
@@ -279,6 +281,18 @@ for idx in indices:
                 # --- Plots ---
                 plot_actions(all_rollouts_actions)
                 plot_returns(returns)
+
+                # Save eval data
+                eval_history_steps.append(total_steps)
+                eval_history_returns.append(returns)
+
+                data_dir = exp_path / "data"
+                data_dir.mkdir(parents=True, exist_ok=True)
+                np.savez(
+                    data_dir / f"{idx}.npz",
+                    steps=np.array(eval_history_steps),
+                    returns=np.array(eval_history_returns),
+                )
 
         if online_training:
             interaction = glue.step()
