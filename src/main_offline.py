@@ -98,7 +98,7 @@ for idx in indices:
     # Build agent using problem's getAgent method
     agent = chk.build("a", problem.getAgent)
 
-    online_training = params.get("update_per_step", 0) > 0
+    online_training = params.get("updates_per_step", 0) > 0
 
     env = chk.build("e", problem.getEnvironment)
     eval_env = chk.build("ee", problem.getEvalEnvironment)
@@ -233,6 +233,9 @@ for idx in indices:
         disable=prod,
         dynamic_ncols=True,
     )
+
+    if online_training:
+        interaction = glue.start()
 
     while total_steps < exp.total_steps:
         if (
