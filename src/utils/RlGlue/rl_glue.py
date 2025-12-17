@@ -159,7 +159,7 @@ class AsyncRLGlue:
         expanded_info = {}
         if interaction is not None:
             interaction_data = {
-                **expand("state", interaction.o),
+                **expand("state", interaction.o[:20]),
                 "agent_action": [interaction.a],
                 "reward": [interaction.r],
                 "terminal": [interaction.t],
@@ -170,7 +170,11 @@ class AsyncRLGlue:
                 if isinstance(value, pd.DataFrame):
                     continue
                 elif isinstance(value, np.ndarray):
-                    expanded_info.update(expand(key, value))
+                    if key == "agent_state":
+                        state_indices_to_log = [(i,) for i in range(20)]
+                        expanded_info.update(expand(key, value, filter_indices=state_indices_to_log))
+                    else:
+                        expanded_info.update(expand(key, value))
                 else:
                     expanded_info.update(expand(key, value))
             data_dict.update(expanded_info)
