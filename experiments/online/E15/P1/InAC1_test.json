@@ -6,10 +6,10 @@
     "metaParameters": {
         "environment": {
             "zone": "alliance-zone01",
-            "timezone": "America/Edmonton",
+            "timezone": "Asia/Dhaka",
             "action_uema_beta": 0.5
         },
-        "timezone": "America/Edmonton",
+        "timezone": "Asia/Dhaka",
         "discrete_control": false,
         "policy_type": "dirichlet",
         "hidden_units": 256,
@@ -17,7 +17,7 @@
         "updates_per_step": 0,
         "use_planning": false,
         "observation_indices": [[0, 1, 3, 17, 18, 19]],
-        "pretrained_path": "./data/models/A1/P2/InAC_GPsim_test/0/parameters",
+        "pretrained_path": "./data/models/A1/P2/InAC_GPsim_sweep/969/parameters",
         "normalization_path": "./src/environments/PlantGrowthChamber/configs/normalization-stats-v19.4.json"
     }
 }

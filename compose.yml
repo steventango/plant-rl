@@ -24,7 +24,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E15/P0/Spreadsheet1.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E15/P1/InAC1_test.json -i 0 --deploy --gpu
     deploy:
       resources:
         reservations:
