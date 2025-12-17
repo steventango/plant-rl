@@ -90,10 +90,10 @@ def getAgent(name) -> Type[BaseAgent]:
     if name.startswith("Spreadsheet"):
         return SpreadsheetAgent
 
-    if name == ("GreedyACDiscrete"):
+    if name.startswith("GreedyACDiscrete"):
         return GreedyACDiscrete
 
-    if name == ("GreedyACContinuous"):
+    if name.startswith("GreedyACContinuous"):
         return GreedyACContinuous
 
     if name.startswith("InAC"):
