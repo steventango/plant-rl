@@ -35,7 +35,7 @@ class WallStatsActionTraceEmbeddingPlantGrowthChamber(PlantGrowthChamber):
         self.action_uema = UnbiasedExponentialMovingAverage(
             shape=(6,), alpha=1 - self.action_uema_beta
         )
-        self.start_date = self.get_local_time().date()
+        self.start_date = self.get_local_time().replace(hour=9, minute=30)
         self.embedding_dim = kwargs.get("embedding_dim", 768)
 
     async def get_observation(self):  # type: ignore
@@ -43,7 +43,7 @@ class WallStatsActionTraceEmbeddingPlantGrowthChamber(PlantGrowthChamber):
 
         # 1. Wall Time
         wall_time = (
-            (self.get_local_time().date() - self.start_date).total_seconds()
+            (self.get_local_time() - self.start_date).total_seconds()
             / 60
             / 60
             / 24
