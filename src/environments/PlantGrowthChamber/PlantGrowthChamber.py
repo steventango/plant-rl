@@ -223,13 +223,13 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         # 1. Cross-plant Tukey Outlier Detection
         # Compute Q1, Q3, IQR for area
         areas = df["area"].to_numpy()
-        q1 = np.percentile(areas, 25)
-        q3 = np.percentile(areas, 75)
+        q1 = np.nanpercentile(areas, 25)
+        q3 = np.nanpercentile(areas, 75)
         iqr = q3 - q1
         upper_fence = q3 + TUKEY_K_UPPER * iqr
 
         # Identify Tukey outliers
-        tukey_outliers = areas > upper_fence
+        tukey_outliers = (areas > upper_fence) | np.isnan(areas)
 
         # 2. Within-plant EWM Cleaning
         # Prepare lists for new columns
@@ -297,26 +297,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             df[col_name] = values
 
         return df
-
-    def get_clean_area(self, plant_areas):
-        if np.sum(self.last_action) == 0:
-            return np.zeros(len(plant_areas))
-        else:
-            clean_area = plant_areas.copy()
-            mean = np.array(
-                [self.uema_areas[i].compute() for i in range(len(self.uema_areas))]
-            ).flatten()
-            cond = (self.area_count > self.minimum_area_count) & (
-                (plant_areas < (1 - self.clean_area_lower) * mean)
-                | (plant_areas > (1 + self.clean_area_upper) * mean)
-            )
-            clean_area[cond] = self.prev_plant_areas[cond]
-            self.prev_plant_areas[~cond] = plant_areas[~cond]
-            for i, area in enumerate(plant_areas):
-                if area > 0:
-                    self.uema_areas[i].update(area)
-            self.area_count += 1
-            return clean_area
 
     def get_time(self):
         return datetime.now(tz=self.tz_utc)
