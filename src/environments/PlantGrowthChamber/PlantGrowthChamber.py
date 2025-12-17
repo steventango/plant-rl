@@ -527,3 +527,13 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                     f"Error closing aiohttp session for zone {self.zone.identifier}: {str(e)}"
                 )
             self.session = None
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        if "session" in state:
+            del state["session"]
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.session = None
