@@ -1,0 +1,1 @@
+rsync -azP vulcan:/home/stang5/scratch/plant-rl/results .
