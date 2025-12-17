@@ -10,7 +10,7 @@ import time
 from functools import partial
 
 import PyExpUtils.runner.Slurm as Slurm
-from PyExpUtils.runner.utils import approximate_cost, gather_missing_indices
+from PyExpUtils.runner.utils import approximate_cost
 from PyExpUtils.utils.generator import group
 from runner.Slurm import (
     SingleNodeOptions,
@@ -22,7 +22,7 @@ from runner.Slurm import (
 )
 
 import experiment.ExperimentModel as Experiment
-# from utils.results import gather_missing_indices
+from utils.results import gather_missing_indices
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--cluster", type=str, required=True)
