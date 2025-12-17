@@ -27,7 +27,7 @@ def main():
         algorithm_col=None,
         make_global=True,
     )
-    for env, sub_results in results.groupby_directory(level=4):
+    for _env, sub_results in results.groupby_directory(level=4):
         for alg_result in sub_results:
             alg = alg_result.filename
             print(alg)

@@ -114,12 +114,12 @@ for idx in indices:
 
         all_rollouts_actions = []
 
-        for i in range(n_rollouts):
+        for _ in range(n_rollouts):
             obs, info = eval_env.start()
             current_return = 0.0
             rollout_actions = []
 
-            for t in range(1, rollout_steps + 1):
+            for _ in range(1, rollout_steps + 1):
                 obs_jax = jax.numpy.array([obs])  # Add batch dim
                 action, _ = agent.actor_critic.pi(
                     obs_jax, deterministic=True, rngs=agent.rngs
