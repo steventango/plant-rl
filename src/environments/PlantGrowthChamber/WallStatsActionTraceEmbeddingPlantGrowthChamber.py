@@ -49,18 +49,23 @@ class WallStatsActionTraceEmbeddingPlantGrowthChamber(PlantGrowthChamber):
             / 24
         )
 
-        clean_stats = df[COLS].to_numpy(dtype=np.float32)
+        # if df is empty return all 0s
+        if df.empty:
+            mean_clean_stats = np.zeros(len(COLS), dtype=np.float32)
+            mean_embedding = np.zeros(self.embedding_dim, dtype=np.float32)
+        else:
+            clean_stats = df[COLS].to_numpy(dtype=np.float32)
 
-        # take the mean across alive plants
-        alive_mask = (df["clean_area"] > 0) & ~np.isnan(df["clean_area"])
-        mean_clean_stats = np.nanmean(clean_stats[alive_mask], axis=0)
+            # take the mean across alive plants
+            alive_mask = (df["clean_area"] > 0) & ~np.isnan(df["clean_area"])
+            mean_clean_stats = np.nanmean(clean_stats[alive_mask], axis=0)
 
-        # 3. Mean Embedding
-        mean_embedding = np.zeros(self.embedding_dim, dtype=np.float32)
-        alive_mask_and_has_embedding = alive_mask & ~df["cls_token"].isna()
-        if not df.empty and "cls_token" in df.columns:
-            stacked = np.stack(df["cls_token"][alive_mask_and_has_embedding])
-            mean_embedding = np.mean(stacked, axis=0)
+            # 3. Mean Embedding
+            mean_embedding = np.zeros(self.embedding_dim, dtype=np.float32)
+            alive_mask_and_has_embedding = alive_mask & ~df["cls_token"].isna()
+            if not df.empty and "cls_token" in df.columns:
+                stacked = np.stack(df["cls_token"][alive_mask_and_has_embedding])
+                mean_embedding = np.mean(stacked, axis=0)
 
         # 4. Action Trace (Area Trace)
         action_trace = self.action_uema.compute().flatten()
