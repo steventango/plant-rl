@@ -5,28 +5,7 @@ import jax.numpy as jnp
 
 
 class UnbiasedExponentialMovingAverage:
-    """Unbiased Exponential Moving Average.
-
-    Reference: Sutton & Barto (2018) Exercise 2.7
-
-    Example usage::
-
-      >>> import jax.numpy as jnp
-
-      >>> uema = UnbiasedExponentialMovingAverage()
-      >>> uema.update(values=jnp.array([1, 2, 3, 4]))
-      >>> uema.compute()
-      Array(2.501251, dtype=float32)
-      >>> uema.update(values=jnp.array([1, 2, 3, 4]))
-      >>> uema.compute()
-      Array(2.501251, dtype=float32)
-      >>> uema.update(values=jnp.array([3, 2, 1, 0]))
-      >>> uema.compute()
-      Array(1.998997, dtype=float32)
-      >>> uema.reset()
-      >>> uema.compute()
-      Array(nan, dtype=float32)
-    """
+    """ Reference: Sutton & Barto (2018) Exercise 2.7 """
 
     def __init__(
         self, shape: tp.Union[int, tp.Sequence[int]] = 1, alpha: float = 0.001
@@ -40,7 +19,7 @@ class UnbiasedExponentialMovingAverage:
         self.alpha = alpha
         self.shape = shape
         self.reset()
-        self.default = 0.0  # or jnp.nan
+        self.default = 0.0
 
     def reset(self) -> None:
         """Reset this ``UnbiasedExponentialMovingAverage``."""
