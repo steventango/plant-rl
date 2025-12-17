@@ -157,7 +157,9 @@ def log(
             continue
         elif isinstance(value, np.ndarray):
             if key == "agent_state":
-                expanded_info.update(expand(key, value, filter_indices=state_indices_to_log))
+                expanded_info.update(
+                    expand(key, value, filter_indices=state_indices_to_log)
+                )
             else:
                 expanded_info.update(expand(key, value))
         else:

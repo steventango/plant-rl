@@ -172,7 +172,9 @@ class AsyncRLGlue:
                 elif isinstance(value, np.ndarray):
                     if key == "agent_state":
                         state_indices_to_log = [(i,) for i in range(20)]
-                        expanded_info.update(expand(key, value, filter_indices=state_indices_to_log))
+                        expanded_info.update(
+                            expand(key, value, filter_indices=state_indices_to_log)
+                        )
                     else:
                         expanded_info.update(expand(key, value))
                 else:

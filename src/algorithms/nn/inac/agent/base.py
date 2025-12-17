@@ -331,9 +331,7 @@ def load(
         # If target is provided, it forces restoration onto the devices of the target
         # ignoring the sharding saved in the checkpoint.
         kwargs = {"target": target} if target is not None else {}
-        ckpt = checkpointer.restore(
-            os.path.join(parameters_dir, "default"), **kwargs
-        )
+        ckpt = checkpointer.restore(os.path.join(parameters_dir, "default"), **kwargs)
 
     module = nnx.merge(module, ckpt["module"])
     optimizers = nnx.merge(optimizers, ckpt["optimizers"])

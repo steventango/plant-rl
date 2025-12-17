@@ -5,7 +5,7 @@ import jax.numpy as jnp
 
 
 class UnbiasedExponentialMovingAverage:
-    """ Reference: Sutton & Barto (2018) Exercise 2.7 """
+    """Reference: Sutton & Barto (2018) Exercise 2.7"""
 
     def __init__(
         self, shape: tp.Union[int, tp.Sequence[int]] = 1, alpha: float = 0.001
