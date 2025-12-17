@@ -1,0 +1,10 @@
+{
+    "type": "single_node",
+
+    "account": "aip-amw8",
+    "time": "1:00:00",
+    "cores": 16,
+    "mem_per_core": "4G",
+    "tasks_per_core": 1,
+    "sequential": 1
+}

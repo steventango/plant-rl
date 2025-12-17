@@ -1,0 +1,2 @@
+python scripts/slurm.py --cluster clusters/vulcan-cpu.json --time 01:00:00 --runs 5 --entry src/continuing_main.py --force -e experiments/offline/S8/P2/InAC.json
+python scripts/slurm.py --cluster clusters/vulcan-cpu.json --time 01:00:00 --runs 5 --entry src/continuing_main.py --force -e experiments/offline/S8/P2/InAC_Calibration.json
