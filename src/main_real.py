@@ -165,7 +165,7 @@ async def main():
             def schedule_checkpoint():
                 while True:
                     now = datetime.now()
-                    target = now.replace(minute=7, second=0, microsecond=0)
+                    target = now.replace(minute=33, second=0, microsecond=0)
                     if target <= now:
                         target += timedelta(hours=1)
 
