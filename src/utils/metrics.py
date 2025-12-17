@@ -5,28 +5,7 @@ import jax.numpy as jnp
 
 
 class UnbiasedExponentialMovingAverage:
-    """Unbiased Exponential Moving Average.
-
-    Reference: Sutton & Barto (2018) Exercise 2.7
-
-    Example usage::
-
-      >>> import jax.numpy as jnp
-
-      >>> uema = UnbiasedExponentialMovingAverage()
-      >>> uema.update(values=jnp.array([1, 2, 3, 4]))
-      >>> uema.compute()
-      Array(2.501251, dtype=float32)
-      >>> uema.update(values=jnp.array([1, 2, 3, 4]))
-      >>> uema.compute()
-      Array(2.501251, dtype=float32)
-      >>> uema.update(values=jnp.array([3, 2, 1, 0]))
-      >>> uema.compute()
-      Array(1.998997, dtype=float32)
-      >>> uema.reset()
-      >>> uema.compute()
-      Array(nan, dtype=float32)
-    """
+    """Reference: Sutton & Barto (2018) Exercise 2.7"""
 
     def __init__(
         self, shape: tp.Union[int, tp.Sequence[int]] = 1, alpha: float = 0.001
@@ -40,25 +19,23 @@ class UnbiasedExponentialMovingAverage:
         self.alpha = alpha
         self.shape = shape
         self.reset()
-        self.default = 0.0  # or jnp.nan
+        self.default = 0.0
 
     def reset(self) -> None:
         """Reset this ``UnbiasedExponentialMovingAverage``."""
         self.total = jnp.zeros(self.shape, dtype=jnp.float32)
-        self.count_trace = jnp.array(0, dtype=jnp.int32)
+        self.count_trace = jnp.array(0.0, dtype=jnp.float32)
 
     def update(self, values: tp.Union[int, float, jax.Array]) -> None:
-        """In-place update this ``UnbiasedExponentialMovingAverage``. This
-        method will use ``values`` to update the metric.
-
-        Args:
-            values: the values we want to use to update this metric.
-        """
+        """Update each dimension with corresponding value from input array."""
         values = jnp.atleast_1d(values).astype(jnp.float32)
-        for value in values:
-            self.count_trace += self.alpha * (1 - self.count_trace)
-            beta = self.alpha / self.count_trace
-            self.total = (1 - beta) * self.total + beta * value
+
+        # Update count_trace (scalar, shared across all dimensions)
+        self.count_trace = self.count_trace + self.alpha * (1 - self.count_trace)
+        beta = self.alpha / self.count_trace
+
+        # Update each dimension with its corresponding value
+        self.total = (1 - beta) * self.total + beta * values
 
     def compute(self) -> jax.Array:
         """Compute and return the unbiased exponential moving average."""

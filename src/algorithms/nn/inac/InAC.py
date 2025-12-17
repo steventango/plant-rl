@@ -211,7 +211,11 @@ class InAC(BaseAgent):
 
         # Load the saved state and merge back with structure
         loaded_ac, loaded_opt = load(
-            actor_critic_graphdef, optimizers_graphdef, parameters_dir
+            actor_critic_graphdef,
+            optimizers_graphdef,
+            parameters_dir,
+            module_state=nnx.split(self.actor_critic)[1],
+            optimizers_state=nnx.split(self.optimizers)[1],
         )
 
         # Replace the current objects with loaded ones
@@ -371,7 +375,7 @@ class InAC(BaseAgent):
         if self.discrete_control:
             a = int(a)
 
-        return a, {}
+        return a, {"agent_state": self.current_state}
 
     def step(self, r: float, xp: np.ndarray | None, extra: Dict[str, Any]):  # type: ignore
         """Take a step in the environment."""
@@ -410,7 +414,7 @@ class InAC(BaseAgent):
         if self.updates_per_step > 0:
             info = self.update()
 
-        return a, info
+        return a, info | {"agent_state": self.current_state}
 
     def end(self, r: float, extra: Dict[str, Any]):  # type: ignore
         """End an episode."""
@@ -435,7 +439,7 @@ class InAC(BaseAgent):
         self.current_state = None
         self.current_action = None
 
-        return info
+        return info | {"agent_state": self.current_state}
 
     def _store_transition(
         self,

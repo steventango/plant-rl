@@ -312,10 +312,27 @@ def save(module: nnx.Module, optimizers: nnx.Module, parameters_dir):
         checkpointer.save(os.path.join(parameters_dir, "default"), ckpt, force=True)
 
 
-def load(module: nnx.GraphDef, optimizers: nnx.GraphDef, parameters_dir):
+def load(
+    module: nnx.GraphDef,
+    optimizers: nnx.GraphDef,
+    parameters_dir,
+    module_state=None,
+    optimizers_state=None,
+):
     parameters_dir = os.path.abspath(parameters_dir)
+    target = None
+    if module_state is not None and optimizers_state is not None:
+        target = {
+            "module": module_state,
+            "optimizers": optimizers_state,
+        }
+
     with ocp.StandardCheckpointer() as checkpointer:
-        ckpt = checkpointer.restore(os.path.join(parameters_dir, "default"))
+        # If target is provided, it forces restoration onto the devices of the target
+        # ignoring the sharding saved in the checkpoint.
+        kwargs = {"target": target} if target is not None else {}
+        ckpt = checkpointer.restore(os.path.join(parameters_dir, "default"), **kwargs)
+
     module = nnx.merge(module, ckpt["module"])
     optimizers = nnx.merge(optimizers, ckpt["optimizers"])
     return module, optimizers

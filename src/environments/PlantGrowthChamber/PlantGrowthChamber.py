@@ -22,6 +22,48 @@ from .zones import load_zone_from_config
 logger = logging.getLogger("plant_rl.PlantGrowthChamber")
 
 
+# Configuration for clean area calculation
+# Tukey outlier detection (across plants per timestep)
+TUKEY_K_UPPER = 4.0  # Conservative k factor for Tukey fence
+
+# EWM outlier detection (within each plant over time)
+CLEAN_AREA_LOWER_THRESHOLD = 0.5  # Reject if area < (1 - threshold) * ewm_mean
+CLEAN_AREA_UPPER_THRESHOLD = 1.5  # Reject if area > (1 + threshold) * ewm_mean
+MINIMUM_AREA_COUNT = 1  # Minimum observations before applying outlier detection
+EWM_BETA = 0.1  # Decay factor for EWM (higher = smoother); alpha = 1 - beta
+
+# Morphology features that should be replaced together with area when outlier detected
+MORPHOLOGY_FEATURES = [
+    "in_bounds",
+    "area",
+    "convex_hull_area",
+    "solidity",
+    "perimeter",
+    "width",
+    "height",
+    "longest_path",
+    "center_of_mass_x",
+    "center_of_mass_y",
+    "convex_hull_vertices",
+    "object_in_frame",
+    "ellipse_center_x",
+    "ellipse_center_y",
+    "ellipse_major_axis",
+    "ellipse_minor_axis",
+    "ellipse_angle",
+    "ellipse_eccentricity",
+]
+
+
+class PlantCleaningState:
+    def __init__(self, features):
+        self.ewm_sum = 0.0
+        self.ewm_weight = 0.0
+        self.prev_clean_values = {f: 0.0 for f in features}
+        self.prev_clean_area = 0.0
+        self.area_count = 0
+
+
 class PlantGrowthChamber(BaseAsyncEnvironment):
     def __init__(
         self,
@@ -43,6 +85,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.dataset_path = None
         self.cv_client = CVPipelineClient()
 
+        # Cleaning state
+        self.plant_cleaning_states = []
+
         self.clean_areas = []
         # i.e. a mapping from datetime to the mean clean area
         self.daily_mean_clean_areas = defaultdict(float)
@@ -50,7 +95,10 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.n_step = 0
         self.duration = timedelta(minutes=1)
         self.clean_area_lower, self.clean_area_upper = 0.1, 0.3
+
+        # Kept for backward compat / referenced in get_info but superseded by new logic
         self.uema_areas = [UEMA(alpha=0.1) for _ in range(self.zone.num_plants)]
+
         self.area_count = 0
         self.minimum_area_count = 5
         self.dli = 0
@@ -90,15 +138,21 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         if not self.df.empty:
             self.plant_areas = self.df["area"].to_numpy().flatten()  # type: ignore
 
-            clean_area = self.get_clean_area(self.plant_areas)
-            self.df["clean_area"] = clean_area
+            # self.df["clean_area"] is already computed in get_plant_stats now
+            if "clean_area" in self.df.columns:
+                clean_area = self.df["clean_area"].to_numpy()
+                self.clean_areas.append(clean_area)
 
-            self.clean_areas.append(clean_area)
-
-            # Update daily mean clean areas history
-            current_local_date = self.get_local_time().replace(second=0, microsecond=0)
-            mean_area_this_step = np.mean(clean_area) if clean_area.size > 0 else 0.0
-            self.daily_mean_clean_areas[current_local_date] = float(mean_area_this_step)
+                # Update daily mean clean areas history
+                current_local_date = self.get_local_time().replace(
+                    second=0, microsecond=0
+                )
+                mean_area_this_step = (
+                    np.mean(clean_area) if clean_area.size > 0 else 0.0
+                )
+                self.daily_mean_clean_areas[current_local_date] = float(
+                    mean_area_this_step
+                )
 
         return self.time, self.image, self.df
 
@@ -120,12 +174,16 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 return
             logger.debug("Daylight detected, running initial pot detection...")
             session = await self._ensure_session()
-            self.pot_quads = await self.cv_client.detect_pots(session, self.image)
-            if self.pot_quads:
-                num_plants = len(self.pot_quads)
-                logger.debug(f"Initialized tracking for {num_plants} plants")
-                self.uema_areas = [UEMA(alpha=0.1) for _ in range(num_plants)]
-                self.prev_plant_areas = np.zeros(num_plants)
+            try:
+                self.pot_quads = await self.cv_client.detect_pots(session, self.image)
+                if self.pot_quads:
+                    num_plants = len(self.pot_quads)
+                    logger.debug(f"Initialized tracking for {num_plants} plants")
+                    self.uema_areas = [UEMA(alpha=0.1) for _ in range(num_plants)]
+                    self.prev_plant_areas = np.zeros(num_plants)
+            except Exception:
+                logger.exception("Error during pot detection")
+                self.pot_quads = None
 
         if self.pot_quads is None:
             logger.debug("No pot quads, skipping plant stats.")
@@ -138,30 +196,107 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             if self.time.minute % 5 == 0
             else None
         )
-        plant_stats = await self.cv_client.process_plants(
-            session, self.image, self.pot_quads, timestamp_str=iso_time
-        )
-        self.df = pd.DataFrame(plant_stats)
-
-    def get_clean_area(self, plant_areas):
-        if np.sum(self.last_action) == 0:
-            return np.zeros(len(plant_areas))
-        else:
-            clean_area = plant_areas.copy()
-            mean = np.array(
-                [self.uema_areas[i].compute() for i in range(len(self.uema_areas))]
-            ).flatten()
-            cond = (self.area_count > self.minimum_area_count) & (
-                (plant_areas < (1 - self.clean_area_lower) * mean)
-                | (plant_areas > (1 + self.clean_area_upper) * mean)
+        try:
+            plant_stats = await self.cv_client.process_plants(
+                session, self.image, self.pot_quads, timestamp_str=iso_time
             )
-            clean_area[cond] = self.prev_plant_areas[cond]
-            self.prev_plant_areas[~cond] = plant_areas[~cond]
-            for i, area in enumerate(plant_areas):
-                if area > 0:
-                    self.uema_areas[i].update(area)
-            self.area_count += 1
-            return clean_area
+            self.df = pd.DataFrame(plant_stats)
+
+            # Apply incremental cleaning
+            if not self.df.empty:
+                self.df = self.clean_stats_incremental(self.df)
+
+        except Exception:
+            logger.exception("Error during plant processing")
+            self.df = pd.DataFrame()
+
+    def clean_stats_incremental(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Incrementally clean plant stats using Tukey outlier detection (cross-plant)
+        and EWM outlier detection (within-plant), mirroring dataset_cleaning.py.
+        """
+        # Ensure we have states for all plants
+        num_plants = len(df)
+        while len(self.plant_cleaning_states) < num_plants:
+            self.plant_cleaning_states.append(PlantCleaningState(MORPHOLOGY_FEATURES))
+
+        # 1. Cross-plant Tukey Outlier Detection
+        # Compute Q1, Q3, IQR for area
+        areas = df["area"].to_numpy()
+        q1 = np.nanpercentile(areas, 25)
+        q3 = np.nanpercentile(areas, 75)
+        iqr = q3 - q1
+        upper_fence = q3 + TUKEY_K_UPPER * iqr
+
+        # Identify Tukey outliers
+        tukey_outliers = (areas > upper_fence) | np.isnan(areas)
+
+        # 2. Within-plant EWM Cleaning
+        # Prepare lists for new columns
+        # We need to determine available features in df that are also in MORPHOLOGY_FEATURES
+        available_features = [f for f in MORPHOLOGY_FEATURES if f in df.columns]
+
+        new_cols = defaultdict(list)
+        new_cols["uema_area"] = []
+        new_cols["is_outlier"] = []
+        for f in available_features:
+            new_cols[f"clean_{f}"] = []
+
+        alpha = 1.0 - EWM_BETA
+
+        for i in range(num_plants):
+            state = self.plant_cleaning_states[i]
+            area = areas[i]
+            is_tukey_outlier = tukey_outliers[i]
+
+            # Check for invalid area (None/NaN or <= 0 or Tukey outlier)
+            is_invalid = False
+            if pd.isna(area) or area <= 0 or is_tukey_outlier:
+                is_invalid = True
+
+            current_ewm = None
+            if state.ewm_weight > 0:
+                current_ewm = state.ewm_sum / state.ewm_weight
+            else:
+                current_ewm = area if not is_invalid else 0.0  # Fallback
+
+            new_cols["uema_area"].append(current_ewm)
+
+            # Check for temporal outlier
+            is_outlier = False
+            if is_invalid:
+                is_outlier = True
+            elif state.area_count >= MINIMUM_AREA_COUNT and state.prev_clean_area > 0:
+                lower_bound = (1 - CLEAN_AREA_LOWER_THRESHOLD) * current_ewm
+                upper_bound = (1 + CLEAN_AREA_UPPER_THRESHOLD) * current_ewm
+                if area < lower_bound or area > upper_bound:
+                    is_outlier = True
+
+            new_cols["is_outlier"].append(is_outlier)
+
+            if is_outlier:
+                # Use previous clean values
+                for f in available_features:
+                    new_cols[f"clean_{f}"].append(state.prev_clean_values.get(f, 0.0))
+            else:
+                # Accept current values
+                for f in available_features:
+                    val = df.iloc[i][f]
+                    new_cols[f"clean_{f}"].append(val)
+                    state.prev_clean_values[f] = val
+
+                state.prev_clean_area = area
+
+                # Update EWM
+                state.ewm_sum = state.ewm_sum * (1 - alpha) + area
+                state.ewm_weight = state.ewm_weight * (1 - alpha) + 1.0
+                state.area_count += 1
+
+        # Add new columns to dataframe
+        for col_name, values in new_cols.items():
+            df[col_name] = values
+
+        return df
 
     def get_time(self):
         return datetime.now(tz=self.tz_utc)
@@ -234,6 +369,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         logger.debug(f"Local time: {self.get_local_time()}. Step 0")
         self.n_step = 0
         self.clean_areas = []
+        self.plant_cleaning_states = []  # Reset cleaning states on start
         self.daily_mean_clean_areas = defaultdict(float)
         observation = await self.get_observation()
         await self.sleep_until_next_step(self.duration)
@@ -301,17 +437,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 "df": self.df,
                 "env_time": self.time.timestamp(),
             }
-        mean = np.array(
-            [self.uema_areas[i].compute() for i in range(self.zone.num_plants)]
-        ).flatten()
-        upper = mean * (1 + self.clean_area_upper)
-        lower = mean * (1 - self.clean_area_lower)
         return {
             "df": self.df,
             "mean_clean_area": np.mean(self.clean_areas[-1]),
-            "uema_area": mean,
-            "upper_area": upper,
-            "lower_area": lower,
             "env_time": self.time.timestamp(),
         }
 
@@ -371,3 +499,13 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                     f"Error closing aiohttp session for zone {self.zone.identifier}: {str(e)}"
                 )
             self.session = None
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        if "session" in state:
+            del state["session"]
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.session = None

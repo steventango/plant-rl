@@ -82,7 +82,7 @@ class CVPipelineClient:
                 self._save_image(quad_result["visualization"], "quad_pots")
 
             quads = quad_result["quadrilaterals"]
-            logger.info(f"Successfully detected {len(quads)} pots.")
+            logger.debug(f"Successfully detected {len(quads)} pots.")
             return quads
 
         except Exception as e:

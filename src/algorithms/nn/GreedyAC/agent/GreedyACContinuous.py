@@ -4,25 +4,24 @@ import inspect
 import numpy as np
 import torch
 import torch.nn.functional as F
-from gymnasium.spaces import Box, Discrete
 from torch.optim import Adam
 
-from ..policy.MLP import Gaussian, Softmax, SquashedGaussian
+from ..policy.MLP import Gaussian, SquashedGaussian, Dirichlet
 from ..utils import nn_utils
 from ..utils.experience_replay import TorchBuffer as ExperienceReplay
 from ..value_function.MLP import Q as QMLP
 from .baseAgent import BaseAgent
 
 
-class GreedyAC(BaseAgent):
+class GreedyACContinuous(BaseAgent):
     """
     GreedyAC implements the GreedyAC algorithm with continuous actions.
     """
 
     def __init__(
         self,
-        num_inputs,
-        action_space,
+        input_dim,
+        action_dim,
         gamma,
         tau,
         alpha,
@@ -32,18 +31,20 @@ class GreedyAC(BaseAgent):
         actor_lr_scale,
         actor_hidden_dim,
         critic_hidden_dim,
+        actor_n_hidden,
+        critic_n_hidden,
         replay_capacity,
         seed,
         batch_size,
         rho,
         num_samples,
-        betas,
-        env,
-        cuda=False,
-        clip_stddev=1000,
-        init=None,
-        entropy_from_single_sample=True,
-        activation="relu",
+        beta1,
+        beta2,
+        cuda,
+        clip_stddev,
+        init,
+        entropy_from_single_sample,
+        activation,
     ):
         super().__init__()
 
@@ -66,31 +67,22 @@ class GreedyAC(BaseAgent):
         self.gamma = gamma
         self.tau = tau  # Polyak average
         self.alpha = alpha  # Entropy scale
-        self.state_dims = num_inputs
-        self.discrete_action = isinstance(action_space, Discrete)
-        self.action_space = action_space
+        self.state_dim = input_dim
+        self.action_dim = action_dim
 
         self.device = torch.device(
             "cuda:0" if cuda and torch.cuda.is_available() else "cpu"
         )
 
-        if isinstance(action_space, Box):
-            self.action_dims = len(action_space.high)
+        # Keep a replay buffer
+        self.replay = ExperienceReplay(
+            replay_capacity,
+            seed,
+            (self.state_dim,),
+            self.action_dim,
+            self.device,
+        )
 
-            # Keep a replay buffer
-            self.replay = ExperienceReplay(
-                replay_capacity,
-                seed,
-                env.observation_space.shape,
-                action_space.shape[0],
-                self.device,
-            )
-        elif isinstance(action_space, Discrete):
-            self.action_dims = 1
-            # Keep a replay buffer
-            self.replay = ExperienceReplay(
-                replay_capacity, seed, env.observation_space.shape, 1, self.device
-            )
         self.batch_size = batch_size
 
         # Set the interval between timesteps when the target network should be
@@ -103,24 +95,25 @@ class GreedyAC(BaseAgent):
         self.num_samples = num_samples
 
         # Create the critic Q function
-        if isinstance(action_space, Box):
-            action_shape = action_space.shape[0]
-        elif isinstance(action_space, Discrete):
-            action_shape = 1
+        action_shape = action_dim
 
         self.critic = QMLP(  # type: ignore
-            num_inputs,
+            input_dim,
             action_shape,
             critic_hidden_dim,
+            critic_n_hidden,
             init,
             activation,  # type: ignore
         ).to(device=self.device)
-        self.critic_optim = Adam(self.critic.parameters(), lr=critic_lr, betas=betas)
+        self.critic_optim = Adam(
+            self.critic.parameters(), lr=critic_lr, betas=(beta1, beta2)
+        )
 
         self.critic_target = QMLP(  # type: ignore
-            num_inputs,
+            input_dim,
             action_shape,
             critic_hidden_dim,
+            critic_n_hidden,
             init,
             activation,  # type: ignore
         ).to(self.device)
@@ -128,17 +121,22 @@ class GreedyAC(BaseAgent):
 
         self._create_policies(
             policy,
-            num_inputs,
-            action_space,
+            input_dim,
+            action_dim,
             actor_hidden_dim,
+            actor_n_hidden,
             clip_stddev,
             init,
             activation,
         )
 
         actor_lr = actor_lr_scale * critic_lr
-        self.policy_optim = Adam(self.policy.parameters(), lr=actor_lr, betas=betas)
-        self.sampler_optim = Adam(self.sampler.parameters(), lr=actor_lr, betas=betas)
+        self.policy_optim = Adam(
+            self.policy.parameters(), lr=actor_lr, betas=(beta1, beta2)
+        )
+        self.sampler_optim = Adam(
+            self.sampler.parameters(), lr=actor_lr, betas=(beta1, beta2)
+        )
         nn_utils.hard_update(self.sampler, self.policy)
 
         self.is_training = True
@@ -147,13 +145,11 @@ class GreedyAC(BaseAgent):
         self.info["source"] = source
 
     def update(self, state, action, reward, next_state, done_mask):
-        # Adjust action shape to ensure it fits in replay buffer properly
-        if self.discrete_action:
-            action = np.array([action])
-
         # Keep transition in replay buffer
         self.replay.push(state, action, reward, next_state, done_mask)
+        self.plan()
 
+    def plan(self):
         # Sample a batch from memory
         state_batch, action_batch, reward_batch, next_state_batch, mask_batch = (
             self.replay.sample(batch_size=self.batch_size)
@@ -196,7 +192,7 @@ class GreedyAC(BaseAgent):
         ) = self.sampler.sample(state_batch, self.num_samples)
         action_batch = action_batch.permute(1, 0, 2)
         action_batch = action_batch.reshape(
-            self.batch_size * self.num_samples, self.action_dims
+            self.batch_size * self.num_samples, self.action_dim
         )
         stacked_s_batch = state_batch.repeat_interleave(self.num_samples, dim=0)
 
@@ -208,17 +204,17 @@ class GreedyAC(BaseAgent):
         q_values = q_values.reshape(self.batch_size, self.num_samples, 1)
         sorted_q = torch.argsort(q_values, dim=1, descending=True)
         best_ind = sorted_q[:, : int(self.rho * self.num_samples)]
-        best_ind = best_ind.repeat_interleave(self.action_dims, -1)
+        best_ind = best_ind.repeat_interleave(self.action_dim, -1)
 
         action_batch = action_batch.reshape(
-            self.batch_size, self.num_samples, self.action_dims
+            self.batch_size, self.num_samples, self.action_dim
         )
         best_actions = torch.gather(action_batch, 1, best_ind)
 
         # Reshape samples for calculating the loss
         samples = int(self.rho * self.num_samples)
         stacked_s_batch = state_batch.repeat_interleave(samples, dim=0)
-        best_actions = torch.reshape(best_actions, (-1, self.action_dims))
+        best_actions = torch.reshape(best_actions, (-1, self.action_dim))
 
         # Actor loss
         # print(stacked_s_batch.shape, best_actions.shape)
@@ -233,8 +229,8 @@ class GreedyAC(BaseAgent):
 
         # Calculate sampler entropy
         stacked_s_batch = state_batch.repeat_interleave(self.num_samples, dim=0)
-        stacked_s_batch = stacked_s_batch.reshape(-1, self.state_dims)
-        action_batch = action_batch.reshape(-1, self.action_dims)
+        stacked_s_batch = stacked_s_batch.reshape(-1, self.state_dim)
+        action_batch = action_batch.reshape(-1, self.action_dim)
 
         sampler_entropy = self.sampler.log_prob(stacked_s_batch, action_batch)
         with torch.no_grad():
@@ -268,10 +264,7 @@ class GreedyAC(BaseAgent):
 
         act = action.detach().cpu().numpy()[0]
 
-        if not self.discrete_action:
-            return act
-        else:
-            return int(act[0])
+        return act
 
     def reset(self):
         pass
@@ -285,9 +278,10 @@ class GreedyAC(BaseAgent):
     def _create_policies(
         self,
         policy,
-        num_inputs,
-        action_space,
+        input_dim,
+        action_dim,
         actor_hidden_dim,
+        actor_n_hidden,
         clip_stddev,
         init,
         activation,
@@ -295,64 +289,65 @@ class GreedyAC(BaseAgent):
         self.policy_type = policy.lower()
         if self.policy_type == "gaussian":
             self.policy = Gaussian(
-                num_inputs,
-                action_space.shape[0],
+                input_dim,
+                action_dim,
                 actor_hidden_dim,
+                actor_n_hidden,
                 activation,
-                action_space,
                 clip_stddev,
                 init,
             ).to(self.device)
 
             self.sampler = Gaussian(
-                num_inputs,
-                action_space.shape[0],
+                input_dim,
+                action_dim,
                 actor_hidden_dim,
+                actor_n_hidden,
                 activation,
-                action_space,
                 clip_stddev,
                 init,
             ).to(self.device)
 
         elif self.policy_type == "squashedgaussian":
             self.policy = SquashedGaussian(
-                num_inputs,
-                action_space.shape[0],
+                input_dim,
+                action_dim,
                 actor_hidden_dim,
+                actor_n_hidden,
                 activation,
-                action_space,
                 clip_stddev,
                 init,
             ).to(self.device)
 
             self.sampler = SquashedGaussian(
-                num_inputs,
-                action_space.shape[0],
+                input_dim,
+                action_dim,
                 actor_hidden_dim,
+                actor_n_hidden,
                 activation,
-                action_space,
                 clip_stddev,
                 init,
             ).to(self.device)
 
-        elif self.policy_type == "softmax":
-            num_actions = action_space.n
-            self.policy = Softmax(
-                num_inputs,
-                num_actions,
+        elif self.policy_type == "dirichlet":
+            self.policy = Dirichlet(
+                input_dim,
+                action_dim,
                 actor_hidden_dim,
+                actor_n_hidden,
                 activation,
-                action_space,
-                init,
+                offset=0.0,
+                init=init,
             ).to(self.device)
 
-            self.sampler = Softmax(
-                num_inputs,
-                num_actions,
+            self.sampler = Dirichlet(
+                input_dim,
+                action_dim,
                 actor_hidden_dim,
+                actor_n_hidden,
                 activation,
-                action_space,
-                init,
+                offset=0.0,
+                init=init,
             ).to(self.device)
 
         else:
