@@ -43,10 +43,7 @@ class WallStatsActionTraceEmbeddingPlantGrowthChamber(PlantGrowthChamber):
 
         # 1. Wall Time
         wall_time = (
-            (self.get_local_time() - self.start_date).total_seconds()
-            / 60
-            / 60
-            / 24
+            (self.get_local_time() - self.start_date).total_seconds() / 60 / 60 / 24
         )
 
         # if df is empty return all 0s

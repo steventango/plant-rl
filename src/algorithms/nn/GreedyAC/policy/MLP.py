@@ -11,7 +11,8 @@ from ..utils.nn_utils import weights_init_
 # Global variables
 EPSILON = 1e-6
 
-#TODO Remove action_space from all policy classes, replace with action_dim and range.
+# TODO Remove action_space from all policy classes, replace with action_dim and range.
+
 
 class SquashedGaussian(nn.Module):
     """
@@ -412,8 +413,8 @@ class Gaussian(nn.Module):
         self.apply(lambda module: weights_init_(module, init, activation))  # type: ignore
 
         # Action rescaling
-        self.action_min = torch.ones(action_dim)*action_min
-        self.action_max = torch.ones(action_dim)*action_max
+        self.action_min = torch.ones(action_dim) * action_min
+        self.action_max = torch.ones(action_dim) * action_max
 
         if activation == "relu":
             self.act = F.relu
@@ -564,7 +565,6 @@ class Gaussian(nn.Module):
         return super(Gaussian, self).to(device)
 
 
-
 class Dirichlet(nn.Module):
     """
     Class Dirichlet implements a policy following Dirichlet distribution
@@ -614,7 +614,7 @@ class Dirichlet(nn.Module):
         self.hidden_layers = nn.ModuleList(
             [nn.Linear(hidden_dim, hidden_dim) for _ in range(n_hidden)]
         )
-        
+
         self.alpha_layer = nn.Linear(hidden_dim, action_dim)
 
         # Initialize weights
@@ -655,14 +655,14 @@ class Dirichlet(nn.Module):
         alpha_logits = self.alpha_layer(x)
         alpha = torch.sigmoid(alpha_logits) * self.clip_alpha + self.offset
         return alpha
-        
+
     def rsample(self, state, num_samples=1):
         pi_mean, pi_distribution = self.forward(state)
         pi_action = pi_distribution.rsample((num_samples,))
 
         pi_action = self.clip(pi_action)
         pi_mean = self.clip(pi_mean)
-        
+
         if num_samples == 1:
             pi_action = pi_action.squeeze(0)
 
@@ -680,7 +680,7 @@ class Dirichlet(nn.Module):
 
         pi_action = self.clip(pi_action)
         pi_mean = self.clip(pi_mean)
-        
+
         if num_samples == 1:
             pi_action = pi_action.squeeze(0)
 
@@ -724,5 +724,3 @@ class Dirichlet(nn.Module):
             The current network, moved to a new device
         """
         return super(Dirichlet, self).to(device)
-
-

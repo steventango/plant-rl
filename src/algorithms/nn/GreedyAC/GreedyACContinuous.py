@@ -82,7 +82,6 @@ class GreedyAC(BaseAgent):
             return a
         else:
             return self.greedy_ac.sample_action(self.state)
-        
 
     def plan(self):
         super().plan()

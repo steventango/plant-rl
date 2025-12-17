@@ -9,7 +9,9 @@ from problems.BasePlantGrowthChamberAsyncProblem import (
 )
 
 
-class WallStatsActionTraceEmbeddingPlantGrowthChamberColorTriangle(BasePlantGrowthChamberAsyncProblem):
+class WallStatsActionTraceEmbeddingPlantGrowthChamberColorTriangle(
+    BasePlantGrowthChamberAsyncProblem
+):
     def __init__(self, exp: ExperimentModel, idx: int, collector: Collector):
         super().__init__(exp, idx, collector)
 

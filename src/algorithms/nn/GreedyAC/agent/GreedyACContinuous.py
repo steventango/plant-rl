@@ -105,7 +105,9 @@ class GreedyACContinuous(BaseAgent):
             init,
             activation,  # type: ignore
         ).to(device=self.device)
-        self.critic_optim = Adam(self.critic.parameters(), lr=critic_lr, betas=(beta1, beta2))
+        self.critic_optim = Adam(
+            self.critic.parameters(), lr=critic_lr, betas=(beta1, beta2)
+        )
 
         self.critic_target = QMLP(  # type: ignore
             input_dim,
@@ -129,8 +131,12 @@ class GreedyACContinuous(BaseAgent):
         )
 
         actor_lr = actor_lr_scale * critic_lr
-        self.policy_optim = Adam(self.policy.parameters(), lr=actor_lr, betas=(beta1, beta2))
-        self.sampler_optim = Adam(self.sampler.parameters(), lr=actor_lr, betas=(beta1, beta2))
+        self.policy_optim = Adam(
+            self.policy.parameters(), lr=actor_lr, betas=(beta1, beta2)
+        )
+        self.sampler_optim = Adam(
+            self.sampler.parameters(), lr=actor_lr, betas=(beta1, beta2)
+        )
         nn_utils.hard_update(self.sampler, self.policy)
 
         self.is_training = True
@@ -322,7 +328,7 @@ class GreedyACContinuous(BaseAgent):
                 clip_stddev,
                 init,
             ).to(self.device)
-        
+
         elif self.policy_type == "dirichlet":
             self.policy = Dirichlet(
                 input_dim,

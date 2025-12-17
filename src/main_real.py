@@ -180,7 +180,9 @@ async def main():
                         chk.save()
                         logger.debug("Scheduled checkpoint complete.")
                     except Exception as e:
-                        logger.warning(f"Scheduled checkpoint failed: {e}", exc_info=True)
+                        logger.warning(
+                            f"Scheduled checkpoint failed: {e}", exc_info=True
+                        )
 
             ckpt_thread = threading.Thread(target=schedule_checkpoint, daemon=True)
             ckpt_thread.start()
