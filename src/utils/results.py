@@ -14,7 +14,6 @@ from PyExpUtils.models.ExperimentDescription import (
     ExperimentDescription,
     loadExperiment,
 )
-from PyExpUtils.results.indices import listIndices
 from PyExpUtils.results.tools import getHeader, getParamsAsDict
 
 from utils.ml_instrumentation.reader import get_run_ids
@@ -299,10 +298,6 @@ def detect_missing_indices(exp: ExperimentDescription, runs: int, base: str = ".
     header = getHeader(exp)
     path = context.resolve("results.db")
     data_path = context.resolve("data")
-
-    if not context.exists("results.db"):
-        yield from listIndices(exp, runs)
-        return
 
     n_params = exp.numPermutations()
     for param_id in range(n_params):
