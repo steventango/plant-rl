@@ -2271,10 +2271,10 @@ def main():
     parser.add_argument(
         "--exp_path",
         type=str,
-        default="results/offline/S8/P1/InAC/0",
+        default="results/offline/S8/P2/InAC_Calibration/664",
         help="Path to experiment directory with trained model",
     )
-    parser.add_argument("--dataset", default="plant-data/mixed-v19", type=str)
+    parser.add_argument("--dataset", default="plant-data/mixed-v20", type=str)
     parser.add_argument(
         "--episodes", default=10, type=int, help="Number of episodes to visualize"
     )

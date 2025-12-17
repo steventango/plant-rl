@@ -12,11 +12,10 @@ from pathlib import Path
 
 import jax
 import matplotlib.pyplot as plt
+import minari
 import numpy as np
 import seaborn as sns
 import torch
-from PIL import Image
-from plant_models.calibration import PlantCalibrationModel
 from tqdm import tqdm
 
 import wandb
@@ -24,6 +23,7 @@ from experiment import ExperimentModel
 from problems.registry import getProblem
 from utils.checkpoint import Checkpoint
 from utils.preempt import TimeoutHandler
+from utils.RlGlue.rl_glue import LoggingRlGlue
 
 # ------------------
 # -- Command Args --
@@ -98,47 +98,28 @@ for idx in indices:
     # Build agent using problem's getAgent method
     agent = chk.build("a", problem.getAgent)
 
-    dataset_id = exp_params["dataset_id"]
-    if hasattr(problem, "dataset"):
-        # Get dataset from problem
-        dataset = problem.dataset
-        logger.info(f"Using offline dataset: {dataset_id}")
+    online_training = params.get("updates_per_step", 0) > 0
 
-        # Load offline data into agent's buffer if agent supports it
-        logger.info("Loading offline dataset into agent buffer...")
+    env = chk.build("e", problem.getEnvironment)
+    eval_env = chk.build("ee", problem.getEvalEnvironment)
+
+    dataset_id = params.get("dataset_id")
+    if dataset_id:
+        logger.info(f"Loading offline dataset: {dataset_id}")
+        dataset = minari.load_dataset(dataset_id)
         agent.load(dataset)
-
-    cal_env = PlantCalibrationModel(
-        dataset_id=dataset_id,
-        k=3,
-        max_state_dist=0.5,
-        max_action_dist=0.1,
-        render_mode="rgb_array",
-    )
 
     def eval_rollouts(n_rollouts, rollout_steps):
         returns = []
 
         all_rollouts_actions = []
 
-        for i in range(n_rollouts):
-            obs, info = cal_env.reset(seed=idx * 1000 + total_steps + i)
+        for _ in range(n_rollouts):
+            obs, info = eval_env.start()
             current_return = 0.0
             rollout_actions = []
-            # Create directory for this rollout's images if it's one of the first 10
-            if i < 10:
-                rollout_dir = plots_dir / "trajectories" / f"rollout_{i}"
-                rollout_dir.mkdir(parents=True, exist_ok=True)
-                # Save image if available and we are tracing this rollout
-                try:
-                    img_array = cal_env.render()
-                    if img_array is not None:
-                        img = Image.fromarray(img_array)
-                        img.save(rollout_dir / "step_0.png")
-                except Exception as e:
-                    logger.warning(f"Failed to save initial image: {e}")
 
-            for t in range(1, rollout_steps + 1):
+            for _ in range(1, rollout_steps + 1):
                 obs_jax = jax.numpy.array([obs])  # Add batch dim
                 action, _ = agent.actor_critic.pi(
                     obs_jax, deterministic=True, rngs=agent.rngs
@@ -149,21 +130,11 @@ for idx in indices:
                 action_vec = np.array(action)[0]
                 rollout_actions.append(action_vec)
 
-                next_obs, reward, terminated, truncated, info = cal_env.step(action_vec)
+                reward, next_obs, done, info = eval_env.step(action_vec)
                 obs = next_obs
                 current_return += reward
 
-                # Save image if available and we are tracing this rollout
-                if i < 10:
-                    try:
-                        img_array = cal_env.render()
-                        if img_array is not None:
-                            img = Image.fromarray(img_array)
-                            img.save(rollout_dir / f"step_{t}.png")
-                    except Exception as e:
-                        logger.warning(f"Failed to save image at step {t}: {e}")
-
-                if terminated or truncated:
+                if done:
                     break
 
             returns.append(current_return)
@@ -214,13 +185,10 @@ for idx in indices:
         fig, ax = plt.subplots(figsize=(6, 4))
         sns.violinplot(data=returns, ax=ax)
         sns.despine(ax=ax)
-        returns_plot_path = plots_dir / "calibration_returns.png"
-        plt.savefig(returns_plot_path)
         wandb.log(
-            {"eval/returns_dist": wandb.Image(str(returns_plot_path))},
+            {"eval/returns_dist": wandb.Image(fig)},
             step=total_steps,
         )
-        plt.close(fig)
 
     # Setup wandb
     config = {
@@ -252,6 +220,10 @@ for idx in indices:
     start_time = time.time()
     total_steps = 0
     losses_accumulator = defaultdict(list)
+    eval_history_steps = []
+    eval_history_returns = []
+
+    glue = chk.build("glue", lambda: LoggingRlGlue(agent, env))
 
     # Create progress bar
     pbar = tqdm(
@@ -262,52 +234,53 @@ for idx in indices:
         dynamic_ncols=True,
     )
 
+    if online_training:
+        interaction = glue.start()
+
     while total_steps < exp.total_steps:
         if (
             eval_interval
             and total_steps % eval_interval == 0
             and hasattr(agent, "actor_critic")
         ):
-            logger.info(f"Evaluating at step {total_steps}")
-            pbar.set_description("Evaluating")
-            try:
-                from algorithms.nn.inac.agent.base import evaluate_on_dataset
-
-                evaluate_on_dataset(
-                    logger,
-                    total_steps,
-                    dataset,
-                    agent.actor_critic.pi,
-                    agent.actor_critic.q,
-                    agent.rngs,
-                    plots_dir=plots_dir,
-                )
-            except Exception as e:
-                logger.warning(f"Evaluation failed: {e}")
-            pbar.set_description("Training")
-
             # ---------------------------
             # -- Calibration Rollouts --
             # ---------------------------
             if hasattr(agent, "actor_critic"):
-                logger.info("Running calibration rollouts...")
-
-                n_rollouts = 64
+                n_rollouts = 100
                 rollout_steps = 13
                 returns, all_rollouts_actions = eval_rollouts(
                     n_rollouts=n_rollouts, rollout_steps=rollout_steps
                 )
                 mean_return = np.mean(returns)
-                logger.info(f"Calibration Eval Return: {mean_return:.3f}")
                 wandb.log({"eval/return": mean_return}, step=total_steps)
 
                 # --- Plots ---
                 plot_actions(all_rollouts_actions)
-                plot_returns(returns)
+                # plot_returns(returns)
 
-        # Perform update step using the plan() method (RL-Glue interface)
-        t0 = time.time()
-        info = agent.plan()
+                # Save eval data
+                eval_history_steps.append(total_steps)
+                eval_history_returns.append(returns)
+
+                data_dir = exp_path / "data"
+                data_dir.mkdir(parents=True, exist_ok=True)
+                np.savez(
+                    data_dir / f"{idx}.npz",
+                    steps=np.array(eval_history_steps),
+                    returns=np.array(eval_history_returns),
+                )
+
+        if online_training:
+            interaction = glue.step()
+            info = interaction.extra
+
+            if interaction.t:
+                glue.start()
+        else:
+            # Perform update step using the plan() method
+            t0 = time.time()
+            info = agent.plan()
 
         # Accumulate losses if info is returned as a dict
         if isinstance(info, dict):
@@ -326,20 +299,9 @@ for idx in indices:
                 avg_losses = {k: np.mean(v) for k, v in losses_accumulator.items()}
 
                 # Update progress bar with loss information
-                postfix_dict = {k: f"{v:.3f}" for k, v in avg_losses.items()}
+                postfix_dict = {k: f"{v:.2f}" for k, v in avg_losses.items()}
+                postfix_dict["eval/return"] = f"{mean_return:.2f}"
                 pbar.set_postfix(postfix_dict)
-
-                logger.info(
-                    f"TRAIN LOG: steps {total_steps}, "
-                    f"{total_steps * 100 // exp.total_steps}%, "
-                    f"{elapsed_time:.2f} steps/s"
-                )
-
-                # Log individual losses
-                loss_str = "\nLOSSES:\n" + "\n".join(
-                    f"{k} {v:.3f}" for k, v in avg_losses.items()
-                )
-                logger.info(loss_str)
 
                 # Log to wandb
                 wandb_log = {
@@ -348,12 +310,6 @@ for idx in indices:
                 }
                 wandb_run.log(wandb_log, step=total_steps)
             else:
-                # Just log progress if no losses
-                logger.info(
-                    f"TRAIN LOG: steps {total_steps}, "
-                    f"{total_steps * 100 // exp.total_steps}%, "
-                    f"{elapsed_time:.2f} steps/s"
-                )
                 wandb_run.log({"steps_per_second": elapsed_time}, step=total_steps)
 
             # Reset accumulators and timer
@@ -371,9 +327,5 @@ for idx in indices:
         save_path.mkdir(parents=True, exist_ok=True)
         save(agent.actor_critic, agent.optimizers, save_path)  # type: ignore
         logger.info(f"Saved final model to {save_path}")
-
-    # Save checkpoint
-    chk.save()
-    logger.info("Checkpoint saved")
 
     wandb_run.finish()
