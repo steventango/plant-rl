@@ -15,4 +15,4 @@ class WallStatsActionTraceEmbeddingPlantGrowthChamberColorTriangle(BasePlantGrow
 
         self.env = Env(**self.env_params)
         self.actions = 3
-        self.observations = (5,)
+        self.observations = (788,)
