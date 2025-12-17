@@ -208,13 +208,10 @@ for idx in indices:
         fig, ax = plt.subplots(figsize=(6, 4))
         sns.violinplot(data=returns, ax=ax)
         sns.despine(ax=ax)
-        returns_plot_path = plots_dir / "calibration_returns.png"
-        plt.savefig(returns_plot_path)
         wandb.log(
-            {"eval/returns_dist": wandb.Image(str(returns_plot_path))},
+            {"eval/returns_dist": wandb.Image(fig)},
             step=total_steps,
         )
-        plt.close(fig)
 
     # Setup wandb
     config = {
@@ -280,7 +277,7 @@ for idx in indices:
 
                 # --- Plots ---
                 plot_actions(all_rollouts_actions)
-                plot_returns(returns)
+                # plot_returns(returns)
 
                 # Save eval data
                 eval_history_steps.append(total_steps)
