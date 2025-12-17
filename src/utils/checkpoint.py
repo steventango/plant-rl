@@ -86,8 +86,11 @@ class Checkpoint:
                 json.dump(self._params, f)
 
         data_path = self._ctx.ensureExists(self._data_path, is_file=True)
-        with lzma.open(data_path, "wb") as f:
+        tmp_path = data_path + ".tmp"
+        with lzma.open(tmp_path, "wb") as f:
             pickle.dump(self._storage, f)
+
+        os.replace(tmp_path, data_path)
 
         logging.debug("Finished dumping checkpoint")
 
