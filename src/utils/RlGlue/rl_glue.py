@@ -232,8 +232,8 @@ class AsyncRLGlue:
             return
         img_name = self.save_images(self.dataset_path, self.images_save_keys)
         date = dt.date()
-        data_isoformat = date.isoformat()
-        raw_csv_path = self.dataset_path / f"raw_{data_isoformat}.csv"
+        date_isoformat = date.isoformat()
+        raw_csv_path = self.dataset_path / f"raw_{date_isoformat}.csv"
         self.append_csv(None, raw_csv_path, img_name, self.last_interaction)  # type: ignore
 
 
