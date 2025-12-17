@@ -18,7 +18,7 @@
             "seed_offset": 0
         },
         "dataset_id": "plant-data/mixed-v20",
-        "normalization_path": "/data/plant-rl/offline/v20/normalization-stats-v20.json",
+        "normalization_path": "/home/stang5/projects/aip-amw8/shared/plant/offline/normalization-stats-v20.json",
         "policy_type": "dirichlet",
         "actor_lr_scale": [0.5, 1, 2],
         "tau": [1e-4, 1e-3, 1e-2, 1e-1],
