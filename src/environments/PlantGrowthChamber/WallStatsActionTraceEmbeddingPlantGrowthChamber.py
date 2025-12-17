@@ -29,7 +29,7 @@ COLS = [
 ]
 
 
-class WallStatsActionTraceEmbeddingGrowthChamber(PlantGrowthChamber):
+class WallStatsActionTraceEmbeddingPlantGrowthChamber(PlantGrowthChamber):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.action_uema_beta = kwargs.get("action_uema_beta", 0.9)
@@ -47,9 +47,12 @@ class WallStatsActionTraceEmbeddingGrowthChamber(PlantGrowthChamber):
 
         # TODO: clean the stats
         # concat df columns into a single array
-        clean_stats = np.concatenate(df[COLS].to_numpy(dtype=np.float32), axis=1)
+        df.drop('area', axis=1, inplace=True)
+        df.columns = ["clean_" + col if not col.startswith("clean_") else col for col in df.columns]
+        clean_stats = df[COLS].to_numpy(dtype=np.float32)
         # take the mean across plants
-        mean_clean_stats = np.mean(clean_stats, axis=0)
+        #TODO Mask out dead plants
+        mean_clean_stats = np.nanmean(clean_stats, axis=0)
 
         # 3. Mean Embedding
         mean_embedding = np.zeros(self.embedding_dim, dtype=np.float32)
@@ -70,10 +73,12 @@ class WallStatsActionTraceEmbeddingGrowthChamber(PlantGrowthChamber):
                     mean_embedding = current_mean
 
         # 4. Action Trace (Area Trace)
-        action_trace = self.action_uema.compute()
+        action_trace = self.action_uema.compute().flatten()
 
+        
         # Concatenate
-        return np.concatenate(([wall_time], [mean_clean_stats], action_trace, mean_embedding))
+        observation = np.concatenate(([wall_time], mean_clean_stats, action_trace, mean_embedding))
+        return observation
 
     def update_action_trace(self, action):
         self.action_uema.update(jnp.array(action)[None])
