@@ -151,8 +151,7 @@ def log(
     expanded_info = {}
     for key, value in info.items():
         if isinstance(value, pd.DataFrame):
-            table = wandb.Table(dataframe=value)
-            expanded_info.update({key: table})
+            continue
         elif isinstance(value, np.ndarray):
             expanded_info.update(expand(key, value))
         else:
