@@ -80,6 +80,7 @@ export OMP_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export NPROC=1
+export WANDB_MODE=disabled
 export XLA_FLAGS="--xla_cpu_multi_thread_eigen=false intra_op_parallelism_threads=1"
 export XLA_PYTHON_CLIENT_MEM_FRACTION={max_xla_python_client_mem_fraction / jobs}
 {device_str}
