@@ -21,6 +21,7 @@ def fill_offline_data_to_buffer(dataset: MinariDataset, batch_size: int):
     all_rewards = []
     all_next_obs = []
     all_terminations = []
+    all_truncations = []
 
     for episode in dataset.iterate_episodes():
         all_obs.append(episode.observations[:-1])
@@ -28,13 +29,17 @@ def fill_offline_data_to_buffer(dataset: MinariDataset, batch_size: int):
         all_rewards.append(episode.rewards)
         all_next_obs.append(episode.observations[1:])
         all_terminations.append(episode.terminations)
+        all_truncations.append(episode.truncations)
+
+    truncations = jnp.concatenate(all_truncations, axis=0)
+    valid_mask = ~truncations
 
     dataset_transitions = {
-        "state": jnp.concatenate(all_obs, axis=0),
-        "action": jnp.concatenate(all_actions, axis=0),
-        "reward": jnp.concatenate(all_rewards, axis=0),
-        "next_state": jnp.concatenate(all_next_obs, axis=0),
-        "termination": jnp.concatenate(all_terminations, axis=0),
+        "state": jnp.concatenate(all_obs, axis=0)[valid_mask],
+        "action": jnp.concatenate(all_actions, axis=0)[valid_mask],
+        "reward": jnp.concatenate(all_rewards, axis=0)[valid_mask],
+        "next_state": jnp.concatenate(all_next_obs, axis=0)[valid_mask],
+        "termination": jnp.concatenate(all_terminations, axis=0)[valid_mask],
     }
 
     dummy_transition = jax.tree_util.tree_map(lambda x: x[0], dataset_transitions)
@@ -87,14 +92,7 @@ def evaluate_on_dataset(
         episode_length = len(episode.observations) - 1
         for t in range(episode_length):
             observation = episode.observations[t]
-            # Extract normalized clean_area from observation (index 0)
-            normalized_area = observation[0] if len(observation) > 0 else 0.0
-            # Denormalize to get actual clean_area
-            clean_area_min = 14.3125
-            clean_area_max = 1211.0
-            actual_area = (
-                normalized_area * (clean_area_max - clean_area_min) + clean_area_min
-            )
+            actual_area = observation[1] if len(observation) > 1 else 0.0
             # Bin by hundreds: 0-100, 100-200, 200-300, 300-400, etc.
             area_bin_idx = int(actual_area // 100)
             area_bin_idx = min(

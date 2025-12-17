@@ -10,7 +10,7 @@ import time
 from functools import partial
 
 import PyExpUtils.runner.Slurm as Slurm
-from PyExpUtils.runner.utils import approximate_cost, gather_missing_indices
+from PyExpUtils.runner.utils import approximate_cost
 from PyExpUtils.utils.generator import group
 from runner.Slurm import (
     SingleNodeOptions,
@@ -22,7 +22,7 @@ from runner.Slurm import (
 )
 
 import experiment.ExperimentModel as Experiment
-# from utils.results import gather_missing_indices
+from utils.results import gather_missing_indices
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--cluster", type=str, required=True)
@@ -80,6 +80,7 @@ export OMP_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export NPROC=1
+export WANDB_MODE=disabled
 export XLA_FLAGS="--xla_cpu_multi_thread_eigen=false intra_op_parallelism_threads=1"
 export XLA_PYTHON_CLIENT_MEM_FRACTION={max_xla_python_client_mem_fraction / jobs}
 {device_str}

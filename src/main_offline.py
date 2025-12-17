@@ -11,7 +11,10 @@ from collections import defaultdict
 from pathlib import Path
 
 import jax
+import matplotlib.pyplot as plt
+import minari
 import numpy as np
+import seaborn as sns
 import torch
 from tqdm import tqdm
 
@@ -20,6 +23,7 @@ from experiment import ExperimentModel
 from problems.registry import getProblem
 from utils.checkpoint import Checkpoint
 from utils.preempt import TimeoutHandler
+from utils.RlGlue.rl_glue import LoggingRlGlue
 
 # ------------------
 # -- Command Args --
@@ -91,17 +95,100 @@ for idx in indices:
     # Build problem to get environment/agent configuration
     problem = chk.build("p", lambda: Problem(exp, idx, None))
 
-    # Get dataset from problem
-    dataset = problem.dataset
-    dataset_name = exp_params["dataset"]
-    logger.info(f"Using offline dataset: {dataset_name}")
-
     # Build agent using problem's getAgent method
     agent = chk.build("a", problem.getAgent)
 
-    # Load offline data into agent's buffer if agent supports it
-    logger.info("Loading offline dataset into agent buffer...")
-    agent.load(dataset)
+    online_training = params.get("updates_per_step", 0) > 0
+
+    env = chk.build("e", problem.getEnvironment)
+    eval_env = chk.build("ee", problem.getEvalEnvironment)
+
+    dataset_id = params.get("dataset_id")
+    if dataset_id:
+        logger.info(f"Loading offline dataset: {dataset_id}")
+        dataset = minari.load_dataset(dataset_id)
+        agent.load(dataset)
+
+    def eval_rollouts(n_rollouts, rollout_steps):
+        returns = []
+
+        all_rollouts_actions = []
+
+        for _ in range(n_rollouts):
+            obs, info = eval_env.start()
+            current_return = 0.0
+            rollout_actions = []
+
+            for _ in range(1, rollout_steps + 1):
+                obs_jax = jax.numpy.array([obs])  # Add batch dim
+                action, _ = agent.actor_critic.pi(
+                    obs_jax, deterministic=True, rngs=agent.rngs
+                )
+
+                # Convert action back to numpy/list for env
+                # Action from agent is [batch, action_dim]
+                action_vec = np.array(action)[0]
+                rollout_actions.append(action_vec)
+
+                reward, next_obs, done, info = eval_env.step(action_vec)
+                obs = next_obs
+                current_return += reward
+
+                if done:
+                    break
+
+            returns.append(current_return)
+            all_rollouts_actions.append(rollout_actions)
+        return returns, all_rollouts_actions
+
+    def plot_actions(all_rollouts_actions):
+        # Handle variable lengths by padding with NaNs
+        max_len = max(len(r) for r in all_rollouts_actions)
+        if max_len > 0 and len(all_rollouts_actions) > 0:
+            action_dim = len(all_rollouts_actions[0][0])
+            action_tensor = np.full((n_rollouts, max_len, action_dim), np.nan)
+
+            for r_idx, r_actions in enumerate(all_rollouts_actions):
+                for step_idx, step_action in enumerate(r_actions):
+                    action_tensor[r_idx, step_idx, :] = step_action
+
+            # Compute mean ignoring NaNs
+            mean_actions = np.nanmean(
+                action_tensor, axis=0
+            )  # Shape: (max_len, action_dim)
+
+            fig, ax = plt.subplots(figsize=(6, 4))
+
+            # Stackplot with specific colors
+            steps = range(mean_actions.shape[0])
+            # Transpose for stackplot (needs y as (M, N))
+            y_data = mean_actions.T
+            colors = ["red", "grey", "blue"]
+
+            ax.stackplot(steps, y_data, colors=colors, alpha=0.7)
+
+            ax.set_xlabel("Step")
+            ax.set_ylabel("Average Action Value (Stacked)")
+            ax.set_title(f"Average Actions over {n_rollouts} Rollouts (Stacked)")
+            # despine
+            ax.spines["top"].set_visible(False)
+            ax.spines["right"].set_visible(False)
+
+            wandb.log(
+                {"eval/mean_actions": wandb.Image(fig)},
+                step=total_steps,
+            )
+            plt.close(fig)
+
+    def plot_returns(returns):
+        # violin plot of returns
+        fig, ax = plt.subplots(figsize=(6, 4))
+        sns.violinplot(data=returns, ax=ax)
+        sns.despine(ax=ax)
+        wandb.log(
+            {"eval/returns_dist": wandb.Image(fig)},
+            step=total_steps,
+        )
 
     # Setup wandb
     config = {
@@ -133,6 +220,10 @@ for idx in indices:
     start_time = time.time()
     total_steps = 0
     losses_accumulator = defaultdict(list)
+    eval_history_steps = []
+    eval_history_returns = []
+
+    glue = chk.build("glue", lambda: LoggingRlGlue(agent, env))
 
     # Create progress bar
     pbar = tqdm(
@@ -143,33 +234,53 @@ for idx in indices:
         dynamic_ncols=True,
     )
 
+    if online_training:
+        interaction = glue.start()
+
     while total_steps < exp.total_steps:
         if (
             eval_interval
             and total_steps % eval_interval == 0
             and hasattr(agent, "actor_critic")
         ):
-            logger.info(f"Evaluating at step {total_steps}")
-            pbar.set_description("Evaluating")
-            try:
-                from algorithms.nn.inac.agent.base import evaluate_on_dataset
-
-                evaluate_on_dataset(
-                    logger,
-                    total_steps,
-                    dataset,
-                    agent.actor_critic.pi,
-                    agent.actor_critic.q,
-                    agent.rngs,
-                    plots_dir=plots_dir,
+            # ---------------------------
+            # -- Calibration Rollouts --
+            # ---------------------------
+            if hasattr(agent, "actor_critic"):
+                n_rollouts = 100
+                rollout_steps = 13
+                returns, all_rollouts_actions = eval_rollouts(
+                    n_rollouts=n_rollouts, rollout_steps=rollout_steps
                 )
-            except Exception as e:
-                logger.warning(f"Evaluation failed: {e}")
-            pbar.set_description("Training")
+                mean_return = np.mean(returns)
+                wandb.log({"eval/return": mean_return}, step=total_steps)
 
-        # Perform update step using the plan() method (RL-Glue interface)
-        t0 = time.time()
-        info = agent.plan()
+                # --- Plots ---
+                plot_actions(all_rollouts_actions)
+                # plot_returns(returns)
+
+                # Save eval data
+                eval_history_steps.append(total_steps)
+                eval_history_returns.append(returns)
+
+                data_dir = exp_path / "data"
+                data_dir.mkdir(parents=True, exist_ok=True)
+                np.savez(
+                    data_dir / f"{idx}.npz",
+                    steps=np.array(eval_history_steps),
+                    returns=np.array(eval_history_returns),
+                )
+
+        if online_training:
+            interaction = glue.step()
+            info = interaction.extra
+
+            if interaction.t:
+                glue.start()
+        else:
+            # Perform update step using the plan() method
+            t0 = time.time()
+            info = agent.plan()
 
         # Accumulate losses if info is returned as a dict
         if isinstance(info, dict):
@@ -188,20 +299,9 @@ for idx in indices:
                 avg_losses = {k: np.mean(v) for k, v in losses_accumulator.items()}
 
                 # Update progress bar with loss information
-                postfix_dict = {k: f"{v:.3f}" for k, v in avg_losses.items()}
+                postfix_dict = {k: f"{v:.2f}" for k, v in avg_losses.items()}
+                postfix_dict["eval/return"] = f"{mean_return:.2f}"
                 pbar.set_postfix(postfix_dict)
-
-                logger.info(
-                    f"TRAIN LOG: steps {total_steps}, "
-                    f"{total_steps * 100 // exp.total_steps}%, "
-                    f"{elapsed_time:.2f} steps/s"
-                )
-
-                # Log individual losses
-                loss_str = "\nLOSSES:\n" + "\n".join(
-                    f"{k} {v:.3f}" for k, v in avg_losses.items()
-                )
-                logger.info(loss_str)
 
                 # Log to wandb
                 wandb_log = {
@@ -210,12 +310,6 @@ for idx in indices:
                 }
                 wandb_run.log(wandb_log, step=total_steps)
             else:
-                # Just log progress if no losses
-                logger.info(
-                    f"TRAIN LOG: steps {total_steps}, "
-                    f"{total_steps * 100 // exp.total_steps}%, "
-                    f"{elapsed_time:.2f} steps/s"
-                )
                 wandb_run.log({"steps_per_second": elapsed_time}, step=total_steps)
 
             # Reset accumulators and timer
@@ -233,9 +327,5 @@ for idx in indices:
         save_path.mkdir(parents=True, exist_ok=True)
         save(agent.actor_critic, agent.optimizers, save_path)  # type: ignore
         logger.info(f"Saved final model to {save_path}")
-
-    # Save checkpoint
-    chk.save()
-    logger.info("Checkpoint saved")
 
     wandb_run.finish()
