@@ -211,7 +211,11 @@ class InAC(BaseAgent):
 
         # Load the saved state and merge back with structure
         loaded_ac, loaded_opt = load(
-            actor_critic_graphdef, optimizers_graphdef, parameters_dir
+            actor_critic_graphdef,
+            optimizers_graphdef,
+            parameters_dir,
+            module_state=nnx.split(self.actor_critic)[1],
+            optimizers_state=nnx.split(self.optimizers)[1],
         )
 
         # Replace the current objects with loaded ones
