@@ -16,7 +16,6 @@ import minari
 import numpy as np
 import seaborn as sns
 import torch
-from PIL import Image
 from tqdm import tqdm
 
 import wandb
@@ -119,18 +118,6 @@ for idx in indices:
             obs, info = eval_env.start()
             current_return = 0.0
             rollout_actions = []
-            # Create directory for this rollout's images if it's one of the first 10
-            if i < 10:
-                rollout_dir = plots_dir / "trajectories" / f"rollout_{i}"
-                rollout_dir.mkdir(parents=True, exist_ok=True)
-                # Save image if available and we are tracing this rollout
-                try:
-                    img_array = eval_env.render()
-                    if img_array is not None:
-                        img = Image.fromarray(img_array)
-                        img.save(rollout_dir / "step_0.png")
-                except Exception as e:
-                    logger.warning(f"Failed to save initial image: {e}")
 
             for t in range(1, rollout_steps + 1):
                 obs_jax = jax.numpy.array([obs])  # Add batch dim
@@ -146,16 +133,6 @@ for idx in indices:
                 reward, next_obs, done, info = eval_env.step(action_vec)
                 obs = next_obs
                 current_return += reward
-
-                # Save image if available and we are tracing this rollout
-                if i < 10:
-                    try:
-                        img_array = eval_env.render()
-                        if img_array is not None:
-                            img = Image.fromarray(img_array)
-                            img.save(rollout_dir / f"step_{t}.png")
-                    except Exception as e:
-                        logger.warning(f"Failed to save image at step {t}: {e}")
 
                 if done:
                     break
