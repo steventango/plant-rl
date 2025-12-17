@@ -24,7 +24,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run --group cuda python src/main_real.py -e experiments/online/E15/P1/InAC1_test.json -i 0 --deploy --gpu
+    command: uv run python src/main_real.py -e experiments/online/E15/P1/InAC1_test.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -58,7 +58,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run --group cuda python src/main_real.py -e experiments/online/E15/P1/InAC2.json -i 1 --deploy
+    command: uv run --group cuda python src/main_real.py -e experiments/online/E15/P1/InAC2.json -i 1 --deploy --gpu
     deploy:
       resources:
         reservations:
@@ -93,7 +93,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E15/P0/Spreadsheet3.json -i 2 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E15/P1/InAC3.json -i 2 --deploy
     deploy:
       resources:
         reservations:
@@ -128,7 +128,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E15/P0/Spreadsheet4.json -i 3 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E15/P1/InAC4.json -i 3 --deploy
     deploy:
       resources:
         reservations:

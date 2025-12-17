@@ -16,8 +16,7 @@
         "deterministic": true,
         "updates_per_step": 0,
         "use_planning": false,
-        "observation_indices": [[0, 1, 3, 17, 18, 19]],
-        "pretrained_path": "./data/models/A1/P2/InAC_GPsim_sweep/969/parameters",
-        "normalization_path": "./src/environments/PlantGrowthChamber/configs/normalization-stats-v19.4.json"
+        "pretrained_path": "results/offline/S8/P2/InAC_Calibration/664/parameters",
+        "normalization_path": "./src/environments/PlantGrowthChamber/configs/normalization-stats-v20.json"
     }
 }

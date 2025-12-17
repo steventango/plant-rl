@@ -1,6 +1,6 @@
 {
     "agent": "InAC3",
-    "problem": "DayAreaTracePlantGrowthChamberColorTriangle",
+    "problem": "WallStatsActionTraceEmbeddingPlantGrowthChamberColorTriangle",
     "total_steps": 40320,
     "episode_cutoff": -1,
     "metaParameters": {
@@ -12,9 +12,10 @@
         "discrete_control": false,
         "policy_type": "dirichlet",
         "hidden_units": 256,
-        "deterministic": false,
+        "deterministic": true,
         "updates_per_step": 0,
         "use_planning": false,
-        "pretrained_path": "/data/models/S8/P0/InAC/0/parameters"
+        "pretrained_path": "results/offline/S8/P2/InAC/2357/parameters",
+        "normalization_path": "./src/environments/PlantGrowthChamber/configs/normalization-stats-v20.json"
     }
 }
