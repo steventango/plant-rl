@@ -96,13 +96,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.duration = timedelta(minutes=1)
         self.clean_area_lower, self.clean_area_upper = 0.1, 0.3
 
-        # Kept for backward compat / referenced in get_info but superseded by new logic
-        self.uema_areas = [UEMA(alpha=0.1) for _ in range(self.zone.num_plants)]
-
-        self.area_count = 0
-        self.minimum_area_count = 5
         self.dli = 0
-        self.prev_plant_areas = np.zeros(self.zone.num_plants)
         self.normalize_reward = normalize_reward
 
         self.last_action = np.zeros(6)
@@ -180,8 +174,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 if self.pot_quads:
                     num_plants = len(self.pot_quads)
                     logger.debug(f"Initialized tracking for {num_plants} plants")
-                    self.uema_areas = [UEMA(alpha=0.1) for _ in range(num_plants)]
-                    self.prev_plant_areas = np.zeros(num_plants)
             except Exception:
                 logger.exception("Error during pot detection")
                 self.pot_quads = None
