@@ -167,11 +167,12 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
     async def get_plant_stats(self):
         assert self.image is not None, "Image must be fetched before processing."
 
+        if not self.is_daylight():
+            logger.debug("Not daylight, skipping plant stats.")
+            self.df = pd.DataFrame()
+            return
+
         if self.pot_quads is None:
-            if not self.is_daylight():
-                logger.debug("Not daylight, skipping pot detection.")
-                self.df = pd.DataFrame()
-                return
             logger.debug("Daylight detected, running initial pot detection...")
             session = await self._ensure_session()
             try:
