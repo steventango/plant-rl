@@ -217,7 +217,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         # Compute Q1, Q3, IQR for area
         areas = df["area"].to_numpy()
         q1 = np.nanpercentile(areas, 25)
-        q3 = np.nanpercentile(areas, 75)
+        q3 = np.nanpercentile(areas, 65)
         iqr = q3 - q1
         upper_fence = q3 + TUKEY_K_UPPER * iqr
 
