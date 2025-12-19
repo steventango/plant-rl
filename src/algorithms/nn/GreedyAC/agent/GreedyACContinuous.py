@@ -24,7 +24,7 @@ class GreedyACContinuous(BaseAgent):
         action_dim,
         gamma,
         tau,
-        alpha,
+        entropy_scale,
         policy,
         target_update_interval,
         critic_lr,
@@ -66,7 +66,7 @@ class GreedyACContinuous(BaseAgent):
         self.entropy_from_single_sample = entropy_from_single_sample
         self.gamma = gamma
         self.tau = tau  # Polyak average
-        self.alpha = alpha  # Entropy scale
+        self.entropy_scale = entropy_scale  # Entropy scale
         self.state_dim = input_dim
         self.action_dim = action_dim
 
@@ -247,7 +247,7 @@ class GreedyACContinuous(BaseAgent):
         sampler_loss = self.sampler.log_prob(stacked_s_batch, best_actions)
         sampler_loss = sampler_loss.reshape(self.batch_size, samples, 1)
         sampler_loss = sampler_loss.mean(axis=1)  # type: ignore
-        sampler_loss = sampler_loss + (sampler_entropy * self.alpha)
+        sampler_loss = sampler_loss + (sampler_entropy * self.entropy_scale)
         sampler_loss = -sampler_loss.mean()
 
         # Update the sampler
