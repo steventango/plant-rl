@@ -197,9 +197,8 @@ class AsyncRLGlue:
                 right_on=["frame"],
             )
         if raw_csv_path.exists():
-            logger.debug(f"{raw_csv_path} exists, reading and backing up")
+            logger.debug(f"{raw_csv_path} exists, reading")
             df_old = pd.read_csv(raw_csv_path)
-            shutil.copy(raw_csv_path, raw_csv_path.with_suffix(".bak"))
             with warnings.catch_warnings():
                 warnings.filterwarnings(
                     "ignore",
@@ -209,7 +208,9 @@ class AsyncRLGlue:
             logger.debug("Concatenating old and new DataFrames")
             df = pd.concat([df_old, df], ignore_index=True)
         logger.debug(f"Saving DataFrame to {raw_csv_path}")
-        df.to_csv(raw_csv_path, index=False)
+        raw_csv_path_tmp = raw_csv_path.with_suffix(".tmp.csv")
+        df.to_csv(raw_csv_path_tmp, index=False)
+        shutil.move(raw_csv_path_tmp, raw_csv_path)
         end_time = time.time()
         logger.debug(f"append_csv took {end_time - start_time:.4f} seconds")
 
