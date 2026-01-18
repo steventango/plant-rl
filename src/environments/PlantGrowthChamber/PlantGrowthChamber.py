@@ -96,13 +96,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.duration = timedelta(minutes=1)
         self.clean_area_lower, self.clean_area_upper = 0.1, 0.3
 
-        # Kept for backward compat / referenced in get_info but superseded by new logic
-        self.uema_areas = [UEMA(alpha=0.1) for _ in range(self.zone.num_plants)]
-
-        self.area_count = 0
-        self.minimum_area_count = 5
         self.dli = 0
-        self.prev_plant_areas = np.zeros(self.zone.num_plants)
         self.normalize_reward = normalize_reward
 
         self.last_action = np.zeros(6)
@@ -167,11 +161,12 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
     async def get_plant_stats(self):
         assert self.image is not None, "Image must be fetched before processing."
 
+        if not self.is_daylight():
+            logger.debug("Not daylight, skipping plant stats.")
+            self.df = pd.DataFrame()
+            return
+
         if self.pot_quads is None:
-            if not self.is_daylight():
-                logger.debug("Not daylight, skipping pot detection.")
-                self.df = pd.DataFrame()
-                return
             logger.debug("Daylight detected, running initial pot detection...")
             session = await self._ensure_session()
             try:
@@ -179,8 +174,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 if self.pot_quads:
                     num_plants = len(self.pot_quads)
                     logger.debug(f"Initialized tracking for {num_plants} plants")
-                    self.uema_areas = [UEMA(alpha=0.1) for _ in range(num_plants)]
-                    self.prev_plant_areas = np.zeros(num_plants)
             except Exception:
                 logger.exception("Error during pot detection")
                 self.pot_quads = None
@@ -224,7 +217,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         # Compute Q1, Q3, IQR for area
         areas = df["area"].to_numpy()
         q1 = np.nanpercentile(areas, 25)
-        q3 = np.nanpercentile(areas, 75)
+        q3 = np.nanpercentile(areas, 60)
         iqr = q3 - q1
         upper_fence = q3 + TUKEY_K_UPPER * iqr
 

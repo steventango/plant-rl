@@ -33,7 +33,7 @@ class GreedyAC(BaseAgent):
             action_dim=actions,
             gamma=self.gamma,
             tau=params.get("tau", 0.01),
-            alpha=params.get("alpha", 0.01),
+            entropy_scale=params.get("entropy_scale", 0.01),
             policy=params.get("policy_type", "dirichlet"),
             target_update_interval=params.get("target_update_interval", 1),
             critic_lr=params.get("critic_lr", 0.001),
@@ -60,7 +60,7 @@ class GreedyAC(BaseAgent):
     def start(self, observation: Any, extra: Dict[str, Any]) -> int:  # type: ignore
         self.state = observation
         self.action = self.get_action()
-        return self.action
+        return self.action, {}
 
     def step(self, reward: float, observation: Any, extra: Dict[str, Any]) -> int:  # type: ignore
         self.greedy_ac.update(
@@ -72,7 +72,7 @@ class GreedyAC(BaseAgent):
         )
         self.state = observation
         self.action = self.get_action()
-        return self.action
+        return self.action, {}
 
     def get_action(self):
         if self.deterministic:
