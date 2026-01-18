@@ -1,6 +1,7 @@
 # ruff: noqa
 import asyncio
 import io
+import base64
 import logging
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -20,48 +21,6 @@ from .CVPipelineClient import CVPipelineClient
 from .zones import load_zone_from_config
 
 logger = logging.getLogger("plant_rl.PlantGrowthChamber")
-
-
-# Configuration for clean area calculation
-# Tukey outlier detection (across plants per timestep)
-TUKEY_K_UPPER = 4.0  # Conservative k factor for Tukey fence
-
-# EWM outlier detection (within each plant over time)
-CLEAN_AREA_LOWER_THRESHOLD = 0.5  # Reject if area < (1 - threshold) * ewm_mean
-CLEAN_AREA_UPPER_THRESHOLD = 1.5  # Reject if area > (1 + threshold) * ewm_mean
-MINIMUM_AREA_COUNT = 1  # Minimum observations before applying outlier detection
-EWM_BETA = 0.1  # Decay factor for EWM (higher = smoother); alpha = 1 - beta
-
-# Morphology features that should be replaced together with area when outlier detected
-MORPHOLOGY_FEATURES = [
-    "in_bounds",
-    "area",
-    "convex_hull_area",
-    "solidity",
-    "perimeter",
-    "width",
-    "height",
-    "longest_path",
-    "center_of_mass_x",
-    "center_of_mass_y",
-    "convex_hull_vertices",
-    "object_in_frame",
-    "ellipse_center_x",
-    "ellipse_center_y",
-    "ellipse_major_axis",
-    "ellipse_minor_axis",
-    "ellipse_angle",
-    "ellipse_eccentricity",
-]
-
-
-class PlantCleaningState:
-    def __init__(self, features):
-        self.ewm_sum = 0.0
-        self.ewm_weight = 0.0
-        self.prev_clean_values = {f: 0.0 for f in features}
-        self.prev_clean_area = 0.0
-        self.area_count = 0
 
 
 class PlantGrowthChamber(BaseAsyncEnvironment):
@@ -86,7 +45,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.cv_client = CVPipelineClient()
 
         # Cleaning state
-        self.plant_cleaning_states = []
+        self.cv_state = None
+        self.last_cv_time = None
+        self.cv_interval = timedelta(minutes=5)
 
         self.clean_areas = []
         # i.e. a mapping from datetime to the mean clean area
@@ -166,130 +127,66 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             self.df = pd.DataFrame()
             return
 
-        if self.pot_quads is None:
-            logger.debug("Daylight detected, running initial pot detection...")
-            session = await self._ensure_session()
-            try:
-                self.pot_quads = await self.cv_client.detect_pots(session, self.image)
-                if self.pot_quads:
-                    num_plants = len(self.pot_quads)
-                    logger.debug(f"Initialized tracking for {num_plants} plants")
-            except Exception:
-                logger.exception("Error during pot detection")
-                self.pot_quads = None
-
-        if self.pot_quads is None:
-            logger.debug("No pot quads, skipping plant stats.")
-            self.df = pd.DataFrame()
+        # Check update frequency (every 5 minutes or if never run)
+        now = self.get_time()
+        if (
+            self.last_cv_time is not None
+            and (now - self.last_cv_time) < self.cv_interval
+        ):
+            # Not time to update yet, keep existing df/image or use empty if none
             return
 
         session = await self._ensure_session()
-        iso_time = (
-            self.time.isoformat(timespec="seconds").replace(":", "")
-            if self.time.minute % 5 == 0
-            else None
-        )
+        response = None
         try:
-            plant_stats = await self.cv_client.process_plants(
-                session, self.image, self.pot_quads, timestamp_str=iso_time
-            )
-            self.df = pd.DataFrame(plant_stats)
+            if self.cv_state is None:
+                logger.debug("Running initial CV detect...")
+                response = await self.cv_client.detect(session, self.image)
+            else:
+                logger.debug("Running CV propagate...")
+                response = await self.cv_client.propagate(
+                    session, self.image, self.cv_state
+                )
 
-            # Apply incremental cleaning
-            if not self.df.empty:
-                self.df = self.clean_stats_incremental(self.df)
+            if response:
+                self.last_cv_time = now
+
+                # Update state
+                if "state" in response:
+                    self.cv_state = response["state"]
+
+                # Update Dataframe
+                plant_stats = response.get("plant_stats", {})
+                if plant_stats and not isinstance(plant_stats, list):
+                    # Convert dict of dicts to list of dicts for DataFrame
+                    # plant_stats is {pot_id: stats_dict, ...}
+                    stats_list = []
+                    for pot_id, stats in plant_stats.items():
+                        if stats and "error" not in stats:
+                            stats["pot_id"] = pot_id
+                            stats_list.append(stats)
+                    self.df = pd.DataFrame(stats_list)
+                elif isinstance(plant_stats, list):
+                    self.df = pd.DataFrame(plant_stats)
+                else:
+                    self.df = pd.DataFrame()
+
+                # Visualization
+                if "visualization_data" in response and response["visualization_data"]:
+                    try:
+                        vis_data = base64.b64decode(response["visualization_data"])
+                        self.images["visualization"] = Image.open(io.BytesIO(vis_data))
+                    except Exception:
+                        logger.warning(
+                            "Failed to decode visualization image", exc_info=True
+                        )
+
+            else:
+                logger.warning("CV pipeline returned None")
 
         except Exception:
-            logger.exception("Error during plant processing")
+            logger.exception("Error during CV processing")
             self.df = pd.DataFrame()
-
-    def clean_stats_incremental(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Incrementally clean plant stats using Tukey outlier detection (cross-plant)
-        and EWM outlier detection (within-plant), mirroring dataset_cleaning.py.
-        """
-        # Ensure we have states for all plants
-        num_plants = len(df)
-        while len(self.plant_cleaning_states) < num_plants:
-            self.plant_cleaning_states.append(PlantCleaningState(MORPHOLOGY_FEATURES))
-
-        # 1. Cross-plant Tukey Outlier Detection
-        # Compute Q1, Q3, IQR for area
-        areas = df["area"].to_numpy()
-        q1 = np.nanpercentile(areas, 25)
-        q3 = np.nanpercentile(areas, 60)
-        iqr = q3 - q1
-        upper_fence = q3 + TUKEY_K_UPPER * iqr
-
-        # Identify Tukey outliers
-        tukey_outliers = (areas > upper_fence) | np.isnan(areas)
-
-        # 2. Within-plant EWM Cleaning
-        # Prepare lists for new columns
-        # We need to determine available features in df that are also in MORPHOLOGY_FEATURES
-        available_features = [f for f in MORPHOLOGY_FEATURES if f in df.columns]
-
-        new_cols = defaultdict(list)
-        new_cols["uema_area"] = []
-        new_cols["is_outlier"] = []
-        for f in available_features:
-            new_cols[f"clean_{f}"] = []
-
-        alpha = 1.0 - EWM_BETA
-
-        for i in range(num_plants):
-            state = self.plant_cleaning_states[i]
-            area = areas[i]
-            is_tukey_outlier = tukey_outliers[i]
-
-            # Check for invalid area (None/NaN or <= 0 or Tukey outlier)
-            is_invalid = False
-            if pd.isna(area) or area <= 0 or is_tukey_outlier:
-                is_invalid = True
-
-            current_ewm = None
-            if state.ewm_weight > 0:
-                current_ewm = state.ewm_sum / state.ewm_weight
-            else:
-                current_ewm = area if not is_invalid else 0.0  # Fallback
-
-            new_cols["uema_area"].append(current_ewm)
-
-            # Check for temporal outlier
-            is_outlier = False
-            if is_invalid:
-                is_outlier = True
-            elif state.area_count >= MINIMUM_AREA_COUNT and state.prev_clean_area > 0:
-                lower_bound = (1 - CLEAN_AREA_LOWER_THRESHOLD) * current_ewm
-                upper_bound = (1 + CLEAN_AREA_UPPER_THRESHOLD) * current_ewm
-                if area < lower_bound or area > upper_bound:
-                    is_outlier = True
-
-            new_cols["is_outlier"].append(is_outlier)
-
-            if is_outlier:
-                # Use previous clean values
-                for f in available_features:
-                    new_cols[f"clean_{f}"].append(state.prev_clean_values.get(f, 0.0))
-            else:
-                # Accept current values
-                for f in available_features:
-                    val = df.iloc[i][f]
-                    new_cols[f"clean_{f}"].append(val)
-                    state.prev_clean_values[f] = val
-
-                state.prev_clean_area = area
-
-                # Update EWM
-                state.ewm_sum = state.ewm_sum * (1 - alpha) + area
-                state.ewm_weight = state.ewm_weight * (1 - alpha) + 1.0
-                state.area_count += 1
-
-        # Add new columns to dataframe
-        for col_name, values in new_cols.items():
-            df[col_name] = values
-
-        return df
 
     def get_time(self):
         return datetime.now(tz=self.tz_utc)

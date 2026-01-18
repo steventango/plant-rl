@@ -177,8 +177,8 @@ def log(
     if hasattr(env, "time"):
         data["time"] = env.time.timestamp()
 
-    if not is_mock_env:
-        if hasattr(env, "image") and env.time.minute % 10 == 0:
+    if not is_mock_env and env.time.minute % 10 == 0:
+        if hasattr(env, "image"):
             data["raw_image"] = wandb.Image(env.image, file_type="jpg")
 
             if hasattr(env, "detections"):
@@ -200,6 +200,11 @@ def log(
                     data["image"] = create_annotated_image(
                         image_data, box_data, class_id_to_label, masks_dict
                     )
+
+        if hasattr(env, "images") and "visualization" in env.images:
+            data["visualization"] = wandb.Image(
+                env.images["visualization"], file_type="jpg"
+            )
 
     if r is not None:
         data["reward"] = r
