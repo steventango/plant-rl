@@ -181,9 +181,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                             "Failed to decode visualization image", exc_info=True
                         )
 
-            else:
-                logger.warning("CV pipeline returned None")
-
         except Exception:
             logger.exception("Error during CV processing")
             self.df = pd.DataFrame()
