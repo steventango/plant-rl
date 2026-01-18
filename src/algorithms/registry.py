@@ -93,7 +93,7 @@ def getAgent(name) -> Type[BaseAgent]:
     if name.startswith("GreedyACDiscrete"):
         return GreedyACDiscrete
 
-    if name.startswith("GreedyACContinuous"):
+    if name.startswith("GAC"):
         return GreedyACContinuous
 
     if name.startswith("InAC"):
