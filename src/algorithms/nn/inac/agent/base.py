@@ -31,15 +31,15 @@ def fill_offline_data_to_buffer(dataset: MinariDataset, batch_size: int):
         all_terminations.append(episode.terminations)
         all_truncations.append(episode.truncations)
 
-    truncations = jnp.concatenate(all_truncations, axis=0)
-    valid_mask = ~truncations
+    # NOTE: truncations are valid transitions now, so we can bootstrap
+    # truncations = jnp.concatenate(all_truncations, axis=0)
 
     dataset_transitions = {
-        "state": jnp.concatenate(all_obs, axis=0)[valid_mask],
-        "action": jnp.concatenate(all_actions, axis=0)[valid_mask],
-        "reward": jnp.concatenate(all_rewards, axis=0)[valid_mask],
-        "next_state": jnp.concatenate(all_next_obs, axis=0)[valid_mask],
-        "termination": jnp.concatenate(all_terminations, axis=0)[valid_mask],
+        "state": jnp.concatenate(all_obs, axis=0),
+        "action": jnp.concatenate(all_actions, axis=0),
+        "reward": jnp.concatenate(all_rewards, axis=0),
+        "next_state": jnp.concatenate(all_next_obs, axis=0),
+        "termination": jnp.concatenate(all_terminations, axis=0),
     }
 
     dummy_transition = jax.tree_util.tree_map(lambda x: x[0], dataset_transitions)
