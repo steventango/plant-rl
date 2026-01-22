@@ -61,6 +61,7 @@ class InAC(BaseAgent):
         self.batch_size = params.get("batch_size", 256)
         self.update_freq = params.get("update_freq", 1)
         self.updates_per_step = params.get("updates_per_step", 0)
+        self.use_layernorm = params.get("use_layernorm", False)
 
         # Path to pre-trained model (optional)
         self.pretrained_path = params.get("pretrained_path", None)
@@ -83,6 +84,7 @@ class InAC(BaseAgent):
             hidden_units=self.hidden_units,
             discrete_control=self.discrete_control,
             policy_type=self.policy_type,
+            use_layernorm=self.use_layernorm,
             rngs=self.rngs,
         )
 
