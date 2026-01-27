@@ -13,11 +13,13 @@ logger = logging.getLogger(__name__)
 # logger.setLevel(logging.DEBUG)
 
 
-def expand(key, value):
+def expand(key, value, filter_indices=None):
     if isinstance(value, np.ndarray):
         result = {}
         for idx in np.ndindex(value.shape):
             idx_str = ".".join(map(str, idx))
+            if filter_indices is not None and idx not in filter_indices:
+                continue
             result[f"{key}.{idx_str}"] = value[idx]
         return result
     if isinstance(value, (list, tuple)):
@@ -149,16 +151,21 @@ def log(
 ):
     start_time = time.time()
     expanded_info = {}
+    state_indices_to_log = [(0,), (1,), (3,), (17,), (18,), (19,)]
     for key, value in info.items():
         if isinstance(value, pd.DataFrame):
-            table = wandb.Table(dataframe=value)
-            expanded_info.update({key: table})
+            continue
         elif isinstance(value, np.ndarray):
-            expanded_info.update(expand(key, value))
+            if key == "agent_state":
+                expanded_info.update(
+                    expand(key, value, filter_indices=state_indices_to_log)
+                )
+            else:
+                expanded_info.update(expand(key, value))
         else:
             expanded_info.update(expand(key, value))
     data = {
-        **expand("state", s),
+        **expand("state", s, filter_indices=state_indices_to_log),
         **expand("agent_action", a),
         "steps": glue.num_steps,
         **expanded_info,
@@ -170,8 +177,8 @@ def log(
     if hasattr(env, "time"):
         data["time"] = env.time.timestamp()
 
-    if not is_mock_env:
-        if hasattr(env, "image") and env.time.minute % 10 == 0:
+    if not is_mock_env and env.time.minute % 10 == 0:
+        if hasattr(env, "image"):
             data["raw_image"] = wandb.Image(env.image, file_type="jpg")
 
             if hasattr(env, "detections"):
@@ -193,6 +200,11 @@ def log(
                     data["image"] = create_annotated_image(
                         image_data, box_data, class_id_to_label, masks_dict
                     )
+
+        if hasattr(env, "images") and "visualization" in env.images:
+            data["visualization"] = wandb.Image(
+                env.images["visualization"], file_type="jpg"
+            )
 
     if r is not None:
         data["reward"] = r

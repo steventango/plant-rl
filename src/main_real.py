@@ -10,7 +10,8 @@ import argparse
 import logging
 import socket
 import time
-from datetime import datetime
+import threading
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import jax
@@ -21,9 +22,6 @@ from experiment import ExperimentModel
 from problems.registry import getProblem
 from utils.checkpoint import Checkpoint
 from utils.logger import WandbAlertHandler, log
-
-# --- Q-value plotting imports ---
-from utils.plotting import plot_q_values_and_diff
 from utils.preempt import TimeoutHandler
 from utils.RlGlue.rl_glue import AsyncRLGlue
 
@@ -160,6 +158,32 @@ async def main():
             with open(config_path, "w") as f:
                 json.dump(config, f, indent=4)
 
+            # Start checkpoint scheduler
+            def schedule_checkpoint():
+                while True:
+                    now = datetime.now()
+                    target = now.replace(minute=33, second=0, microsecond=0)
+                    if target <= now:
+                        target += timedelta(hours=1)
+
+                    sleep_time = (target - now).total_seconds()
+                    logger.debug(
+                        f"Scheduling next checkpoint for {target} (in {sleep_time:.2f}s)"
+                    )
+                    time.sleep(sleep_time)
+
+                    try:
+                        logger.debug("Starting scheduled checkpoint...")
+                        chk.save()
+                        logger.debug("Scheduled checkpoint complete.")
+                    except Exception as e:
+                        logger.warning(
+                            f"Scheduled checkpoint failed: {e}", exc_info=True
+                        )
+
+            ckpt_thread = threading.Thread(target=schedule_checkpoint, daemon=True)
+            ckpt_thread.start()
+
             # Run the experiment
             start_time = time.time()
             is_mock_env = exp.problem.startswith("Mock")
@@ -214,43 +238,6 @@ async def main():
                     episodic_return=episodic_return,
                     episode=episode,
                 )
-
-                # --- Q-value plotting every hour ---
-                now = time.time()
-                if (
-                    now - last_q_plot_time >= 600
-                    or step == glue.total_steps
-                    or step < 10
-                ):
-                    try:
-                        # Use a dummy DataFrame for plotting (real data not available in online mode)
-                        import pandas as pd
-
-                        dummy_df = pd.DataFrame(
-                            {
-                                "observation": [],
-                                "action": [],
-                                "reward": [],
-                                "terminal": [],
-                                "trajectory_name": [],
-                            }
-                        )
-                        plot_q_values_and_diff(
-                            logger, agent.agent, q_plots_dir, step, dummy_df
-                        )
-                        # Log the latest Q-value and Q-diff plots to wandb
-                        q_plot_file = q_plots_dir / f"q_values_step_{step:06d}.jpg"
-                        q_diff_file = q_plots_dir / f"q_diff_step_{step:06d}.jpg"
-                        if q_plot_file.exists():
-                            wandb_run.log({"q_values": wandb.Image(str(q_plot_file))})
-                        if q_diff_file.exists():
-                            wandb_run.log({"q_diff": wandb.Image(str(q_diff_file))})
-                        last_q_plot_time = now
-                    except Exception as e:
-                        logger.warning(
-                            f"Q-value plotting/logging failed at step {step}: {e}",
-                            exc_info=True,
-                        )
 
                 if interaction.t or (
                     exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff

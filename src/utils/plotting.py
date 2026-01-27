@@ -228,67 +228,6 @@ def _plot_single_trajectory_on_ax(ax, traj_df):
         )
 
 
-def plot_q_values_and_diff(
-    logger, agent, q_plots_dir, step, df
-):  # Renamed original plot function
-    if (
-        hasattr(agent, "w")
-        and hasattr(agent, "tile_coder")
-        and agent.w is not None
-        and agent.tile_coder is not None
-    ):
-        try:
-            weights = agent.w
-            tile_coder = agent.tile_coder
-
-            # Define observation space for plotting (as in plot_q_values.py)
-            daytime_observation_space = np.linspace(0, 1, 11 * 6, endpoint=False)
-            area_observation_space = np.linspace(0, 1, 11 * 6, endpoint=True)
-
-            num_actions = weights.shape[0]
-            Q_vals = get_Q(
-                weights,
-                tile_coder,
-                daytime_observation_space,
-                area_observation_space,
-                num_actions,
-            )
-
-            # Plot and save Q-values
-            q_plot_filename = q_plots_dir / f"q_values_step_{step:06d}.jpg"
-            fig_q, _ = plot_q(
-                daytime_observation_space, area_observation_space, Q_vals
-            )  # Call the plot function
-            fig_q.savefig(q_plot_filename)  # Save the figure
-            plt.close(fig_q)  # Close the figure
-
-            # Plot and save Q-value differences
-            if num_actions >= 2:
-                Q_diff = Q_vals[:, :, 1] - Q_vals[:, :, 0]
-            else:
-                logger.debug(
-                    f"Step {step}: Not enough actions ({num_actions}) to compute Q-difference. Plotting Q[s,0] instead."
-                )
-                Q_diff = Q_vals[:, :, 0]
-
-            q_diff_plot_filename = q_plots_dir / f"q_diff_step_{step:06d}.jpg"
-            fig_diff, axs_diff = plot_q_diff(
-                daytime_observation_space, area_observation_space, Q_diff
-            )  # Call the plot function
-
-            fig_diff.savefig(q_diff_plot_filename)  # Save the figure
-            plt.close(fig_diff)  # Close the figure
-            logger.debug(f"Step {step}: Saved Q-value plots to {q_plots_dir}")
-        except Exception as e:
-            logger.warning(
-                f"Step {step}: Error during Q-value plotting: {e}", exc_info=True
-            )
-    else:
-        logger.debug(
-            f"Step {step}: Agent does not have 'w' or 'tile_coder' attributes, or they are None. Skipping Q-value plotting."
-        )
-
-
 def plot_state_action_distribution(df, q_plots_dir, logger):
     try:
         # Filter out rows where action is None and ensure action is numeric

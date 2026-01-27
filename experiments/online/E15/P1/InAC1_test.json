@@ -1,0 +1,22 @@
+{
+    "agent": "InAC1_test",
+    "problem": "WallStatsActionTraceEmbeddingPlantGrowthChamberColorTriangle",
+    "total_steps": 40320,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": "alliance-zone01",
+            "timezone": "Asia/Dhaka",
+            "action_uema_beta": 0.5
+        },
+        "timezone": "Asia/Dhaka",
+        "discrete_control": false,
+        "policy_type": "dirichlet",
+        "hidden_units": 256,
+        "deterministic": true,
+        "updates_per_step": 0,
+        "use_planning": false,
+        "pretrained_path": "results/offline/S8/P2/InAC_Calibration/664/parameters",
+        "normalization_path": "./src/environments/PlantGrowthChamber/configs/normalization-stats-v20.json"
+    }
+}

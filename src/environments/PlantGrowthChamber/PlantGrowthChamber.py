@@ -1,6 +1,7 @@
 # ruff: noqa
 import asyncio
 import io
+import base64
 import logging
 from collections import defaultdict
 from datetime import datetime, timedelta
@@ -43,6 +44,11 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.dataset_path = None
         self.cv_client = CVPipelineClient()
 
+        # Cleaning state
+        self.cv_state = None
+        self.last_cv_time = None
+        self.cv_interval = timedelta(minutes=5)
+
         self.clean_areas = []
         # i.e. a mapping from datetime to the mean clean area
         self.daily_mean_clean_areas = defaultdict(float)
@@ -50,11 +56,8 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.n_step = 0
         self.duration = timedelta(minutes=1)
         self.clean_area_lower, self.clean_area_upper = 0.1, 0.3
-        self.uema_areas = [UEMA(alpha=0.1) for _ in range(self.zone.num_plants)]
-        self.area_count = 0
-        self.minimum_area_count = 5
+
         self.dli = 0
-        self.prev_plant_areas = np.zeros(self.zone.num_plants)
         self.normalize_reward = normalize_reward
 
         self.last_action = np.zeros(6)
@@ -90,15 +93,21 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         if not self.df.empty:
             self.plant_areas = self.df["area"].to_numpy().flatten()  # type: ignore
 
-            clean_area = self.get_clean_area(self.plant_areas)
-            self.df["clean_area"] = clean_area
+            # self.df["clean_area"] is already computed in get_plant_stats now
+            if "clean_area" in self.df.columns:
+                clean_area = self.df["clean_area"].to_numpy()
+                self.clean_areas.append(clean_area)
 
-            self.clean_areas.append(clean_area)
-
-            # Update daily mean clean areas history
-            current_local_date = self.get_local_time().replace(second=0, microsecond=0)
-            mean_area_this_step = np.mean(clean_area) if clean_area.size > 0 else 0.0
-            self.daily_mean_clean_areas[current_local_date] = float(mean_area_this_step)
+                # Update daily mean clean areas history
+                current_local_date = self.get_local_time().replace(
+                    second=0, microsecond=0
+                )
+                mean_area_this_step = (
+                    np.mean(clean_area) if clean_area.size > 0 else 0.0
+                )
+                self.daily_mean_clean_areas[current_local_date] = float(
+                    mean_area_this_step
+                )
 
         return self.time, self.image, self.df
 
@@ -113,55 +122,68 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
     async def get_plant_stats(self):
         assert self.image is not None, "Image must be fetched before processing."
 
-        if self.pot_quads is None:
-            if not self.is_daylight():
-                logger.debug("Not daylight, skipping pot detection.")
-                self.df = pd.DataFrame()
-                return
-            logger.debug("Daylight detected, running initial pot detection...")
-            session = await self._ensure_session()
-            self.pot_quads = await self.cv_client.detect_pots(session, self.image)
-            if self.pot_quads:
-                num_plants = len(self.pot_quads)
-                logger.debug(f"Initialized tracking for {num_plants} plants")
-                self.uema_areas = [UEMA(alpha=0.1) for _ in range(num_plants)]
-                self.prev_plant_areas = np.zeros(num_plants)
-
-        if self.pot_quads is None:
-            logger.debug("No pot quads, skipping plant stats.")
+        if not self.is_daylight():
+            logger.debug("Not daylight, skipping plant stats.")
             self.df = pd.DataFrame()
             return
 
-        session = await self._ensure_session()
-        iso_time = (
-            self.time.isoformat(timespec="seconds").replace(":", "")
-            if self.time.minute % 5 == 0
-            else None
-        )
-        plant_stats = await self.cv_client.process_plants(
-            session, self.image, self.pot_quads, timestamp_str=iso_time
-        )
-        self.df = pd.DataFrame(plant_stats)
+        # Check update frequency (every 5 minutes or if never run)
+        now = self.get_time()
+        if (
+            self.last_cv_time is not None
+            and (now - self.last_cv_time) < self.cv_interval
+        ):
+            # Not time to update yet, keep existing df/image or use empty if none
+            return
 
-    def get_clean_area(self, plant_areas):
-        if np.sum(self.last_action) == 0:
-            return np.zeros(len(plant_areas))
-        else:
-            clean_area = plant_areas.copy()
-            mean = np.array(
-                [self.uema_areas[i].compute() for i in range(len(self.uema_areas))]
-            ).flatten()
-            cond = (self.area_count > self.minimum_area_count) & (
-                (plant_areas < (1 - self.clean_area_lower) * mean)
-                | (plant_areas > (1 + self.clean_area_upper) * mean)
-            )
-            clean_area[cond] = self.prev_plant_areas[cond]
-            self.prev_plant_areas[~cond] = plant_areas[~cond]
-            for i, area in enumerate(plant_areas):
-                if area > 0:
-                    self.uema_areas[i].update(area)
-            self.area_count += 1
-            return clean_area
+        session = await self._ensure_session()
+        response = None
+        try:
+            if self.cv_state is None:
+                logger.debug("Running initial CV detect...")
+                response = await self.cv_client.detect(session, self.image)
+            else:
+                logger.debug("Running CV propagate...")
+                response = await self.cv_client.propagate(
+                    session, self.image, self.cv_state
+                )
+
+            if response:
+                self.last_cv_time = now
+
+                # Update state
+                if "state" in response:
+                    self.cv_state = response["state"]
+
+                # Update Dataframe
+                plant_stats = response.get("plant_stats", {})
+                if plant_stats and not isinstance(plant_stats, list):
+                    # Convert dict of dicts to list of dicts for DataFrame
+                    # plant_stats is {pot_id: stats_dict, ...}
+                    stats_list = []
+                    for pot_id, stats in plant_stats.items():
+                        if stats and "error" not in stats:
+                            stats["pot_id"] = pot_id
+                            stats_list.append(stats)
+                    self.df = pd.DataFrame(stats_list)
+                elif isinstance(plant_stats, list):
+                    self.df = pd.DataFrame(plant_stats)
+                else:
+                    self.df = pd.DataFrame()
+
+                # Visualization
+                if "visualization_data" in response and response["visualization_data"]:
+                    try:
+                        vis_data = base64.b64decode(response["visualization_data"])
+                        self.images["visualization"] = Image.open(io.BytesIO(vis_data))
+                    except Exception:
+                        logger.warning(
+                            "Failed to decode visualization image", exc_info=True
+                        )
+
+        except Exception:
+            logger.exception("Error during CV processing")
+            self.df = pd.DataFrame()
 
     def get_time(self):
         return datetime.now(tz=self.tz_utc)
@@ -234,6 +256,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         logger.debug(f"Local time: {self.get_local_time()}. Step 0")
         self.n_step = 0
         self.clean_areas = []
+        self.plant_cleaning_states = []  # Reset cleaning states on start
         self.daily_mean_clean_areas = defaultdict(float)
         observation = await self.get_observation()
         await self.sleep_until_next_step(self.duration)
@@ -301,17 +324,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 "df": self.df,
                 "env_time": self.time.timestamp(),
             }
-        mean = np.array(
-            [self.uema_areas[i].compute() for i in range(self.zone.num_plants)]
-        ).flatten()
-        upper = mean * (1 + self.clean_area_upper)
-        lower = mean * (1 - self.clean_area_lower)
         return {
             "df": self.df,
             "mean_clean_area": np.mean(self.clean_areas[-1]),
-            "uema_area": mean,
-            "upper_area": upper,
-            "lower_area": lower,
             "env_time": self.time.timestamp(),
         }
 
@@ -371,3 +386,13 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                     f"Error closing aiohttp session for zone {self.zone.identifier}: {str(e)}"
                 )
             self.session = None
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        if "session" in state:
+            del state["session"]
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.session = None
