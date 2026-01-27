@@ -114,20 +114,13 @@ for idx in indices:
 
         all_rollouts_actions = []
 
-        for _ in range(n_rollouts):
+        for _ in tqdm(range(n_rollouts), disable=prod):
             obs, info = eval_env.start()
             current_return = 0.0
             rollout_actions = []
 
             for _ in range(1, rollout_steps + 1):
-                obs_jax = jax.numpy.array([obs])  # Add batch dim
-                action, _ = agent.actor_critic.pi(
-                    obs_jax, deterministic=True, rngs=agent.rngs
-                )
-
-                # Convert action back to numpy/list for env
-                # Action from agent is [batch, action_dim]
-                action_vec = np.array(action)[0]
+                action_vec = agent.policy(obs, deterministic=True)
                 rollout_actions.append(action_vec)
 
                 reward, next_obs, done, info = eval_env.step(action_vec)
@@ -222,6 +215,8 @@ for idx in indices:
     losses_accumulator = defaultdict(list)
     eval_history_steps = []
     eval_history_returns = []
+    n_rollouts = 1000
+    rollout_steps = 13
 
     glue = chk.build("glue", lambda: LoggingRlGlue(agent, env))
 
@@ -238,38 +233,18 @@ for idx in indices:
         interaction = glue.start()
 
     while total_steps < exp.total_steps:
-        if (
-            eval_interval
-            and total_steps % eval_interval == 0
-            and hasattr(agent, "actor_critic")
-        ):
+        if eval_interval and total_steps % eval_interval == 0:
             # ---------------------------
             # -- Calibration Rollouts --
             # ---------------------------
-            if hasattr(agent, "actor_critic"):
-                n_rollouts = 100
-                rollout_steps = 13
-                returns, all_rollouts_actions = eval_rollouts(
-                    n_rollouts=n_rollouts, rollout_steps=rollout_steps
-                )
-                mean_return = np.mean(returns)
-                wandb.log({"eval/return": mean_return}, step=total_steps)
+            returns, all_rollouts_actions = eval_rollouts(
+                n_rollouts=n_rollouts, rollout_steps=rollout_steps
+            )
+            mean_return = np.mean(returns)
+            wandb.log({"eval/return": mean_return}, step=total_steps)
 
-                # --- Plots ---
-                plot_actions(all_rollouts_actions)
-                # plot_returns(returns)
-
-                # Save eval data
-                eval_history_steps.append(total_steps)
-                eval_history_returns.append(returns)
-
-                data_dir = exp_path / "data"
-                data_dir.mkdir(parents=True, exist_ok=True)
-                np.savez(
-                    data_dir / f"{idx}.npz",
-                    steps=np.array(eval_history_steps),
-                    returns=np.array(eval_history_returns),
-                )
+            # --- Plots ---
+            plot_actions(all_rollouts_actions)
 
         if online_training:
             interaction = glue.step()
@@ -316,6 +291,27 @@ for idx in indices:
             losses_accumulator = defaultdict(list)
             start_time = time.time()
 
+    returns, all_rollouts_actions = eval_rollouts(
+        n_rollouts=n_rollouts, rollout_steps=rollout_steps
+    )
+    mean_return = np.mean(returns)
+    wandb.log({"eval/return": mean_return}, step=total_steps)
+
+    # --- Plots ---
+    plot_actions(all_rollouts_actions)
+    # plot_returns(returns)
+
+    # Save eval data
+    eval_history_steps.append(total_steps)
+    eval_history_returns.append(returns)
+
+    data_dir = exp_path / "data"
+    data_dir.mkdir(parents=True, exist_ok=True)
+    np.savez(
+        data_dir / f"{idx}.npz",
+        steps=np.array(eval_history_steps),
+        returns=np.array(eval_history_returns),
+    )
     pbar.close()
     logger.info("Offline training complete")
 

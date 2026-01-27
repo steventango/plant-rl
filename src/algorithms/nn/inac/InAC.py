@@ -333,20 +333,23 @@ class InAC(BaseAgent):
 
         print(f"Loaded {len(all_states)} transitions from offline dataset")
 
-    def policy(self, obs: np.ndarray) -> np.ndarray:
+    def policy(self, obs: np.ndarray, deterministic: bool | None = None) -> np.ndarray:
         """
         Compute action probabilities or sample action.
 
         For discrete actions: returns action probabilities
         For continuous actions: returns sampled action
         """
+        if deterministic is None:
+            deterministic = self.deterministic
+
         obs = np.asarray(obs)
         obs = self._normalize(obs)
         if len(obs.shape) == 1:
             obs = np.expand_dims(obs, 0)
 
         obs_jax = jnp.array(obs)
-        action = _policy(self.actor_critic.pi, obs_jax, self.deterministic, self.rngs)
+        action = _policy(self.actor_critic.pi, obs_jax, deterministic, self.rngs)
         action = jax.device_get(action)
 
         if len(action.shape) > 1:
@@ -549,6 +552,9 @@ class InAC(BaseAgent):
             "actor": float(jax.device_get(loss_pi)),
             "critic": float(jax.device_get(loss_q)),
             "value": float(jax.device_get(loss_vs)),
+            "q_info": float(jax.device_get(qinfo.mean())),
+            "v_info": float(jax.device_get(v_info.mean())),
+            "logp_info": float(jax.device_get(logp_info.mean())),
         }
 
     def plan(self):  # type: ignore
