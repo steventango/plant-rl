@@ -12,7 +12,7 @@ from utils.calibration import load_and_clean_data
 # one sheet per zone
 # transpose the sheet
 calibration_file = (
-    "/workspaces/plant-rl/scripts/calibration/Plant Chamber Full Calibration.xlsx"
+    "scripts/calibration/Plant Chamber Full Calibration.xlsx"
 )
 
 maximum = {}
@@ -72,7 +72,7 @@ for zone in range(1, 13):
 
     # Save maximum to a JSON file
     # /workspaces/plant-rl/src/environments/PlantGrowthChamber/configs/calibration.json
-    max_file_path = "/workspaces/plant-rl/src/environments/PlantGrowthChamber/configs/calibration.json"
+    max_file_path = "src/environments/PlantGrowthChamber/configs/calibration.json"
     with open(max_file_path, "w") as max_file:
         out = {
             "maximum": maximum,
@@ -81,7 +81,7 @@ for zone in range(1, 13):
         json.dump(out, max_file, indent=4)
 
     # Update the calibrations in alliance-zone*.json
-    alliance_zone_file = f"/workspaces/plant-rl/src/environments/PlantGrowthChamber/configs/alliance-{zone_str}.json"
+    alliance_zone_file = f"src/environments/PlantGrowthChamber/configs/alliance-{zone_str}.json"
     with open(alliance_zone_file, "r") as file:
         alliance_zone = json.load(file)
     alliance_zone["zone"]["calibration"] = df_dict
