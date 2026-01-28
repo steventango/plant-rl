@@ -9,7 +9,7 @@ RUN gpg --keyserver keyserver.ubuntu.com --recv-keys 82B129927FA3303E \
 
 RUN apt update && apt install -y --no-install-recommends \
   libcap-dev \
-  libatlas-base-dev \
+  libopenblas-dev \
   libcamera-dev \
   libkms++-dev \
   libfmt-dev \
