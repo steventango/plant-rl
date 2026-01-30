@@ -27,7 +27,7 @@
         "updates_per_step": 0,
         "use_planning": false,
         "observation_indices": [[3, 28, 33, 38, 39, 40, 41]],
-        "pretrained_path": "results/offline/S8/P2/InAC/21/parameters",
+        "pretrained_path": "results/offline/S8/P2/InAC_LN/21/parameters",
         "normalization_path": "/data/plant-rl/offline/v23/normalization-stats-v23.json"
     }
 }
