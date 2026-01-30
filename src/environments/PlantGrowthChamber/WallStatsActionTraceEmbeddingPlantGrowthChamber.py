@@ -55,7 +55,7 @@ class WallStatsActionTraceEmbeddingPlantGrowthChamber(PlantGrowthChamber):
         self.action_uema = UnbiasedExponentialMovingAverage(
             shape=(6,), alpha=1 - self.action_uema_beta
         )
-        self.start_date = self.get_local_time().replace(hour=9, minute=30)
+        self.start_date = datetime.fromisoformat(kwargs["start_date"])
         self.embedding_dim = kwargs.get("embedding_dim", 768)
         self.pca_dim = kwargs.get("pca_dim", 10)
 
@@ -79,7 +79,7 @@ class WallStatsActionTraceEmbeddingPlantGrowthChamber(PlantGrowthChamber):
         local_time = self.get_local_time()
 
         # 1. Wall Time
-        wall_time = (local_time - self.start_date).total_seconds() / 60 / 60 / 24
+        wall_time = (local_time - self.start_date.astimezone(self.tz)).total_seconds() / 60 / 60 / 24
 
         def days_since(date):
             if date is None:
