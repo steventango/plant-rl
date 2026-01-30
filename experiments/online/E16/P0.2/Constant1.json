@@ -1,0 +1,22 @@
+{
+    "agent": "Constant1",
+    "problem": "WallStatsActionTraceEmbeddingPlantGrowthChamberColorTriangle",
+    "total_steps": 40320,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": "alliance-zone01",
+            "timezone": "America/Edmonton",
+            "sterilization_date": "2025-12-01",
+            "plate_date": "2025-12-04",
+            "transplant_date": "2025-12-11",
+            "dome_removal_date": "2025-12-15",
+            "watering_date": "2025-12-15",
+            "start_date": "2025-12-17T16:30:00+00:00",
+            "liters_per_pot": 0.0625,
+            "pca_model_path": "/data/plant-rl/offline/v23/pca_model.joblib"
+        },
+        "timezone": "America/Edmonton",
+        "constant_action": [[0, 1, 0]]
+    }
+}
