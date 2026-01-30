@@ -149,6 +149,7 @@ class AsyncRLGlue:
         start_time = time.time()
         data_dict = {
             "time": [self.environment.time],  # type: ignore
+            "timezone": [self.environment.timezone],  # type: ignore
             "frame": [self.num_steps],
             **expand("action", self.environment.last_action),  # type: ignore
             **expand("calibrated_action", self.environment.last_calibrated_action),  # type: ignore

@@ -34,6 +34,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             self.zone = load_zone_from_config(zone) if isinstance(zone, str) else zone
         self.images = {}
         self.image = None
+        self.timezone = timezone
         self.tz = ZoneInfo(timezone)
         self.sparse_reward = kwargs.get("sparse_reward", False)
         self.tz_utc = ZoneInfo("Etc/UTC")
@@ -62,6 +63,8 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.last_calibrated_action = np.zeros(6)
         self.plant_areas = np.array([])
         self.last_step_time = None
+
+        self.df = pd.DataFrame()
 
     async def _ensure_session(self):
         """Ensures an aiohttp session is available and returns it."""
