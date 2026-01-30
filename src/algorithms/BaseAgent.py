@@ -52,6 +52,8 @@ class BaseAgent(utils.RlGlue.agent.BaseAgent):
 
     def cleanup(self): ...
 
+    def load(self): ...
+
     def plan(self):
         if not self.use_planning:
             return

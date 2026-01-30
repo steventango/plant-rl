@@ -33,14 +33,26 @@ class PlantCalibrationModel(BaseProblem):
         self.env_params = self.params.get("environment", {})
         self.eval_env_params = self.params.get("eval_environment", {})
 
+        if "stat_weights" not in self.env_params:
+            self.env_params["stat_weights"] = self._get_default_stat_weights()
+        if "stat_weights" not in self.eval_env_params:
+            self.eval_env_params["stat_weights"] = self._get_default_stat_weights()
+
         # Instantiate the environment
         self.env = self._build_env(self.env_params)
         self.eval_env = self._build_env(self.eval_env_params)
 
         self.actions = self.env.env.action_space.shape[0]
-        self.observations = self.env.env.observation_space.shape
+        self.observations = (int(sum(self.env_params["stat_weights"])),)
 
         self.gamma = self.params.get("agent", {}).get("gamma", 0.99)
+
+    def _get_default_stat_weights(self):
+        indices = [3, 28, 33, 38, 39, 40, 41]
+        stat_weights = np.zeros(48)
+        for idx in indices:
+            stat_weights[idx] = 1.0
+        return stat_weights
 
     def _build_env(self, params):
         gym_env = Env(**params)

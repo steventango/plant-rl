@@ -15,6 +15,7 @@ class MLPCont(nnx.Module):
         hidden_sizes,
         action_range=1.0,
         init_type="xavier",
+        use_layernorm=False,
         *,
         rngs: nnx.Rngs,
     ):
@@ -22,6 +23,7 @@ class MLPCont(nnx.Module):
             input_dim=obs_dim,
             hidden_units=tuple(hidden_sizes),
             init_type=init_type,
+            use_layernorm=use_layernorm,
             rngs=rngs,
         )
         self.mu_layer = nnx.Linear(
@@ -77,6 +79,7 @@ class MLPDirichlet(nnx.Module):
         hidden_sizes,
         init_type="xavier",
         offset=0.0,
+        use_layernorm=False,
         *,
         rngs: nnx.Rngs,
     ):
@@ -84,6 +87,7 @@ class MLPDirichlet(nnx.Module):
             input_dim=obs_dim,
             hidden_units=tuple(hidden_sizes),
             init_type=init_type,
+            use_layernorm=use_layernorm,
             rngs=rngs,
         )
         self.alpha_layer = nnx.Linear(
@@ -153,6 +157,7 @@ class MLPMixtureDirichlet(nnx.Module):
         init_type="xavier",
         offset=1.0,
         clip_alpha=15.0,
+        use_layernorm=False,
         *,
         rngs: nnx.Rngs,
     ):
@@ -160,6 +165,7 @@ class MLPMixtureDirichlet(nnx.Module):
             input_dim=obs_dim,
             hidden_units=tuple(hidden_sizes),
             init_type=init_type,
+            use_layernorm=use_layernorm,
             rngs=rngs,
         )
 
@@ -244,6 +250,7 @@ class MLPDiscrete(nnx.Module):
         act_dim,
         hidden_sizes,
         init_type="xavier",
+        use_layernorm=False,
         *,
         rngs: nnx.Rngs,
     ):
@@ -251,6 +258,7 @@ class MLPDiscrete(nnx.Module):
             input_dim=obs_dim,
             hidden_units=tuple(hidden_sizes),
             init_type=init_type,
+            use_layernorm=use_layernorm,
             rngs=rngs,
         )
         self.mu_layer = nnx.Linear(

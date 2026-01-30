@@ -30,6 +30,14 @@ class DirichletAgent(BaseAgent):
         action = z[0] * RED_ACTION + z[1] * BALANCED_ACTION_105 + z[2] * BLUE_ACTION
         return action
 
+    def policy(self, observation: np.ndarray, deterministic: bool = True) -> np.ndarray:
+        if deterministic:
+            z = self.alpha / np.sum(self.alpha)
+            if not self.project_action:
+                return z
+            return z[0] * RED_ACTION + z[1] * BALANCED_ACTION_105 + z[2] * BLUE_ACTION
+        return self.sample_action()
+
     # ----------------------
     # -- RLGlue interface --
     # ----------------------

@@ -1,11 +1,11 @@
+import glob
 import json  # type: ignore
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
-# from zoneinfo import ZoneInfo
 import numpy as np
-import pandas as pd
+import polars as pl
 from PIL import Image
 
 from environments.PlantGrowthChamber.PlantGrowthChamber import PlantGrowthChamber
@@ -16,48 +16,58 @@ logger = logging.getLogger("plant_rl.MockPlantGrowthChamber")
 
 class MockPlantGrowthChamber(PlantGrowthChamber):
     def __init__(self, *args, **kwargs):
-        self.dataset_path = Path(kwargs["dataset_path"])
-        self.config_path = self.dataset_path / "config.json"
-        self.procesed_csv_paths = sorted(self.dataset_path.glob("processed/**/all.csv"))
-        if len(self.procesed_csv_paths) == 0:
-            self.dataset_df = pd.read_csv(self.dataset_path / "raw.csv")
+        self.dataset_path = Path(
+            kwargs.get("dataset_path", "/data/plant-rl/offline/v23/mixed-v23.parquet")
+        )
+
+        if self.dataset_path.is_dir():
+            self.dataset_df = pl.read_parquet(self.dataset_path / "mixed-v23.parquet")
         else:
-            self.dataset_df = pd.read_csv(self.procesed_csv_paths[-1])
-        self.dataset_df["time"] = pd.to_datetime(self.dataset_df["time"])
-        with open(self.config_path) as f:
-            self.config = json.load(f)
-        kwargs["zone"] = deserialize_zone(self.config["zone"])
-        self.index = 0
-        self.time = self.dataset_df["time"].min()
-        # For testing purposes, we can set a fixed time
-        # tzinfo = ZoneInfo("America/Edmonton")
-        # self.time = datetime(2022, 7, 22, 9, 25, 0, tzinfo=tzinfo)
-        self.mock_area = kwargs.get("mock_area", False)
-        self.plant_stat_columns = [
-            "in_bounds",
-            "area",
-            "convex_hull_area",
-            "solidity",
-            "perimeter",
-            "width",
-            "height",
-            "longest_path",
-            "center_of_mass_x",
-            "center_of_mass_y",
-            "convex_hull_vertices",
-            "object_in_frame",
-            "ellipse_center_x",
-            "ellipse_center_y",
-            "ellipse_major_axis",
-            "ellipse_minor_axis",
-            "ellipse_angle",
-            "ellipse_eccentricity",
-        ]
+            self.dataset_df = pl.read_parquet(self.dataset_path)
+
+        self.mock_stats = kwargs.get("mock_stats", kwargs.get("mock_area", False))
+
+        # Filtering
+        if "experiment" in kwargs:
+            self.dataset_df = self.dataset_df.filter(
+                pl.col("experiment") == kwargs["experiment"]
+            )
+        if "zone_id" in kwargs:
+            self.dataset_df = self.dataset_df.filter(
+                pl.col("zone") == kwargs["zone_id"]
+            )
+
+        # Sort and get unique wall times
+        self.dataset_df = self.dataset_df.sort("wall_time")
+        self.unique_wall_times = (
+            self.dataset_df["wall_time"].unique(maintain_order=True).to_list()
+        )
+        self.time_index = 0
+        self.wall_time = (
+            self.unique_wall_times[self.time_index] if self.unique_wall_times else 0.0
+        )
+
+        # Pull initial time from the dataset if available
+        if "time" in self.dataset_df.columns:
+            self.current_time = self.dataset_df.filter(
+                pl.col("wall_time") == self.wall_time
+            )["time"][0]
+        else:
+            self.current_time = datetime.fromtimestamp(self.wall_time, tz=timezone.utc)
+
+        # We still need some config for zones if not provided
+        self.config_path = self.dataset_path.parent / "config.json"
+        if self.config_path.exists():
+            with open(self.config_path) as f:
+                self.config = json.load(f)
+            if "zone" not in kwargs or kwargs["zone"] is None:
+                kwargs["zone"] = deserialize_zone(self.config["zone"])
+
         super().__init__(*args, **kwargs)
 
-        self.images_path = self.dataset_path / "images"
+        # Image resolution base path
+        self.images_base_path = Path("/data/plant-rl/online")
 
-        self.simulate = kwargs.get("simulate", False)
         self.dim_action_penalty = 0
         self.awoken = False
 
@@ -66,28 +76,49 @@ class MockPlantGrowthChamber(PlantGrowthChamber):
         return result
 
     async def get_image(self):
-        row = self.dataset_df[self.dataset_df["frame"] == self.index].iloc[0]
-        path = self.images_path / row["image_name"]
-        self.images["left"] = Image.open(path)
+        row = self.dataset_df.filter(pl.col("wall_time") == self.wall_time).head(1)
+        if row.height == 0:
+            return
+
+        image_name = row["image_name"][0]
+        exp = row["experiment"][0]
+        zone = row["zone"][0]
+
+        # Common patterns for image paths
+        path = (
+            self.images_base_path
+            / f"E{exp}"
+            / "P1"
+            / f"*{zone}"
+            / f"alliance-zone{zone:02d}"
+            / "images"
+            / image_name
+        )
+        glob_path = str(path)
+
+        matches = glob.glob(glob_path)
+        if len(matches) == 0:
+            logger.warning(f"Could not find image {image_name} in {path}")
+        elif len(matches) > 1:
+            logger.warning(f"Found multiple images {image_name} in {path}")
+
+        self.images["left"] = Image.open(matches[0])
 
     def get_time(self):  # type: ignore
-        return self.time
+        return self.current_time
 
     def get_terminal(self):
-        return self.index >= self.dataset_df["frame"].max()
+        return self.time_index >= len(self.unique_wall_times) - 1
 
-    def get_plant_stats(self):
-        if self.mock_area:
-            self.df = self.dataset_df[self.dataset_df["frame"] == self.index]
-            self.df = self.df[self.plant_stat_columns]
-            self.plant_stats = np.array(self.df, dtype=np.float32)
+    async def get_plant_stats(self):
+        if self.mock_stats:
+            df_step = self.dataset_df.filter(pl.col("wall_time") == self.wall_time)
+            self.df = df_step.to_pandas()
         else:
-            super().get_plant_stats()
+            await super().get_plant_stats()
 
     async def step(self, action: np.ndarray):
         reward, observation, terminal, info = await super().step(action)
-        if self.simulate and np.sum(action) == 0:
-            reward -= 0.5 * abs(reward)
         return reward, observation, terminal, info
 
     async def put_action(self, action: int):
@@ -95,18 +126,15 @@ class MockPlantGrowthChamber(PlantGrowthChamber):
         self.last_action = action
 
     async def sleep_until(self, wake_time: datetime):
-        while self.time < wake_time and not self.get_terminal():
-            self.time = wake_time
-            if self.index + 1 >= self.dataset_df["frame"].max():
-                self.index = 0
-                break
-            next_row = self.dataset_df[self.dataset_df["frame"] == self.index + 1].iloc[
-                0
-            ]
-            next_time = next_row["time"]
-            if next_time <= self.time:
-                self.time = next_time
-                self.index += 1
+        while (
+            self.time_index + 1 < len(self.unique_wall_times)
+            and self.current_time < wake_time
+        ):
+            self.time_index += 1
+            self.wall_time = self.unique_wall_times[self.time_index]
+            self.current_time = self.dataset_df.filter(
+                pl.col("wall_time") == self.wall_time
+            )["time"][0]
 
     async def close(self):
         pass

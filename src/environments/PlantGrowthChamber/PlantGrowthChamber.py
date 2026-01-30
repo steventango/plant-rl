@@ -28,7 +28,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self,
         zone: str | None = None,
         timezone: str = "Etc/UTC",
-        normalize_reward: bool = False,
         **kwargs,
     ):
         if zone is not None:
@@ -58,7 +57,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.clean_area_lower, self.clean_area_upper = 0.1, 0.3
 
         self.dli = 0
-        self.normalize_reward = normalize_reward
 
         self.last_action = np.zeros(6)
         self.last_calibrated_action = np.zeros(6)
@@ -346,31 +344,29 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             yesterday_morning_local_date, 0.0
         )
 
-        if self.normalize_reward:
-            if yesterday_morning_mean_area == 0:
-                logger.debug(
-                    "Yesterday's morning mean area is 0, returning 0 reward to avoid division by zero."
-                )
-                return 0
-            reward = normalize(
-                today_morning_mean_area / yesterday_morning_mean_area - 1, 0, 0.35
+        if yesterday_morning_mean_area == 0:
+            logger.debug(
+                "Yesterday's morning mean area is 0, returning 0 reward to avoid division by zero."
             )
-        else:
-            if len(self.clean_areas) < 10:
-                logger.debug("Not enough clean areas to compute reward.")
-                return 0
-            reward = normalize(
-                np.mean(self.clean_areas[-1]) - np.mean(self.clean_areas[-10]), 0, 150
-            )
+            return 0.0
 
         # if reward only @ 9:30 AM
+        local_time = self.time.astimezone(self.tz)
         if self.sparse_reward and not (
-            self.get_local_time().hour == 9 and self.get_local_time().minute == 30
+            local_time.hour == 9 and local_time.minute == 30
         ):
             logger.debug(
-                f"Returning sparse reward of 0 at {self.get_local_time().astimezone(self.tz)}"
+                f"Returning sparse reward of 0 at {local_time}"
             )
-            return 0
+            return 0.0
+    
+        reward = np.log(today_morning_mean_area + 1) - np.log(
+            yesterday_morning_mean_area + 1
+        )
+
+        if np.isnan(reward):
+            logger.debug(f"Reward is nan: {today_morning_mean_area}, {yesterday_morning_mean_area}")
+            reward = 0.0
 
         return reward
 
