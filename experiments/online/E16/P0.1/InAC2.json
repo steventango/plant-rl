@@ -1,13 +1,22 @@
 {
     "agent": "InAC2",
-    "problem": "WallStatsActionTraceEmbeddingPlantGrowthChamberColorTriangle",
+    "problem": "MockWallStatsActionTraceEmbeddingPlantGrowthChamberColorTriangle",
     "total_steps": 40320,
     "episode_cutoff": -1,
     "metaParameters": {
         "environment": {
             "zone": "alliance-zone02",
             "timezone": "America/Edmonton",
-            "action_uema_beta": 0.5
+            "experiment": 15,
+            "zone_id": 2,
+            "sterilization_date": "2025-12-01",
+            "plate_date": "2025-12-04",
+            "transplant_date": "2025-12-11",
+            "dome_removal_date": "2025-12-15",
+            "watering_date": "2025-12-15",
+            "start_date": "2025-12-17T16:30:00+00:00",
+            "liters_per_pot": 0.0625,
+            "pca_model_path": "/data/plant-rl/offline/v23/pca_model.joblib"
         },
         "timezone": "America/Edmonton",
         "discrete_control": false,
@@ -18,7 +27,7 @@
         "updates_per_step": 0,
         "use_planning": false,
         "observation_indices": [[3, 28, 33, 38, 39, 40, 41]],
-        "pretrained_path": "./data/models/A1/P2/InAC_GPsim_sweep/969/parameters",
-        "normalization_path": "/data/plant-rl/offline/v23/normalization-stats-v23.json",
+        "pretrained_path": "results/offline/S8/P2/InAC/7/parameters",
+        "normalization_path": "/data/plant-rl/offline/v23/normalization-stats-v23.json"
     }
 }

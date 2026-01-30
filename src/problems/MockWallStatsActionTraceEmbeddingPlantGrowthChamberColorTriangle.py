@@ -1,7 +1,7 @@
 from PyExpUtils.collection.Collector import Collector
 
-from environments.PlantGrowthChamber.WallStatsActionTraceEmbeddingPlantGrowthChamberColorTriangle import (
-    WallStatsActionTraceEmbeddingPlantGrowthChamberColorTriangle as Env,
+from environments.PlantGrowthChamber.MockWallStatsActionTraceEmbeddingPlantGrowthChamberColorTriangle import (
+    MockWallStatsActionTraceEmbeddingPlantGrowthChamberColorTriangle as Env,
 )
 from experiment.ExperimentModel import ExperimentModel
 from problems.BasePlantGrowthChamberAsyncProblem import (
@@ -9,7 +9,7 @@ from problems.BasePlantGrowthChamberAsyncProblem import (
 )
 
 
-class WallStatsActionTraceEmbeddingPlantGrowthChamberColorTriangle(
+class MockWallStatsActionTraceEmbeddingPlantGrowthChamberColorTriangle(
     BasePlantGrowthChamberAsyncProblem
 ):
     def __init__(self, exp: ExperimentModel, idx: int, collector: Collector):
