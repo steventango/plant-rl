@@ -6,10 +6,10 @@
     "metaParameters": {
         "environment": {
             "zone": "alliance-zone08",
-            "timezone": "Asia/Aqtau"
+            "timezone": "Europe/Brussels"
         },
         "filepath": "experiments/incubation/balanced.xlsx",
         "compatibility_mode": false,
-        "timezone": "Asia/Aqtau"
+        "timezone": "Europe/Brussels"
     }
 }
