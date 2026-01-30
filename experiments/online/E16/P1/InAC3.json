@@ -6,7 +6,7 @@
     "metaParameters": {
         "environment": {
             "zone": "alliance-zone03",
-            "timezone": "Europe/Brussels",
+            "timezone": "Europe/Athens",
             "sterilization_date": "2025-12-01",
             "plate_date": "2025-12-04",
             "transplant_date": "2025-12-11",
@@ -16,7 +16,7 @@
             "liters_per_pot": 0.0625,
             "pca_model_path": "/data/plant-rl/offline/v23/pca_model.joblib"
         },
-        "timezone": "Europe/Brussels",
+        "timezone": "Europe/Athens",
         "discrete_control": false,
         "policy_type": "dirichlet",
         "hidden_units": 64,
