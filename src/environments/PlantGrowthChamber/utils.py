@@ -8,15 +8,15 @@ from aiohttp_retry import ExponentialRetry, RetryClient
 async def create_session():
     # Configure retry options with exponential backoff
     retry_options = ExponentialRetry(
-        attempts=9,  # Maximum 9 retry attempts
-        start_timeout=0.1,  # Start with 0.1s delay
-        max_timeout=30,  # Maximum 30s delay
-        factor=2,  # Double the delay each retry
+        attempts=3,  # Maximum 3 retry attempts
+        start_timeout=60,  # Start with 60s delay
+        max_timeout=4 * 60,  # Maximum 4 minute delay
+        factor=1,
         statuses={500, 502, 503, 504, 429},  # Retry on server errors and rate limiting
     )
 
     # Create RetryClient with retry options
-    timeout = aiohttp.ClientTimeout(total=60)
+    timeout = aiohttp.ClientTimeout(total=4 * 60)
     connector = aiohttp.TCPConnector(limit=10, ttl_dns_cache=300)
     # Create and return a new session instance directly
     session = RetryClient(
