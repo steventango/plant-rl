@@ -35,7 +35,7 @@
                 41
             ]
         ],
-        "pretrained_path": "results/offline/S8/P2/InAC_LN/21/parameters",
+        "pretrained_path": "results/offline/S8/P2/InAC_LN/6/parameters",
         "normalization_path": "/data/plant-rl/offline/v23/normalization-stats-v23.json"
     }
 }
