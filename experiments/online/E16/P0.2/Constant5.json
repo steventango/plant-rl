@@ -7,12 +7,12 @@
         "environment": {
             "zone": "alliance-zone05",
             "timezone": "America/Edmonton",
-            "sterilization_date": "2025-12-01",
-            "plate_date": "2025-12-04",
-            "transplant_date": "2025-12-11",
-            "dome_removal_date": "2025-12-15",
-            "watering_date": "2025-12-15",
-            "start_date": "2025-12-17T16:30:00+00:00",
+            "sterilization_date": "2026-01-19",
+            "plate_date": "2026-01-23",
+            "transplant_date": "2026-01-30",
+            "dome_removal_date": "2026-02-03",
+            "watering_date": "2026-02-03",
+            "start_date": "2026-02-05T09:30:00+02:00",
             "liters_per_pot": 0.0625,
             "pca_model_path": "/data/plant-rl/offline/v23/pca_model.joblib"
         },
