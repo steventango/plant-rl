@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.INFO)
 
 def assert_observation(obs, row):
     actual_wall_time = obs[0]
-    desired_wall_time = row["wall_time"][0].mean()
+    desired_wall_time = row["wall_time"].item().mean()
     np.testing.assert_allclose(actual_wall_time, desired_wall_time, rtol=1e-5)
 
     actual_mean_clean_area = obs[1]
@@ -42,15 +42,15 @@ def assert_observation(obs, row):
 async def test_mock_triangle_chamber_cv():
     env = MockWallStatsActionTraceEmbeddingPlantGrowthChamberColorTriangle(
         mock_stats=False,
-        experiment=11,
-        zone_id=1,
-        sterilization_date="2025-08-05",
-        plate_date="2025-08-08",
-        transplant_date="2025-08-15",
-        dome_removal_date="2025-08-18",
-        watering_date="2025-08-18",
-        start_date="2025-08-20T15:30:00+00:00",
-        liters_per_pot=2.0 / 18,
+        experiment=15,
+        zone_id=2,
+        sterilization_date="2025-12-01",
+        plate_date="2025-12-04",
+        transplant_date="2025-12-11",
+        dome_removal_date="2025-12-15",
+        watering_date="2025-12-15",
+        start_date="2025-12-17T16:30:00+00:00",
+        liters_per_pot=0.0625,
         pca_model_path="/data/plant-rl/offline/v23/pca_model.joblib",
         timezone="America/Edmonton",
     )
@@ -59,7 +59,7 @@ async def test_mock_triangle_chamber_cv():
     obs, info = await env.start()
     print(f"Observation shape: {obs.shape}")
     rows = (
-        env.dataset_df.filter((pl.col("experiment") == 11) & (pl.col("zone") == 1))
+        env.dataset_df.filter((pl.col("experiment") == 15) & (pl.col("zone") == 2))
         .group_by("time", maintain_order=True)
         .agg(
             "wall_time",
@@ -72,7 +72,8 @@ async def test_mock_triangle_chamber_cv():
         .head(4)
     )
 
-    assert len(env.df) == 18
+    assert len(obs) == 816
+    assert len(env.df) == len(rows[0]["clean_area"].item())
     assert_observation(obs, rows[0])
 
     # Test step
