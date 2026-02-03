@@ -151,7 +151,15 @@ def normalize_state(obs, offset, scale):
     return (obs - offset) / (scale + 1e-8)
 
 
-def get_trajectory_actions(episode, pi, beh_pi, rngs, state_min=None, state_diff=None):
+def get_trajectory_actions(
+    episode,
+    pi,
+    beh_pi,
+    rngs,
+    observation_indices=None,
+    state_min=None,
+    state_diff=None,
+):
     """Get policy actions for each state in the trajectory."""
     states = episode.observations[
         :-1
@@ -159,6 +167,9 @@ def get_trajectory_actions(episode, pi, beh_pi, rngs, state_min=None, state_diff
     dataset_actions = episode.actions
 
     # Normalize states for policy query
+    if observation_indices is not None:
+        states = states[:, observation_indices]
+
     norm_states = normalize_state(states, state_min, state_diff)
 
     # Get policy actions
@@ -1375,9 +1386,10 @@ def compute_clipped_advantage_over_dataset(
     exp_threshold=10000,
     num_points=64,
     max_transitions=None,
+    observation_indices=None,
     state_min=None,
     state_diff=None,
-):
+) -> dict:
     """
     Compute the average clipped advantage over the entire dataset.
 
@@ -1390,11 +1402,14 @@ def compute_clipped_advantage_over_dataset(
         tau: Temperature parameter
         eps: Lower clipping threshold
         exp_threshold: Upper clipping threshold
-        num_points: Number of points per simplex dimension
-        max_transitions: Maximum number of transitions to process (None = all)
+        num_points: Resolution of simplex grid
+        max_transitions: Maximum number of transitions to use
+        observation_indices: Indices of observations to keep
+        state_min: Min/mean values for normalization
+        state_diff: Diff/std values for normalization
 
     Returns:
-        Dictionary with keys 'points' (simplex coordinates) and 'clipped_advantages' (mean values)
+        Dictionary with keys 'points' and 'clipped_advantages'
     """
     # Generate ALL points on the simplex grid
     points = []
@@ -1413,6 +1428,8 @@ def compute_clipped_advantage_over_dataset(
     transition_count = 0
     for episode in dataset.iterate_episodes():
         states = episode.observations[:-1]  # Remove last observation
+        if observation_indices is not None:
+            states = states[:, observation_indices]
         actions = episode.actions
 
         all_states.append(states)
@@ -1548,9 +1565,10 @@ def compute_dataset_metrics(
     exp_threshold=10000,
     num_points=64,
     max_transitions=None,
+    observation_indices=None,
     state_min=None,
     state_diff=None,
-):
+) -> dict:
     """
     Compute various metrics over the entire dataset.
 
@@ -1563,8 +1581,11 @@ def compute_dataset_metrics(
         tau: Temperature parameter for clipped advantage
         eps: Lower clipping threshold for clipped advantage
         exp_threshold: Upper clipping threshold for clipped advantage
-        num_points: Number of points per simplex dimension
-        max_transitions: Maximum number of transitions to process (None = all)
+        num_points: Resolution of simplex grid
+        max_transitions: Maximum number of transitions to use
+        observation_indices: Indices of observations to keep
+        state_min: Min/mean values for normalization
+        state_diff: Diff/std values for normalization
 
     Returns:
         Dictionary with keys 'points', 'advantages', 'values', 'action_values', 'clipped_advantages'
@@ -1586,6 +1607,8 @@ def compute_dataset_metrics(
     transition_count = 0
     for episode in dataset.iterate_episodes():
         states = episode.observations[:-1]  # Remove last observation
+        if observation_indices is not None:
+            states = states[:, observation_indices]
         actions = episode.actions
 
         all_states.append(states)
@@ -1738,6 +1761,7 @@ def compute_dataset_policy_metrics(
     dataset,
     num_points=64,
     max_transitions=None,
+    observation_indices=None,
     state_min=None,
     state_diff=None,
 ):
@@ -1748,10 +1772,13 @@ def compute_dataset_policy_metrics(
     states in the dataset and returns the mean.
 
     Args:
-        policy: The policy network (pi or beh_pi)
+        policy: The policy network
         dataset: The Minari dataset
-        num_points: Number of points per simplex dimension
-        max_transitions: Maximum number of transitions to process (None = all)
+        num_points: Resolution of simplex grid
+        max_transitions: Maximum number of transitions to use
+        observation_indices: Indices of observations to keep
+        state_min: Min/mean values for normalization
+        state_diff: Diff/std values for normalization
 
     Returns:
         Dictionary with keys 'points' and 'log_probs' (mean log probabilities)
@@ -1772,6 +1799,8 @@ def compute_dataset_policy_metrics(
     transition_count = 0
     for episode in dataset.iterate_episodes():
         states = episode.observations[:-1]  # Remove last observation
+        if observation_indices is not None:
+            states = states[:, observation_indices]
 
         all_states.append(states)
 
@@ -2289,10 +2318,10 @@ def main():
     parser.add_argument(
         "--exp_path",
         type=str,
-        default="results/offline/S8/P2/InAC_LN/7",
+        default="results/offline/S8/P3/InAC_LN/5",
         help="Path to experiment directory with trained model",
     )
-    parser.add_argument("--dataset", default="plant-data/mixed-v22", type=str)
+    parser.add_argument("--dataset", default="plant-data/mixed-v23", type=str)
     parser.add_argument(
         "--episodes", default=10, type=int, help="Number of episodes to visualize"
     )
@@ -2341,14 +2370,14 @@ def main():
     parser.add_argument(
         "--normalization_path",
         type=str,
-        default="/data/plant-rl/offline/v22/normalization-stats-v22.json",
+        default="/data/plant-rl/offline/v23/normalization-stats-v23.1.json",
         help="Path to normalization statistics JSON (z-score)",
     )
     parser.add_argument(
         "--observation_indices",
         type=int,
         nargs="+",
-        default=None,
+        default=[3, 28, 33, 38, 39, 40, 41],
         help="Indices of observations to keep",
     )
 
@@ -2410,6 +2439,7 @@ def main():
                 actor_critic.pi,
                 actor_critic.beh_pi,
                 rngs,
+                observation_indices=args.observation_indices,
                 state_min=state_min,
                 state_diff=state_diff,
             )
@@ -2591,6 +2621,8 @@ def main():
         episode = episodes[idx]
         # Take the first state of the episode as a start state
         start_state = episode.observations[0]
+        if args.observation_indices is not None:
+            start_state = start_state[args.observation_indices]
         start_states.append(start_state)
         print(f"  Selected start state from episode {idx}, area={start_state[0]:.3f}")
 
@@ -2625,6 +2657,9 @@ def main():
     #     exp_threshold=args.exp_threshold,
     #     num_points=64,
     #     max_transitions=args.max_transitions,
+    #     observation_indices=args.observation_indices,
+    #     state_min=state_min,
+    #     state_diff=state_diff,
     # )
 
     # # Plot advantage
@@ -2683,6 +2718,9 @@ def main():
     #     dataset,
     #     num_points=64,
     #     max_transitions=args.max_transitions,
+    #     observation_indices=args.observation_indices,
+    #     state_min=state_min,
+    #     state_diff=state_diff,
     # )
     # pi_dataset_plot_path = output_dir / "simplex_pi_dataset_mean.pdf"
     # plot_dataset_policy_ternary(
@@ -2698,6 +2736,9 @@ def main():
     #     dataset,
     #     num_points=64,
     #     max_transitions=args.max_transitions,
+    #     observation_indices=args.observation_indices,
+    #     state_min=state_min,
+    #     state_diff=state_diff,
     # )
     # beh_pi_dataset_plot_path = output_dir / "simplex_beh_pi_dataset_mean.pdf"
     # plot_dataset_policy_ternary(
