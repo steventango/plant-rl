@@ -117,19 +117,21 @@ class WallStatsActionTraceEmbeddingPlantGrowthChamber(PlantGrowthChamber):
             self.last_log_clean_area = mean_log_clean_area
             df["reward"] = reward
 
-            # Filter and take mean
-            alive_mask = (df["clean_area"] > 0) & ~np.isnan(df["clean_area"])
+            # Filter and take IQM
+            q1 = df["clean_area"].quantile(0.25)
+            q3 = df["clean_area"].quantile(0.75)
+            mask = (df["clean_area"] > q1) & (df["clean_area"] < q3) & ~np.isnan(df["clean_area"])
             mean_stats = df[COLS].to_numpy(dtype=np.float32)
-            mean_stats = np.nanmean(mean_stats[alive_mask], axis=0)
+            mean_stats = np.nanmean(mean_stats[mask], axis=0)
 
             # 3. Mean Embedding
             mean_embedding = np.zeros(self.embedding_dim, dtype=np.float32)
             cls_token_pca = np.zeros(self.pca_dim, dtype=np.float32)
 
             if "cls_token" in df.columns:
-                alive_mask_and_has_embedding = alive_mask & ~df["cls_token"].isna()
-                if alive_mask_and_has_embedding.any():
-                    stacked = np.stack(df["cls_token"][alive_mask_and_has_embedding])
+                mask_and_has_embedding = mask & ~df["cls_token"].isna()
+                if mask_and_has_embedding.any():
+                    stacked = np.stack(df["cls_token"][mask_and_has_embedding])
                     mean_embedding = np.mean(stacked, axis=0)
                     cls_token_pca = self.pca.transform(
                         mean_embedding.reshape(1, -1)
