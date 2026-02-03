@@ -108,7 +108,7 @@ class MockPlantGrowthChamber(PlantGrowthChamber):
         return self.current_time
 
     def get_terminal(self):
-        return self.time_index >= len(self.unique_wall_times) - 1
+        return self.time_index >= len(self.unique_wall_times) - 3
 
     async def get_plant_stats(self):
         if self.mock_stats:
