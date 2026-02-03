@@ -12,7 +12,7 @@
             "transplant_date": "2026-01-30",
             "dome_removal_date": "2026-02-03",
             "watering_date": "2026-02-03",
-            "start_date": "2026-02-05T09:30:00+02:00",
+            "start_date": "2026-02-04T09:30:00+02:00",
             "liters_per_pot": 0.0625,
             "pca_model_path": "/data/plant-rl/offline/v23/pca_model.joblib"
         },
