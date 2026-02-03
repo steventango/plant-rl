@@ -253,17 +253,7 @@ async def main():
                     logger.debug(
                         f"{episode} {step} {glue.total_reward} {avg_time:.4}ms {int(fps)}"
                     )
-
-                    interaction = await glue.start()
-                    log(
-                        env,
-                        glue,
-                        wandb_run,
-                        interaction.o,
-                        interaction.a,
-                        interaction.extra,
-                        is_mock_env=is_mock_env,
-                    )
+                    break
         except Exception as e:
             logger.exception(e)
             raise e
