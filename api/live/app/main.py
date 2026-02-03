@@ -7,7 +7,7 @@ app = FastAPI()
 
 @app.get("/", response_class=HTMLResponse)
 async def show_zones():
-    zones = [1, 2, 3, 6, 8, 9]
+    zones = list(range(1, 13))
     response = """
     <html>
     <head>
@@ -74,7 +74,7 @@ async def show_zones():
           const images = zone.querySelectorAll("img");
           const zoneId = zone.querySelector("h3").textContent.split(" ")[1];
           for (const [index, img] of images.entries()) {
-            const src = "/proxy/zone/0" + zoneId + "/camera/" + (index + 1).toString().padStart(2, "0") + ".jpg";
+            const src = "/proxy/zone/" + zoneId.padStart(2, "0") + "/camera/" + (index + 1).toString().padStart(2, "0") + ".jpg";
             const newSrc = src + "?t=" + Date.now();
             const newImg = new Image();
             newImg.onload = () => {
@@ -114,7 +114,8 @@ async def show_zones():
 async def proxy_latest(zone: int):
     async with httpx.AsyncClient() as client:
         resp = await client.get(
-            f"http://mitacs-zone{zone}.ccis.ualberta.ca:8080/action/latest", timeout=5
+            f"http://alliance-zone{zone:02d}.ccis.ualberta.ca:8080/action/latest",
+            timeout=5,
         )
         return Response(
             content=resp.text,
@@ -127,7 +128,7 @@ async def proxy_latest(zone: int):
 async def proxy_camera(zone: int, camera_id: int):
     async with httpx.AsyncClient() as client:
         resp = await client.get(
-            f"http://mitacs-zone{zone:02d}-camera{camera_id:02d}.ccis.ualberta.ca:8080/observation",
+            f"http://alliance-zone{zone:02d}-camera{camera_id:02d}.ccis.ualberta.ca:8080/observation",
             timeout=30,
         )
         return Response(
