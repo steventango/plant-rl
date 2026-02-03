@@ -1,0 +1,34 @@
+{
+    "agent": "Constant_Red",
+    "problem": "PlantCalibrationModel",
+    "total_steps": 20000,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "dataset_id": "plant-data/mixed-v23",
+            "k": 10,
+            "max_stat_dist": 9.0,
+            "max_emb_dist": 1.0,
+            "max_action_dist": 0.816496580927726,
+            "terminal_episode_steps": 13
+        },
+        "eval_environment": {
+            "dataset_id": "plant-data/mixed-v23",
+            "k": 10,
+            "max_stat_dist": 9.0,
+            "max_emb_dist": 1.0,
+            "max_action_dist": 0.816496580927726,
+            "terminal_episode_steps": 13
+        },
+        "experiment": {
+            "log_interval": 1000,
+            "eval_interval": 1000,
+            "seed_offset": 0
+        },
+        "dataset_id": "plant-data/mixed-v23",
+        "normalization_path": "/data/plant-rl/offline/v23/normalization-stats-v23.1.json",
+        "constant_action": [[1, 0, 0]],
+        "observation_indices": [[3, 28, 33, 38, 39, 40, 41]],
+        "gamma": 0.9
+    }
+}
