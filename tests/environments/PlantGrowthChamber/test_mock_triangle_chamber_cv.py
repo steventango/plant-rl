@@ -83,8 +83,7 @@ async def test_mock_triangle_chamber_cv():
     assert reward == 0.0
     assert not terminal
 
-    # TODO: debug the mock environment is skipping two steps after start + step
-    assert_observation(observation, rows[2])
+    assert_observation(observation, rows[1])
 
     # Test step
     action = np.array([0.0, 1.0, 0.0], dtype=np.float32)
