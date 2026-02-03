@@ -151,7 +151,7 @@ def log(
 ):
     start_time = time.time()
     expanded_info = {}
-    state_indices_to_log = [(0,), (1,), (3,), (17,), (18,), (19,)]
+    state_indices_to_log = [(0,), (3,), (28,), (33,), (38,), (39,), (40,), (41,)]
     for key, value in info.items():
         if isinstance(value, pd.DataFrame):
             continue
