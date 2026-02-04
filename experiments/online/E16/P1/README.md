@@ -1,26 +1,34 @@
 # Experiment E16 / Phase P1
 
-Keep seedlings alive with 12h daylight and 12h night with calibrated action
-space.
+Test whether there is a statistical difference between the returns of the different policies. Verify that there is no differences between the returns of the constant policy deployed in different zones.
 
 ## Environment
 ### PlantGrowthChamber
 #### State
-  - time
+- Plant solidity
+- Log clean area
+- Liters per pot
+- DINOv3 embedding PC 1
+- DINOv3 embedding PC 2
+- DINOv3 embedding PC 3
+- DINOv3 embedding PC 4
 
 #### Actions
-  - dim
-  - balanced
+- Dirichlet policy over the Color Triangle: (Red, White, Blue)
 
 #### Time step
-10 minute
+1 day
 
 ## Agents
 ### Constant
-Constant1
+- **Zones 1, 5, 9**
+- Running with `Constant1`, `Constant5`, and `Constant9` configurations.
 
 ### InAC
-Actor Critic agents (zones 2-12)
+- **Zones 2, 3, 4, 6, 7, 8, 10, 11, 12**
+- Pretrained models from `results/offline/S8/P2/InAC_LN/`.
+- Testing three different policies learned with offline RL.
 
 ## Deployment
-Using some alliance chambers (zones 1-12)
+- Using alliance chambers (zones 1-12).
+- Start Date: 2026-02-04 09:30 AM (Europe/Athens).
