@@ -1,4 +1,5 @@
 import asyncio  # type: ignore
+import json
 import logging
 import shutil
 import time
@@ -164,6 +165,15 @@ class AsyncRLGlue:
                     pass
             return value
 
+        def _to_csv_cell(value: Any) -> Any:
+            value = _normalize_csv_value(value)
+            if isinstance(value, (dict, list, tuple)):
+                try:
+                    return json.dumps(value)
+                except Exception:
+                    return str(value)
+            return value
+
         start_time = time.time()
         data_dict = {
             "time": self.environment.time,  # type: ignore
@@ -201,7 +211,7 @@ class AsyncRLGlue:
             data_dict.update(expanded_info)
 
         logger.debug("Creating DataFrame from data_dict")
-        normalized_row = {k: _normalize_csv_value(v) for k, v in data_dict.items()}
+        normalized_row = {k: _to_csv_cell(v) for k, v in data_dict.items()}
         df = pd.DataFrame(index=[0])
         for key, value in normalized_row.items():
             df.at[0, key] = value
