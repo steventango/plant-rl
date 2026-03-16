@@ -6,9 +6,9 @@
     "metaParameters": {
         "environment": {
             "zone": "alliance-zone05",
-            "timezone": "America/Edmonton"
+            "timezone": "America/Toronto"
         },
-        "timezone": "America/Edmonton",
+        "timezone": "America/Toronto",
         "action_timestep": 5,
         "intensity_min": 0.0,
         "intensity_max": 400.0,
