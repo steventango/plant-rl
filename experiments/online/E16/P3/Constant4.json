@@ -1,0 +1,23 @@
+{
+    "agent": "Constant4",
+    "problem": "PlantGrowthChamber",
+    "total_steps": 40320,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": "alliance-zone04",
+            "timezone": "America/Toronto"
+        },
+        "timezone": "America/Toronto",
+        "constant_action": [
+            [
+                19.6875,
+                70.875,
+                8.1375,
+                0.0,
+                6.3,
+                12.425
+            ]
+        ]
+    }
+}
