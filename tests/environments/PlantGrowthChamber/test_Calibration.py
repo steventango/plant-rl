@@ -81,6 +81,16 @@ def test_post_init(calibration_z3: Calibration):
         np.array([114, 101, 80, 89, 29, 21.5]),
         atol=1e-1,
     )
+    assert calibration_z3.safe_minimum_action_values is not None
+    assert isinstance(calibration_z3.safe_minimum_action_values, np.ndarray)
+    assert calibration_z3.safe_minimum_action_values.shape == (6,)
+    # blue/cool_white/warm_white/orange_red/red all require action=0.3;
+    # far_red first emits at action=0.25 across all zones.
+    np.testing.assert_allclose(
+        calibration_z3.safe_minimum_action_values,
+        np.array([0.3, 0.3, 0.3, 0.3, 0.3, 0.25]),
+        atol=1e-9,
+    )
 
 
 def test_get_calibrated_value(calibration_z3: Calibration):
@@ -249,6 +259,38 @@ def test_blue_action(calibration_z3: Calibration):
 
     # check sum < 4
     assert np.sum(calibrated_action) < 4
+
+
+def test_safe_minimum_zeroes_below_threshold(calibration_z3: Calibration):
+    """
+    Channels whose desired PPFD interpolates to an action below the safe minimum
+    action (the highest first-nonzero action across all zones) must be zeroed so
+    that no zone is asked to emit in a range where another zone cannot follow.
+
+    zone03 blue: [0.0, 1.0, 6.0, ...] at actions [0.2, 0.25, 0.3, ...]
+    After zeroing action at PPFD=0: interp(1.5 PPFD) ≈ 0.255, which is < 0.3
+    (the global safe_minimum_action for blue), so the output must be 0.
+    """
+    # desired = 1.5 PPFD for blue maps to action ≈ 0.255 < safe_minimum 0.3
+    action_below = np.array([1.5, 1.5, 1.5, 1.5, 1.5, 0.025])
+    calibrated = calibration_z3.get_calibrated_action(action_below)
+    # All channels with desired PPFD below their safe minimum should be zeroed
+    np.testing.assert_array_equal(calibrated, np.zeros(6))
+
+
+def test_safe_minimum_allows_above_threshold(calibration_z3: Calibration):
+    """
+    Channels whose desired PPFD interpolates to an action at or above the safe
+    minimum action must not be zeroed.
+
+    zone03 blue: interp(10.0 PPFD) ≈ 0.325, which is >= 0.3 → non-zero output.
+    """
+    # desired = 10.0 PPFD for blue maps to action ≈ 0.325 >= safe_minimum 0.3
+    action_above = np.array([10.0, 10.0, 10.0, 10.0, 10.0, 1.0])
+    calibrated = calibration_z3.get_calibrated_action(action_above)
+    assert np.all(calibrated > 0), (
+        f"Expected all channels > 0 above safe minimum, got {calibrated}"
+    )
 
 
 def test_red_action(calibration_z3: Calibration):

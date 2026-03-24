@@ -38,12 +38,14 @@ class Calibration:
         ]
         self.maximum_values = np.array([data["maximum"][key] for key in keys])
         self.safe_maximum_values = np.array([data["safe_maximum"][key] for key in keys])
+        self.safe_minimum_action_values = np.array([data["safe_minimum_action"][key] for key in keys])
 
     def _get_calibrated_value(
         self,
         action_cal: list[float] | None,
         color_cal: list[float] | None,
         desired: float,
+        safe_min_action: float = 0.0,
     ) -> float:
         """
         Get the calibrated value for a single color channel.
@@ -56,8 +58,14 @@ class Calibration:
         action_array[color_array == 0] = 0
 
         # Interpolate the desired value
-        action_value = np.interp(desired, color_array, action_array)
-        return float(np.clip(action_value, 0, action_array.max()))
+        action_value = float(np.clip(np.interp(desired, color_array, action_array), 0, action_array.max()))
+
+        # If the interpolated action is below the safe minimum, at least one
+        # lightbar cannot emit anything — zero all bars for this channel.
+        if safe_min_action > 0 and action_value < safe_min_action:
+            return 0.0
+
+        return action_value
 
     def get_calibrated_action(self, action: np.ndarray) -> np.ndarray:
         """
@@ -77,8 +85,10 @@ class Calibration:
 
         calibrated_action = np.array(
             [
-                self._get_calibrated_value(self.action, color, desired)
-                for desired, color in zip(action, calibration_data, strict=True)
+                self._get_calibrated_value(self.action, color, desired, float(safe_min))
+                for desired, color, safe_min in zip(
+                    action, calibration_data, self.safe_minimum_action_values, strict=True
+                )
             ]
         )
         return calibrated_action

@@ -14,5 +14,13 @@
         "orange_red": 79.0,
         "red": 60.0,
         "far_red": 21.487820999999997
+    },
+    "safe_minimum_action": {
+        "blue": 0.3,
+        "cool_white": 0.3,
+        "warm_white": 0.3,
+        "orange_red": 0.3,
+        "red": 0.3,
+        "far_red": 0.25
     }
 }

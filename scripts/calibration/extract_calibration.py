@@ -17,6 +17,7 @@ calibration_file = (
 
 maximum = {}
 safe_maximum = {}
+safe_minimum_action = {}
 
 for zone in range(1, 13):
     zone_str = f"zone{zone:02}"
@@ -70,6 +71,18 @@ for zone in range(1, 13):
         else:
             safe_maximum[action] = min(safe_maximum[action], max_value)
 
+        # Safe minimum action: the highest action value at which any zone first
+        # produces non-zero PPFD for this channel. Below this action, at least one
+        # lightbar emits nothing, so all bars should be zeroed.
+        action_values = df_dict["action"]
+        first_nonzero_action = next(
+            (a for a, v in zip(action_values, values) if v > 0), 0.0
+        )
+        if action not in safe_minimum_action:
+            safe_minimum_action[action] = first_nonzero_action
+        else:
+            safe_minimum_action[action] = max(safe_minimum_action[action], first_nonzero_action)
+
     # Save maximum to a JSON file
     # /workspaces/plant-rl/src/environments/PlantGrowthChamber/configs/calibration.json
     max_file_path = "src/environments/PlantGrowthChamber/configs/calibration.json"
@@ -77,6 +90,7 @@ for zone in range(1, 13):
         out = {
             "maximum": maximum,
             "safe_maximum": safe_maximum,
+            "safe_minimum_action": safe_minimum_action,
         }
         json.dump(out, max_file, indent=4)
 
