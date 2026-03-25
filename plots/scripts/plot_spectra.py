@@ -136,6 +136,7 @@ def main() -> None:
 
     row_groups = [
         ("All", all_zones),
+        ("1/3", [zone for zone in [1, 3] if zone in all_zones]),
         ("1/5/9", [zone for zone in [1, 5, 9] if zone in all_zones]),
         ("2/6/10", [zone for zone in [2, 6, 10] if zone in all_zones]),
         ("3/7/11", [zone for zone in [3, 7, 11] if zone in all_zones]),
