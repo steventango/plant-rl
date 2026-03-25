@@ -83,14 +83,26 @@ class Calibration:
             self.far_red,
         ]
 
-        calibrated_action = np.array(
-            [
-                self._get_calibrated_value(self.action, color, desired, float(safe_min))
-                for desired, color, safe_min in zip(
-                    action, calibration_data, self.safe_minimum_action_values, strict=True
-                )
-            ]
-        )
+        def _calibrate(a: np.ndarray) -> np.ndarray:
+            return np.array(
+                [
+                    self._get_calibrated_value(self.action, color, desired, float(safe_min))
+                    for desired, color, safe_min in zip(
+                        a, calibration_data, self.safe_minimum_action_values, strict=True
+                    )
+                ]
+            )
+
+        calibrated_action = _calibrate(action)
+
+        target_ppfd = self.get_ppfd(action)
+        if target_ppfd > 0:
+            predicted_ppfd = self.get_ppfd(self.decalibrated_action(calibrated_action))
+            if 0 < predicted_ppfd < target_ppfd:
+                scale = target_ppfd / predicted_ppfd
+                scaled_action = np.minimum(action * scale, self.safe_maximum_values)
+                calibrated_action = _calibrate(scaled_action)
+
         return calibrated_action
 
     def decalibrated_action(self, calibrated_action: np.ndarray) -> np.ndarray:
