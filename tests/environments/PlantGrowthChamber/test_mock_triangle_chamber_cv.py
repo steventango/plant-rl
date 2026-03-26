@@ -19,7 +19,9 @@ def assert_observation(obs, row):
 
     actual_mean_clean_area = obs[1]
     desired_mean_clean_area = row["clean_area"].item().mean()
-    np.testing.assert_allclose(actual_mean_clean_area, desired_mean_clean_area, rtol=5e-2)
+    np.testing.assert_allclose(
+        actual_mean_clean_area, desired_mean_clean_area, rtol=5e-2
+    )
 
     actual_log_clean_area = obs[28]
     desired_log_clean_area = row["log_clean_area"].item().mean()

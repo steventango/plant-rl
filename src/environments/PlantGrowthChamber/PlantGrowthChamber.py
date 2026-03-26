@@ -357,17 +357,17 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         if self.sparse_reward and not (
             local_time.hour == 9 and local_time.minute == 30
         ):
-            logger.debug(
-                f"Returning sparse reward of 0 at {local_time}"
-            )
+            logger.debug(f"Returning sparse reward of 0 at {local_time}")
             return 0.0
-    
+
         reward = np.log(today_morning_mean_area + 1) - np.log(
             yesterday_morning_mean_area + 1
         )
 
         if np.isnan(reward):
-            logger.debug(f"Reward is nan: {today_morning_mean_area}, {yesterday_morning_mean_area}")
+            logger.debug(
+                f"Reward is nan: {today_morning_mean_area}, {yesterday_morning_mean_area}"
+            )
             reward = 0.0
 
         return reward

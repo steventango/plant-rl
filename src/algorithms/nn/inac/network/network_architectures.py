@@ -51,8 +51,20 @@ class DoubleCriticDiscrete(nnx.Module):
         *,
         rngs: nnx.Rngs,
     ):
-        self.q1_net = FCNetwork(input_units, hidden_units, output_units, use_layernorm=use_layernorm, rngs=rngs)
-        self.q2_net = FCNetwork(input_units, hidden_units, output_units, use_layernorm=use_layernorm, rngs=rngs)
+        self.q1_net = FCNetwork(
+            input_units,
+            hidden_units,
+            output_units,
+            use_layernorm=use_layernorm,
+            rngs=rngs,
+        )
+        self.q2_net = FCNetwork(
+            input_units,
+            hidden_units,
+            output_units,
+            use_layernorm=use_layernorm,
+            rngs=rngs,
+        )
 
     def __call__(self, x, a):
         q1 = self.q1_net(x)

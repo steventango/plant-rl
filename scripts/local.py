@@ -64,12 +64,14 @@ if __name__ == "__main__":
             env["OPENBLAS_NUM_THREADS"] = "1"
             env["MKL_NUM_THREADS"] = "1"
             env["NPROC"] = "1"
-            env["XLA_FLAGS"] = "--xla_cpu_multi_thread_eigen=false intra_op_parallelism_threads=1"
+            env["XLA_FLAGS"] = (
+                "--xla_cpu_multi_thread_eigen=false intra_op_parallelism_threads=1"
+            )
             exe = f"python {cmdline.entry} --silent -e {path} -i "
 
         def batched(arr, batch_size: int):
             for i in range(0, len(arr), batch_size):
-                yield arr[i:i+batch_size]
+                yield arr[i : i + batch_size]
 
         for group in batched(indices, cmdline.vmap):
             idxs = " ".join([str(idx) for idx in group])

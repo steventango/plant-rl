@@ -101,10 +101,14 @@ def wavelength_to_rgb(wavelength_nm: float) -> tuple[float, float, float]:
 def add_em_color_bar(axis: plt.Axes) -> None:
     x_min, x_max = axis.get_xlim()
     wavelengths = np.linspace(x_min, x_max, 600)
-    colors = np.array([wavelength_to_rgb(wavelength) for wavelength in wavelengths])[np.newaxis, :, :]
+    colors = np.array([wavelength_to_rgb(wavelength) for wavelength in wavelengths])[
+        np.newaxis, :, :
+    ]
 
     color_axis = axis.inset_axes([0.0, -0.26, 1.0, 0.08])
-    color_axis.imshow(colors, aspect="auto", extent=(x_min, x_max, 0, 1), interpolation="nearest")
+    color_axis.imshow(
+        colors, aspect="auto", extent=(x_min, x_max, 0, 1), interpolation="nearest"
+    )
     color_axis.set_yticks([])
     color_axis.set_xticks([])
     for spine in color_axis.spines.values():
@@ -156,10 +160,18 @@ def main() -> None:
         "tab:cyan",
     ]
     line_styles = ["-", "--", ":", "-."]
-    zone_line_colors = {zone: zone_palette[index % len(zone_palette)] for index, zone in enumerate(all_zones)}
-    zone_styles = {zone: line_styles[index % len(line_styles)] for index, zone in enumerate(all_zones)}
+    zone_line_colors = {
+        zone: zone_palette[index % len(zone_palette)]
+        for index, zone in enumerate(all_zones)
+    }
+    zone_styles = {
+        zone: line_styles[index % len(line_styles)]
+        for index, zone in enumerate(all_zones)
+    }
 
-    fig, axes = plt.subplots(len(row_groups), len(colors), figsize=(18, 20), sharex=True, sharey=True)
+    fig, axes = plt.subplots(
+        len(row_groups), len(colors), figsize=(18, 20), sharex=True, sharey=True
+    )
 
     for row_index, (group_label, zones) in enumerate(row_groups):
         for column_index, color in enumerate(colors):

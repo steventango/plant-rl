@@ -79,7 +79,12 @@ class WallStatsActionTraceEmbeddingPlantGrowthChamber(PlantGrowthChamber):
         local_time = self.get_local_time()
 
         # 1. Wall Time
-        wall_time = (local_time - self.start_date.astimezone(self.tz)).total_seconds() / 60 / 60 / 24
+        wall_time = (
+            (local_time - self.start_date.astimezone(self.tz)).total_seconds()
+            / 60
+            / 60
+            / 24
+        )
 
         def days_since(date):
             if date is None:
@@ -120,7 +125,11 @@ class WallStatsActionTraceEmbeddingPlantGrowthChamber(PlantGrowthChamber):
             # Filter and take IQM
             q1 = df["clean_area"].quantile(0.25)
             q3 = df["clean_area"].quantile(0.75)
-            mask = (df["clean_area"] > q1) & (df["clean_area"] < q3) & ~np.isnan(df["clean_area"])
+            mask = (
+                (df["clean_area"] > q1)
+                & (df["clean_area"] < q3)
+                & ~np.isnan(df["clean_area"])
+            )
             mean_stats = df[COLS].to_numpy(dtype=np.float32)
             mean_stats = np.nanmean(mean_stats[mask], axis=0)
 

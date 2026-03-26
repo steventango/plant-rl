@@ -11,9 +11,7 @@ from utils.calibration import load_and_clean_data
 # Load the calibration data
 # one sheet per zone
 # transpose the sheet
-calibration_file = (
-    "scripts/calibration/Plant Chamber Full Calibration.xlsx"
-)
+calibration_file = "scripts/calibration/Plant Chamber Full Calibration.xlsx"
 
 maximum = {}
 safe_maximum = {}
@@ -74,9 +72,7 @@ for zone in range(1, 13):
         # Safe minimum PPFD: the highest first-nonzero PPFD across all zones for
         # this channel. Below this PPFD, at least one zone produces nothing.
         action_values = df_dict["action"]
-        first_nonzero_ppfd = next(
-            (v for v in values if v > 0), 0.0
-        )
+        first_nonzero_ppfd = next((v for v in values if v > 0), 0.0)
         if action not in safe_minimum:
             safe_minimum[action] = first_nonzero_ppfd
         else:
@@ -94,7 +90,9 @@ for zone in range(1, 13):
         json.dump(out, max_file, indent=4)
 
     # Update the calibrations in alliance-zone*.json
-    alliance_zone_file = f"src/environments/PlantGrowthChamber/configs/alliance-{zone_str}.json"
+    alliance_zone_file = (
+        f"src/environments/PlantGrowthChamber/configs/alliance-{zone_str}.json"
+    )
     with open(alliance_zone_file, "r") as file:
         alliance_zone = json.load(file)
     alliance_zone["zone"]["calibration"] = df_dict

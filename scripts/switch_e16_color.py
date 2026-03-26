@@ -14,7 +14,9 @@ COLOR_TO_PHASE = {
 DEFAULT_SERVICES = [f"zone{i}" for i in range(1, 13)]
 
 
-def update_compose(compose_path: Path, experiment: str, color: str, dry_run: bool) -> int:
+def update_compose(
+    compose_path: Path, experiment: str, color: str, dry_run: bool
+) -> int:
     phase = COLOR_TO_PHASE[color]
     text = compose_path.read_text()
 
@@ -33,7 +35,9 @@ def update_compose(compose_path: Path, experiment: str, color: str, dry_run: boo
             continue
 
         pattern = rf"experiments/online/{re.escape(experiment)}/P[^/]+/(?:Constant|Random){zone_index}\.json"
-        replacement = f"experiments/online/{experiment}/{phase}/Constant{zone_index}.json"
+        replacement = (
+            f"experiments/online/{experiment}/{phase}/Constant{zone_index}.json"
+        )
         new_line, n = re.subn(pattern, replacement, line)
 
         if n:
