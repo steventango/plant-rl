@@ -21,14 +21,14 @@ def adjust_ppfd(action: np.ndarray, ppfd: float) -> np.ndarray:
     return adjusted_action
 
 
-BALANCED_ACTION_120 = np.array([22.5, 81.0, 9.3, 0.0, 7.2, 14.2])
-BALANCED_ACTION_105 = adjust_ppfd(BALANCED_ACTION_120, 105.0)
-BALANCED_ACTION_100 = adjust_ppfd(BALANCED_ACTION_120, 100.0)
+BALANCED_ACTION_105 = np.array([19.5, 71.53, 7.82, 0.0, 6.15, 14.12])
+BALANCED_ACTION_120 = adjust_ppfd(BALANCED_ACTION_105, 120.0)
+BALANCED_ACTION_100 = adjust_ppfd(BALANCED_ACTION_105, 100.0)
 
 DIM_ACTION = 0.675 * BALANCED_ACTION_100.copy()
 
-RED_ACTION = get_modified_action(ppfd=105.0, channel=4, offset=50.0)
-BLUE_ACTION = get_modified_action(ppfd=105.0, channel=0, offset=50.0)
+RED_ACTION = get_modified_action(ppfd=105.0, channel=4, offset=40.0)
+BLUE_ACTION = get_modified_action(ppfd=105.0, channel=0, offset=40.0)
 
 TWILIGHT_INTENSITIES_30_MIN = np.array(
     [

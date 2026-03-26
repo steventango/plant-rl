@@ -75,12 +75,13 @@ def make_heatmaps(df, out_path):
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
 
     sns.set(style="whitegrid", font_scale=1.0)
-    fig = plt.figure(figsize=(14, 10), constrained_layout=True)
-    gs = fig.add_gridspec(2, 3)
-    # Row 1: Elec, Predicted, Elec-Predicted diff
+    fig = plt.figure(figsize=(18, 10), constrained_layout=True)
+    gs = fig.add_gridspec(2, 4)
+    # Row 1: Elec, Predicted, Elec-Predicted diff, Elec-105
     ax0 = fig.add_subplot(gs[0, 0])
     ax1 = fig.add_subplot(gs[0, 1])
     ax2 = fig.add_subplot(gs[0, 2])
+    ax3 = fig.add_subplot(gs[0, 3])
     # Row 2: histogram spanning all columns
     ax_hist = fig.add_subplot(gs[1, :])
 
@@ -147,9 +148,24 @@ def make_heatmaps(df, out_path):
     )
     ax2.set_title("PPFD (ELEC) - PPFD (PREDICTED)")
 
+    # PPFD (ELEC) - 105 heatmap
+    elec_minus_105 = elec - 105.0
+    maxabs_e105 = float(np.nanmax(np.abs(elec_minus_105.values.astype(float))))
+    sns.heatmap(
+        elec_minus_105,
+        annot=True,
+        fmt="+.0f",
+        cmap="RdYlBu_r",
+        center=0,
+        vmin=-maxabs_e105,
+        vmax=maxabs_e105,
+        cbar=False,
+        ax=ax3,
+    )
+    ax3.set_title("PPFD (ELEC) - 105")
+
     # Histogram of PPFD (ELEC) - 105 by color
     colors_map = {"R": "tab:red", "W": "grey", "B": "tab:blue"}
-    elec_minus_105 = elec - 105.0
     combined_vals = []
     for color in ["R", "W", "B"]:
         vals = elec_minus_105[color].dropna().values.astype(float)
@@ -211,7 +227,7 @@ def make_heatmaps(df, out_path):
     except Exception:
         pass
 
-    for a in [ax0, ax1, ax2, ax_hist]:
+    for a in [ax0, ax1, ax2, ax3, ax_hist]:
         a.grid(False)
 
     try:
@@ -219,7 +235,7 @@ def make_heatmaps(df, out_path):
     except Exception:
         pass
     try:
-        fig.colorbar(ax2.collections[0], ax=[ax2], label="Δ PPFD")
+        fig.colorbar(ax2.collections[0], ax=[ax2, ax3], label="Δ PPFD")
     except Exception:
         pass
 
