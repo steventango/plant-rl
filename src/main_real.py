@@ -189,7 +189,6 @@ async def main():
             is_mock_env = exp.problem.startswith("Mock")
 
             # --- Q-value plotting setup ---
-            last_q_plot_time = 0
             q_plots_dir = Path(context.resolve()) / "q_value_plots"
             q_plots_dir.mkdir(parents=True, exist_ok=True)
 

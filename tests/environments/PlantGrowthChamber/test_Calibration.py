@@ -8,7 +8,6 @@ from environments.PlantGrowthChamber.Calibration import Calibration
 from utils.constants import (
     BALANCED_ACTION_100,
     BALANCED_ACTION_105,
-    BALANCED_ACTION_120,
     BLUE_ACTION,
     RED_ACTION,
 )
