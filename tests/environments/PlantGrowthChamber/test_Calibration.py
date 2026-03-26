@@ -144,6 +144,7 @@ def test_adjusted_action(calibration_z3: Calibration):
     adjusted_action = curtis_action.copy()
     adjusted_action[:5] = adjusted_action[:5] / np.sum(adjusted_action[:5]) * 105
     adjusted_action[5] = curtis_action[5] / curtis_action[4] * adjusted_action[4]
+    adjusted_action[-1] = 0.0
 
     np.testing.assert_allclose(
         adjusted_action,
@@ -173,7 +174,7 @@ def test_get_calibrated_action(calibration_z3: Calibration):
     assert calibrated_action.shape == (6,)
     np.testing.assert_allclose(
         calibrated_action,
-        np.array([0.397, 0.758, 0.324, 0.000, 0.332, 0.603]),
+        np.array([0.397, 0.758, 0.324, 0.000, 0.332, 0.0]),
         atol=1e-3,
     )
 
@@ -182,7 +183,7 @@ def test_decalibrated_action(calibration_z3: Calibration):
     """
     Test that the decalibrated_action method correctly decalibrates an action.
     """
-    calibrated_action = np.array([0.397, 0.758, 0.324, 0.000, 0.332, 0.603])
+    calibrated_action = np.array([0.397, 0.758, 0.324, 0.000, 0.332, 0.0])
     decalibrated_action = calibration_z3.decalibrated_action(calibrated_action)
     assert isinstance(decalibrated_action, np.ndarray)
     assert decalibrated_action.shape == (6,)
@@ -199,7 +200,7 @@ def test_blue_action(calibration_z3: Calibration):
     """
     np.testing.assert_allclose(
         BLUE_ACTION,
-        np.array([59.5, 38.1, 4.2, 0.0, 3.3, 7.5]),
+        np.array([59.5, 38.1, 4.2, 0.0, 3.3, 0.0]),
         atol=1e-1,
     )
 
@@ -265,7 +266,7 @@ def test_red_action(calibration_z3: Calibration):
     """
     np.testing.assert_allclose(
         RED_ACTION,
-        np.array([11.6, 42.6, 4.7, 0.0, 46.2, 8.4]),
+        np.array([11.6, 42.6, 4.7, 0.0, 46.2, 0.0]),
         atol=1e-1,
     )
 

@@ -22,6 +22,7 @@ def adjust_ppfd(action: np.ndarray, ppfd: float) -> np.ndarray:
 
 
 BALANCED_ACTION_105 = np.array([19.5, 71.53, 7.82, 0.0, 6.15, 14.12])
+BALANCED_ACTION_105[-1] = 0.0
 BALANCED_ACTION_120 = adjust_ppfd(BALANCED_ACTION_105, 120.0)
 BALANCED_ACTION_100 = adjust_ppfd(BALANCED_ACTION_105, 100.0)
 
