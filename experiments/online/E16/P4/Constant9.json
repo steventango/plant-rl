@@ -1,22 +1,27 @@
 {
     "agent": "Constant9",
-    "problem": "PlantGrowthChamber",
+    "problem": "WallStatsActionTraceEmbeddingPlantGrowthChamberColorTriangle",
     "total_steps": 40320,
     "episode_cutoff": -1,
     "metaParameters": {
         "environment": {
             "zone": "alliance-zone09",
-            "timezone": "America/Toronto"
+            "timezone": "America/Edmonton",
+            "sterilization_date": "2026-01-19",
+            "plate_date": "2026-01-23",
+            "transplant_date": "2026-01-30",
+            "dome_removal_date": "2026-02-02",
+            "watering_date": "2026-02-02",
+            "start_date": "2026-02-04T09:30:00+02:00",
+            "liters_per_pot": 0.0625,
+            "pca_model_path": "/data/plant-rl/offline/v23/pca_model.joblib"
         },
-        "timezone": "America/Toronto",
+        "timezone": "America/Edmonton",
         "constant_action": [
             [
-                9.71409574468085,
-                34.97074468085106,
-                4.015159574468084,
-                0.0,
-                56.300000000000004,
-                6.130673758865249
+                1,
+                0,
+                0
             ]
         ]
     }
