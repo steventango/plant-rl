@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Plot PPFD heatmaps (Elec, Predicted, Elec-Predicted) from ppfd.csv."""
+"""Plot PPFD heatmaps (Elec, Elec-105) from ppfd.csv."""
 
 import os
 import sys
@@ -11,8 +11,6 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 )
-from src.utils.constants import BALANCED_ACTION_105, RED_ACTION, BLUE_ACTION
-from environments.PlantGrowthChamber.Calibration import Calibration
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -36,68 +34,20 @@ def pivot_by_color(df, value_col):
 
 
 def make_heatmaps(df, out_path):
-    import json
-
     elec = pivot_by_color(df, "PPFD_ELEC")
-
-    # Predicted PPFD calculation per zone x color
-    action_map = {"W": BALANCED_ACTION_105, "R": RED_ACTION, "B": BLUE_ACTION}
-    preds = {}
-    for zone in elec.index:
-        cfg_path = f"src/environments/PlantGrowthChamber/configs/alliance-zone{int(zone):02d}.json"
-        try:
-            with open(cfg_path) as f:
-                z = json.load(f)
-            cal = Calibration(**z["zone"]["calibration"])
-        except Exception:
-            cfg_path2 = (
-                f"src/environments/PlantGrowthChamber/configs/alliance-zone{zone}.json"
-            )
-            with open(cfg_path2) as f:
-                z = json.load(f)
-            cal = Calibration(**z["zone"]["calibration"])
-
-        for color in elec.columns:
-            action = action_map.get(color)
-            if action is None:
-                preds[(zone, color)] = float("nan")
-                continue
-            calibrated = cal.get_calibrated_action(action)
-            uncal = cal.decalibrated_action(calibrated)
-            preds[(zone, color)] = float(cal.get_ppfd(uncal))
-
-    # Build predicted pivot
-    pred_df = pd.DataFrame(index=elec.index, columns=elec.columns)
-    for (zone, color), val in preds.items():
-        pred_df.at[zone, color] = val
-    pred_df = pred_df.astype(float)
+    elec_minus_105 = elec - 105.0
 
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
 
     sns.set(style="whitegrid", font_scale=1.0)
-    fig = plt.figure(figsize=(18, 10), constrained_layout=True)
-    gs = fig.add_gridspec(2, 4)
-    # Row 1: Elec, Predicted, Elec-Predicted diff, Elec-105
+    fig = plt.figure(figsize=(12, 10), constrained_layout=True)
+    gs = fig.add_gridspec(2, 2)
     ax0 = fig.add_subplot(gs[0, 0])
     ax1 = fig.add_subplot(gs[0, 1])
-    ax2 = fig.add_subplot(gs[0, 2])
-    ax3 = fig.add_subplot(gs[0, 3])
-    # Row 2: histogram spanning all columns
     ax_hist = fig.add_subplot(gs[1, :])
 
-    # Shared diverging range centered at 105 for Elec and Predicted
-    all_vals = []
-    for df_ in (elec, pred_df):
-        try:
-            all_vals.append(df_.values.astype(float))
-        except Exception:
-            pass
-    if len(all_vals) > 0:
-        combined = np.concatenate([a.flatten() for a in all_vals])
-        delta = combined - 105.0
-        max_abs_global = float(np.nanmax(np.abs(delta)))
-    else:
-        max_abs_global = 10.0
+    delta = elec.values.astype(float) - 105.0
+    max_abs_global = float(np.nanmax(np.abs(delta)))
     vmin_global = 105.0 - max_abs_global
     vmax_global = 105.0 + max_abs_global
 
@@ -119,37 +69,6 @@ def make_heatmaps(df, out_path):
     )
     ax0.set_title("PPFD (ELEC)")
 
-    sns.heatmap(
-        pred_df,
-        annot=True,
-        fmt=".0f",
-        cmap="RdYlBu_r",
-        center=105,
-        vmin=vmin_global,
-        vmax=vmax_global,
-        cbar=False,
-        ax=ax1,
-    )
-    ax1.set_title("PPFD (PREDICTED)")
-
-    # Elec - Predicted diff
-    diff = elec - pred_df
-    maxabs_diff = float(np.nanmax(np.abs(diff.values.astype(float))))
-    sns.heatmap(
-        diff,
-        annot=True,
-        fmt="+.0f",
-        cmap="RdYlBu_r",
-        center=0,
-        vmin=-maxabs_diff,
-        vmax=maxabs_diff,
-        cbar=False,
-        ax=ax2,
-    )
-    ax2.set_title("PPFD (ELEC) - PPFD (PREDICTED)")
-
-    # PPFD (ELEC) - 105 heatmap
-    elec_minus_105 = elec - 105.0
     maxabs_e105 = float(np.nanmax(np.abs(elec_minus_105.values.astype(float))))
     sns.heatmap(
         elec_minus_105,
@@ -160,9 +79,9 @@ def make_heatmaps(df, out_path):
         vmin=-maxabs_e105,
         vmax=maxabs_e105,
         cbar=False,
-        ax=ax3,
+        ax=ax1,
     )
-    ax3.set_title("PPFD (ELEC) - 105")
+    ax1.set_title("PPFD (ELEC) - 105")
 
     # Histogram of PPFD (ELEC) - 105 by color
     colors_map = {"R": "tab:red", "W": "grey", "B": "tab:blue"}
@@ -227,15 +146,15 @@ def make_heatmaps(df, out_path):
     except Exception:
         pass
 
-    for a in [ax0, ax1, ax2, ax3, ax_hist]:
+    for a in [ax0, ax1, ax_hist]:
         a.grid(False)
 
     try:
-        fig.colorbar(ax0.collections[0], ax=[ax0, ax1], label="PPFD")
+        fig.colorbar(ax0.collections[0], ax=[ax0], label="PPFD")
     except Exception:
         pass
     try:
-        fig.colorbar(ax2.collections[0], ax=[ax2, ax3], label="Δ PPFD")
+        fig.colorbar(ax1.collections[0], ax=[ax1], label="Δ PPFD")
     except Exception:
         pass
 
