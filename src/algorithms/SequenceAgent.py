@@ -42,3 +42,15 @@ class SequenceAgent(BaseAgent):
 
     def end(self, reward: float, extra: Dict[str, Any]):
         return {}
+
+    # -------------------
+    # -- Checkpointing --
+    # -------------------
+    def __getstate__(self):
+        state = super().__getstate__()
+        state["steps"] = self.steps
+        return state
+
+    def __setstate__(self, state):
+        super().__setstate__(state)
+        self.steps = state["steps"]
