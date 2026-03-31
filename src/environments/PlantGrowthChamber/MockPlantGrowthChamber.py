@@ -76,6 +76,9 @@ class MockPlantGrowthChamber(PlantGrowthChamber):
         return result
 
     async def get_image(self):
+        if self.mock_stats:
+            return
+
         row = self.dataset_df.filter(pl.col("wall_time") == self.wall_time).head(1)
         if row.height == 0:
             return
