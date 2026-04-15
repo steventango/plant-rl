@@ -82,8 +82,10 @@ class Checkpoint:
         logging.debug("Dumping checkpoint")
         if not os.path.exists(params_path):
             params_path = self._ctx.ensureExists(self._params_path, is_file=True)
-            with open(params_path, "w") as f:
+            tmp_path = params_path + ".tmp"
+            with open(tmp_path, "w") as f:
                 json.dump(self._params, f)
+            os.replace(tmp_path, params_path)
 
         data_path = self._ctx.ensureExists(self._data_path, is_file=True)
         tmp_path = data_path + ".tmp"
