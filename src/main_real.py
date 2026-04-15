@@ -98,6 +98,16 @@ async def main():
 
         env = None
         chk = None
+        # checkpoint thread and synchronization primitives
+        ckpt_thread = None
+        save_lock = threading.Lock()
+        stop_event = threading.Event()
+
+        def _save_checkpoint(chk):
+            with save_lock:
+                logger.debug("Saving checkpoint...")
+                chk.save()
+                logger.debug("Checkpoint saved.")
 
         try:
             # ----------------------
@@ -112,7 +122,7 @@ async def main():
             loaded = chk.load_if_exists()
             if loaded:
                 logger.info("Loaded checkpoint")
-            timeout_handler.before_cancel(chk.save)
+            timeout_handler.before_cancel(lambda : _save_checkpoint(chk))
 
             run = exp.getRun(idx)
 
@@ -160,7 +170,7 @@ async def main():
 
             # Start checkpoint scheduler
             def schedule_checkpoint():
-                while True:
+                while not stop_event.is_set():
                     now = datetime.now()
                     target = now.replace(minute=33, second=0, microsecond=0)
                     if target <= now:
@@ -170,18 +180,22 @@ async def main():
                     logger.debug(
                         f"Scheduling next checkpoint for {target} (in {sleep_time:.2f}s)"
                     )
-                    time.sleep(sleep_time)
+                    # wait is interruptible by stop_event
+                    interrupted = stop_event.wait(timeout=sleep_time)
+                    if interrupted:
+                        logger.debug("Checkpoint scheduler received stop event, exiting")
+                        break
 
                     try:
                         logger.debug("Starting scheduled checkpoint...")
-                        chk.save()
+                        _save_checkpoint(chk)
                         logger.debug("Scheduled checkpoint complete.")
                     except Exception as e:
                         logger.warning(
                             f"Scheduled checkpoint failed: {e}", exc_info=True
                         )
 
-            ckpt_thread = threading.Thread(target=schedule_checkpoint, daemon=True)
+            ckpt_thread = threading.Thread(target=schedule_checkpoint, daemon=False)
             ckpt_thread.start()
 
             # Run the experiment
@@ -257,6 +271,16 @@ async def main():
             logger.exception(e)
             raise e
         finally:
+            # stop scheduled checkpointing and wait for it to finish
+            try:
+                stop_event.set()
+                if ckpt_thread is not None and ckpt_thread.is_alive():
+                    ckpt_thread.join(timeout=30)
+                    if ckpt_thread.is_alive():
+                        logger.warning("Checkpoint thread did not exit after join timeout")
+            except Exception:
+                logger.exception("Error while stopping checkpoint thread")
+
             # ------------
             # -- Saving --
             # ------------
@@ -264,7 +288,7 @@ async def main():
                 await env.close()
             if chk is not None:
                 try:
-                    chk.save()
+                    _save_checkpoint(chk)
                 except Exception:
                     logger.exception("Failed to save checkpoint")
                     raise
