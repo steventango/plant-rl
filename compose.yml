@@ -24,7 +24,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E17/P1/RedRed1.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E17/P2/Red1.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -58,7 +58,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E17/P1/RedBlue2.json -i 1 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E17/P2/Blue2.json -i 1 --deploy
     deploy:
       resources:
         reservations:
@@ -93,7 +93,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E17/P1/BlueRed3.json -i 2 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E17/P2/Red3.json -i 2 --deploy
     deploy:
       resources:
         reservations:
@@ -128,7 +128,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E17/P1/BlueBlue4.json -i 3 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E17/P2/Blue4.json -i 3 --deploy
     deploy:
       resources:
         reservations:
@@ -163,7 +163,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E17/P1/RedRed5.json -i 4 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E17/P2/Red5.json -i 4 --deploy
     deploy:
       resources:
         reservations:
@@ -198,7 +198,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E17/P1/RedBlue6.json -i 5 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E17/P2/Blue6.json -i 5 --deploy
     deploy:
       resources:
         reservations:
@@ -233,7 +233,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E17/P1/BlueRed7.json -i 6 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E17/P2/Red7.json -i 6 --deploy
     deploy:
       resources:
         reservations:
@@ -268,7 +268,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E17/P1/BlueBlue8.json -i 7 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E17/P2/Blue8.json -i 7 --deploy
     deploy:
       resources:
         reservations:
@@ -303,7 +303,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E17/P1/RedRed9.json -i 8 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E17/P2/Red9.json -i 8 --deploy
     deploy:
       resources:
         reservations:
@@ -338,7 +338,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E17/P1/RedBlue10.json -i 9 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E17/P2/Blue10.json -i 9 --deploy
     deploy:
       resources:
         reservations:
@@ -373,7 +373,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E17/P1/BlueRed11.json -i 10 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E17/P2/Red11.json -i 10 --deploy
     deploy:
       resources:
         reservations:
@@ -408,7 +408,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E17/P1/BlueBlue12.json -i 11 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E17/P2/Blue12.json -i 11 --deploy
     deploy:
       resources:
         reservations:
