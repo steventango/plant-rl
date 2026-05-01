@@ -232,8 +232,8 @@ async def main():
                     is_mock_env=is_mock_env,
                     episode=episode,
                 )
-
-            for step in range(glue.total_steps, exp.total_steps):
+            step = glue.total_steps
+            while True:
                 interaction = await glue.step()
 
                 episodic_return = glue.total_reward if interaction.t else None
@@ -267,6 +267,7 @@ async def main():
                         f"{episode} {step} {glue.total_reward} {avg_time:.4}ms {int(fps)}"
                     )
                     break
+                step += 1
         except Exception as e:
             logger.exception(e)
             raise e
