@@ -146,7 +146,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         now = self.get_time()
         on_boundary = now.minute % 5 == 0
         overdue = (
-            self.last_cv_time is None or (now - self.last_cv_time) > self.cv_interval
+            self.last_cv_time is None or (now - self.last_cv_time) >= self.cv_interval
         )
         if not (on_boundary or overdue):
             return
