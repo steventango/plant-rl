@@ -122,7 +122,7 @@ async def main():
             loaded = chk.load_if_exists()
             if loaded:
                 logger.info("Loaded checkpoint")
-            timeout_handler.before_cancel(lambda : _save_checkpoint(chk))
+            timeout_handler.before_cancel(lambda: _save_checkpoint(chk))
 
             run = exp.getRun(idx)
 
@@ -183,7 +183,9 @@ async def main():
                     # wait is interruptible by stop_event
                     interrupted = stop_event.wait(timeout=sleep_time)
                     if interrupted:
-                        logger.debug("Checkpoint scheduler received stop event, exiting")
+                        logger.debug(
+                            "Checkpoint scheduler received stop event, exiting"
+                        )
                         break
 
                     try:
@@ -278,7 +280,9 @@ async def main():
                 if ckpt_thread is not None and ckpt_thread.is_alive():
                     ckpt_thread.join(timeout=30)
                     if ckpt_thread.is_alive():
-                        logger.warning("Checkpoint thread did not exit after join timeout")
+                        logger.warning(
+                            "Checkpoint thread did not exit after join timeout"
+                        )
             except Exception:
                 logger.exception("Error while stopping checkpoint thread")
 
