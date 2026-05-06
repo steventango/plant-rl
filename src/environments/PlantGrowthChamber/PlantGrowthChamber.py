@@ -49,7 +49,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         # self.power: agent-facing carry-over of last successful reading
         # self.power_record: per-step audit value sent to CSV/WandB; sticky between fetches, None on failure
         self.smart_plug_client = (
-            SmartPlugClient() if self.zone.smart_plug_host is not None else None
+            SmartPlugClient()
+            if zone is not None and self.zone.smart_plug_host is not None
+            else None
         )
         self.power = dict.fromkeys(POWER_KEYS, 0.0)
         self.power_record: dict = {}

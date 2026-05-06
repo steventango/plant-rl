@@ -54,6 +54,4 @@ class SmartPlugClient:
                 try:
                     await dev.disconnect()
                 except Exception:
-                    logger.warning(
-                        "kasa disconnect error for %s", host, exc_info=True
-                    )
+                    logger.warning("kasa disconnect error for %s", host, exc_info=True)
