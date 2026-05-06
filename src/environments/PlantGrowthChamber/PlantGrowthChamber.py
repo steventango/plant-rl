@@ -55,8 +55,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         )
         self.power = dict.fromkeys(POWER_KEYS, 0.0)
         self.power_record: dict = {}
-        self.last_smart_plug_time = None
-        self.smart_plug_interval = timedelta(minutes=5)
 
         # Cleaning state
         self.cv_state = None
@@ -143,13 +141,14 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             self.df = pd.DataFrame()
             return
 
-        # Check update frequency (every 5 minutes or if never run)
+        # 5-minute cadence aligned with the CSV writer (env.time.minute % 5 == 0),
+        # with an elapsed-time fallback so a missed boundary still triggers a fetch.
         now = self.get_time()
-        if (
-            self.last_cv_time is not None
-            and (now - self.last_cv_time) < self.cv_interval
-        ):
-            # Not time to update yet, keep existing df/image or use empty if none
+        on_boundary = now.minute % 5 == 0
+        overdue = (
+            self.last_cv_time is None or (now - self.last_cv_time) >= self.cv_interval
+        )
+        if not (on_boundary or overdue):
             return
 
         session = await self._ensure_session()
@@ -205,17 +204,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         if self.smart_plug_client is None or self.zone.smart_plug_host is None:
             return
 
-        now = self.get_time()
-        on_boundary = now.minute % 5 == 0
-        overdue = (
-            self.last_smart_plug_time is None
-            or (now - self.last_smart_plug_time) > self.smart_plug_interval
-        )
-        if not (on_boundary or overdue):
-            return
-
         reading = await self.smart_plug_client.read(self.zone.smart_plug_host)
-        self.last_smart_plug_time = now
         if reading is not None:
             self.power = reading
             self.power_record = reading
