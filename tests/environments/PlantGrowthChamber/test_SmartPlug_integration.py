@@ -64,5 +64,5 @@ async def test_get_power_respects_5_minute_gate(kasa_creds):
 
     await chamber.get_power()
     assert chamber.smart_plug_client.read.await_count == 1
-    assert chamber.power_record == {}
+    assert chamber.power_record == successful
     assert chamber.power == successful

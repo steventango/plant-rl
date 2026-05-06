@@ -47,7 +47,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         # Smart plug
         # self.power: agent-facing carry-over of last successful reading
-        # self.power_record: per-step audit value sent to CSV/WandB; None on failure, empty when no read attempted
+        # self.power_record: per-step audit value sent to CSV/WandB; sticky between fetches (matches get_plant_stats), None on failure
         self.smart_plug_client = (
             SmartPlugClient() if self.zone.smart_plug_host is not None else None
         )
@@ -200,7 +200,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             self.df = pd.DataFrame()
 
     async def get_power(self):
-        self.power_record = {}
         if self.smart_plug_client is None or self.zone.smart_plug_host is None:
             return
 
