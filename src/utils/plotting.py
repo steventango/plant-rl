@@ -238,14 +238,14 @@ def plot_state_action_distribution(df, q_plots_dir, logger):
         if not plot_df.empty:
             # Extract state components
             plot_df["daytime"] = plot_df["observation"].apply(
-                lambda x: x[0]
-                if isinstance(x, (list, np.ndarray)) and len(x) > 0
-                else np.nan
+                lambda x: (
+                    x[0] if isinstance(x, (list, np.ndarray)) and len(x) > 0 else np.nan
+                )
             )
             plot_df["area"] = plot_df["observation"].apply(
-                lambda x: x[1]
-                if isinstance(x, (list, np.ndarray)) and len(x) > 1
-                else np.nan
+                lambda x: (
+                    x[1] if isinstance(x, (list, np.ndarray)) and len(x) > 1 else np.nan
+                )
             )
             plot_df.dropna(subset=["daytime", "area"], inplace=True)
 
