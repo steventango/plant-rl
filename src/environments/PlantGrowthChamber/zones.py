@@ -34,6 +34,7 @@ class Zone:
     lightbar_url: str | None
     trays: list[Tray]
     calibration: Calibration | None
+    smart_plug_host: str | None = None
 
     @property
     def num_plants(self) -> int:
@@ -49,6 +50,7 @@ def deserialize_zone(zone: dict) -> Zone:
         camera_left_url=zone.get("camera_left_url"),
         camera_right_url=zone.get("camera_right_url"),
         lightbar_url=zone.get("lightbar_url"),
+        smart_plug_host=zone.get("smart_plug_host"),
         calibration=calibration,
         trays=[
             Tray(
@@ -74,6 +76,7 @@ def serialize_zone(zone: Zone) -> dict:
         "camera_left_url": zone.camera_left_url,
         "camera_right_url": zone.camera_right_url,
         "lightbar_url": zone.lightbar_url,
+        "smart_plug_host": zone.smart_plug_host,
         "calibration": calibration_data,
         "trays": [
             {
