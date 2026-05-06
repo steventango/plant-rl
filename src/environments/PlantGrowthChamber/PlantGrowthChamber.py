@@ -47,8 +47,12 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         # Smart plug
         # self.power: agent-facing carry-over of last successful reading
-        # self.power_record: per-step audit value sent to CSV/WandB; None on failure, empty when no read attempted
-        self.smart_plug_client = SmartPlugClient()
+        # self.power_record: per-step audit value sent to CSV/WandB; sticky between fetches, None on failure
+        self.smart_plug_client = (
+            SmartPlugClient()
+            if zone is not None and self.zone.smart_plug_host is not None
+            else None
+        )
         self.power = dict.fromkeys(POWER_KEYS, 0.0)
         self.power_record: dict = {}
         self.last_smart_plug_time = None
@@ -198,14 +202,16 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             self.df = pd.DataFrame()
 
     async def get_power(self):
-        if self.zone.smart_plug_host is None:
+        if self.smart_plug_client is None or self.zone.smart_plug_host is None:
             return
 
         now = self.get_time()
-        if (
-            self.last_smart_plug_time is not None
-            and (now - self.last_smart_plug_time) < self.smart_plug_interval
-        ):
+        on_boundary = now.minute % 5 == 0
+        overdue = (
+            self.last_smart_plug_time is None
+            or (now - self.last_smart_plug_time) > self.smart_plug_interval
+        )
+        if not (on_boundary or overdue):
             return
 
         reading = await self.smart_plug_client.read(self.zone.smart_plug_host)
