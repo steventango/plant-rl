@@ -4,6 +4,7 @@ from algorithms.BaseAgent import BaseAgent
 from algorithms.BernoulliAgent import BernoulliAgent
 from algorithms.ConstantAgent import ConstantAgent
 from algorithms.ContinuousRandomAgent import ContinuousRandomAgent
+from algorithms.ContinuousRandomSimplexAgent import ContinuousRandomSimplexAgent
 from algorithms.DirichletAgent import DirichletAgent
 from algorithms.DiscreteRandomAgent import DiscreteRandomAgent
 from algorithms.linear.ESARSA import ESARSA as LinearESARSA
@@ -80,6 +81,9 @@ def getAgent(name) -> Type[BaseAgent]:
 
     if name == "ContinuousRandom":
         return ContinuousRandomAgent
+
+    if name.startswith("ContinuousRandomSimplex"):
+        return ContinuousRandomSimplexAgent
 
     if name.startswith("Dirichlet"):
         return DirichletAgent

@@ -1,0 +1,28 @@
+{
+    "agent": "Constant9",
+    "problem": "WallStatsActionTraceEmbeddingPlantGrowthChamberColorTriangle",
+    "total_steps": 40320,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": "alliance-zone09",
+            "timezone": "Europe/Athens",
+            "sterilization_date": "2026-01-19",
+            "plate_date": "2026-01-23",
+            "transplant_date": "2026-01-30",
+            "dome_removal_date": "2026-02-02",
+            "watering_date": "2026-02-02",
+            "start_date": "2026-02-04T09:30:00+02:00",
+            "liters_per_pot": 0.0625,
+            "pca_model_path": "/data/plant-rl/offline/v23/pca_model.joblib"
+        },
+        "timezone": "Europe/Athens",
+        "constant_action": [
+            [
+                0,
+                1,
+                0
+            ]
+        ]
+    }
+}

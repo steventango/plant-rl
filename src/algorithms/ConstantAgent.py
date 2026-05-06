@@ -24,6 +24,9 @@ class ConstantAgent(BaseAgent):
         if isinstance(self.action, list):
             self.action = np.array(self.action)
 
+    def policy(self, observation: np.ndarray, deterministic: bool = True) -> np.ndarray:
+        return self.action
+
     # ----------------------
     # -- RLGlue interface --
     # ----------------------

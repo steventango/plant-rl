@@ -10,6 +10,7 @@ class FCBody(nnx.Module):
         activation=nnx.relu,
         init_type="xavier",
         info=None,
+        use_layernorm=False,
         *,
         rngs: nnx.Rngs,
     ):
@@ -37,18 +38,22 @@ class FCBody(nnx.Module):
         else:
             raise ValueError(f"init_type is not defined: {init_type}")
 
-        self.layers = nnx.List(
-            [
-                nnx.Linear(
-                    dim_in,
-                    dim_out,
-                    kernel_init=kernel_init,
-                    bias_init=bias_init,
-                    rngs=rngs,
-                )
-                for dim_in, dim_out in zip(dims[:-1], dims[1:], strict=True)
-            ]
-        )
+        layers = []
+        for dim_in, dim_out in zip(dims[:-1], dims[1:], strict=True):
+            linear = nnx.Linear(
+                dim_in,
+                dim_out,
+                kernel_init=kernel_init,
+                bias_init=bias_init,
+                rngs=rngs,
+            )
+            if use_layernorm:
+                layer_norm = nnx.LayerNorm(dim_out, rngs=rngs)
+                layers.append(nnx.Sequential(linear, layer_norm))
+            else:
+                layers.append(linear)
+
+        self.layers = nnx.List(layers)
         self.activation = activation
         self.feature_dim = dims[-1]
 

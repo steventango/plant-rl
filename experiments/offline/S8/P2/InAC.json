@@ -5,7 +5,7 @@
     "episode_cutoff": -1,
     "metaParameters": {
         "environment": {
-            "dataset_id": "plant-data/mixed-all-v20",
+            "dataset_id": "plant-data/mixed-all-v22",
             "k": 10,
             "max_stat_dist": 3.0,
             "max_emb_dist": 1.0,
@@ -13,9 +13,9 @@
             "terminal_episode_steps": 13
         },
         "eval_environment": {
-            "dataset_id": "plant-data/mixed-all-v20",
+            "dataset_id": "plant-data/mixed-all-v22",
             "k": 10,
-            "max_stat_dist": 3.0,
+            "max_stat_dist": 9.0,
             "max_emb_dist": 1.0,
             "max_action_dist": 1000.0,
             "terminal_episode_steps": 13
@@ -25,8 +25,8 @@
             "eval_interval": 1000,
             "seed_offset": 0
         },
-        "dataset_id": "plant-data/mixed-v20",
-        "normalization_path": "/home/stang5/projects/aip-amw8/shared/plant/offline/normalization-stats-v20.json",
+        "dataset_id": "plant-data/mixed-v22",
+        "normalization_path": "/data/plant-rl/offline/v22/normalization-stats-v22.json",
         "policy_type": "dirichlet",
         "actor_lr_scale": [0.5, 1, 2],
         "tau": [1e-4, 1e-3, 1e-2, 1e-1],
@@ -34,7 +34,9 @@
         "hidden_units": 256,
         "max_buffer_size": 100000,
         "batch_size": [32, 256],
+        "use_layernorm": false,
         "gamma": 0.9,
+        "observation_indices": [3, 28, 33, 38, 39, 40, 41],
         "use_target_network": 1,
         "target_network_update_freq": 1,
         "polyak": [0.99, 0.995],

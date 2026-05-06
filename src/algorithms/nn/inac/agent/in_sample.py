@@ -46,15 +46,30 @@ class ActorCritic(nnx.Module):
         hidden_units: int,
         discrete_control: bool,
         policy_type: str,
+        use_layernorm: bool,
         rngs: nnx.Rngs,
     ) -> None:
         if discrete_control:
-            self.pi = MLPDiscrete(state_dim, action_dim, [hidden_units] * 2, rngs=rngs)
+            self.pi = MLPDiscrete(
+                state_dim,
+                action_dim,
+                [hidden_units] * 2,
+                use_layernorm=use_layernorm,
+                rngs=rngs,
+            )
             self.beh_pi = MLPDiscrete(
-                state_dim, action_dim, [hidden_units] * 2, rngs=rngs
+                state_dim,
+                action_dim,
+                [hidden_units] * 2,
+                use_layernorm=use_layernorm,
+                rngs=rngs,
             )
             self.q = DoubleCriticDiscrete(
-                state_dim, [hidden_units] * 2, action_dim, rngs=rngs
+                state_dim,
+                [hidden_units] * 2,
+                action_dim,
+                use_layernorm=use_layernorm,
+                rngs=rngs,
             )
         else:
             # Choose policy based on policy_type
@@ -64,6 +79,7 @@ class ActorCritic(nnx.Module):
                     action_dim,
                     [hidden_units] * 2,
                     offset=1.0,
+                    use_layernorm=use_layernorm,
                     rngs=rngs,
                 )
                 self.beh_pi = MLPDirichlet(
@@ -71,6 +87,7 @@ class ActorCritic(nnx.Module):
                     action_dim,
                     [hidden_units] * 2,
                     offset=1.0,
+                    use_layernorm=use_layernorm,
                     rngs=rngs,
                 )
             elif policy_type == "mixture_dirichlet":
@@ -80,6 +97,7 @@ class ActorCritic(nnx.Module):
                     [hidden_units] * 2,
                     num_components=5,
                     offset=0,
+                    use_layernorm=use_layernorm,
                     rngs=rngs,
                 )
                 self.beh_pi = MLPMixtureDirichlet(
@@ -88,19 +106,38 @@ class ActorCritic(nnx.Module):
                     [hidden_units] * 2,
                     num_components=5,
                     offset=0,
+                    use_layernorm=use_layernorm,
                     rngs=rngs,
                 )
             else:
-                self.pi = MLPCont(state_dim, action_dim, [hidden_units] * 2, rngs=rngs)
+                self.pi = MLPCont(
+                    state_dim,
+                    action_dim,
+                    [hidden_units] * 2,
+                    use_layernorm=use_layernorm,
+                    rngs=rngs,
+                )
                 self.beh_pi = MLPCont(
-                    state_dim, action_dim, [hidden_units] * 2, rngs=rngs
+                    state_dim,
+                    action_dim,
+                    [hidden_units] * 2,
+                    use_layernorm=use_layernorm,
+                    rngs=rngs,
                 )
 
             self.q = DoubleCriticNetwork(
-                state_dim, action_dim, [hidden_units] * 2, rngs=rngs
+                state_dim,
+                action_dim,
+                [hidden_units] * 2,
+                use_layernorm=use_layernorm,
+                rngs=rngs,
             )
         self.value_net = FCNetwork(
-            jnp.prod(state_dim), [hidden_units] * 2, 1, rngs=rngs
+            jnp.prod(state_dim),
+            [hidden_units] * 2,
+            1,
+            use_layernorm=use_layernorm,
+            rngs=rngs,
         )
         self.pi_target = nnx.clone(self.pi)
         self.q_target = nnx.clone(self.q)
@@ -352,6 +389,7 @@ def train(
     batch_size,
     use_target_network,
     target_network_update_freq,
+    use_layernorm: bool,
     logger,
     max_steps,
     log_interval,
@@ -365,6 +403,7 @@ def train(
         hidden_units,
         discrete_control,
         policy_type=policy_type,
+        use_layernorm=use_layernorm,
         rngs=rngs,
     )
     critic_adamw = optax.adamw(learning_rate, weight_decay=weight_decay)

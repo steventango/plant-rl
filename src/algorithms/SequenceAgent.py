@@ -29,16 +29,28 @@ class SequenceAgent(BaseAgent):
     def start(  # type: ignore
         self, observation: np.ndarray, extra: Dict[str, Any]
     ) -> Tuple[np.ndarray, Dict[str, Any]]:
-        action = self.actions[self.steps]
+        action = self.actions[min(self.steps, len(self.actions) - 1)]
         self.steps += 1
         return action, {}
 
     def step(
         self, reward: float, observation: np.ndarray | None, extra: Dict[str, Any]
     ):
-        action = self.actions[self.steps]
+        action = self.actions[min(self.steps, len(self.actions) - 1)]
         self.steps += 1
         return action, {}
 
     def end(self, reward: float, extra: Dict[str, Any]):
         return {}
+
+    # -------------------
+    # -- Checkpointing --
+    # -------------------
+    def __getstate__(self):
+        state = super().__getstate__()
+        state["steps"] = self.steps
+        return state
+
+    def __setstate__(self, state):
+        super().__setstate__(state)
+        self.steps = state["steps"]

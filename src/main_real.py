@@ -22,9 +22,6 @@ from experiment import ExperimentModel
 from problems.registry import getProblem
 from utils.checkpoint import Checkpoint
 from utils.logger import WandbAlertHandler, log
-
-# --- Q-value plotting imports ---
-from utils.plotting import plot_q_values_and_diff
 from utils.preempt import TimeoutHandler
 from utils.RlGlue.rl_glue import AsyncRLGlue
 
@@ -101,6 +98,16 @@ async def main():
 
         env = None
         chk = None
+        # checkpoint thread and synchronization primitives
+        ckpt_thread = None
+        save_lock = threading.Lock()
+        stop_event = threading.Event()
+
+        def _save_checkpoint(chk):
+            with save_lock:
+                logger.debug("Saving checkpoint...")
+                chk.save()
+                logger.debug("Checkpoint saved.")
 
         try:
             # ----------------------
@@ -115,7 +122,7 @@ async def main():
             loaded = chk.load_if_exists()
             if loaded:
                 logger.info("Loaded checkpoint")
-            timeout_handler.before_cancel(chk.save)
+            timeout_handler.before_cancel(lambda: _save_checkpoint(chk))
 
             run = exp.getRun(idx)
 
@@ -163,7 +170,7 @@ async def main():
 
             # Start checkpoint scheduler
             def schedule_checkpoint():
-                while True:
+                while not stop_event.is_set():
                     now = datetime.now()
                     target = now.replace(minute=33, second=0, microsecond=0)
                     if target <= now:
@@ -173,18 +180,24 @@ async def main():
                     logger.debug(
                         f"Scheduling next checkpoint for {target} (in {sleep_time:.2f}s)"
                     )
-                    time.sleep(sleep_time)
+                    # wait is interruptible by stop_event
+                    interrupted = stop_event.wait(timeout=sleep_time)
+                    if interrupted:
+                        logger.debug(
+                            "Checkpoint scheduler received stop event, exiting"
+                        )
+                        break
 
                     try:
                         logger.debug("Starting scheduled checkpoint...")
-                        chk.save()
+                        _save_checkpoint(chk)
                         logger.debug("Scheduled checkpoint complete.")
                     except Exception as e:
                         logger.warning(
                             f"Scheduled checkpoint failed: {e}", exc_info=True
                         )
 
-            ckpt_thread = threading.Thread(target=schedule_checkpoint, daemon=True)
+            ckpt_thread = threading.Thread(target=schedule_checkpoint, daemon=False)
             ckpt_thread.start()
 
             # Run the experiment
@@ -192,7 +205,6 @@ async def main():
             is_mock_env = exp.problem.startswith("Mock")
 
             # --- Q-value plotting setup ---
-            last_q_plot_time = 0
             q_plots_dir = Path(context.resolve()) / "q_value_plots"
             q_plots_dir.mkdir(parents=True, exist_ok=True)
 
@@ -222,8 +234,8 @@ async def main():
                     is_mock_env=is_mock_env,
                     episode=episode,
                 )
-
-            for step in range(glue.total_steps, exp.total_steps):
+            step = glue.total_steps
+            while True:
                 interaction = await glue.step()
 
                 episodic_return = glue.total_reward if interaction.t else None
@@ -242,43 +254,6 @@ async def main():
                     episode=episode,
                 )
 
-                # --- Q-value plotting every hour ---
-                now = time.time()
-                if (
-                    now - last_q_plot_time >= 600
-                    or step == glue.total_steps
-                    or step < 10
-                ):
-                    try:
-                        # Use a dummy DataFrame for plotting (real data not available in online mode)
-                        import pandas as pd
-
-                        dummy_df = pd.DataFrame(
-                            {
-                                "observation": [],
-                                "action": [],
-                                "reward": [],
-                                "terminal": [],
-                                "trajectory_name": [],
-                            }
-                        )
-                        plot_q_values_and_diff(
-                            logger, agent.agent, q_plots_dir, step, dummy_df
-                        )
-                        # Log the latest Q-value and Q-diff plots to wandb
-                        q_plot_file = q_plots_dir / f"q_values_step_{step:06d}.jpg"
-                        q_diff_file = q_plots_dir / f"q_diff_step_{step:06d}.jpg"
-                        if q_plot_file.exists():
-                            wandb_run.log({"q_values": wandb.Image(str(q_plot_file))})
-                        if q_diff_file.exists():
-                            wandb_run.log({"q_diff": wandb.Image(str(q_diff_file))})
-                        last_q_plot_time = now
-                    except Exception as e:
-                        logger.warning(
-                            f"Q-value plotting/logging failed at step {step}: {e}",
-                            exc_info=True,
-                        )
-
                 if interaction.t or (
                     exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff
                 ):
@@ -293,21 +268,24 @@ async def main():
                     logger.debug(
                         f"{episode} {step} {glue.total_reward} {avg_time:.4}ms {int(fps)}"
                     )
-
-                    interaction = await glue.start()
-                    log(
-                        env,
-                        glue,
-                        wandb_run,
-                        interaction.o,
-                        interaction.a,
-                        interaction.extra,
-                        is_mock_env=is_mock_env,
-                    )
+                    break
+                step += 1
         except Exception as e:
             logger.exception(e)
             raise e
         finally:
+            # stop scheduled checkpointing and wait for it to finish
+            try:
+                stop_event.set()
+                if ckpt_thread is not None and ckpt_thread.is_alive():
+                    ckpt_thread.join(timeout=30)
+                    if ckpt_thread.is_alive():
+                        logger.warning(
+                            "Checkpoint thread did not exit after join timeout"
+                        )
+            except Exception:
+                logger.exception("Error while stopping checkpoint thread")
+
             # ------------
             # -- Saving --
             # ------------
@@ -315,7 +293,7 @@ async def main():
                 await env.close()
             if chk is not None:
                 try:
-                    chk.save()
+                    _save_checkpoint(chk)
                 except Exception:
                     logger.exception("Failed to save checkpoint")
                     raise

@@ -62,6 +62,7 @@ dependencies = [
     "tfp-nightly>=0.26.0.dev20251210",
     "plant-models",
     "ml-instrument>=0.4.2",
+    "scikit-learn==1.7.2",
 ]
 
 [dependency-groups]

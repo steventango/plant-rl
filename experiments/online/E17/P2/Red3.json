@@ -1,0 +1,14 @@
+{
+    "agent": "Constant3",
+    "problem": "TemporalPlantGrowthChamberColorTriangle",
+    "total_steps": 20160,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": "alliance-zone03",
+            "timezone": "Etc/GMT-9"
+        },
+        "timezone": "Etc/GMT-9",
+        "constant_action": [[1, 0, 0]]
+    }
+}

@@ -12,6 +12,7 @@ class FCNetwork(nnx.Module):
         hidden_units,
         output_units,
         head_activation=lambda x: x,
+        use_layernorm=False,
         *,
         rngs: nnx.Rngs,
     ):
@@ -19,6 +20,7 @@ class FCNetwork(nnx.Module):
             input_dim=input_units,
             hidden_units=tuple(hidden_units),
             init_type="xavier",
+            use_layernorm=use_layernorm,
             rngs=rngs,
         )
         self.fc_head = nnx.Linear(
@@ -45,11 +47,24 @@ class DoubleCriticDiscrete(nnx.Module):
         input_units,
         hidden_units,
         output_units,
+        use_layernorm=False,
         *,
         rngs: nnx.Rngs,
     ):
-        self.q1_net = FCNetwork(input_units, hidden_units, output_units, rngs=rngs)
-        self.q2_net = FCNetwork(input_units, hidden_units, output_units, rngs=rngs)
+        self.q1_net = FCNetwork(
+            input_units,
+            hidden_units,
+            output_units,
+            use_layernorm=use_layernorm,
+            rngs=rngs,
+        )
+        self.q2_net = FCNetwork(
+            input_units,
+            hidden_units,
+            output_units,
+            use_layernorm=use_layernorm,
+            rngs=rngs,
+        )
 
     def __call__(self, x, a):
         q1 = self.q1_net(x)
@@ -66,6 +81,7 @@ class DoubleCriticNetwork(nnx.Module):
         num_inputs,
         num_actions,
         hidden_units,
+        use_layernorm=False,
         *,
         rngs: nnx.Rngs,
     ):
@@ -73,6 +89,7 @@ class DoubleCriticNetwork(nnx.Module):
         self.body1 = network_bodies.FCBody(
             input_dim=num_inputs + num_actions,
             hidden_units=tuple(hidden_units),
+            use_layernorm=use_layernorm,
             rngs=rngs,
         )
         self.head1 = nnx.Linear(
@@ -86,6 +103,7 @@ class DoubleCriticNetwork(nnx.Module):
         self.body2 = network_bodies.FCBody(
             input_dim=num_inputs + num_actions,
             hidden_units=tuple(hidden_units),
+            use_layernorm=use_layernorm,
             rngs=rngs,
         )
         self.head2 = nnx.Linear(

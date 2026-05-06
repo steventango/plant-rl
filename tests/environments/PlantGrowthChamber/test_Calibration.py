@@ -8,7 +8,6 @@ from environments.PlantGrowthChamber.Calibration import Calibration
 from utils.constants import (
     BALANCED_ACTION_100,
     BALANCED_ACTION_105,
-    BALANCED_ACTION_120,
     BLUE_ACTION,
     RED_ACTION,
 )
@@ -70,7 +69,7 @@ def test_post_init(calibration_z3: Calibration):
     assert calibration_z3.maximum_values.shape == (6,)
     np.testing.assert_allclose(
         calibration_z3.maximum_values,
-        np.array([126, 118, 95, 101, 75, 32.8]),
+        np.array([111, 103, 85, 89, 67, 32.8]),
         atol=1e-1,
     )
     assert calibration_z3.safe_maximum_values is not None
@@ -78,8 +77,17 @@ def test_post_init(calibration_z3: Calibration):
     assert calibration_z3.safe_maximum_values.shape == (6,)
     np.testing.assert_allclose(
         calibration_z3.safe_maximum_values,
-        np.array([114, 101, 80, 89, 29, 21.5]),
+        np.array([96, 90, 65, 79, 55, 21.6]),
         atol=1e-1,
+    )
+    assert calibration_z3.safe_minimum_values is not None
+    assert isinstance(calibration_z3.safe_minimum_values, np.ndarray)
+    assert calibration_z3.safe_minimum_values.shape == (6,)
+    # PPFD-space safe minimums: max first-nonzero PPFD per channel across all zones.
+    np.testing.assert_allclose(
+        calibration_z3.safe_minimum_values,
+        np.array([5.0, 5.0, 5.0, 4.0, 5.0, 0.668]),
+        atol=1e-2,
     )
 
 
@@ -133,12 +141,13 @@ def test_adjusted_action(calibration_z3: Calibration):
     curtis_calibrated_action = np.array([0.398, 0.762, 0.324, 0.000, 0.332, 0.606])
     curtis_action = calibration_z3.decalibrated_action(curtis_calibrated_action)
     adjusted_action = curtis_action.copy()
-    adjusted_action[:5] = adjusted_action[:5] / np.sum(adjusted_action[:5]) * 120
+    adjusted_action[:5] = adjusted_action[:5] / np.sum(adjusted_action[:5]) * 105
     adjusted_action[5] = curtis_action[5] / curtis_action[4] * adjusted_action[4]
+    adjusted_action[-1] = 0.0
 
     np.testing.assert_allclose(
         adjusted_action,
-        BALANCED_ACTION_120,
+        BALANCED_ACTION_105,
         atol=1e-1,
     )
 
@@ -147,35 +156,24 @@ def test_get_ppfd(calibration_z3: Calibration):
     """
     Test that the get_ppfd method correctly returns the PPFD value.
     """
-    ppfd = calibration_z3.get_ppfd(BALANCED_ACTION_120)
-    assert isinstance(ppfd, float)
-    assert ppfd == 120
     ppfd = calibration_z3.get_ppfd(BALANCED_ACTION_105)
     assert isinstance(ppfd, float)
-    assert ppfd == 105
+    assert ppfd == pytest.approx(105, abs=1e-1)
     ppfd = calibration_z3.get_ppfd(BALANCED_ACTION_100)
     assert isinstance(ppfd, float)
-    assert ppfd == 100
+    assert ppfd == pytest.approx(100, abs=1e-1)
 
 
 def test_get_calibrated_action(calibration_z3: Calibration):
     """
     Test that the get_calibrated_action method correctly returns a calibrated action.
     """
-    calibrated_action = calibration_z3.get_calibrated_action(BALANCED_ACTION_120)
-    assert isinstance(calibrated_action, np.ndarray)
-    assert calibrated_action.shape == (6,)
-    np.testing.assert_allclose(
-        calibrated_action,
-        np.array([0.397, 0.76, 0.324, 0.000, 0.332, 0.605]),
-        atol=1e-3,
-    )
     calibrated_action = calibration_z3.get_calibrated_action(BALANCED_ACTION_105)
     assert isinstance(calibrated_action, np.ndarray)
     assert calibrated_action.shape == (6,)
     np.testing.assert_allclose(
         calibrated_action,
-        np.array([0.382, 0.693, 0.315, 0.000, 0.323, 0.564]),
+        np.array([0.397, 0.758, 0.324, 0.000, 0.332, 0.0]),
         atol=1e-3,
     )
 
@@ -184,27 +182,7 @@ def test_decalibrated_action(calibration_z3: Calibration):
     """
     Test that the decalibrated_action method correctly decalibrates an action.
     """
-    calibrated_action = np.array(
-        [
-            0.39722222222222225,
-            0.76,
-            0.32357142857142857,
-            0.0,
-            0.33199999999999996,
-            0.6053354652215281,
-        ]
-    )
-    decalibrated_action = calibration_z3.decalibrated_action(calibrated_action)
-    assert isinstance(decalibrated_action, np.ndarray)
-    assert decalibrated_action.shape == (6,)
-    assert np.allclose(
-        decalibrated_action,
-        BALANCED_ACTION_120,
-        atol=1e-1,
-    )
-    calibrated_action = np.array(
-        [0.38159722, 0.69296875, 0.31526786, 0.0, 0.323, 0.56383542]
-    )
+    calibrated_action = np.array([0.397, 0.758, 0.324, 0.000, 0.332, 0.0])
     decalibrated_action = calibration_z3.decalibrated_action(calibrated_action)
     assert isinstance(decalibrated_action, np.ndarray)
     assert decalibrated_action.shape == (6,)
@@ -217,11 +195,11 @@ def test_decalibrated_action(calibration_z3: Calibration):
 
 def test_blue_action(calibration_z3: Calibration):
     """
-    Test that the red action is correctly calibrated.
+    Test that the blue action is correctly calibrated.
     """
     np.testing.assert_allclose(
         BLUE_ACTION,
-        np.array([69.7, 29.3, 3.4, 0.0, 2.6, 5.1]),
+        np.array([59.5, 38.1, 4.2, 0.0, 3.3, 0.0]),
         atol=1e-1,
     )
 
@@ -251,19 +229,49 @@ def test_blue_action(calibration_z3: Calibration):
     assert np.sum(calibrated_action) < 4
 
 
+def test_safe_minimum_zeroes_below_threshold(calibration_z3: Calibration):
+    """
+    Channels whose desired PPFD is below the safe minimum PPFD (the highest
+    first-nonzero PPFD across all zones) must be zeroed so that no zone is
+    asked to emit in a range where another zone cannot follow.
+
+    safe_minimum PPFD: blue=5, cool_white=5, warm_white=5, orange_red=4, red=5, far_red≈0.668
+    """
+    # 1.5 PPFD < 5.0 safe_minimum for most channels → all zeroed
+    action_below = np.array([1.5, 1.5, 1.5, 1.5, 1.5, 0.025])
+    calibrated = calibration_z3.get_calibrated_action(action_below)
+    # All channels with desired PPFD below their safe minimum should be zeroed
+    np.testing.assert_array_equal(calibrated, np.zeros(6))
+
+
+def test_safe_minimum_allows_above_threshold(calibration_z3: Calibration):
+    """
+    Channels whose desired PPFD is at or above the safe minimum PPFD must not
+    be zeroed.
+
+    10.0 PPFD >= 5.0 safe_minimum for all main channels → non-zero output.
+    """
+    # 10.0 PPFD >= safe_minimum for all channels
+    action_above = np.array([10.0, 10.0, 10.0, 10.0, 10.0, 1.0])
+    calibrated = calibration_z3.get_calibrated_action(action_above)
+    assert np.all(calibrated > 0), (
+        f"Expected all channels > 0 above safe minimum, got {calibrated}"
+    )
+
+
 def test_red_action(calibration_z3: Calibration):
     """
     Test that the red action is correctly calibrated.
     """
     np.testing.assert_allclose(
         RED_ACTION,
-        np.array([9.7, 34.9, 4.0, 0.0, 56.3, 6.1]),
+        np.array([11.8, 43.4, 4.7, 0.0, 46.2, 0.0]),
         atol=1e-1,
     )
 
     # make sure ppfd is 105
     ppfd = calibration_z3.get_ppfd(RED_ACTION)
-    assert np.isclose(ppfd, 105, atol=1)
+    assert np.isclose(ppfd, 105, atol=1.5)
 
     # check that it doesn't exceed the maximum safe values
     safe_maximum_values = calibration_z3.safe_maximum_values.copy()

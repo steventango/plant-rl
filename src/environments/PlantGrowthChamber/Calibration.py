@@ -38,12 +38,14 @@ class Calibration:
         ]
         self.maximum_values = np.array([data["maximum"][key] for key in keys])
         self.safe_maximum_values = np.array([data["safe_maximum"][key] for key in keys])
+        self.safe_minimum_values = np.array([data["safe_minimum"][key] for key in keys])
 
     def _get_calibrated_value(
         self,
         action_cal: list[float] | None,
         color_cal: list[float] | None,
         desired: float,
+        safe_min_ppfd: float = 0.0,
     ) -> float:
         """
         Get the calibrated value for a single color channel.
@@ -51,13 +53,21 @@ class Calibration:
         if action_cal is None or color_cal is None or desired <= 0:
             return desired if desired > 0 else 0
 
+        # If desired PPFD is below the safe minimum, at least one lightbar cannot
+        # emit anything at this level — zero all bars for this channel.
+        if safe_min_ppfd > 0 and desired < safe_min_ppfd:
+            return 0.0
+
         color_array = np.array(color_cal)
         action_array = np.array(action_cal)
         action_array[color_array == 0] = 0
 
         # Interpolate the desired value
-        action_value = np.interp(desired, color_array, action_array)
-        return float(np.clip(action_value, 0, action_array.max()))
+        return float(
+            np.clip(
+                np.interp(desired, color_array, action_array), 0, action_array.max()
+            )
+        )
 
     def get_calibrated_action(self, action: np.ndarray) -> np.ndarray:
         """
@@ -75,13 +85,32 @@ class Calibration:
             self.far_red,
         ]
 
-        calibrated_action = np.array(
-            [
-                self._get_calibrated_value(self.action, color, desired)
-                for desired, color in zip(action, calibration_data, strict=True)
-            ]
-        )
-        return calibrated_action
+        def _calibrate(a: np.ndarray) -> np.ndarray:
+            return np.array(
+                [
+                    self._get_calibrated_value(
+                        self.action, color, desired, float(safe_min)
+                    )
+                    for desired, color, safe_min in zip(
+                        a, calibration_data, self.safe_minimum_values, strict=True
+                    )
+                ]
+            )
+
+        target_ppfd = self.get_ppfd(action)
+
+        active = action >= self.safe_minimum_values
+        active_ppfd = float(np.sum(np.where(active[:5], action[:5], 0.0)))
+        if target_ppfd > 0 and active_ppfd > 0 and abs(active_ppfd - target_ppfd) > 0.5:
+            scale = target_ppfd / active_ppfd
+            scaled_action = np.where(
+                active,
+                np.minimum(action * scale, self.safe_maximum_values),
+                action,
+            )
+        else:
+            scaled_action = action
+        return _calibrate(scaled_action)
 
     def decalibrated_action(self, calibrated_action: np.ndarray) -> np.ndarray:
         """
