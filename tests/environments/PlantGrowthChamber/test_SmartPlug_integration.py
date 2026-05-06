@@ -27,10 +27,10 @@ async def test_get_power_carryover_records_null_on_failure(kasa_creds):
     assert info["voltage"] == 120.0
     assert info["current"] == 0.04
 
-    chamber.last_smart_plug_time = None  # bypass 5-min gate for next attempt
+    chamber.last_smart_plug_time = None
 
     await chamber.get_power()
-    assert chamber.power == successful  # carry-over preserved for the agent
+    assert chamber.power == successful
     assert chamber.power_record == {"power": None, "voltage": None, "current": None}
     info = chamber.get_info()
     assert info["power"] is None
@@ -62,6 +62,6 @@ async def test_get_power_respects_5_minute_gate(kasa_creds):
     chamber.smart_plug_client.read = AsyncMock(return_value=successful)
 
     await chamber.get_power()
-    await chamber.get_power()  # within 5 minutes — should be skipped
+    await chamber.get_power()
 
     assert chamber.smart_plug_client.read.await_count == 1

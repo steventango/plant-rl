@@ -18,7 +18,7 @@ from utils.RlGlue.environment import BaseAsyncEnvironment
 import pandas as pd
 from pathlib import Path
 from .CVPipelineClient import CVPipelineClient
-from .SmartPlugClient import SmartPlugClient
+from .SmartPlugClient import POWER_KEYS, SmartPlugClient
 from .zones import load_zone_from_config
 
 logger = logging.getLogger("plant_rl.PlantGrowthChamber")
@@ -46,10 +46,10 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.cv_client = CVPipelineClient()
 
         # Smart plug
-        self.smart_plug_client = SmartPlugClient()
         # self.power: agent-facing carry-over of last successful reading
-        self.power = {"power": 0.0, "voltage": 0.0, "current": 0.0}
-        # self.power_record: per-step audit value emitted to CSV/WandB; empty = no read
+        # self.power_record: per-step audit value sent to CSV/WandB; None on failure, empty when no read attempted
+        self.smart_plug_client = SmartPlugClient()
+        self.power = dict.fromkeys(POWER_KEYS, 0.0)
         self.power_record: dict = {}
         self.last_smart_plug_time = None
         self.smart_plug_interval = timedelta(minutes=5)
@@ -214,7 +214,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             self.power = reading
             self.power_record = reading
         else:
-            self.power_record = {"power": None, "voltage": None, "current": None}
+            self.power_record = dict.fromkeys(POWER_KEYS)
 
     def get_time(self):
         return datetime.now(tz=self.tz_utc)

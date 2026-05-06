@@ -6,6 +6,8 @@ from kasa.exceptions import KasaException
 
 logger = logging.getLogger("plant_rl.SmartPlugClient")
 
+POWER_KEYS = ("power", "voltage", "current")
+
 
 class SmartPlugClient:
     def __init__(self):
