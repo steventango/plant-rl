@@ -18,6 +18,7 @@ from utils.RlGlue.environment import BaseAsyncEnvironment
 import pandas as pd
 from pathlib import Path
 from .CVPipelineClient import CVPipelineClient
+from .SmartPlugClient import SmartPlugClient
 from .zones import load_zone_from_config
 
 logger = logging.getLogger("plant_rl.PlantGrowthChamber")
@@ -43,6 +44,15 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.pot_quads = None
         self.dataset_path = None
         self.cv_client = CVPipelineClient()
+
+        # Smart plug
+        self.smart_plug_client = SmartPlugClient()
+        # self.power: agent-facing carry-over of last successful reading
+        self.power = {"power": 0.0, "voltage": 0.0, "current": 0.0}
+        # self.power_record: per-step audit value emitted to CSV/WandB; empty = no read
+        self.power_record: dict = {}
+        self.last_smart_plug_time = None
+        self.smart_plug_interval = timedelta(minutes=5)
 
         # Cleaning state
         self.cv_state = None
@@ -90,6 +100,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             self.image = np.array(self.images["right"])
 
         await self.get_plant_stats()
+        await self.get_power()
 
         if not self.df.empty:
             self.plant_areas = self.df["area"].to_numpy().flatten()  # type: ignore
@@ -185,6 +196,25 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         except Exception:
             logger.exception("Error during CV processing")
             self.df = pd.DataFrame()
+
+    async def get_power(self):
+        if self.zone.smart_plug_host is None:
+            return
+
+        now = self.get_time()
+        if (
+            self.last_smart_plug_time is not None
+            and (now - self.last_smart_plug_time) < self.smart_plug_interval
+        ):
+            return
+
+        reading = await self.smart_plug_client.read(self.zone.smart_plug_host)
+        self.last_smart_plug_time = now
+        if reading is not None:
+            self.power = reading
+            self.power_record = reading
+        else:
+            self.power_record = {"power": None, "voltage": None, "current": None}
 
     def get_time(self):
         return datetime.now(tz=self.tz_utc)
@@ -320,15 +350,18 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     def get_info(self):
         if self.df.empty:
-            return {
+            info = {
                 "df": self.df,
                 "env_time": self.time.timestamp(),
             }
-        return {
-            "df": self.df,
-            "mean_clean_area": np.mean(self.clean_areas[-1]),
-            "env_time": self.time.timestamp(),
-        }
+        else:
+            info = {
+                "df": self.df,
+                "mean_clean_area": np.mean(self.clean_areas[-1]),
+                "env_time": self.time.timestamp(),
+            }
+        info.update(self.power_record)
+        return info
 
     def get_terminal(self) -> bool:
         return False
