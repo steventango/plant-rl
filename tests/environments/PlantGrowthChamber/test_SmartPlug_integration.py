@@ -42,10 +42,8 @@ async def test_get_power_carryover_records_null_on_failure(kasa_creds):
 async def test_get_power_is_noop_when_zone_has_no_plug(kasa_creds):
     chamber = PlantGrowthChamber(zone="alliance-zone03", timezone="Etc/UTC")
     assert chamber.zone.smart_plug_host is None
+    assert chamber.smart_plug_client is None
 
-    chamber.smart_plug_client.read = AsyncMock(
-        side_effect=AssertionError("should not be called when smart_plug_host is None")
-    )
     await chamber.get_power()
 
     assert chamber.power_record == {}
@@ -62,6 +60,9 @@ async def test_get_power_respects_5_minute_gate(kasa_creds):
     chamber.smart_plug_client.read = AsyncMock(return_value=successful)
 
     await chamber.get_power()
-    await chamber.get_power()
+    assert chamber.power_record == successful
 
+    await chamber.get_power()
     assert chamber.smart_plug_client.read.await_count == 1
+    assert chamber.power_record == {}
+    assert chamber.power == successful
