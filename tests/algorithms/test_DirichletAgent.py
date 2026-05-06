@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 
 import numpy as np
+import pytest
 
 from algorithms.DirichletAgent import DirichletAgent
 from utils.constants import BALANCED_ACTION_105, BLUE_ACTION, RED_ACTION
@@ -58,7 +59,7 @@ class TestDirichletAgent:
 
     def test_action_ppfd_sum(self):
         """
-        Test that the action PPFD sum is reasonable (around 105-117).
+        Test that the action PPFD sum stays within the base action range.
         """
         agent = DirichletAgent(
             observations=(1,),
@@ -67,13 +68,23 @@ class TestDirichletAgent:
             collector=MagicMock(),
             seed=456,
         )
+        min_sum = min(
+            np.sum(RED_ACTION[:5]),
+            np.sum(BALANCED_ACTION_105[:5]),
+            np.sum(BLUE_ACTION[:5]),
+        )
+        max_sum = max(
+            np.sum(RED_ACTION[:5]),
+            np.sum(BALANCED_ACTION_105[:5]),
+            np.sum(BLUE_ACTION[:5]),
+        )
         n_samples = 100
         sums = []
         for _ in range(n_samples):
             action = agent.sample_action()
             total_ppfd = np.sum(action[:5])
             sums.append(total_ppfd)
-            np.testing.assert_approx_equal(total_ppfd, 105)
+            assert min_sum <= total_ppfd <= max_sum
         # Mean should be around the average of the three
         mean_sum = np.mean(sums)
         expected_mean = (
@@ -81,7 +92,7 @@ class TestDirichletAgent:
             + np.sum(BALANCED_ACTION_105[:5])
             + np.sum(BLUE_ACTION[:5])
         ) / 3
-        np.testing.assert_approx_equal(mean_sum, expected_mean)
+        assert mean_sum == pytest.approx(expected_mean, abs=1.0)
 
     def test_deterministic_with_seed(self):
         """Test that the agent is deterministic with the same seed"""

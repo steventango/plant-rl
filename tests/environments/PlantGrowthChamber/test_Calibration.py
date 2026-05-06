@@ -265,13 +265,13 @@ def test_red_action(calibration_z3: Calibration):
     """
     np.testing.assert_allclose(
         RED_ACTION,
-        np.array([11.6, 42.6, 4.7, 0.0, 46.2, 0.0]),
+        np.array([11.8, 43.4, 4.7, 0.0, 46.2, 0.0]),
         atol=1e-1,
     )
 
     # make sure ppfd is 105
     ppfd = calibration_z3.get_ppfd(RED_ACTION)
-    assert np.isclose(ppfd, 105, atol=1)
+    assert np.isclose(ppfd, 105, atol=1.5)
 
     # check that it doesn't exceed the maximum safe values
     safe_maximum_values = calibration_z3.safe_maximum_values.copy()

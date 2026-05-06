@@ -1,5 +1,7 @@
 import asyncio
 import logging
+import os
+from pathlib import Path
 
 import numpy as np
 import polars as pl
@@ -42,6 +44,28 @@ def assert_observation(obs, row):
 
 @pytest.mark.asyncio
 async def test_mock_triangle_chamber_cv():
+    dataset_path = Path(
+        os.environ.get(
+            "PLANT_RL_DATASET_PATH", "/data/plant-rl/offline/v23/mixed-v23.parquet"
+        )
+    )
+    if dataset_path.is_dir():
+        data_file = dataset_path / "mixed-v23.parquet"
+    else:
+        data_file = dataset_path
+
+    pca_model_path = Path(
+        os.environ.get(
+            "PLANT_RL_PCA_MODEL_PATH", "/data/plant-rl/offline/v23/pca_model.joblib"
+        )
+    )
+
+    if not data_file.exists() or not pca_model_path.exists():
+        pytest.skip(
+            "Offline dataset or PCA model not available; set PLANT_RL_DATASET_PATH and "
+            "PLANT_RL_PCA_MODEL_PATH to run this test."
+        )
+
     env = MockWallStatsActionTraceEmbeddingPlantGrowthChamberColorTriangle(
         mock_stats=False,
         experiment=15,
@@ -53,7 +77,8 @@ async def test_mock_triangle_chamber_cv():
         watering_date="2025-12-15",
         start_date="2025-12-17T16:30:00+00:00",
         liters_per_pot=0.0625,
-        pca_model_path="/data/plant-rl/offline/v23/pca_model.joblib",
+        dataset_path=str(dataset_path),
+        pca_model_path=str(pca_model_path),
         timezone="America/Edmonton",
     )
 
