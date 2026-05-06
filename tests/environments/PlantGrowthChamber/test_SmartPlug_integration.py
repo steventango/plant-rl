@@ -63,7 +63,7 @@ async def test_get_power_is_noop_when_zone_has_no_plug(kasa_creds):
 
 
 @pytest.mark.asyncio
-async def test_get_power_only_fetches_on_five_minute_boundary(kasa_creds, monkeypatch):
+async def test_get_power_fetches_on_five_minute_boundary(kasa_creds, monkeypatch):
     chamber = PlantGrowthChamber(zone="alliance-zone01", timezone="Etc/UTC")
     successful = {"power": 5.0, "voltage": 120.0, "current": 0.04}
     chamber.smart_plug_client.read = AsyncMock(return_value=successful)
@@ -79,5 +79,23 @@ async def test_get_power_only_fetches_on_five_minute_boundary(kasa_creds, monkey
     assert chamber.power == successful
 
     _pin_time(chamber, monkeypatch, minute=10)
+    await chamber.get_power()
+    assert chamber.smart_plug_client.read.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_get_power_recovers_when_boundary_is_missed(kasa_creds, monkeypatch):
+    """If the step loop drifts past a 5-min boundary, the next call still fetches."""
+    chamber = PlantGrowthChamber(zone="alliance-zone01", timezone="Etc/UTC")
+    successful = {"power": 5.0, "voltage": 120.0, "current": 0.04}
+    chamber.smart_plug_client.read = AsyncMock(return_value=successful)
+
+    _pin_time(chamber, monkeypatch, minute=5)
+    await chamber.get_power()
+    assert chamber.smart_plug_client.read.await_count == 1
+
+    # Step loop missed minute=10 entirely, lands at :11. Not on boundary,
+    # but elapsed is 6 min > 5 min interval → fetch via the overdue fallback.
+    _pin_time(chamber, monkeypatch, minute=11)
     await chamber.get_power()
     assert chamber.smart_plug_client.read.await_count == 2

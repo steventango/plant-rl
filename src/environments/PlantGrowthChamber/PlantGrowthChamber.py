@@ -53,6 +53,8 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         )
         self.power = dict.fromkeys(POWER_KEYS, 0.0)
         self.power_record: dict = {}
+        self.last_smart_plug_time = None
+        self.smart_plug_interval = timedelta(minutes=5)
 
         # Cleaning state
         self.cv_state = None
@@ -200,10 +202,18 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
     async def get_power(self):
         if self.smart_plug_client is None or self.zone.smart_plug_host is None:
             return
-        if self.get_time().minute % 5 != 0:
+
+        now = self.get_time()
+        on_boundary = now.minute % 5 == 0
+        overdue = (
+            self.last_smart_plug_time is None
+            or (now - self.last_smart_plug_time) > self.smart_plug_interval
+        )
+        if not (on_boundary or overdue):
             return
 
         reading = await self.smart_plug_client.read(self.zone.smart_plug_host)
+        self.last_smart_plug_time = now
         if reading is not None:
             self.power = reading
             self.power_record = reading
