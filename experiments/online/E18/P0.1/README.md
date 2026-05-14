@@ -27,6 +27,19 @@ Per-channel `safe_maximum` (`configs/calibration.json`): blue=96, cool_white=90,
 
 Cool_white is the limiting channel: `s_max = 90 / 71.53 ≈ 1.258213`. At s_max the action is `[24.53, 90.00, 9.84, 0, 7.74, 0]` ≈ 132.1 PPFD total. No per-channel clipping fires at this peak.
 
+## Safe-minimum note (spectrum at low levels)
+
+`Calibration.get_calibrated_action` gates each channel by its per-channel `safe_minimum` (`configs/calibration.json`: blue=5, cool_white=5, warm_white=5, red=5). Below that PPFD the channel is zeroed and the remaining active channels are rescaled to hit the target PPFD. With the balanced-105 shares, channels activate at:
+
+- cool_white: `s ≥ 5/71.53 ≈ 0.070` (first hit at s₂ = 0.1258)
+- blue: `s ≥ 5/19.50 ≈ 0.256` (first hit at s₅ = 0.3146)
+- warm_white: `s ≥ 5/7.82 ≈ 0.639` (first hit at s₁₁ = 0.6920)
+- red: `s ≥ 5/6.15 ≈ 0.813` (first hit at s₁₃ = 0.8178)
+
+So below s ≈ 0.813 the emitted spectrum is **not** the balanced 105 reference — it is cool_white-dominant at the bottom, gradually adding blue, then warm_white, then red. The trade is intentional: we accept spectrum distortion at low intensities to retain power measurements near 0 PPFD, which we couldn't otherwise sample. Interpret the low-end rows of the CSV as power for the active sub-spectrum, not for balanced-105.
+
+Note also: s₁ = 0.0629 falls below every channel's threshold, so it emits 0 PPFD (a duplicate of s₀).
+
 ## Sweep schedule
 
 21 ascending levels at 5% increments of `s_max`, `s_i = i × s_max / 20` for `i = 0..20`, played twice back-to-back (42 distinct intensity levels). Each level holds for 5 min → ~3.5 h per zone. With 1-min env steps that is `42 × 5 = 210` env steps (`total_steps`).
