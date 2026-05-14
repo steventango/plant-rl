@@ -1,6 +1,6 @@
 {
     "agent": "Recipe1",
-    "problem": "IntensityExp",
+    "problem": "IntensityExperiment",
     "total_steps": 10000,
     "episode_cutoff": -1,
     "metaParameters": {
