@@ -4,16 +4,20 @@ Power characterization sweep. Drive a deterministic intensity ramp on the balanc
 
 ## Environment
 ### PlantGrowthChamberIntensity
+The problem wraps the agent with `PlantGrowthChamberAsyncAgentWrapper`. The wrapper re-polls the agent on a configurable `action_timestep` (here: 5 min) so each scalar from the agent is held steady for one full smart-plug / CSV cycle. Night/twilight enforcement is disabled (`enforce_night: false`) so the sweep runs continuously regardless of wall-clock time.
+
 #### State
   - time
 
 #### Actions
   - scalar `s` in `[0, s_max]` → `s × BALANCED_ACTION_105` (6-channel PPFD)
 
-#### Time step
-5 minutes (aligned with the smart-plug fetch / CSV writer gate)
+#### Cadence
+- env step duration: 1 min (default)
+- agent re-poll (`action_timestep`): 5 min
+- smart-plug / CSV writer gates: on `minute % 5 == 0`
 
-No twilight ramps (uses `BaseAsyncProblem` / `AsyncAgentWrapper`).
+So the agent emits a fresh intensity every 5 min; the env applies that same intensity for 5 × 1-min steps; one CSV row is written per 5-min boundary, with action and power aligned.
 
 ## Safe-max derivation
 
@@ -25,11 +29,11 @@ Cool_white is the limiting channel: `s_max = 90 / 71.53 ≈ 1.258213`. At s_max 
 
 ## Sweep schedule
 
-21 ascending levels at 5% increments of `s_max`, `s_i = i × s_max / 20` for `i = 0..20`, played twice back-to-back (42 steps total, ≈3.5 h per zone).
+21 ascending levels at 5% increments of `s_max`, `s_i = i × s_max / 20` for `i = 0..20`, played twice back-to-back (42 distinct intensity levels). Each level holds for 5 min → ~3.5 h per zone. With 1-min env steps that is `42 × 5 = 210` env steps (`total_steps`).
 
 ## Agents
 ### SequenceAgent
-`actions` (JSON-stringified list of 42 scalars) is consumed by `SequenceAgent`. The `PlantGrowthChamberIntensity` env multiplies each scalar by the reference spectrum.
+`actions` (JSON-stringified list of 42 scalars) is consumed by `SequenceAgent`. The wrapper rate-limits agent polls to one per 5-min `action_timestep`. The `PlantGrowthChamberIntensity` env multiplies each scalar by the reference spectrum.
 
 ## Deployment
 
