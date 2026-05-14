@@ -28,11 +28,13 @@ class Incubator(BaseAsyncAgent):
             return 0.5 * BALANCED_ACTION_100
         return self.incubation_ppfd / 100 * BALANCED_ACTION_100
 
-    async def start(self, observation: datetime, extra=None):
-        return self._get_action(observation), {}
+    async def start(self, observation, extra=None):
+        t, _ = observation
+        return self._get_action(t), {}
 
-    async def step(self, reward: float, observation: datetime, extra):
-        return self._get_action(observation), {}
+    async def step(self, reward: float, observation, extra):
+        t, _ = observation
+        return self._get_action(t), {}
 
     async def end(self, reward: float, extra):
         return {}
