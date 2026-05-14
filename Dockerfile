@@ -20,4 +20,4 @@ USER $USERNAME
 
 COPY --chown=$USERNAME:$USERNAME ./pyproject.toml /app/pyproject.toml
 COPY --chown=$USERNAME:$USERNAME uv.lock /app/uv.lock
-RUN uv sync --dev --prerelease=allow
+RUN uv sync --dev --group gpu --prerelease=allow
