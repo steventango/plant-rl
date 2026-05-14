@@ -128,7 +128,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-data-collection:/data/plant-data-collection:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E13/P0/Spreadsheet4.json -i 16 --deploy
+    command: uv run python src/main.py -e experiments/incubation/Incubator4.json -i 0 --deploy
     deploy:
       resources:
         reservations:
