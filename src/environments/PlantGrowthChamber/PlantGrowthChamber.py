@@ -262,9 +262,11 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         return False
 
     def reward_function(self):
-        today_morning_local_date = self.get_local_time().replace(
-            hour=9, minute=0, second=0, microsecond=0
-        )
+        local_now = self.get_local_time()
+        if local_now.hour != 9 or local_now.minute != 0:
+            return 0
+        
+        today_morning_local_date = local_now.replace(second=0, microsecond=0)
         yesterday_morning_local_date = today_morning_local_date - timedelta(days=1)
 
         today_morning_mean_area = self.daily_mean_clean_areas.get(
@@ -274,7 +276,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             yesterday_morning_local_date, 0.0
         )
 
-        # Compute daily percentage growth as reward
         if yesterday_morning_mean_area == 0:
             logger.debug(
                 "Yesterday's morning mean area is 0, returning 0 reward to avoid division by zero."
@@ -295,3 +296,13 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                     f"Error closing aiohttp session for zone {self.zone.identifier}: {str(e)}"
                 )
             self.session = None
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        if "session" in state:
+            del state["session"]
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.session = None
