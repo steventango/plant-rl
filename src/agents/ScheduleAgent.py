@@ -10,9 +10,8 @@ class ScheduleAgent(BaseAsyncAgent):
     def __init__(self, observations, actions, params, seed):
         self._init_args = (observations, actions, params, seed)
         self.params = params
-        agent_params = params.get("agent", {})
-        self.action_days = agent_params.get("action_days", [0])
-        self.action_inputs = agent_params.get("action_inputs", [0.0])
+        self.action_days = params.get("action_days", [1])
+        self.action_inputs = params.get("action_inputs", [0.0])
         self.start_hour = 9
         self.end_hour = 21
         self.start_date = None
@@ -26,7 +25,7 @@ class ScheduleAgent(BaseAsyncAgent):
     def _get_ppfd(self, t: datetime) -> float:
         if self.start_date is None:
             return float(self.action_inputs[0])
-        day_number = (t.date() - self.start_date).days
+        day_number = (t.date() - self.start_date).days + 1
         ppfd = float(self.action_inputs[0])
         for day, value in zip(self.action_days, self.action_inputs, strict=False):
             if day_number >= day:
