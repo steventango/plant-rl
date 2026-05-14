@@ -34,6 +34,7 @@ htmlcov/
 # Build
 build/
 *.egg-info/
+uv.lock 
 
 # Editor
 .vscode/
