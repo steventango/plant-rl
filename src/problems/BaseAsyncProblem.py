@@ -37,7 +37,5 @@ class BaseAsyncProblem:
             self.params["gamma"] = self.gamma
 
         Agent = getAgent(self.exp.agent)
-        self.agent = Agent(  # type: ignore[call-arg]
-            self.observations, self.actions, self.params, self.seed
-        )
+        self.agent = Agent(self.observations, self.actions, self.params, self.seed)  # type: ignore[call-arg]
         return self.agent

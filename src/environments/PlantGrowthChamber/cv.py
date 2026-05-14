@@ -82,7 +82,7 @@ def call_segment_anything_api(
         }
     )
 
-    headers = {"Content-Type": "application/json"}
+    headers: dict[str, str | bytes] = {"Content-Type": "application/json"}
 
     try:
         response = requests.post(server_url, data=payload, headers=headers)
@@ -148,7 +148,7 @@ def call_grounding_dino_api(
         }
     )
 
-    headers = {"Content-Type": "application/json"}
+    headers: dict[str, str | bytes] = {"Content-Type": "application/json"}
 
     try:
         response = requests.post(server_url, data=payload, headers=headers)
@@ -306,7 +306,7 @@ def process_image(
         )
     ]
     annotated_frame = label_annotator.annotate(
-        scene=annotated_frame,
+        scene=annotated_frame,  # type: ignore
         detections=annotate_detections,  # type: ignore
         labels=labels,  # type: ignore
     )
@@ -354,7 +354,7 @@ def process_image(
         )
     ]
     annotated_frame = label_annotator.annotate(
-        scene=annotated_frame,
+        scene=annotated_frame,  # type: ignore
         detections=annotate_detections,  # type: ignore
         labels=labels,  # type: ignore
     )
@@ -447,7 +447,7 @@ def process_image(
         font_size=16,
     )
     annotated_frame = label_annotator.annotate(
-        scene=annotated_frame,
+        scene=annotated_frame,  # type: ignore
         detections=annotate_detections,  # type: ignore
         labels=labels,  # type: ignore
     )
