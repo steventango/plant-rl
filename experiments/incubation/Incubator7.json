@@ -1,0 +1,14 @@
+{
+    "agent": "Incubator7",
+    "problem": "IntensityExperiment",
+    "total_steps": 10000,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": "alliance-zone07",
+            "timezone": "America/Edmonton"
+        },
+        "timezone": "America/Edmonton",
+        "incubation_ppfd": 100
+    }
+}
