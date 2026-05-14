@@ -82,9 +82,11 @@ extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends", "fastapi.
 [tool.pytest.ini_options]
 testpaths = ['tests']
 addopts = '--import-mode=importlib'
+pythonpath = ['src']
+asyncio_mode = 'auto'
 
 [tool.pyright]
-include = ['analysis', 'experiments', 'plots', 'scripts', 'src', 'tests']
+include = ['experiments', 'src', 'tests']
 venvPath = '.'
 venv = '.venv'
 typeCheckingMode = 'standard'

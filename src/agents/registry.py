@@ -1,6 +1,6 @@
 from typing import Type
-from algorithms.RecipeAgent import RecipeAgent
-from algorithms.Incubator import Incubator
+from agents.RecipeAgent import RecipeAgent
+from agents.Incubator import Incubator
 from utils.RlGlue.agent import BaseAsyncAgent
 
 

@@ -1,18 +1,14 @@
 from typing import Optional
 
-from PyExpUtils.collection.Collector import Collector
-
-from algorithms.registry import getAgent
+from agents.registry import getAgent
 from experiment.ExperimentModel import ExperimentModel
 from utils.RlGlue.environment import BaseAsyncEnvironment
 
 
 class BaseAsyncProblem:
-    def __init__(self, exp: ExperimentModel, idx: int, collector: Collector):
+    def __init__(self, exp: ExperimentModel, idx: int):
         self.exp = exp
         self.idx = idx
-
-        self.collector = collector
 
         self.params = exp.get_hypers(idx)
         self.env_params = self.params.get("environment", {})
@@ -41,7 +37,7 @@ class BaseAsyncProblem:
             self.params["gamma"] = self.gamma
 
         Agent = getAgent(self.exp.agent)
-        self.agent = Agent(
-            self.observations, self.actions, self.params, self.collector, self.seed
+        self.agent = Agent(  # type: ignore[call-arg]
+            self.observations, self.actions, self.params, self.seed
         )
         return self.agent

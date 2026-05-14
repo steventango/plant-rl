@@ -102,7 +102,7 @@ async def main():
             np.random.seed(run)
 
             # build stateful things and attach to checkpoint
-            problem = chk.build("p", lambda: Problem(exp, idx, None))
+            problem = chk.build("p", lambda: Problem(exp, idx))
             agent = chk.build("a", problem.getAgent)
             env = chk.build("e", problem.getEnvironment)
 
@@ -168,7 +168,7 @@ async def main():
                     episode=episode,
                 )
 
-            for step in range(glue.total_steps, exp.total_steps):
+            for _step in range(glue.total_steps, exp.total_steps):
                 interaction = await glue.step()
 
                 episodic_return = glue.total_reward if interaction.t else None
