@@ -20,6 +20,7 @@ dependencies = [
     'RlGlue-andnp~=1.0',
     'requests>=2.32.3',
     'plantcv~=4.2.1',
+    'altair<6',
     'pandas[excel]',
     'supervision',
     'wandb[media]',
