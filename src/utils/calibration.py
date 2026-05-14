@@ -39,7 +39,7 @@ def calculate_integrals(df):
     for col in df.columns[1:]:
         # between wavelengths of 700 nm and 750 nm
         df_filtered = df[(df["Wavelength"] >= 700) & (df["Wavelength"] <= 750)]
-        integral = np.trapz(df_filtered[col], df_filtered["Wavelength"])
+        integral = np.trapezoid(df_filtered[col], df_filtered["Wavelength"])
         if integral < 0:
             integral = 0
         # NOTE: this integral is in the unit of spectrometer counts, there is no easy conversion to PFD.

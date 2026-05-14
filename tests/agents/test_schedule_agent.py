@@ -61,7 +61,14 @@ class TestScheduleAgent:
         agent = make_agent(action_days=[0, 5, 10], action_inputs=[100.0, 150.0, 200.0])
         await agent.start(dt(START, 10))
 
-        cases = [(0, 100.0), (4, 100.0), (5, 150.0), (9, 150.0), (10, 200.0), (15, 200.0)]
+        cases = [
+            (0, 100.0),
+            (4, 100.0),
+            (5, 150.0),
+            (9, 150.0),
+            (10, 200.0),
+            (15, 200.0),
+        ]
         for day_offset, expected_ppfd in cases:
             obs = dt(START + timedelta(days=day_offset), 12)
             action, _ = await agent.step(0.0, obs, {})
