@@ -33,6 +33,11 @@ test.json
 # ignore editor settings
 .vscode
 
+# ignore coverage artifacts
+.coverage
+coverage.xml
+htmlcov/
+
 # ignore build folder
 build
 build/

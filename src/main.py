@@ -9,8 +9,6 @@ sys.path.append(os.getcwd())
 import argparse
 import logging
 import socket
-import time
-from datetime import datetime
 from pathlib import Path
 
 import jax
@@ -22,12 +20,10 @@ from problems.registry import getProblem
 from utils.checkpoint import Checkpoint
 from utils.logger import WandbAlertHandler, log
 
-# --- Q-value plotting imports ---
-from utils.plotting import plot_q_values_and_diff
 from utils.preempt import TimeoutHandler
 from utils.RlGlue.rl_glue import AsyncRLGlue
 
-logger = logging.getLogger("plant_rl")
+logger = logging.getLogger("plant-data")
 
 
 async def main():
@@ -41,13 +37,6 @@ async def main():
     parser.add_argument("--checkpoint_path", type=str, default="./checkpoints/")
     parser.add_argument("--silent", action="store_true", default=False)
     parser.add_argument("--gpu", action="store_true", default=False)
-    parser.add_argument(
-        "-d",
-        "--deploy",
-        action="store_true",
-        default=False,
-        help="Allows for easily restarting logging for crashed runs in deployment. If the run already exists, then wandb will resume logging to the same run.",
-    )
 
     args = parser.parse_args()
 
@@ -68,22 +57,13 @@ async def main():
         logger.setLevel(logging.DEBUG)
 
     for idx in args.idxs:
-        if args.deploy:
-            run_id = args.exp.replace("/", "-").removesuffix(".json")
-            resume = "allow"
-        else:
-            run_id = (
-                args.exp.replace("/", "-").removesuffix(".json")
-                + "-"
-                + datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-            )
-            resume = "never"
+        run_id = args.exp.replace("/", "-").removesuffix(".json")
 
         wandb_run = wandb.init(
-            entity="plant-rl",
-            project="main",
+            entity="anffanychen-university-of-alberta",
+            project="plant-data-collection",
             id=run_id,
-            resume=resume,
+            resume="allow",
             config={},
             settings=wandb.Settings(
                 x_stats_disk_paths=(
@@ -128,7 +108,7 @@ async def main():
 
             context = exp.buildSaveContext(idx, base=args.save_path)
             agent_path = Path(context.resolve()).relative_to("results")
-            dataset_path = Path("/data/plant-rl/") / agent_path / env.zone.identifier
+            dataset_path = Path("/data/plant-data-collection/") / agent_path / env.zone.identifier
             env.set_dataset_path(dataset_path)
             images_save_keys = problem.exp_params.get("image_save_keys")
 
@@ -160,15 +140,6 @@ async def main():
             with open(config_path, "w") as f:
                 json.dump(config, f, indent=4)
 
-            # Run the experiment
-            start_time = time.time()
-            is_mock_env = exp.problem.startswith("Mock")
-
-            # --- Q-value plotting setup ---
-            last_q_plot_time = 0
-            q_plots_dir = Path(context.resolve()) / "q_value_plots"
-            q_plots_dir.mkdir(parents=True, exist_ok=True)
-
             # if we haven't started yet, then make the first interaction
             if glue.total_steps == 0:
                 # Load partial checkpoint if specified (fine-tuning)
@@ -192,7 +163,6 @@ async def main():
                     interaction.o,
                     interaction.a,
                     interaction.extra,
-                    is_mock_env=is_mock_env,
                     episode=episode,
                 )
 
@@ -208,64 +178,17 @@ async def main():
                     interaction.o,
                     interaction.a,
                     interaction.extra,
-                    is_mock_env=is_mock_env,
                     r=interaction.r,
                     t=interaction.t,
                     episodic_return=episodic_return,
                     episode=episode,
                 )
 
-                # --- Q-value plotting every hour ---
-                now = time.time()
-                if (
-                    now - last_q_plot_time >= 600
-                    or step == glue.total_steps
-                    or step < 10
-                ):
-                    try:
-                        # Use a dummy DataFrame for plotting (real data not available in online mode)
-                        import pandas as pd
-
-                        dummy_df = pd.DataFrame(
-                            {
-                                "observation": [],
-                                "action": [],
-                                "reward": [],
-                                "terminal": [],
-                                "trajectory_name": [],
-                            }
-                        )
-                        plot_q_values_and_diff(
-                            logger, agent.agent, q_plots_dir, step, dummy_df
-                        )
-                        # Log the latest Q-value and Q-diff plots to wandb
-                        q_plot_file = q_plots_dir / f"q_values_step_{step:06d}.jpg"
-                        q_diff_file = q_plots_dir / f"q_diff_step_{step:06d}.jpg"
-                        if q_plot_file.exists():
-                            wandb_run.log({"q_values": wandb.Image(str(q_plot_file))})
-                        if q_diff_file.exists():
-                            wandb_run.log({"q_diff": wandb.Image(str(q_diff_file))})
-                        last_q_plot_time = now
-                    except Exception as e:
-                        logger.warning(
-                            f"Q-value plotting/logging failed at step {step}: {e}",
-                            exc_info=True,
-                        )
 
                 if interaction.t or (
                     exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff
                 ):
-                    # track how many episodes are completed (cutoff is counted as termination for this count)
                     chk["episode"] += 1
-
-                    # compute the average time-per-step in ms
-                    avg_time = 1000 * (time.time() - start_time) / (step + 1)
-                    fps = step / (time.time() - start_time)
-
-                    episode = chk["episode"]
-                    logger.debug(
-                        f"{episode} {step} {glue.total_reward} {avg_time:.4}ms {int(fps)}"
-                    )
 
                     interaction = await glue.start()
                     log(
@@ -275,7 +198,6 @@ async def main():
                         interaction.o,
                         interaction.a,
                         interaction.extra,
-                        is_mock_env=is_mock_env,
                     )
         except Exception as e:
             logger.exception(e)
@@ -293,7 +215,6 @@ async def main():
                     logger.exception("Failed to save checkpoint")
                     raise
         wandb_run.finish()
-
 
 if __name__ == "__main__":
     asyncio.run(main())

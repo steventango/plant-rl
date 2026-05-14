@@ -18,7 +18,7 @@ from supervision.draw.color import DEFAULT_COLOR_PALETTE, ColorPalette
 
 from .zones import POT_HEIGHT, POT_WIDTH, SCALE, Tray
 
-logger = logging.getLogger("plant_rl.cv")
+logger = logging.getLogger("plant-data.cv")
 
 
 CUSTOM_COLOR_PALETTE = (

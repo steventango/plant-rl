@@ -24,7 +24,7 @@ from PyExpUtils.models.ExperimentDescription import ExperimentDescription
 T = TypeVar("T")
 Builder = Callable[[], T]
 
-logger = logging.getLogger("plant_rl.checkpoint")
+logger = logging.getLogger("plant-data.checkpoint")
 logger.setLevel(logging.DEBUG)
 
 

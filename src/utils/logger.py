@@ -140,7 +140,6 @@ def log(
     s,
     a,
     info,
-    is_mock_env: bool = False,
     r=None,
     t=None,
     episodic_return=None,
@@ -169,29 +168,28 @@ def log(
     if hasattr(env, "time"):
         data["time"] = env.time.timestamp()
 
-    if not is_mock_env:
-        if hasattr(env, "image") and env.time.minute % 10 == 0:
-            data["raw_image"] = wandb.Image(env.image, file_type="jpg")
+    if hasattr(env, "image"):
+        data["raw_image"] = wandb.Image(env.image, file_type="jpg")
 
-            if hasattr(env, "detections"):
-                detections = env.detections
+        if hasattr(env, "detections"):
+            detections = env.detections
 
-                # Extract box and mask data
-                box_data, class_id_to_label = format_bounding_boxes(detections)
-                masks_dict = format_masks(detections, class_id_to_label)
+            # Extract box and mask data
+            box_data, class_id_to_label = format_bounding_boxes(detections)
+            masks_dict = format_masks(detections, class_id_to_label)
 
-                # Get the image data to be annotated
-                image_data = (
-                    env.images.get("warped", env.image)
-                    if hasattr(env, "images")
-                    else env.image
+            # Get the image data to be annotated
+            image_data = (
+                env.images.get("warped", env.image)
+                if hasattr(env, "images")
+                else env.image
+            )
+
+            # Create annotated image
+            if box_data or masks_dict:
+                data["image"] = create_annotated_image(
+                    image_data, box_data, class_id_to_label, masks_dict
                 )
-
-                # Create annotated image
-                if box_data or masks_dict:
-                    data["image"] = create_annotated_image(
-                        image_data, box_data, class_id_to_label, masks_dict
-                    )
 
     if r is not None:
         data["reward"] = r
@@ -205,8 +203,7 @@ def log(
 
     end_time = time.time()
     log_time = end_time - start_time
-    if not is_mock_env:
-        logger.debug(f"Logging data to wandb took {log_time:.4f} seconds")
+    logger.debug(f"Logging data to wandb took {log_time:.4f} seconds")
 
 
 MAX_TITLE_LENGTH = 64
