@@ -1,0 +1,280 @@
+import asyncio  # type: ignore
+import logging
+import shutil
+import warnings
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+import pandas as pd
+from RlGlue import RlGlue
+from RlGlue.environment import BaseEnvironment
+from RlGlue.rl_glue import Interaction
+
+from utils.logger import expand
+from utils.RlGlue.agent import BaseAgent, BaseAsyncAgent
+from utils.RlGlue.environment import BaseAsyncEnvironment
+import time
+
+logger = logging.getLogger("rlglue")
+logger.setLevel(logging.DEBUG)
+
+
+background_tasks = set()
+lock = asyncio.Lock()
+default_save_keys = {"left", "right"}
+
+
+class AsyncRLGlue:
+    def __init__(
+        self,
+        agent: BaseAsyncAgent,
+        env: BaseAsyncEnvironment,
+        dataset_path: Path | None,
+        images_save_keys: set[str] | None,
+    ):
+        self.environment = env
+        self.agent = agent
+
+        self.dataset_path = (
+            dataset_path if dataset_path is not None else Path("/data/temp")
+        )
+        self.is_mock_env = self.environment.__class__.__name__.startswith(
+            "Mock"
+        ) or self.environment.__class__.__name__.endswith("Simulator")
+        if not self.is_mock_env and dataset_path is not None:
+            dataset_path.mkdir(parents=True, exist_ok=True)
+        if images_save_keys is None:
+            self.images_save_keys = default_save_keys
+        else:
+            self.images_save_keys = images_save_keys
+
+        self.last_action: Any = None
+        self.last_interaction: Interaction | None = None
+        self.total_reward: float = 0.0
+        self.num_steps: int = 0
+        self.total_steps: int = 0
+        self.num_episodes: int = 0
+
+    async def start(self):
+        self.num_steps = 0
+        self.total_reward = 0
+
+        plan_task = asyncio.create_task(self.plan())
+        background_tasks.add(plan_task)
+        s, env_info = await self.environment.start()
+        self.last_action, agent_info = await self.agent.start(s, env_info)
+        info = {**env_info, **agent_info}
+        self.last_interaction = Interaction(
+            o=s,
+            a=self.last_action,
+            t=False,
+            r=None,  # type: ignore
+            extra=info,
+        )
+        self.log()
+        return self.last_interaction
+
+    async def step(self) -> Interaction:
+        assert self.last_action is not None, (
+            "Action is None; make sure to call glue.start() before calling glue.step()."
+        )
+        reward, s, term, env_info = await self.environment.step(self.last_action)
+
+        self.total_reward += reward
+
+        self.num_steps += 1
+        self.total_steps += 1
+        if term:
+            return await self.end(reward, s, term, env_info)
+        async with lock:
+            self.last_action, agent_info = await self.agent.step(reward, s, env_info)
+        info = {**env_info, **agent_info}
+        self.last_interaction = Interaction(
+            o=s,
+            a=self.last_action,
+            t=term,
+            r=reward,
+            extra=info,
+        )
+        self.log()
+        return self.last_interaction
+
+    async def plan(self):
+        try:
+            while True:
+                await asyncio.sleep(0)
+                async with lock:
+                    await self.agent.plan()
+        except asyncio.CancelledError:
+            pass
+
+    async def end(
+        self, reward: float, s: Any, term: bool, env_info: dict
+    ) -> Interaction:
+        self.num_episodes += 1
+        agent_info = await self.agent.end(reward, env_info)
+        for task in background_tasks:
+            task.cancel()
+        info = {**env_info, **agent_info}
+        self.last_interaction = Interaction(
+            o=s,
+            a=None,
+            t=term,
+            r=reward,
+            extra=info,
+        )
+        self.log()
+        return self.last_interaction
+
+    async def runEpisode(self, max_steps: int = 0):
+        is_terminal = False
+
+        await self.start()
+
+        while (not is_terminal) and ((max_steps == 0) or (self.num_steps < max_steps)):
+            rl_step_result = await self.step()
+            is_terminal = rl_step_result.t
+
+        # even at episode cutoff, this still counts as completing an episode
+        if not is_terminal:
+            self.num_episodes += 1
+
+        return is_terminal
+
+    def append_csv(
+        self, chk, raw_csv_path: Path, img_name: str, interaction: Interaction
+    ):
+        start_time = time.time()
+        data_dict = {
+            "time": [self.environment.time],  # type: ignore
+            "frame": [self.num_steps],
+            **expand("action", self.environment.last_action),  # type: ignore
+            **expand("calibrated_action", self.environment.last_calibrated_action),  # type: ignore
+            "steps": [self.num_steps],
+            "image_name": [img_name],
+            "episode": [chk["episode"] if chk is not None else None],
+        }
+        expanded_info = {}
+        if interaction is not None:
+            interaction_data = {
+                **expand("state", interaction.o),
+                "agent_action": [interaction.a],
+                "reward": [interaction.r],
+                "terminal": [interaction.t],
+                "return": [self.total_reward if interaction.t else None],
+            }
+            data_dict.update(interaction_data)
+            for key, value in interaction.extra.items():
+                if isinstance(value, pd.DataFrame):
+                    continue
+                elif isinstance(value, np.ndarray):
+                    expanded_info.update(expand(key, value))
+                else:
+                    expanded_info.update(expand(key, value))
+            data_dict.update(expanded_info)
+
+        logger.debug("Creating DataFrame from data_dict")
+        df = pd.DataFrame(data_dict)
+        if interaction is not None:
+            logger.debug("Processing interaction.extra['df'] for merging")
+            interaction.extra["df"].reset_index(inplace=True, drop=True)
+            interaction.extra["df"]["plant_id"] = interaction.extra["df"].index
+            interaction.extra["df"]["frame"] = self.num_steps
+            logger.debug("Merging DataFrames on 'frame'")
+            df = pd.merge(
+                df,
+                interaction.extra["df"],
+                how="left",
+                left_on=["frame"],
+                right_on=["frame"],
+            )
+        if raw_csv_path.exists():
+            logger.debug(f"{raw_csv_path} exists, reading and backing up")
+            df_old = pd.read_csv(raw_csv_path)
+            shutil.copy(raw_csv_path, raw_csv_path.with_suffix(".bak"))
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore",
+                    message="The behavior of DataFrame concatenation with empty or all-NA entries is deprecated.",
+                    category=FutureWarning,
+                )
+            logger.debug("Concatenating old and new DataFrames")
+            df = pd.concat([df_old, df], ignore_index=True)
+        logger.debug(f"Saving DataFrame to {raw_csv_path}")
+        df.to_csv(raw_csv_path, index=False)
+        end_time = time.time()
+        logger.debug(f"append_csv took {end_time - start_time:.4f} seconds")
+
+    def save_images(self, dataset_path: Path, save_keys: set[str]):
+        start_time = time.time()
+        isoformat = self.environment.time.isoformat(timespec="seconds").replace(":", "")  # type: ignore
+        images_path = dataset_path / "images"
+        images_path.mkdir(parents=True, exist_ok=True)
+        img_path = None
+        for key, image in self.environment.images.items():  # type: ignore
+            if save_keys != "*" and key not in save_keys:
+                continue
+            img_path = images_path / f"{isoformat}_{key}.jpg"
+            image = image.convert("RGB")
+            image.save(img_path, "JPEG", quality=90)
+        end_time = time.time()
+        logger.debug(f"save_images took {end_time - start_time:.4f} seconds")
+        return img_path.name if img_path else None
+
+    def log(self):
+        if self.is_mock_env:
+            return
+        # Only execute the rest if minutes are divisible by 5
+        if self.environment.time.minute % 5 != 0:  # type: ignore
+            return
+        img_name = self.save_images(self.dataset_path, self.images_save_keys)
+        raw_csv_path = self.dataset_path / "raw.csv"
+        self.append_csv(None, raw_csv_path, img_name, self.last_interaction)  # type: ignore
+
+
+class LoggingRlGlue(RlGlue):
+    def __init__(self, agent: BaseAgent, env: BaseEnvironment):
+        super().__init__(agent, env)
+        self.agent = agent
+        self.environment = env
+
+    def start(self):  # type: ignore
+        self.num_steps = 0
+        self.total_reward = 0
+
+        s, env_info = self.environment.start()
+        self.last_action, agent_info = self.agent.start(s, env_info)
+        info = {**env_info, **agent_info}
+        return s, self.last_action, info
+
+    def step(self) -> Interaction:
+        assert self.last_action is not None, (
+            "Action is None; make sure to call glue.start() before calling glue.step()."
+        )
+        (reward, s, term, env_info) = self.environment.step(self.last_action)
+
+        self.total_reward += reward
+
+        self.num_steps += 1
+        self.total_steps += 1
+        if term:
+            self.num_episodes += 1
+            self.agent.end(reward, {**env_info})
+            return Interaction(
+                o=s,
+                a=None,
+                t=term,
+                r=reward,
+                extra=env_info,
+            )
+
+        self.last_action, agent_info = self.agent.step(reward, s, env_info)
+        info = {**env_info, **agent_info}
+        return Interaction(
+            o=s,
+            a=self.last_action,
+            t=term,
+            r=reward,
+            extra=info,
+        )

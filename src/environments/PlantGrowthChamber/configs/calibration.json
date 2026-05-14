@@ -1,0 +1,26 @@
+{
+    "maximum": {
+        "blue": 111,
+        "cool_white": 103,
+        "warm_white": 85,
+        "orange_red": 89,
+        "red": 67.0,
+        "far_red": 32.807586499999985
+    },
+    "safe_maximum": {
+        "blue": 96,
+        "cool_white": 90,
+        "warm_white": 65,
+        "orange_red": 79.0,
+        "red": 55.0,
+        "far_red": 21.636228499999987
+    },
+    "safe_minimum": {
+        "blue": 5.0,
+        "cool_white": 5.0,
+        "warm_white": 5.0,
+        "orange_red": 4.0,
+        "red": 5.0,
+        "far_red": 0.6679889999999996
+    }
+}

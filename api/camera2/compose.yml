@@ -1,0 +1,10 @@
+services:
+  app:
+    image: ghcr.io/steventango/plant-rl/camera2:main
+    ports:
+      - 8080:80
+    privileged: true
+    restart: unless-stopped
+    volumes:
+      - /run/udev:/run/udev:ro
+      - .:/app

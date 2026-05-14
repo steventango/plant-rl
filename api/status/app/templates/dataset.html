@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>{{ dataset_name }}</title>
+  <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
+  <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script> <!-- Add this line -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script> <!-- Add this line -->
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      background-color: #f5f5f5;
+    }
+
+    .container {
+      padding-top: 84px;
+      /* 64px for top app bar + 20px padding */
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    .mdc-card {
+      padding: 16px;
+    }
+
+    .image-viewer {
+      display: flex;
+      justify-content: space-around;
+      gap: 10px;
+      flex-direction: row;
+    }
+
+    img {
+      max-width: 400px;
+      height: auto;
+    }
+
+    .charts {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 150px;
+    }
+  </style>
+</head>
+
+<body class="mdc-typography">
+  <header class="mdc-top-app-bar">
+    <div class="mdc-top-app-bar__row">
+      <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
+        <span class="mdc-top-app-bar__title">{{ dataset_name }}</span>
+      </section>
+    </div>
+  </header>
+  <div class="container mdc-top-app-bar--prominent-fixed-adjust">dc-top-app-bar--prominent-fixed-adjust">
+    <div class="mdc-card image-viewer">
+      <img id="left-image" />
+      <img id="right-image" />
+    </div>
+    <div class="mdc-card charts">
+      <div class="chart-container">
+        <canvas id="action-chart"></canvas>
+      </div>
+      <div class="chart-container">
+        <canvas id="area-chart"></canvas>
+      </div>
+    </div>
+  </div>
+  <script>
+          mdc.autoInit();
+    const data = {{ events_json | safe }};
+    const leftImage = document.getElementById('left-image');
+    const rightImage = document.getElementById('right-image');
+    let currentIndex = 0;
+
+    const updateImages = (index) => {
+      const event = data.events[index];
+      if (event.left_image_path) {
+        leftImage.src = event.left_image_path;
+        leftImage.style.display = 'block';
+      } else {
+        leftImage.style.display = 'none';
+      }
+      if (event.right_image_path) {
+        rightImage.src = event.right_image_path;
+        rightImage.style.display = 'block';
+      } else {
+        rightImage.style.display = 'none';
+      }
+    };
+
+    const verticalLinePlugin = {
+      id: 'verticalLine',
+      afterDraw: (chart) => {
+        if (chart.tooltip._active && chart.tooltip._active.length) {
+          const activePoint = chart.tooltip._active[0];
+          if (activePoint && activePoint.element) { // Add this check
+            const ctx = chart.ctx;
+            const x = activePoint.element.x;
+            const topY = chart.scales.y.top;
+            const bottomY = chart.scales.y.bottom;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(x, topY);
+            ctx.lineTo(x, bottomY);
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = 'red';
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+      }
+    };
+
+      const createChart = (canvasId, label, chartData, allCharts) => {
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        const colors = {
+          "Blue": '#0000FF',
+          "Cool White": '#ADD8E6',
+          "Warm White": '#FFA500',
+          "Orange Red": '#FF4500',
+          "Red": '#FF0000',
+          "Far Red": '#8B0000'
+        };
+        const chart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            datasets: chartData.map((data, index) => {
+              const label = ["Blue", "Cool White", "Warm White", "Orange Red", "Red", "Far Red"][index]; // Title case labels
+              return {
+                label: label,
+                data: data.map(e => ({ x: e.time, y: e.value })),
+                fill: false,
+                borderColor: colors[label],
+                tension: 0.1,
+                pointRadius: 0 // Disable point rendering
+              };
+            })
+          },
+          options: {
+            maintainAspectRatio: false,
+            interaction: {
+              mode: 'index',
+              intersect: false,
+            },
+            plugins: {
+              tooltip: {
+                enabled: true, // Enable tooltip
+                callbacks: {
+                  label: (context) => {
+                    const value = context.raw.y;
+                    return `${context.dataset.label}: ${value}`;
+                  },
+                  title: (context) => {
+                    return `Date: ${context[0].raw.x}`;
+                  }
+                }
+              },
+              zoom: {
+                pan: {
+                  enabled: true,
+                  mode: 'x', // Allow panning in the x direction
+                },
+                zoom: {
+                  wheel: {
+                    enabled: true,
+                  },
+                  pinch: {
+                    enabled: true,
+                  },
+                  mode: 'x', // Allow zooming in the x direction
+                }
+              }
+            },
+            scales: {
+              x: {
+                type: 'time',
+                time: {
+                  unit: 'day'
+                },
+                ticks: {
+                  minRotation: 45,
+                  maxRotation: 90
+                }
+              }
+            },
+            onHover: (event, chartElement) => {
+              if (chartElement.length > 0) {
+                currentIndex = chartElement[0].index;
+                updateImages(currentIndex);
+                allCharts.forEach(c => {
+                  if (c) {
+                    const activeElements = c.getElementsAtEventForMode(event, 'index', { intersect: false });
+                    c.tooltip._active = activeElements.length > 0 ? [activeElements[0]] : [];
+                    c.draw();
+                  }
+                });
+              }
+            }
+          },
+          plugins: [verticalLinePlugin]
+        });
+        return chart;
+      };
+
+        const actionData = Array.from({ length: 6 }, (_, i) =>
+          data.events.map(e => ({
+            time: e.time,
+            value: e[`action_${i}`]
+          }))
+        );
+      const areaData = data.events.filter(e => e.mean_area !== null).map(e => ({ time: e.time, value: e.mean_area }));
+
+      let actionChart, areaChart;
+      const allCharts = () => [actionChart, areaChart];
+
+      actionChart = createChart('action-chart', 'Action', actionData, allCharts());
+        if (areaData.length > 0) {
+        areaChart = createChart('area-chart', 'Mean Area', [areaData], allCharts());
+      } else {
+        document.getElementById('area-chart').parentElement.style.display = 'none';
+      }
+
+      if (data.events.length > 0) {
+        currentIndex = data.events.length - 1; // Set to the newest data point
+        updateImages(currentIndex);
+        allCharts().forEach(chart => {
+          if (chart) {
+            const meta = chart.getDatasetMeta(0);
+            const activeElement = meta.data[currentIndex];
+            chart.tooltip._active = [activeElement];
+            chart.update();
+          }
+        });
+      }
+</script>
+</body>
+
+</html>
