@@ -22,7 +22,7 @@ services:
       - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
       - ~/.cache:/home/${USERNAME}/.cache:cached
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
-      - /data/plant-rl:/data/plant-rl:cached
+      - /data/plant-data-collection:/data/plant-data-collection:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E13/P0/Spreadsheet1.json -i 13 --deploy
     deploy:
@@ -56,7 +56,7 @@ services:
       - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
       - ~/.cache:/home/${USERNAME}/.cache:cached
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
-      - /data/plant-rl:/data/plant-rl:cached
+      - /data/plant-data-collection:/data/plant-data-collection:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E13/P0/Spreadsheet2.json -i 14 --deploy
     deploy:
@@ -91,7 +91,7 @@ services:
       - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
       - ~/.cache:/home/${USERNAME}/.cache:cached
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
-      - /data/plant-rl:/data/plant-rl:cached
+      - /data/plant-data-collection:/data/plant-data-collection:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E13/P0/Spreadsheet3.json -i 15 --deploy
     deploy:
@@ -126,7 +126,7 @@ services:
       - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
       - ~/.cache:/home/${USERNAME}/.cache:cached
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
-      - /data/plant-rl:/data/plant-rl:cached
+      - /data/plant-data-collection:/data/plant-data-collection:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E13/P0/Spreadsheet4.json -i 16 --deploy
     deploy:
@@ -161,7 +161,7 @@ services:
       - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
       - ~/.cache:/home/${USERNAME}/.cache:cached
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
-      - /data/plant-rl:/data/plant-rl:cached
+      - /data/plant-data-collection:/data/plant-data-collection:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E13/P0/Spreadsheet5.json -i 17 --deploy
     deploy:
@@ -196,7 +196,7 @@ services:
       - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
       - ~/.cache:/home/${USERNAME}/.cache:cached
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
-      - /data/plant-rl:/data/plant-rl:cached
+      - /data/plant-data-collection:/data/plant-data-collection:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E13/P0/Spreadsheet6.json -i 18 --deploy
     deploy:
@@ -231,7 +231,7 @@ services:
       - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
       - ~/.cache:/home/${USERNAME}/.cache:cached
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
-      - /data/plant-rl:/data/plant-rl:cached
+      - /data/plant-data-collection:/data/plant-data-collection:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E13/P0/Dirichlet7.json -i 19 --deploy
     deploy:
@@ -266,7 +266,7 @@ services:
       - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
       - ~/.cache:/home/${USERNAME}/.cache:cached
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
-      - /data/plant-rl:/data/plant-rl:cached
+      - /data/plant-data-collection:/data/plant-data-collection:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E13/P0/Spreadsheet8.json -i 20 --deploy
     deploy:
@@ -301,7 +301,7 @@ services:
       - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
       - ~/.cache:/home/${USERNAME}/.cache:cached
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
-      - /data/plant-rl:/data/plant-rl:cached
+      - /data/plant-data-collection:/data/plant-data-collection:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E13/P0/Spreadsheet9.json -i 21 --deploy
     deploy:
@@ -336,7 +336,7 @@ services:
       - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
       - ~/.cache:/home/${USERNAME}/.cache:cached
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
-      - /data/plant-rl:/data/plant-rl:cached
+      - /data/plant-data-collection:/data/plant-data-collection:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E13/P0/Spreadsheet10.json -i 22 --deploy
     deploy:
@@ -371,7 +371,7 @@ services:
       - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
       - ~/.cache:/home/${USERNAME}/.cache:cached
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
-      - /data/plant-rl:/data/plant-rl:cached
+      - /data/plant-data-collection:/data/plant-data-collection:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E13/P0/Spreadsheet11.json -i 23 --deploy
     deploy:
@@ -406,7 +406,7 @@ services:
       - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
       - ~/.cache:/home/${USERNAME}/.cache:cached
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
-      - /data/plant-rl:/data/plant-rl:cached
+      - /data/plant-data-collection:/data/plant-data-collection:cached
     restart: unless-stopped
     command: uv run python src/main_real.py -e experiments/online/E13/P0/Spreadsheet12.json -i 24 --deploy
     deploy:
@@ -417,32 +417,6 @@ services:
               count: 1
               capabilities:
                 - gpu
-
-  monitor:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        USERNAME: ${USERNAME}
-        USER_UID: ${HOST_UID}
-        USER_GID: ${HOST_GID}
-    env_file: .env
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    networks:
-      - plant-network
-    user: "${HOST_UID}:${HOST_GID}"
-    volumes:
-      - .:/app:cached
-      - ~/.ssh:/home/${USERNAME}/.ssh:cached
-      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
-      - ~/.config:/home/${USERNAME}/.config:cached
-      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
-      - ~/.cache:/home/${USERNAME}/.cache:cached
-      - ~/.netrc:/home/${USERNAME}/.netrc:cached
-      - /data/plant-rl:/data/plant-rl:cached
-    restart: unless-stopped
-    command: uv run python src/monitor.py --interval 300 --memory-threshold 0.9 --disk-threshold 0.9
 
 networks:
   plant-network:
