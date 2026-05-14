@@ -276,10 +276,10 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         # Compute daily percentage growth as reward
         if yesterday_morning_mean_area == 0:
-                logger.debug(
-                    "Yesterday's morning mean area is 0, returning 0 reward to avoid division by zero."
-                )
-                return 0
+            logger.debug(
+                "Yesterday's morning mean area is 0, returning 0 reward to avoid division by zero."
+            )
+            return 0
         else:
             return today_morning_mean_area / yesterday_morning_mean_area - 1
 

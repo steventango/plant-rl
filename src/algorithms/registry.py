@@ -3,6 +3,7 @@ from algorithms.RecipeAgent import RecipeAgent
 from algorithms.Incubator import Incubator
 from utils.RlGlue.agent import BaseAsyncAgent
 
+
 def getAgent(name) -> Type[BaseAsyncAgent]:
     if name.startswith("Incubator"):
         return Incubator

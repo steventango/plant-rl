@@ -3,6 +3,7 @@ import numpy as np
 from environments.PlantGrowthChamber.PlantGrowthChamber import PlantGrowthChamber
 from utils.constants import BALANCED_ACTION_100
 
+
 class PlantGrowthChamberIntensity(PlantGrowthChamber):
     def __init__(self, min_ppfd: float = 0.0, max_ppfd: float = 100.0, **kwargs):
         super().__init__(**kwargs)

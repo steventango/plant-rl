@@ -108,7 +108,9 @@ async def main():
 
             context = exp.buildSaveContext(idx, base=args.save_path)
             agent_path = Path(context.resolve()).relative_to("results")
-            dataset_path = Path("/data/plant-data-collection/") / agent_path / env.zone.identifier
+            dataset_path = (
+                Path("/data/plant-data-collection/") / agent_path / env.zone.identifier
+            )
             env.set_dataset_path(dataset_path)
             images_save_keys = problem.exp_params.get("image_save_keys")
 
@@ -184,7 +186,6 @@ async def main():
                     episode=episode,
                 )
 
-
                 if interaction.t or (
                     exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff
                 ):
@@ -215,6 +216,7 @@ async def main():
                     logger.exception("Failed to save checkpoint")
                     raise
         wandb_run.finish()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

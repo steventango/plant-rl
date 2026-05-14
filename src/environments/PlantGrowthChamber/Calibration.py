@@ -63,7 +63,11 @@ class Calibration:
         action_array[color_array == 0] = 0
 
         # Interpolate the desired value
-        return float(np.clip(np.interp(desired, color_array, action_array), 0, action_array.max()))
+        return float(
+            np.clip(
+                np.interp(desired, color_array, action_array), 0, action_array.max()
+            )
+        )
 
     def get_calibrated_action(self, action: np.ndarray) -> np.ndarray:
         """
@@ -84,7 +88,9 @@ class Calibration:
         def _calibrate(a: np.ndarray) -> np.ndarray:
             return np.array(
                 [
-                    self._get_calibrated_value(self.action, color, desired, float(safe_min))
+                    self._get_calibrated_value(
+                        self.action, color, desired, float(safe_min)
+                    )
                     for desired, color, safe_min in zip(
                         a, calibration_data, self.safe_minimum_values, strict=True
                     )

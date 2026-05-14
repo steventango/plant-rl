@@ -4,6 +4,7 @@ from utils.RlGlue.agent import BaseAsyncAgent
 from utils.constants import BALANCED_ACTION_100
 from utils.checkpoint import checkpointable
 
+
 @checkpointable(("start_date",))
 class RecipeAgent(BaseAsyncAgent):
     def __init__(self, observations, actions, params, collector, seed):

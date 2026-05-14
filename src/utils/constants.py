@@ -29,4 +29,3 @@ DIM_ACTION = 0.675 * BALANCED_ACTION_100.copy()
 
 RED_ACTION = get_modified_action(ppfd=105.0, channel=4, offset=40.0)
 BLUE_ACTION = get_modified_action(ppfd=105.0, channel=0, offset=40.0)
-
