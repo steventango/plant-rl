@@ -28,11 +28,17 @@ class BaseAgent(RlGlueBaseAgent):
 
 
 class BaseAsyncAgent:
+    _init_args: tuple[Any, ...]
+
     def __getstate__(self):
         return {"__args": self._init_args}
 
     def __setstate__(self, state):
-        self.__init__(*state["__args"])
+        self.__init__(*state["__args"])  # type: ignore[misc]
+
+    @abstractmethod
+    async def plan(self) -> None:
+        raise NotImplementedError("Expected `plan` to be implemented")
 
     @abstractmethod
     async def start(
