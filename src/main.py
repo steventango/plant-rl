@@ -65,12 +65,13 @@ async def main():
             id=run_id,
             resume="allow",
             config={},
+            mode="offline",
             settings=wandb.Settings(
                 x_stats_disk_paths=(
                     "/",
                     "/data",
                 ),  # So wandb alerts when data dir is near full
-                init_timeout=180,
+                init_timeout=600,
             ),
         )
 
@@ -111,7 +112,6 @@ async def main():
             dataset_path = (
                 Path("/data/plant-data-collection/") / agent_path / env.zone.identifier
             )
-            env.set_dataset_path(dataset_path)
             images_save_keys = problem.exp_params.get("image_save_keys")
 
             config = {

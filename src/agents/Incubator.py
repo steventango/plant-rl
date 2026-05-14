@@ -7,8 +7,8 @@ from utils.checkpoint import checkpointable
 
 @checkpointable(())
 class Incubator(BaseAsyncAgent):
-    def __init__(self, observations, actions, params):
-        self._init_args = (observations, actions, params)
+    def __init__(self, observations, actions, params, seed):
+        self._init_args = (observations, actions, params, seed)
         self.params = params
         agent_params = params.get("agent", {})
         self.incubation_ppfd = float(agent_params.get("incubation_ppfd", 100.0))
