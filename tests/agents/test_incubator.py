@@ -49,7 +49,9 @@ class TestIncubator:
         for hour in [9, 10, 15, 20]:
             obs = dt(9, 30) if hour == 9 else dt(hour)
             action, _ = await agent.start(obs)
-            np.testing.assert_array_almost_equal(action, expected, err_msg=f"hour={hour}")
+            np.testing.assert_array_almost_equal(
+                action, expected, err_msg=f"hour={hour}"
+            )
 
     async def test_default_incubation_ppfd(self):
         agent = Incubator(
