@@ -6,7 +6,7 @@ from utils.checkpoint import checkpointable
 
 
 @checkpointable(("start_date",))
-class SequenceAgent(BaseAsyncAgent):
+class ScheduleAgent(BaseAsyncAgent):
     def __init__(self, observations, actions, params, seed):
         self._init_args = (observations, actions, params, seed)
         self.params = params
