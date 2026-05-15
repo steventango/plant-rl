@@ -36,3 +36,8 @@ def get_current_action(lightbar: Lightbar = Depends(get_lightbar)):
         if lightbar.safe_action is not None
         else None,
     }
+
+
+@app.post("/reset", response_class=Response)
+def reset(lightbar: Annotated[Lightbar, Depends(get_lightbar)]):
+    lightbar.reset()

@@ -89,6 +89,11 @@ class TestLightbar:
         assert duty_cycle.shape == (2, 6)
         np.testing.assert_array_equal(duty_cycle, np.ones((2, 6)) * 2047)
 
+    def test_reset_sends_swrst_general_call(self, lightbar: Lightbar):
+        before = lightbar.i2c.reset_calls
+        lightbar.reset()
+        assert lightbar.i2c.reset_calls == before + 1
+
 
 def test_get_lightbar_singleton():
     lightbar1 = get_lightbar()

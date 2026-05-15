@@ -38,6 +38,14 @@ class Lightbar:
             duty_cycle = self.convert_to_duty_cycle(action)
             self.set_duty_cycle(duty_cycle)
 
+    def reset(self):
+        # PCA9685 software reset via I2C general call (datasheet section 7.6):
+        # byte 0x06 sent to address 0x00 resets every PCA9685 on the bus to
+        # power-up defaults. Mirrors legacy g2v_perihelion_v2.reset(). Note
+        # that this leaves the chips in SLEEP mode until the next step() write.
+        with self._lock:
+            self.i2c.write_byte(0x00, 0x06)
+
     def set_duty_cycle(self, duty_cycles: np.ndarray):
         for channel in range(len(self.channels)):
             self.set_bar_pwn(channel, duty_cycles[:, channel])
