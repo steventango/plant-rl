@@ -9,6 +9,11 @@ from .zones import Zone
 
 logger = logging.getLogger(__name__)
 
+# Bus-recovery constants, named to match perihelion_cl/i2c_recovery.py.
+SCL_PIN = 3
+SCL_CYCLES = 9
+SCL_CYCLE_DELAY = 1 / 100000
+
 
 class Lightbar:
     def __init__(self, zone: Zone):
@@ -48,27 +53,29 @@ class Lightbar:
 
     def scl_recover(self):
         # Bus-level recovery for a slave stuck mid-byte holding SDA low.
-        # Closes /dev/i2c-1, steals BCM 3 (SCL) as a GPIO output, pulses it
-        # 9 times so the stuck slave clocks out its remaining bits and
-        # releases SDA, restores SCL to ALT0, and reopens /dev/i2c-1.
-        # Matches perihelion_cl/i2c_recovery.py.
+        # Closes /dev/i2c-1, steals SCL as a GPIO output, pulses it so the
+        # stuck slave clocks out its remaining bits and releases SDA,
+        # restores SCL to ALT0, and reopens /dev/i2c-1. Matches
+        # perihelion_cl/i2c_recovery.py.
         import pigpio
 
         with self._lock:
             self.i2c.close()
             try:
                 pi = pigpio.pi()
-                if not pi.connected:
-                    raise RuntimeError("pigpiod is not running; cannot recover bus")
                 try:
-                    pi.set_mode(3, pigpio.OUTPUT)
-                    pi.write(3, 1)
-                    for _ in range(9):
-                        time.sleep(1 / 100000)
-                        pi.write(3, 0)
-                        time.sleep(1 / 100000)
-                        pi.write(3, 1)
-                    pi.set_mode(3, pigpio.ALT0)
+                    if not pi.connected:
+                        raise RuntimeError(
+                            "pigpiod is not running; cannot recover bus"
+                        )
+                    pi.set_mode(SCL_PIN, pigpio.OUTPUT)
+                    pi.write(SCL_PIN, 1)
+                    for _ in range(SCL_CYCLES):
+                        time.sleep(SCL_CYCLE_DELAY)
+                        pi.write(SCL_PIN, 0)
+                        time.sleep(SCL_CYCLE_DELAY)
+                        pi.write(SCL_PIN, 1)
+                    pi.set_mode(SCL_PIN, pigpio.ALT0)
                 finally:
                     pi.stop()
             finally:
