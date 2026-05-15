@@ -83,7 +83,7 @@ class Lightbar:
 
     def set_duty_cycle(self, duty_cycles: np.ndarray):
         for channel in range(len(self.channels)):
-            self.set_bar_pwn(channel, duty_cycles[:, channel])
+            self.set_bar_pwm(channel, duty_cycles[:, channel])
 
     def ensure_safety_limits(self, action: np.ndarray):
         # safety limits
@@ -100,7 +100,7 @@ class Lightbar:
         duty_cycle = duty_cycle.astype(np.int32)
         return duty_cycle
 
-    def set_bar_pwn(self, channel: int, duty_cycles: np.ndarray):
+    def set_bar_pwm(self, channel: int, duty_cycles: np.ndarray):
         for address, duty_cycle in zip(self.addresses, duty_cycles, strict=False):
             self.set_half_bar_pwm(address, channel, duty_cycle)
 
@@ -123,8 +123,6 @@ class Lightbar:
         time.sleep(0.05)
 
     def get_command_array(self, channel, duty_cycle):
-        duty_cycle = max(0, duty_cycle)
-        duty_cycle = min(4095, duty_cycle)
         duty_cycle = np.clip(duty_cycle, 0, 4095)
         low_byte = duty_cycle & 0xFF
         high_byte = duty_cycle >> 8
