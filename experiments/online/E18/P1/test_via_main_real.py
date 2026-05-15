@@ -26,6 +26,8 @@ import json
 import os
 import sys
 import tempfile
+import types
+from datetime import timedelta
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -60,7 +62,13 @@ CONFIGS = [
 CHANNEL_NAMES = ["blue", "cool_white", "warm_white", "orange_red", "red", "far_red"]
 CHANNEL_COLORS = ["tab:blue", "tab:cyan", "goldenrod", "tab:orange", "tab:red", "tab:brown"]
 
-N_STEPS = 14   # one entry per mock-env day; covers our 14-day trial window
+# Simulate 2 full days at 1-min env-step granularity. The flash is a 1-min
+# event (wrapper checks `minute == 59`), so coarser sim steps would *miss*
+# the flash entirely - 1-min ticks match what the real chamber does. 2 days
+# = 2880 steps per zone.
+SIM_STEP_MIN = 1
+SIM_DAYS = 2
+N_STEPS = SIM_DAYS * 24 * 60 // SIM_STEP_MIN
 
 
 def _mocktest_config(src_path: Path) -> Path:
@@ -92,18 +100,46 @@ async def _run_one(label: str, src_path: Path):
     env = problem.getEnvironment()
     agent = problem.getAgent()
 
+    # Patch the mock env to tick at SIM_STEP_MIN granularity instead of jumping
+    # to the next dataset record (which is one calendar day apart). Plant data
+    # stays stale across the tick - we're only testing action emission, not
+    # plant dynamics. With this patch the wrapper sees env_time advance by
+    # SIM_STEP_MIN per env.step, so action_timestep=240 / enforce_night fire
+    # at the correct boundaries.
+    env.duration = timedelta(minutes=SIM_STEP_MIN)
+
+    async def _fast_sleep_until(self, wake_time):  # type: ignore[no-untyped-def]
+        self.current_time = wake_time
+
+    env.sleep_until = types.MethodType(_fast_sleep_until, env)
+
     with tempfile.TemporaryDirectory() as save_dir:
         dataset_path = Path(save_dir)
         env.set_dataset_path(dataset_path)
         glue = AsyncRLGlue(agent, env, dataset_path, images_save_keys=None)
 
+        from utils.constants import BALANCED_ACTION_105
+
+        def _normalize(a_raw) -> np.ndarray:
+            """Each step's `interaction.a` may be a scalar (agent action) or
+            a 6-vector (wrapper-enforced night/flash action). Promote scalars
+            to 6-channel PPFD via the BALANCED_ACTION_105 spectrum."""
+            arr = np.asarray(a_raw, dtype=float)
+            if arr.ndim == 0:
+                return float(arr) * BALANCED_ACTION_105
+            if arr.shape == (6,):
+                return arr
+            if arr.size == 1:
+                return float(arr.ravel()[0]) * BALANCED_ACTION_105
+            return arr
+
         t_secs, actions = [], []
         interaction = await glue.start()
         t_secs.append(env.time.timestamp())
-        actions.append(np.asarray(interaction.a, dtype=float))
+        actions.append(_normalize(interaction.a))
         for _ in range(N_STEPS - 1):
             interaction = await glue.step()
-            a = np.asarray(interaction.a, dtype=float)
+            a = _normalize(interaction.a)
             if not np.all(np.isfinite(a)):
                 # Mock dataset has run out of valid samples; stop cleanly.
                 break
@@ -116,18 +152,8 @@ async def _run_one(label: str, src_path: Path):
     }
 
 
-def _to_per_channel(actions: np.ndarray) -> np.ndarray:
-    """SequenceAgent/ConstantAgent emit scalar s = PPFD/105; the env multiplies
-    by BALANCED_ACTION_105 to get the 6-channel PPFD vector. Reproduce that
-    here so the plot shows what physically reaches the lightbar."""
-    from utils.constants import BALANCED_ACTION_105
-    if actions.ndim == 1 or actions.shape[-1] != 6:
-        return np.outer(actions.ravel(), BALANCED_ACTION_105)
-    return actions
-
-
 def _plot(label: str, data: dict):
-    actions = _to_per_channel(data["actions"])
+    actions = data["actions"]  # already normalised to 6-channel by _run_one
     t_hours = (data["t_secs"] - data["t_secs"][0]) / 3600.0
 
     fig, ax = plt.subplots(figsize=(10, 5))
@@ -136,9 +162,12 @@ def _plot(label: str, data: dict):
             continue
         ax.plot(t_hours, actions[:, i], color=color, marker="o", markersize=4,
                 linewidth=1.2, label=name)
-    ax.set_xlabel("hours from first step")
+    ax.set_xlabel("hours from first step  (env tick = " + str(SIM_STEP_MIN) + " min)")
     ax.set_ylabel("per-channel PPFD (µmol m⁻² s⁻¹)")
-    ax.set_title(f"{label} — actions emitted via main_real path (mock env, {N_STEPS} steps)")
+    ax.set_title(
+        f"{label} — actions emitted via main_real path "
+        f"({SIM_DAYS} sim-days at {SIM_STEP_MIN}-min env steps, {N_STEPS} total)"
+    )
     ax.grid(alpha=0.3)
     ax.legend(loc="best", fontsize=9, ncol=2)
     fig.tight_layout()
@@ -158,10 +187,12 @@ async def _main():
 
     print("\nPer-step action summary (PPFD totals over first 5 channels):")
     for label, data in results.items():
-        actions = _to_per_channel(data["actions"])
+        actions = data["actions"]
         ppfd = actions[:, :5].sum(axis=1)
-        print(f"  {label}: first 5 steps PPFD = {np.round(ppfd[:5], 2).tolist()}; "
-              f"min/max over {N_STEPS} steps = {ppfd.min():.1f}/{ppfd.max():.1f}")
+        lights_on = ppfd > 0.5
+        print(f"  {label}: lights_on fraction = {lights_on.mean():.2%}; "
+              f"min/max lights-on PPFD = {ppfd[lights_on].min():.1f}/{ppfd[lights_on].max():.1f}; "
+              f"unique daytime PPFD levels ≈ {sorted({round(float(x)) for x in ppfd[lights_on]})}")
 
 
 if __name__ == "__main__":
