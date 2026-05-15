@@ -75,7 +75,7 @@ def cadence_stats(df: pd.DataFrame, label: str) -> None:
     abnormal = deltas[(deltas > typical_delta + 30) | (deltas < typical_delta - 30)]
     if len(abnormal):
         print(f"  anomalous step gaps ({len(abnormal)} rows, expected ~{typical_delta:.0f}s):")
-        for t, d in zip(df.loc[abnormal.index, "time"], abnormal):
+        for t, d in zip(df.loc[abnormal.index, "time"], abnormal, strict=False):
             print(f"    {t}  gap={d:.0f}s")
     if "power" in df.columns:
         n_nan_power = df["power"].isna().sum()
@@ -97,7 +97,7 @@ def plot_zone(df: pd.DataFrame, label: str) -> None:
     ch_names = ["blue", "cool_white", "warm_white", "orange_red", "red", "far_red"]
     ch_colors = ["tab:blue", "tab:cyan", "goldenrod", "tab:orange",
                  "tab:red", "tab:brown"]
-    for i, (name, color) in enumerate(zip(ch_names, ch_colors)):
+    for i, (name, color) in enumerate(zip(ch_names, ch_colors, strict=False)):
         col = f"action.{i}"
         if df[col].max() < 1e-6:
             continue
@@ -182,7 +182,7 @@ def main() -> None:
     fig.tight_layout()
     fig.savefig(FIG_DIR / "p02_power_all_zones.pdf")
     plt.close(fig)
-    print(f"\nwrote combined power plot")
+    print("\nwrote combined power plot")
 
 
 if __name__ == "__main__":

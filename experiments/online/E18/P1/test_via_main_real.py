@@ -147,7 +147,7 @@ def _plot(label: str, data: dict):
     t_hours = (data["t_secs"] - data["t_secs"][0]) / 3600.0
 
     fig, ax = plt.subplots(figsize=(10, 5))
-    for i, (name, color) in enumerate(zip(CHANNEL_NAMES, CHANNEL_COLORS)):
+    for i, (name, color) in enumerate(zip(CHANNEL_NAMES, CHANNEL_COLORS, strict=False)):
         if actions[:, i].max() < 1e-6:
             continue
         ax.plot(t_hours, actions[:, i], color=color, marker="o", markersize=4,

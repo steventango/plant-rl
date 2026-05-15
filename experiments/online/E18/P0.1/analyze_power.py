@@ -213,7 +213,7 @@ def main() -> None:
                 continue
             pred = fn(x, *popt)
             rmse = float(np.sqrt(np.mean((y - pred) ** 2)))
-            param_str = ", ".join(f"{n}={v:.4g}" for n, v in zip(pnames, popt))
+            param_str = ", ".join(f"{n}={v:.4g}" for n, v in zip(pnames, popt, strict=False))
             print(f"  {name}: RMSE={rmse:.3f} W  |  {param_str}")
             fit_results[label][name] = (popt, rmse)
 
@@ -244,7 +244,7 @@ def main() -> None:
             continue
         pred = fn(x_pool, *popt)
         rmse = float(np.sqrt(np.mean((y_pool - pred) ** 2)))
-        param_str = ", ".join(f"{n}={v:.4g}" for n, v in zip(pnames, popt))
+        param_str = ", ".join(f"{n}={v:.4g}" for n, v in zip(pnames, popt, strict=False))
         print(f"  {name}: RMSE={rmse:.3f} W  |  {param_str}")
         pooled_fits[name] = (popt, rmse)
 
@@ -311,7 +311,7 @@ def main() -> None:
     print("\nPower @ matched total-drive levels (interpolated):")
     drive_grid = np.linspace(0.4, 2.0, 9)
     rows_disp: list[str] = []
-    rows_disp.append(f"  drive    z01_power  z02_power   Δ(W)   z01_I   z02_I   ΔI(A)")
+    rows_disp.append("  drive    z01_power  z02_power   Δ(W)   z01_I   z02_I   ΔI(A)")
     z1on = summaries["zone01"][summaries["zone01"]["level_idx"] >= 2].sort_values("mean_drive")
     z2on = summaries["zone02"][summaries["zone02"]["level_idx"] >= 2].sort_values("mean_drive")
     for d in drive_grid:
@@ -351,7 +351,7 @@ def main() -> None:
         popt, rmse = fit_results["zone01"][name]
         ax.plot(x_grid, fn(x_grid, *popt), color=cmap(i),
                 label=f"{name.strip()}  RMSE={rmse:.2f} W", linewidth=1.5)
-    for ch, s in ACTIVATION.items():
+    for _ch, s in ACTIVATION.items():
         ax.axvline(s * TOTAL_BALANCED, color="gray", linestyle="--",
                    linewidth=0.7, alpha=0.4)
     ax.set_xlabel("nominal balanced PPFD")
@@ -365,7 +365,7 @@ def main() -> None:
 
     # --- residual plots for each candidate (zone01) ---
     fig, axes = plt.subplots(2, 2, figsize=(11, 7), sharex=True, sharey=True)
-    for ax, (name, fn) in zip(axes.flat, model_fns.items()):
+    for ax, (name, fn) in zip(axes.flat, model_fns.items(), strict=False):
         if name not in fit_results["zone01"]:
             ax.set_visible(False)
             continue
@@ -377,7 +377,7 @@ def main() -> None:
             ax.scatter(xs, ys - fn(xs, *popt), color=COLORS[label],
                        label=label, alpha=0.85)
         ax.axhline(0, color="black", linewidth=0.6)
-        for ch, s in ACTIVATION.items():
+        for _ch, s in ACTIVATION.items():
             ax.axvline(s * TOTAL_BALANCED, color="gray", linestyle="--",
                        linewidth=0.7, alpha=0.4)
         ax.set_title(f"{name.strip()}   zone01 RMSE={rmse:.2f} W", fontsize=10)

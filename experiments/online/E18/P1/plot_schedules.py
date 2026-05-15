@@ -27,11 +27,11 @@ import numpy as np
 REPO_ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from algorithms.PlantGrowthChamberAsyncAgentWrapper import (
+from algorithms.PlantGrowthChamberAsyncAgentWrapper import (  # noqa: E402
     PlantGrowthChamberAsyncAgentWrapper,
 )
-from algorithms.registry import getAgent
-from utils.constants import BALANCED_ACTION_105
+from algorithms.registry import getAgent  # noqa: E402
+from utils.constants import BALANCED_ACTION_105  # noqa: E402
 
 HERE = Path(__file__).parent
 FIG_DIR = HERE / "figures"
@@ -134,7 +134,7 @@ def simulate_all() -> dict[str, dict[str, np.ndarray]]:
 def plot_ppfd_timeline(results) -> None:
     fig, axes = plt.subplots(3, 1, figsize=(11, 7.5), sharex=True)
     t_hours = np.arange(TOTAL_MIN) / 60.0
-    for ax, (label, data) in zip(axes, results.items()):
+    for ax, (label, data) in zip(axes, results.items(), strict=False):
         ax.plot(t_hours, data["ppfd"], color=ZONE_COLOR[label], linewidth=0.7)
         ax.set_ylabel("PPFD\nµmol m⁻² s⁻¹")
         ax.set_title(f"{label}  (peak {data['ppfd'].max():.0f} PPFD)", fontsize=10)
