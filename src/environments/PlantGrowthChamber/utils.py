@@ -6,13 +6,17 @@ from aiohttp_retry import ExponentialRetry, RetryClient
 
 
 async def create_session():
-    # Configure retry options with exponential backoff
+    # Retry config tuned to the lightbar's ~300-400 ms steady-state response
+    # (lightbar.py:50-60 does 12 I2C writes x 25 ms sleep = 300 ms server-side).
+    # Backoff and attempt count are kept small so a single put_action never
+    # exceeds one env-step duration; a dropped action is re-emitted on the
+    # next env.step (1 min later) anyway.
     retry_options = ExponentialRetry(
-        attempts=3,  # Maximum 3 retry attempts
-        start_timeout=60,  # Start with 60s delay
-        max_timeout=4 * 60,  # Maximum 4 minute delay
+        attempts=2,
+        start_timeout=1,
+        max_timeout=4,
         factor=1,
-        statuses={500, 502, 503, 504, 429},  # Retry on server errors and rate limiting
+        statuses={500, 502, 503, 504, 429},
     )
 
     # Create RetryClient with retry options
