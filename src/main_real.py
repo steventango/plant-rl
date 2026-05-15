@@ -244,9 +244,7 @@ async def main():
                     and exp.total_steps != -1
                     and glue.total_steps >= exp.total_steps
                 ):
-                    logger.info(
-                        f"Reached total_steps={exp.total_steps}; ending run."
-                    )
+                    logger.info(f"Reached total_steps={exp.total_steps}; ending run.")
                     finished_at_total_steps = True
                     break
 

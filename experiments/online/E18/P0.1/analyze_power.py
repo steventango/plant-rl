@@ -33,11 +33,25 @@ ZONES = {
 }
 
 USECOLS = [
-    "time", "frame", "steps",
-    "action.0", "action.1", "action.2", "action.3", "action.4", "action.5",
-    "calibrated_action.0", "calibrated_action.1", "calibrated_action.2",
-    "calibrated_action.3", "calibrated_action.4", "calibrated_action.5",
-    "agent_action", "power", "voltage", "current",
+    "time",
+    "frame",
+    "steps",
+    "action.0",
+    "action.1",
+    "action.2",
+    "action.3",
+    "action.4",
+    "action.5",
+    "calibrated_action.0",
+    "calibrated_action.1",
+    "calibrated_action.2",
+    "calibrated_action.3",
+    "calibrated_action.4",
+    "calibrated_action.5",
+    "agent_action",
+    "power",
+    "voltage",
+    "current",
 ]
 
 BALANCED_SHARES = np.array([19.5, 71.53, 7.82, 0.0, 6.15, 0.0])
@@ -74,8 +88,10 @@ def load_zone(label: str, path: Path) -> pd.DataFrame:
     stuck_mask = (df["req_ppfd"] - expected).abs() > 15
     if bool(stuck_mask.any()):
         first_stuck = int(df.index[stuck_mask][0])
-        print(f"  {label}: stuck at row {first_stuck} "
-              f"(t={df.loc[first_stuck, 'time']}); dropping from there")
+        print(
+            f"  {label}: stuck at row {first_stuck} "
+            f"(t={df.loc[first_stuck, 'time']}); dropping from there"
+        )
         df = df.iloc[:first_stuck].copy()
 
     # Drop pre-experiment stale readings: lights-off action (drive ≈ 0) but
@@ -121,25 +137,39 @@ def summarize(df: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(grouped)
 
 
-def plot_power_vs_x(summaries: dict[str, pd.DataFrame], x_col: str,
-                    x_label: str, fname: str) -> None:
+def plot_power_vs_x(
+    summaries: dict[str, pd.DataFrame], x_col: str, x_label: str, fname: str
+) -> None:
     fig, ax = plt.subplots(figsize=(9, 5.5))
     for label, summ in summaries.items():
         for rep_val, sub in summ.groupby("repeat"):
             rep = int(rep_val)  # type: ignore[arg-type]
             sub = sub.sort_values(x_col)
             ax.errorbar(
-                sub[x_col], sub["mean_power"], yerr=sub["std_power"],
-                fmt=MARKERS.get(rep, "s"), color=COLORS[label],
+                sub[x_col],
+                sub["mean_power"],
+                yerr=sub["std_power"],
+                fmt=MARKERS.get(rep, "s"),
+                color=COLORS[label],
                 label=f"{label} r{rep + 1} (n={int(sub['n'].sum())})",
-                capsize=3, alpha=0.85,
+                capsize=3,
+                alpha=0.85,
             )
     threshold_x = {"nominal_ppfd": TOTAL_BALANCED, "s": 1.0}[x_col]
     for name, s in ACTIVATION.items():
-        ax.axvline(s * threshold_x, color="gray", linestyle="--",
-                   linewidth=0.7, alpha=0.5)
-        ax.text(s * threshold_x, ax.get_ylim()[1] * 0.95, f" {name} on",
-                rotation=90, fontsize=7, color="gray", alpha=0.8, va="top")
+        ax.axvline(
+            s * threshold_x, color="gray", linestyle="--", linewidth=0.7, alpha=0.5
+        )
+        ax.text(
+            s * threshold_x,
+            ax.get_ylim()[1] * 0.95,
+            f" {name} on",
+            rotation=90,
+            fontsize=7,
+            color="gray",
+            alpha=0.8,
+            va="top",
+        )
     ax.set_xlabel(x_label)
     ax.set_ylabel("plug power (W)")
     ax.set_title(f"E18/P0.1: plug power vs {x_label}")
@@ -161,33 +191,42 @@ def main() -> None:
         rows[label] = df
         summaries[label] = summarize(df)
 
-    plot_power_vs_x(summaries, "nominal_ppfd", "nominal balanced PPFD",
-                    "power_vs_ppfd.pdf")
+    plot_power_vs_x(
+        summaries, "nominal_ppfd", "nominal balanced PPFD", "power_vs_ppfd.pdf"
+    )
     plot_power_vs_x(summaries, "s", "intensity scalar s", "power_vs_s.pdf")
 
     print("\n--- Model fits over LEDs-on region only (drive > 0, levels 2..20) ---")
-    print("    Below that (levels 0,1) every channel is safe_min-gated; power = baseline.")
+    print(
+        "    Below that (levels 0,1) every channel is safe_min-gated; power = baseline."
+    )
 
     def model_linear(x: np.ndarray, a: float, b: float) -> np.ndarray:
         return a + b * x
 
     def model_quadratic(x: np.ndarray, a: float, b: float, c: float) -> np.ndarray:
-        return a + b * x + c * x ** 2
+        return a + b * x + c * x**2
 
     def model_power_law(x: np.ndarray, a: float, b: float, c: float) -> np.ndarray:
         # P = a + b * PPFD^c. Captures concave/convex curvature with one shape param.
         return a + b * np.power(np.clip(x, 1e-6, None), c)
 
-    def model_lin_plus_exp(x: np.ndarray, a: float, b: float, c: float, tau: float) -> np.ndarray:
+    def model_lin_plus_exp(
+        x: np.ndarray, a: float, b: float, c: float, tau: float
+    ) -> np.ndarray:
         # Linear in PPFD plus a decaying overhead from sub-spectrum drive.
         return a + b * x + c * np.exp(-x / max(tau, 1e-6))
 
     candidates = [
-        ("linear         (2p)", model_linear,        [7.0, 0.5],            ["a", "b"]),
-        ("quadratic      (3p)", model_quadratic,     [7.0, 0.5, -1e-4],     ["a", "b", "c"]),
-        ("power-law      (3p)", model_power_law,     [5.0, 0.5, 1.0],       ["a", "b", "c"]),
-        ("lin+exp decay  (4p)", model_lin_plus_exp,  [3.0, 0.45, 5.0, 30.0],
-            ["a", "b", "c", "tau"]),
+        ("linear         (2p)", model_linear, [7.0, 0.5], ["a", "b"]),
+        ("quadratic      (3p)", model_quadratic, [7.0, 0.5, -1e-4], ["a", "b", "c"]),
+        ("power-law      (3p)", model_power_law, [5.0, 0.5, 1.0], ["a", "b", "c"]),
+        (
+            "lin+exp decay  (4p)",
+            model_lin_plus_exp,
+            [3.0, 0.45, 5.0, 30.0],
+            ["a", "b", "c", "tau"],
+        ),
     ]
 
     # Baseline: the levels where every channel is gated below safe_min and
@@ -202,8 +241,10 @@ def main() -> None:
         on = summ[summ["level_idx"] >= 2]
         x = on["nominal_ppfd"].to_numpy()
         y = on["mean_power"].to_numpy()
-        print(f"\n{label}  baseline={baselines[label]:.3f} W   "
-              f"fit n={len(x)} levels (drive > 0)")
+        print(
+            f"\n{label}  baseline={baselines[label]:.3f} W   "
+            f"fit n={len(x)} levels (drive > 0)"
+        )
         fit_results[label] = {}
         for name, fn, p0, pnames in candidates:
             try:
@@ -213,7 +254,9 @@ def main() -> None:
                 continue
             pred = fn(x, *popt)
             rmse = float(np.sqrt(np.mean((y - pred) ** 2)))
-            param_str = ", ".join(f"{n}={v:.4g}" for n, v in zip(pnames, popt, strict=False))
+            param_str = ", ".join(
+                f"{n}={v:.4g}" for n, v in zip(pnames, popt, strict=False)
+            )
             print(f"  {name}: RMSE={rmse:.3f} W  |  {param_str}")
             fit_results[label][name] = (popt, rmse)
 
@@ -221,13 +264,17 @@ def main() -> None:
     for label, summ in summaries.items():
         b0 = summ[summ["level_idx"] == 0]
         if len(b0):
-            print(f"  {label}: power={b0['mean_power'].mean():.3f} W "
-                  f"(n={int(b0['n'].sum())})")
+            print(
+                f"  {label}: power={b0['mean_power'].mean():.3f} W "
+                f"(n={int(b0['n'].sum())})"
+            )
 
     # --- pooled fit across both zones (LEDs-on only) ---
     pooled_on = pd.concat(
-        [summ[summ["level_idx"] >= 2].assign(zone=label)
-         for label, summ in summaries.items()],
+        [
+            summ[summ["level_idx"] >= 2].assign(zone=label)
+            for label, summ in summaries.items()
+        ],
         ignore_index=True,
     )
     x_pool = pooled_on["nominal_ppfd"].to_numpy()
@@ -244,7 +291,9 @@ def main() -> None:
             continue
         pred = fn(x_pool, *popt)
         rmse = float(np.sqrt(np.mean((y_pool - pred) ** 2)))
-        param_str = ", ".join(f"{n}={v:.4g}" for n, v in zip(pnames, popt, strict=False))
+        param_str = ", ".join(
+            f"{n}={v:.4g}" for n, v in zip(pnames, popt, strict=False)
+        )
         print(f"  {name}: RMSE={rmse:.3f} W  |  {param_str}")
         pooled_fits[name] = (popt, rmse)
 
@@ -253,21 +302,43 @@ def main() -> None:
     for label, summ in summaries.items():
         on = summ[summ["level_idx"] >= 2]
         off = summ[summ["level_idx"] <= 1]
-        ax.scatter(on["nominal_ppfd"], on["mean_power"], color=COLORS[label],
-                   s=30, zorder=10, label=f"{label}")
-        ax.scatter(off["nominal_ppfd"], off["mean_power"], color=COLORS[label],
-                   s=30, marker="x", zorder=10, alpha=0.7)
+        ax.scatter(
+            on["nominal_ppfd"],
+            on["mean_power"],
+            color=COLORS[label],
+            s=30,
+            zorder=10,
+            label=f"{label}",
+        )
+        ax.scatter(
+            off["nominal_ppfd"],
+            off["mean_power"],
+            color=COLORS[label],
+            s=30,
+            marker="x",
+            zorder=10,
+            alpha=0.7,
+        )
     ppfd_on_min = float(pooled_on["nominal_ppfd"].min())
     ppfd_max = float(pooled_on["nominal_ppfd"].max())
     x_grid = np.linspace(ppfd_on_min, ppfd_max, 200)
-    ax.hlines(pooled_baseline, 0, ppfd_on_min, color="dimgray",
-              linewidth=2, label=f"baseline = {pooled_baseline:.2f} W")
+    ax.hlines(
+        pooled_baseline,
+        0,
+        ppfd_on_min,
+        color="dimgray",
+        linewidth=2,
+        label=f"baseline = {pooled_baseline:.2f} W",
+    )
     popt_pl, rmse_pl = pooled_fits["power-law      (3p)"]
     a_pl, b_pl, c_pl = popt_pl
-    ax.plot(x_grid, model_power_law(x_grid, *popt_pl), color="tab:red",
-            linewidth=2,
-            label=f"P = {a_pl:.2f} + {b_pl:.3f}·PPFD^{c_pl:.3f}   "
-                  f"(RMSE={rmse_pl:.2f} W)")
+    ax.plot(
+        x_grid,
+        model_power_law(x_grid, *popt_pl),
+        color="tab:red",
+        linewidth=2,
+        label=f"P = {a_pl:.2f} + {b_pl:.3f}·PPFD^{c_pl:.3f}   (RMSE={rmse_pl:.2f} W)",
+    )
     ax.set_xlabel("nominal balanced PPFD")
     ax.set_ylabel("plug power (W)")
     ax.set_title("E18/P0.1 pooled power-law fit")
@@ -281,10 +352,22 @@ def main() -> None:
     fig, axes = plt.subplots(1, 2, figsize=(12, 5))
     for label, summ in summaries.items():
         on = summ[summ["level_idx"] >= 2]
-        axes[0].scatter(on["mean_drive"], on["mean_power"], color=COLORS[label],
-                        s=30, label=label, alpha=0.85)
-        axes[1].scatter(on["mean_drive"], on["mean_current"], color=COLORS[label],
-                        s=30, label=label, alpha=0.85)
+        axes[0].scatter(
+            on["mean_drive"],
+            on["mean_power"],
+            color=COLORS[label],
+            s=30,
+            label=label,
+            alpha=0.85,
+        )
+        axes[1].scatter(
+            on["mean_drive"],
+            on["mean_current"],
+            color=COLORS[label],
+            s=30,
+            label=label,
+            alpha=0.85,
+        )
     axes[0].set_xlabel("total drive (Σ calibrated_action)")
     axes[0].set_ylabel("plug power (W)")
     axes[0].set_title("Power vs drive — same actuator axis")
@@ -295,8 +378,10 @@ def main() -> None:
     axes[1].set_title("Current vs drive")
     axes[1].grid(alpha=0.3)
     axes[1].legend(fontsize=9)
-    fig.suptitle("If zones overlap here, the power-vs-PPFD gap is calibration; "
-                 "if not, it's hardware")
+    fig.suptitle(
+        "If zones overlap here, the power-vs-PPFD gap is calibration; "
+        "if not, it's hardware"
+    )
     fig.tight_layout()
     fig.savefig(OUT_DIR / "calibration_vs_hardware.pdf")
     plt.close(fig)
@@ -312,15 +397,21 @@ def main() -> None:
     drive_grid = np.linspace(0.4, 2.0, 9)
     rows_disp: list[str] = []
     rows_disp.append("  drive    z01_power  z02_power   Δ(W)   z01_I   z02_I   ΔI(A)")
-    z1on = summaries["zone01"][summaries["zone01"]["level_idx"] >= 2].sort_values("mean_drive")
-    z2on = summaries["zone02"][summaries["zone02"]["level_idx"] >= 2].sort_values("mean_drive")
+    z1on = summaries["zone01"][summaries["zone01"]["level_idx"] >= 2].sort_values(
+        "mean_drive"
+    )
+    z2on = summaries["zone02"][summaries["zone02"]["level_idx"] >= 2].sort_values(
+        "mean_drive"
+    )
     for d in drive_grid:
         p1 = float(np.interp(d, z1on["mean_drive"], z1on["mean_power"]))
         p2 = float(np.interp(d, z2on["mean_drive"], z2on["mean_power"]))
         i1 = float(np.interp(d, z1on["mean_drive"], z1on["mean_current"]))
         i2 = float(np.interp(d, z2on["mean_drive"], z2on["mean_current"]))
-        rows_disp.append(f"  {d:5.2f}   {p1:8.2f}   {p2:8.2f}  {p1 - p2:+6.2f}  "
-                         f"{i1:6.3f}  {i2:6.3f}  {i1 - i2:+6.3f}")
+        rows_disp.append(
+            f"  {d:5.2f}   {p1:8.2f}   {p2:8.2f}  {p1 - p2:+6.2f}  "
+            f"{i1:6.3f}  {i2:6.3f}  {i1 - i2:+6.3f}"
+        )
     print("\n".join(rows_disp))
 
     # --- overlay: candidate models on top of zone01 data ---
@@ -328,16 +419,35 @@ def main() -> None:
     summ_z = summaries["zone01"]
     on_z = summ_z[summ_z["level_idx"] >= 2]
     off_z = summ_z[summ_z["level_idx"] <= 1]
-    ax.scatter(on_z["nominal_ppfd"], on_z["mean_power"], color="black", s=30,
-               zorder=10, label="zone01 data (LEDs on)")
-    ax.scatter(off_z["nominal_ppfd"], off_z["mean_power"], color="black",
-               s=30, marker="x", zorder=10, label="zone01 baseline (gated)")
+    ax.scatter(
+        on_z["nominal_ppfd"],
+        on_z["mean_power"],
+        color="black",
+        s=30,
+        zorder=10,
+        label="zone01 data (LEDs on)",
+    )
+    ax.scatter(
+        off_z["nominal_ppfd"],
+        off_z["mean_power"],
+        color="black",
+        s=30,
+        marker="x",
+        zorder=10,
+        label="zone01 baseline (gated)",
+    )
     ppfd_on_min = float(on_z["nominal_ppfd"].min())
     ppfd_max = float(summ_z["nominal_ppfd"].max())
     x_grid = np.linspace(ppfd_on_min, ppfd_max, 200)
     # baseline segment up to first LEDs-on threshold
-    ax.hlines(baselines["zone01"], 0, ppfd_on_min, color="dimgray",
-              linewidth=2, label=f"baseline = {baselines['zone01']:.2f} W")
+    ax.hlines(
+        baselines["zone01"],
+        0,
+        ppfd_on_min,
+        color="dimgray",
+        linewidth=2,
+        label=f"baseline = {baselines['zone01']:.2f} W",
+    )
     model_fns = {
         "linear         (2p)": model_linear,
         "quadratic      (3p)": model_quadratic,
@@ -349,11 +459,17 @@ def main() -> None:
         if name not in fit_results["zone01"]:
             continue
         popt, rmse = fit_results["zone01"][name]
-        ax.plot(x_grid, fn(x_grid, *popt), color=cmap(i),
-                label=f"{name.strip()}  RMSE={rmse:.2f} W", linewidth=1.5)
+        ax.plot(
+            x_grid,
+            fn(x_grid, *popt),
+            color=cmap(i),
+            label=f"{name.strip()}  RMSE={rmse:.2f} W",
+            linewidth=1.5,
+        )
     for _ch, s in ACTIVATION.items():
-        ax.axvline(s * TOTAL_BALANCED, color="gray", linestyle="--",
-                   linewidth=0.7, alpha=0.4)
+        ax.axvline(
+            s * TOTAL_BALANCED, color="gray", linestyle="--", linewidth=0.7, alpha=0.4
+        )
     ax.set_xlabel("nominal balanced PPFD")
     ax.set_ylabel("plug power (W)")
     ax.set_title("E18/P0.1 zone01: candidate fits (LEDs-on region only)")
@@ -374,12 +490,18 @@ def main() -> None:
             on = summ[summ["level_idx"] >= 2]
             xs = on["nominal_ppfd"].to_numpy()
             ys = on["mean_power"].to_numpy()
-            ax.scatter(xs, ys - fn(xs, *popt), color=COLORS[label],
-                       label=label, alpha=0.85)
+            ax.scatter(
+                xs, ys - fn(xs, *popt), color=COLORS[label], label=label, alpha=0.85
+            )
         ax.axhline(0, color="black", linewidth=0.6)
         for _ch, s in ACTIVATION.items():
-            ax.axvline(s * TOTAL_BALANCED, color="gray", linestyle="--",
-                       linewidth=0.7, alpha=0.4)
+            ax.axvline(
+                s * TOTAL_BALANCED,
+                color="gray",
+                linestyle="--",
+                linewidth=0.7,
+                alpha=0.4,
+            )
         ax.set_title(f"{name.strip()}   zone01 RMSE={rmse:.2f} W", fontsize=10)
         ax.grid(alpha=0.3)
         ax.legend(fontsize=7)
@@ -387,7 +509,9 @@ def main() -> None:
         ax.set_xlabel("nominal balanced PPFD")
     for ax in axes[:, 0]:
         ax.set_ylabel("residual (W)")
-    fig.suptitle("Residuals vs PPFD for each candidate fit (zone01 params applied to both zones)")
+    fig.suptitle(
+        "Residuals vs PPFD for each candidate fit (zone01 params applied to both zones)"
+    )
     fig.tight_layout()
     fig.savefig(OUT_DIR / "fit_residuals.pdf")
     plt.close(fig)
@@ -401,7 +525,9 @@ def main() -> None:
         s = summ.copy()
         s["zone"] = label
         long_rows.append(s)
-    pd.concat(long_rows, ignore_index=True).to_csv(csv_dir / "summary_long.csv", index=False)
+    pd.concat(long_rows, ignore_index=True).to_csv(
+        csv_dir / "summary_long.csv", index=False
+    )
     print(f"\nfigures (PDF) written to {OUT_DIR}; CSV summaries written to {csv_dir}")
 
 

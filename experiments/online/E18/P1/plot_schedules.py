@@ -50,20 +50,26 @@ ZONE_COLOR = {
 }
 
 ENV_STEP_MIN = 1
-TOTAL_MIN = 14 * 24 * 60       # 14-day simulation
+TOTAL_MIN = 14 * 24 * 60  # 14-day simulation
 START = datetime(2026, 3, 31, 0, 0, tzinfo=timezone.utc)
 
 
 def lights_on_power(ppfd_total: np.ndarray) -> np.ndarray:
     """E18/P0.1 pooled fit, lights-on; returns 7.21 W baseline when zero."""
-    out = np.where(ppfd_total > 0, 9.71 + 0.164 * np.power(np.maximum(ppfd_total, 1e-9), 1.19), 7.21)
+    out = np.where(
+        ppfd_total > 0,
+        9.71 + 0.164 * np.power(np.maximum(ppfd_total, 1e-9), 1.19),
+        7.21,
+    )
     return out
 
 
 def lights_on_only_power(ppfd_total: np.ndarray) -> np.ndarray:
     """Lights-on plug power, zero when off. Used for the lights-on-only Wh sum
     that matches the plan's 6921 / 6931 / 8636 Wh figures."""
-    return np.where(ppfd_total > 0, 9.71 + 0.164 * np.power(np.maximum(ppfd_total, 1e-9), 1.19), 0.0)
+    return np.where(
+        ppfd_total > 0, 9.71 + 0.164 * np.power(np.maximum(ppfd_total, 1e-9), 1.19), 0.0
+    )
 
 
 SAFE_MIN = np.array([5.0, 5.0, 5.0, 4.0, 5.0, 0.6679889999999996])
@@ -92,7 +98,7 @@ def _build_agent(cfg_path: Path):
         observations=(1,),
         actions=1,
         params=meta,
-        collector=None,    # type: ignore[arg-type]
+        collector=None,  # type: ignore[arg-type]
         seed=0,
     )
     return PlantGrowthChamberAsyncAgentWrapper(inner), meta
@@ -155,8 +161,13 @@ def plot_daily_profile(results) -> None:
     for label, data in results.items():
         # mean PPFD per minute-of-day across 14 days
         per_min = data["ppfd"].reshape(14, 24 * 60).mean(axis=0)
-        ax.plot(np.arange(24 * 60) / 60.0, per_min,
-                color=ZONE_COLOR[label], linewidth=1.5, label=label)
+        ax.plot(
+            np.arange(24 * 60) / 60.0,
+            per_min,
+            color=ZONE_COLOR[label],
+            linewidth=1.5,
+            label=label,
+        )
     ax.set_xlabel("wrapper-local hour of day")
     ax.set_ylabel("PPFD (mean across 14 days)")
     ax.set_title("E18/P1 — mean daily PPFD profile per zone")
@@ -174,10 +185,16 @@ def plot_power_and_cumulative(results) -> None:
     for label, data in results.items():
         p = lights_on_power(data["ppfd"])
         cum = np.cumsum(p) / 60.0  # W·min → Wh (each step is 1 min)
-        axes[0].plot(t_hours, p, color=ZONE_COLOR[label], linewidth=0.5,
-                     label=label, alpha=0.85)
-        axes[1].plot(t_hours, cum, color=ZONE_COLOR[label], linewidth=1.5,
-                     label=f"{label} (final {cum[-1]:.0f} Wh)")
+        axes[0].plot(
+            t_hours, p, color=ZONE_COLOR[label], linewidth=0.5, label=label, alpha=0.85
+        )
+        axes[1].plot(
+            t_hours,
+            cum,
+            color=ZONE_COLOR[label],
+            linewidth=1.5,
+            label=f"{label} (final {cum[-1]:.0f} Wh)",
+        )
     axes[0].set_ylabel("plug power (W)")
     axes[0].set_title("E18/P1 — instantaneous plug power vs time")
     axes[0].grid(alpha=0.3)
@@ -200,8 +217,12 @@ def self_test(results) -> bool:
     energy-budget table (6 921 / 6 931 / 8 636 Wh over 14 days).
     """
     expected = {
-        "Z1 power-law ramp": dict(min_ppfd=40, max_ppfd=130, cum_min=6850, cum_max=7000),
-        "Z2 within-day parabola": dict(min_ppfd=60, max_ppfd=126, cum_min=6850, cum_max=7000),
+        "Z1 power-law ramp": dict(
+            min_ppfd=40, max_ppfd=130, cum_min=6850, cum_max=7000
+        ),
+        "Z2 within-day parabola": dict(
+            min_ppfd=60, max_ppfd=126, cum_min=6850, cum_max=7000
+        ),
         "Z3 constant 105": dict(min_ppfd=105, max_ppfd=105, cum_min=8550, cum_max=8700),
     }
     ok = True
@@ -220,12 +241,14 @@ def self_test(results) -> bool:
         min_p = ppfd_on.min()
         max_p = ppfd_on.max()
         passes = (
-            abs(min_p - exp["min_ppfd"]) <= 1.5 and
-            abs(max_p - exp["max_ppfd"]) <= 1.5 and
-            exp["cum_min"] <= cum_wh <= exp["cum_max"]
+            abs(min_p - exp["min_ppfd"]) <= 1.5
+            and abs(max_p - exp["max_ppfd"]) <= 1.5
+            and exp["cum_min"] <= cum_wh <= exp["cum_max"]
         )
         n_chan_unique = sorted(set(int(x) for x in data["n_chan"][lights_on]))
-        print(f"  {label:<28s} {min_p:6.2f}    {max_p:6.2f}    {cum_wh:7.1f}   {n_chan_unique}     {'PASS' if passes else 'FAIL'}")
+        print(
+            f"  {label:<28s} {min_p:6.2f}    {max_p:6.2f}    {cum_wh:7.1f}   {n_chan_unique}     {'PASS' if passes else 'FAIL'}"
+        )
         if not passes:
             print(f"      expected {exp}")
             ok = False

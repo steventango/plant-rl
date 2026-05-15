@@ -65,9 +65,7 @@ class Lightbar:
                 pi = pigpio.pi()
                 try:
                     if not pi.connected:
-                        raise RuntimeError(
-                            "pigpiod is not running; cannot recover bus"
-                        )
+                        raise RuntimeError("pigpiod is not running; cannot recover bus")
                     pi.set_mode(SCL_PIN, pigpio.OUTPUT)
                     pi.write(SCL_PIN, 1)
                     for _ in range(SCL_CYCLES):

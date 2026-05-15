@@ -51,7 +51,7 @@ FIG_DIR.mkdir(exist_ok=True)
 
 MOCK_DATASET = Path("/data/plant-rl/offline/v27/mixed-v27.parquet")
 MOCK_EXPERIMENT = 17
-MOCK_ZONE_ID = 1   # only used for filtering the mock dataset
+MOCK_ZONE_ID = 1  # only used for filtering the mock dataset
 
 CONFIGS = [
     ("Z1 power-law ramp", HERE / "PowerLawRamp1.json"),
@@ -60,7 +60,14 @@ CONFIGS = [
 ]
 
 CHANNEL_NAMES = ["blue", "cool_white", "warm_white", "orange_red", "red", "far_red"]
-CHANNEL_COLORS = ["tab:blue", "tab:cyan", "goldenrod", "tab:orange", "tab:red", "tab:brown"]
+CHANNEL_COLORS = [
+    "tab:blue",
+    "tab:cyan",
+    "goldenrod",
+    "tab:orange",
+    "tab:red",
+    "tab:brown",
+]
 
 # Simulate the full 14-day deploy window at 1-min env-step granularity. The
 # flash is a 1-min event (wrapper checks `minute == 59`), so coarser sim
@@ -150,8 +157,15 @@ def _plot(label: str, data: dict):
     for i, (name, color) in enumerate(zip(CHANNEL_NAMES, CHANNEL_COLORS, strict=False)):
         if actions[:, i].max() < 1e-6:
             continue
-        ax.plot(t_hours, actions[:, i], color=color, marker="o", markersize=4,
-                linewidth=1.2, label=name)
+        ax.plot(
+            t_hours,
+            actions[:, i],
+            color=color,
+            marker="o",
+            markersize=4,
+            linewidth=1.2,
+            label=name,
+        )
     ax.set_xlabel("hours from first step  (env tick = " + str(SIM_STEP_MIN) + " min)")
     ax.set_ylabel("per-channel PPFD (µmol m⁻² s⁻¹)")
     ax.set_title(
@@ -180,9 +194,11 @@ async def _main():
         actions = data["actions"]
         ppfd = actions[:, :5].sum(axis=1)
         lights_on = ppfd > 0.5
-        print(f"  {label}: lights_on fraction = {lights_on.mean():.2%}; "
-              f"min/max lights-on PPFD = {ppfd[lights_on].min():.1f}/{ppfd[lights_on].max():.1f}; "
-              f"unique daytime PPFD levels ≈ {sorted({round(float(x)) for x in ppfd[lights_on]})}")
+        print(
+            f"  {label}: lights_on fraction = {lights_on.mean():.2%}; "
+            f"min/max lights-on PPFD = {ppfd[lights_on].min():.1f}/{ppfd[lights_on].max():.1f}; "
+            f"unique daytime PPFD levels ≈ {sorted({round(float(x)) for x in ppfd[lights_on]})}"
+        )
 
 
 if __name__ == "__main__":
