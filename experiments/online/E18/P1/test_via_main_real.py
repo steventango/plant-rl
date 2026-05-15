@@ -21,7 +21,6 @@ Run:
 from __future__ import annotations
 
 import asyncio
-import copy
 import json
 import os
 import sys
@@ -41,8 +40,9 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 os.environ.setdefault("WANDB_MODE", "disabled")
 os.environ.setdefault("WANDB_DISABLED", "true")
 
-from experiment import ExperimentModel  # noqa: E402  (after sys.path edit)
+from experiment.ExperimentModel import ExperimentModel  # noqa: E402  (after sys.path edit)
 from problems.registry import getProblem  # noqa: E402
+from utils.constants import BALANCED_ACTION_105  # noqa: E402
 from utils.RlGlue.rl_glue import AsyncRLGlue  # noqa: E402
 
 HERE = Path(__file__).parent
@@ -71,41 +71,46 @@ SIM_DAYS = 14
 N_STEPS = SIM_DAYS * 24 * 60 // SIM_STEP_MIN
 
 
-def _mocktest_config(src_path: Path) -> Path:
-    """Produce a temp JSON identical to `src_path` but with problem swapped to
-    MockAreaPlantGrowthChamberIntensity and the mock env params injected."""
-    cfg = json.loads(src_path.read_text())
-    cfg = copy.deepcopy(cfg)
-    cfg["problem"] = "MockAreaPlantGrowthChamberIntensity"
-    cfg["total_steps"] = N_STEPS
-    env = cfg["metaParameters"]["environment"]
+def _mocktest_exp(src_path: Path) -> ExperimentModel:
+    """Load the deploy JSON, swap to the Mock problem and inject the mock env
+    params, return an in-memory ExperimentModel (no tempfile required)."""
+    d = json.loads(src_path.read_text())
+    d["problem"] = "MockAreaPlantGrowthChamberIntensity"
+    d["total_steps"] = N_STEPS
+    env = d["metaParameters"]["environment"]
     env["dataset_path"] = str(MOCK_DATASET)
     env["experiment"] = MOCK_EXPERIMENT
     env["zone_id"] = MOCK_ZONE_ID
     env["mock_area"] = True
-    tmp = tempfile.NamedTemporaryFile(
-        mode="w", suffix="_mocktest.json", delete=False, dir="/tmp"
-    )
-    json.dump(cfg, tmp, indent=4)
-    tmp.close()
-    return Path(tmp.name)
+    return ExperimentModel(d, str(src_path))
+
+
+def _promote_to_six_channel(a_raw) -> np.ndarray:
+    """Mirror PlantGrowthChamberIntensity.step's scalar -> 6-channel scaling.
+
+    SequenceAgent/ConstantAgent emit scalar s; the env multiplies by
+    BALANCED_ACTION_105. Wrapper-enforced (night/flash) actions are already
+    6-vectors and pass through unchanged.
+    """
+    arr = np.asarray(a_raw, dtype=float)
+    if arr.shape == (6,):
+        return arr
+    if arr.ndim == 0 or arr.size == 1:
+        return float(arr.ravel()[0] if arr.size == 1 else arr) * BALANCED_ACTION_105
+    raise ValueError(f"unexpected action shape {arr.shape!r}")
 
 
 async def _run_one(label: str, src_path: Path):
     print(f"  running {label} via main_real path...")
-    cfg_path = _mocktest_config(src_path)
-    exp = ExperimentModel.load(str(cfg_path))
+    exp = _mocktest_exp(src_path)
     Problem = getProblem(exp.problem)
     problem = Problem(exp, 0, None)
     env = problem.getEnvironment()
     agent = problem.getAgent()
 
-    # Patch the mock env to tick at SIM_STEP_MIN granularity instead of jumping
-    # to the next dataset record (which is one calendar day apart). Plant data
-    # stays stale across the tick - we're only testing action emission, not
-    # plant dynamics. With this patch the wrapper sees env_time advance by
-    # SIM_STEP_MIN per env.step, so action_timestep=240 / enforce_night fire
-    # at the correct boundaries.
+    # Make the mock env tick at SIM_STEP_MIN granularity instead of jumping
+    # to the next dataset record (calendar days apart). Plant data goes stale
+    # across the tick - we're testing action emission, not plant dynamics.
     env.duration = timedelta(minutes=SIM_STEP_MIN)
 
     async def _fast_sleep_until(self, wake_time):  # type: ignore[no-untyped-def]
@@ -118,28 +123,13 @@ async def _run_one(label: str, src_path: Path):
         env.set_dataset_path(dataset_path)
         glue = AsyncRLGlue(agent, env, dataset_path, images_save_keys=None)
 
-        from utils.constants import BALANCED_ACTION_105
-
-        def _normalize(a_raw) -> np.ndarray:
-            """Each step's `interaction.a` may be a scalar (agent action) or
-            a 6-vector (wrapper-enforced night/flash action). Promote scalars
-            to 6-channel PPFD via the BALANCED_ACTION_105 spectrum."""
-            arr = np.asarray(a_raw, dtype=float)
-            if arr.ndim == 0:
-                return float(arr) * BALANCED_ACTION_105
-            if arr.shape == (6,):
-                return arr
-            if arr.size == 1:
-                return float(arr.ravel()[0]) * BALANCED_ACTION_105
-            return arr
-
         t_secs, actions = [], []
         interaction = await glue.start()
         t_secs.append(env.time.timestamp())
-        actions.append(_normalize(interaction.a))
+        actions.append(_promote_to_six_channel(interaction.a))
         for _ in range(N_STEPS - 1):
             interaction = await glue.step()
-            a = _normalize(interaction.a)
+            a = _promote_to_six_channel(interaction.a)
             if not np.all(np.isfinite(a)):
                 # Mock dataset has run out of valid samples; stop cleanly.
                 break

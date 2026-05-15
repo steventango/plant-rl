@@ -22,10 +22,6 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
         )
         self.agent_started = False
         self.enforce_night = agent.params.get("enforce_night", True)
-        # Flash photography mode: replaces the twilight ramp with a hard
-        # 12 h square-wave photoperiod (09:00-20:59 local) preceded by a
-        # one-env-step full-intensity flash at 08:59 local (BALANCED_ACTION_105)
-        # for daily camera capture under a standardized spectrum.
         self.flash_photography = agent.params.get("flash_photography", False)
         self.last_action_time = None
         self.tz = ZoneInfo(agent.params.get("timezone", "Etc/UTC"))

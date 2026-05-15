@@ -46,7 +46,7 @@ python src/main_real.py -e "experiments/online/E18/P0.2/SequenceParabolic2.json"
 python src/main_real.py -e "experiments/online/E18/P0.2/Constant3.json" -i 0 --deploy
 ```
 
-Start all three simultaneously at chamber wall-clock 18:00 MDT. The run completes by chamber 05:54 (12 × 51 = 612-min Z1 schedule), or naturally at the 06:00 day → night transition for Z3.
+Start all three simultaneously at chamber wall-clock 18:00 MDT. All three configs use `total_steps: 210` (3.5 h at 1-min env steps), so the run completes around chamber 21:30 MDT — well within the 12 h photoperiod.
 
 ## Verification
 

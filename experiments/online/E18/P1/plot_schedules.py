@@ -31,7 +31,6 @@ from algorithms.PlantGrowthChamberAsyncAgentWrapper import (
     PlantGrowthChamberAsyncAgentWrapper,
 )
 from algorithms.registry import getAgent
-from environments.PlantGrowthChamber.Calibration import Calibration
 from utils.constants import BALANCED_ACTION_105
 
 HERE = Path(__file__).parent
@@ -67,18 +66,22 @@ def lights_on_only_power(ppfd_total: np.ndarray) -> np.ndarray:
     return np.where(ppfd_total > 0, 9.71 + 0.164 * np.power(np.maximum(ppfd_total, 1e-9), 1.19), 0.0)
 
 
-class _FakeAgent:
-    """Minimal shim so the wrapper sees the deploy JSON's metaParameters."""
+SAFE_MIN = np.array([5.0, 5.0, 5.0, 4.0, 5.0, 0.6679889999999996])
 
-    def __init__(self, params: dict[str, Any], underlying):
-        self.params = params
-        self._underlying = underlying
 
-    def start(self, observation, extra):
-        return self._underlying.start(observation, extra)
+def _promote_to_balanced(action) -> np.ndarray:
+    """Mirror PlantGrowthChamberIntensity.step's scalar -> 6-channel scaling.
 
-    def step(self, reward, observation, extra):
-        return self._underlying.step(reward, observation, extra)
+    SequenceAgent / ConstantAgent return scalar `s`; the env multiplies by
+    BALANCED_ACTION_105. Wrapper-enforced (night/dawn/flash) actions are
+    already 6-vectors and pass through.
+    """
+    arr = np.asarray(action, dtype=float)
+    if arr.ndim == 0:
+        return float(arr) * BALANCED_ACTION_105
+    if arr.shape == (6,):
+        return arr
+    return float(arr.ravel()[0]) * BALANCED_ACTION_105
 
 
 def _build_agent(cfg_path: Path):
@@ -92,49 +95,30 @@ def _build_agent(cfg_path: Path):
         collector=None,    # type: ignore[arg-type]
         seed=0,
     )
-    wrapper = PlantGrowthChamberAsyncAgentWrapper(_FakeAgent(meta, inner))
-    return wrapper, meta
+    return PlantGrowthChamberAsyncAgentWrapper(inner), meta
 
 
-async def _simulate_zone(label: str, cfg_path: Path) -> dict[str, np.ndarray]:
+async def _simulate_zone(cfg_path: Path) -> dict[str, np.ndarray]:
     wrapper, meta = _build_agent(cfg_path)
-    cal = Calibration(
-        action=[0.25, 0.3, 0.35, 0.4, 0.5, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95, 1.0],
-        blue=[0, 5, 12, 19, 36, 51, 65, 79, 86, 91, 94, 96],
-        cool_white=[0, 4, 10, 18, 33, 47, 61, 73, 80, 85, 89, 92],
-        warm_white=[0, 3, 8, 15, 27, 39, 49, 57, 61, 62, 62, 65],
-        orange_red=[0, 4, 11, 18, 33, 48, 62, 75, 81, 82, 82, 83],
-        red=[0, 3, 8, 15, 27, 38, 48, 55, 57, 57, 56, 56],
-        far_red=[0.237, 1.727, 3.823, 6.081, 10.583, 14.877, 18.881, 22.443, 23.930, 25.181, 25.667, 25.870],
-    )
 
-    ppfd = np.zeros(TOTAL_MIN)
-    n_chan = np.zeros(TOTAL_MIN, dtype=int)
+    actions = np.zeros((TOTAL_MIN, 6))
     obs = np.zeros((1,))
-
-    # First call must be wrapper.start
     extra: dict[str, Any] = {"env_time": START.timestamp()}
-    action, _ = await wrapper.start(obs, extra)
 
-    for t in range(TOTAL_MIN):
-        env_time = START + timedelta(minutes=t * ENV_STEP_MIN)
-        extra = {"env_time": env_time.timestamp()}
-        if t > 0:
-            action, _ = await wrapper.step(0.0, obs, extra)
-        # action returned by wrapper is the 6-channel scaled action (BALANCED_ACTION_105 * s),
-        # OR the wrapper-enforced night/dawn/dusk action.
-        act = np.asarray(action, dtype=float)
-        if act.ndim == 0:
-            act = act * BALANCED_ACTION_105
-        elif act.shape == (6,):
-            pass
-        else:
-            # SequenceAgent under PlantGrowthChamberIntensity returns a scalar; env scales.
-            # Without the env wrapper we have to scale here.
-            act = float(act.ravel()[0]) * BALANCED_ACTION_105
-        drive = cal.get_calibrated_action(act)
-        ppfd[t] = act[:5].sum()       # exclude far_red from PAR
-        n_chan[t] = int((drive > 1e-9).sum())
+    action, _ = await wrapper.start(obs, extra)
+    actions[0] = _promote_to_balanced(action)
+
+    for t in range(1, TOTAL_MIN):
+        extra["env_time"] = (START + timedelta(minutes=t * ENV_STEP_MIN)).timestamp()
+        action, _ = await wrapper.step(0.0, obs, extra)
+        actions[t] = _promote_to_balanced(action)
+
+    ppfd = actions[:, :5].sum(axis=1)
+    # n_chan = number of channels whose desired PPFD clears its safe_min
+    # (matches Calibration.get_calibrated_action's `active` mask without
+    # calling it 20k+ times).
+    n_chan = (actions >= SAFE_MIN).sum(axis=1).astype(int)
+    n_chan[ppfd <= 0] = 0
 
     return {"ppfd": ppfd, "n_chan": n_chan, "meta": meta}
 
@@ -143,7 +127,7 @@ def simulate_all() -> dict[str, dict[str, np.ndarray]]:
     results = {}
     for label, path in CONFIGS.items():
         print(f"  simulating {label}...")
-        results[label] = asyncio.run(_simulate_zone(label, path))
+        results[label] = asyncio.run(_simulate_zone(path))
     return results
 
 
@@ -168,8 +152,6 @@ def plot_ppfd_timeline(results) -> None:
 
 def plot_daily_profile(results) -> None:
     fig, ax = plt.subplots(figsize=(8, 5))
-    t_hours = np.arange(TOTAL_MIN) / 60.0
-    hr_of_day = t_hours % 24
     for label, data in results.items():
         # mean PPFD per minute-of-day across 14 days
         per_min = data["ppfd"].reshape(14, 24 * 60).mean(axis=0)
