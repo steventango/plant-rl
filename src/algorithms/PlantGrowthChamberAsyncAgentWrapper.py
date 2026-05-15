@@ -23,6 +23,9 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
         self.agent_started = False
         self.enforce_night = agent.params.get("enforce_night", True)
         self.flash_photography = agent.params.get("flash_photography", False)
+        # In flash mode the daytime block starts at 09:00; in normal mode dawn
+        # finishes at 09:30 and the agent is first polled then.
+        self.poll_at_minute = 0 if self.flash_photography else 30
         self.last_action_time = None
         self.tz = ZoneInfo(agent.params.get("timezone", "Etc/UTC"))
         self.tz_utc = ZoneInfo("Etc/UTC")
@@ -199,16 +202,10 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
             "Environment local time must be set before checking action timestep."
         )
         # Will have to change again if we go longer than a day.
-        # In flash_photography mode, daytime starts at 9:00 (not 9:30) — so
-        # poll at the start of that 12-hour block instead.
-        if self.flash_photography:
-            should_poll = (
-                self.env_local_time.hour == 9 and self.env_local_time.minute == 0
-            )
-        else:
-            should_poll = (
-                self.env_local_time.hour == 9 and self.env_local_time.minute == 30
-            )
+        should_poll = (
+            self.env_local_time.hour == 9
+            and self.env_local_time.minute == self.poll_at_minute
+        )
 
         if time_since_last_action >= self.action_timestep or should_poll:
             logger.debug(

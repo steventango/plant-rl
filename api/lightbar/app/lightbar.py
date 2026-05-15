@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 # Bus-recovery constants, named to match perihelion_cl/i2c_recovery.py.
 SCL_PIN = 3
 SCL_CYCLES = 9
-SCL_CYCLE_DELAY = 1 / 100000
+SCL_CYCLE_DELAY = 1e-5
 
 
 class Lightbar:
