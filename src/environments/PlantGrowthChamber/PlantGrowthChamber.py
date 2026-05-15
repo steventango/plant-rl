@@ -274,7 +274,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             await session.put(
                 self.zone.lightbar_url,
                 json={"array": action_to_send.tolist()},
-                timeout=10,
+                timeout=2,
             )
             self.last_action = action
             self.last_calibrated_action = last_calibrated_action

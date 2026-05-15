@@ -10,7 +10,7 @@ class PlantGrowthChamberIntensity(PlantGrowthChamber):
         self.reference_spectrum = BALANCED_ACTION_105
 
     async def step(self, action: float | np.ndarray):
-        if isinstance(action, np.ndarray):
+        if isinstance(action, np.ndarray) and action.ndim > 0:
             return await super().step(action)
         action = self.reference_spectrum * action
         return await super().step(action)

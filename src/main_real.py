@@ -65,6 +65,8 @@ async def main():
     if not prod:
         logger.setLevel(logging.DEBUG)
 
+    finished_at_total_steps = False
+
     for idx in args.idxs:
         if args.deploy:
             run_id = args.exp.replace("/", "-").removesuffix(".json")
@@ -236,6 +238,16 @@ async def main():
                 )
             step = glue.total_steps
             while True:
+                # -1 (or unset) means run indefinitely.
+                if (
+                    exp.total_steps is not None
+                    and exp.total_steps != -1
+                    and glue.total_steps >= exp.total_steps
+                ):
+                    logger.info(f"Reached total_steps={exp.total_steps}; ending run.")
+                    finished_at_total_steps = True
+                    break
+
                 interaction = await glue.step()
 
                 episodic_return = glue.total_reward if interaction.t else None
@@ -298,6 +310,13 @@ async def main():
                     logger.exception("Failed to save checkpoint")
                     raise
         wandb_run.finish()
+
+    # Inside a Docker container, sleep instead of returning so `restart: always`
+    # does not loop on checkpoint-load-then-exit. Outside Docker, just exit.
+    if finished_at_total_steps and os.path.exists("/.dockerenv"):
+        logger.info("Run complete; sleeping to keep the container alive.")
+        while True:
+            await asyncio.sleep(3600)
 
 
 if __name__ == "__main__":
