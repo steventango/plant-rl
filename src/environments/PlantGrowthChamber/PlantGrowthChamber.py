@@ -10,7 +10,7 @@ from zoneinfo import ZoneInfo
 import numpy as np
 from PIL import Image
 
-from environments.PlantGrowthChamber.utils import create_session
+from environments.PlantGrowthChamber.utils import create_action_session, create_cv_session
 from utils.constants import BALANCED_ACTION_105, DIM_ACTION
 from utils.functions import normalize
 from utils.metrics import UnbiasedExponentialMovingAverage as UEMA
@@ -40,7 +40,13 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.sparse_reward = kwargs.get("sparse_reward", False)
         self.tz_utc = ZoneInfo("Etc/UTC")
         self.time = self.get_time()
-        self.session = None
+        # Two aiohttp sessions: fast-fail for LAN endpoints (lightbar +
+        # cameras), generous-timeout for the CV pipeline. They have very
+        # different latency profiles (lightbar ~400 ms, CV ~30 s under load)
+        # so a shared retry budget can't serve both without one or the other
+        # blowing the env step's 60 s/cycle budget.
+        self.action_session = None
+        self.cv_session = None
         self.pot_quads = None
         self.dataset_path = None
         self.cv_client = CVPipelineClient()
@@ -80,11 +86,17 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         self.df = pd.DataFrame()
 
-    async def _ensure_session(self):
-        """Ensures an aiohttp session is available and returns it."""
-        if self.session is None:
-            self.session = await create_session()
-        return self.session
+    async def _ensure_action_session(self):
+        """Fast-fail session for lightbar PUT and camera GET."""
+        if self.action_session is None:
+            self.action_session = await create_action_session()
+        return self.action_session
+
+    async def _ensure_cv_session(self):
+        """Generous-timeout session for CV pipeline detect/propagate."""
+        if self.cv_session is None:
+            self.cv_session = await create_cv_session()
+        return self.cv_session
 
     def set_dataset_path(self, path: Path):
         self.dataset_path = path
@@ -92,7 +104,19 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     async def get_observation(self):
         self.time = self.get_time()
+        # Hard 50 s ceiling so put_action(<=5s) + get_observation(<=50s) fits
+        # inside the env's 60 s/cycle budget (sleep_until_next_step is elastic
+        # but desyncs if active work exceeds 60 s). On timeout, reuse the
+        # previous self.df / self.images so the agent still gets a step.
+        try:
+            await asyncio.wait_for(self._get_observation_inner(), timeout=50)
+        except asyncio.TimeoutError:
+            logger.warning(
+                "get_observation exceeded 50 s; reusing previous frame/df"
+            )
+        return self.time, self.image, self.df
 
+    async def _get_observation_inner(self):
         await self.get_image()
         if "left" in self.images and "right" in self.images:
             self.image = np.hstack(
@@ -125,8 +149,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                     mean_area_this_step
                 )
 
-        return self.time, self.image, self.df
-
     def is_daylight(self):
         local_time = self.get_local_time()
         return (
@@ -152,7 +174,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             # Not time to update yet, keep existing df/image or use empty if none
             return
 
-        session = await self._ensure_session()
+        session = await self._ensure_cv_session()
         response = None
         try:
             if self.cv_state is None:
@@ -231,7 +253,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
     async def get_image(self):
         """Fetch images from cameras using aiohttp"""
         tasks = []
-        session = await self._ensure_session()
+        session = await self._ensure_action_session()
         if self.zone.camera_left_url:
             tasks.append(self._fetch_image(session, self.zone.camera_left_url, "left"))
         if self.zone.camera_right_url:
@@ -245,7 +267,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
     async def _fetch_image(self, session, url, side):
         """Helper method to fetch a single image with retry logic"""
         try:
-            async with session.get(url, timeout=60) as response:
+            async with session.get(url, timeout=10) as response:
                 image_data = await response.read()
                 self.images[side] = Image.open(io.BytesIO(image_data))
                 logger.debug(f"Successfully fetched image from {url}")
@@ -268,7 +290,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         action_to_send = np.tile(last_calibrated_action, (2, 1))
 
         try:
-            session = await self._ensure_session()
+            session = await self._ensure_action_session()
             logger.debug(f"{self.zone.lightbar_url}: {action_to_send}")
             assert self.zone.lightbar_url is not None, "Lightbar URL must be set."
             await session.put(
@@ -413,23 +435,28 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     async def close(self):
         """Close the environment and clean up resources."""
-        # Close the aiohttp RetryClient
-        if self.session:
+        for attr in ("action_session", "cv_session"):
+            session = getattr(self, attr, None)
+            if session is None:
+                continue
             try:
-                await self.session.close()
-                logger.debug(f"Closed aiohttp session for zone {self.zone.identifier}")
+                await session.close()
+                logger.debug(
+                    f"Closed aiohttp {attr} for zone {self.zone.identifier}"
+                )
             except Exception as e:
                 logger.exception(
-                    f"Error closing aiohttp session for zone {self.zone.identifier}: {str(e)}"
+                    f"Error closing aiohttp {attr} for zone {self.zone.identifier}: {str(e)}"
                 )
-            self.session = None
+            setattr(self, attr, None)
 
     def __getstate__(self):
         state = self.__dict__.copy()
-        if "session" in state:
-            del state["session"]
+        state.pop("action_session", None)
+        state.pop("cv_session", None)
         return state
 
     def __setstate__(self, state):
         self.__dict__.update(state)
-        self.session = None
+        self.action_session = None
+        self.cv_session = None
