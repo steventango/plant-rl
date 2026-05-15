@@ -10,7 +10,10 @@ from zoneinfo import ZoneInfo
 import numpy as np
 from PIL import Image
 
-from environments.PlantGrowthChamber.utils import create_action_session, create_cv_session
+from environments.PlantGrowthChamber.utils import (
+    create_action_session,
+    create_cv_session,
+)
 from utils.constants import BALANCED_ACTION_105, DIM_ACTION
 from utils.functions import normalize
 from utils.metrics import UnbiasedExponentialMovingAverage as UEMA
@@ -110,9 +113,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         try:
             await asyncio.wait_for(self._get_observation_inner(), timeout=50)
         except asyncio.TimeoutError:
-            logger.warning(
-                "get_observation exceeded 50 s; reusing previous frame/df"
-            )
+            logger.warning("get_observation exceeded 50 s; reusing previous frame/df")
         return self.time, self.image, self.df
 
     async def _get_observation_inner(self):
@@ -151,11 +152,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     def is_daylight(self):
         local_time = self.get_local_time()
-        return (
-            local_time.hour > 9 or (local_time.hour == 9 and local_time.minute >= 30)
-        ) and (
-            local_time.hour < 20 or (local_time.hour == 20 and local_time.minute < 30)
-        )
+        return 9 <= local_time.hour <= 20
 
     async def get_plant_stats(self):
         assert self.image is not None, "Image must be fetched before processing."
@@ -330,7 +327,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             self.dli += 1.0
         elif np.array_equal(action, DIM_ACTION):
             self.dli += 0.5
-        if self.get_local_time().hour == 9 and self.get_local_time().minute == 30:
+        if self.get_local_time().hour == 9 and self.get_local_time().minute == 0:
             self.dli = 0.0
         await self.put_action(action)
 
@@ -396,7 +393,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     def reward_function(self):
         today_morning_local_date = self.get_local_time().replace(
-            hour=9, minute=30, second=0, microsecond=0
+            hour=9, minute=0, second=0, microsecond=0
         )
         yesterday_morning_local_date = today_morning_local_date - timedelta(days=1)
 
@@ -413,11 +410,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             )
             return 0.0
 
-        # if reward only @ 9:30 AM
+        # if reward only @ 9:00 AM
         local_time = self.time.astimezone(self.tz)
-        if self.sparse_reward and not (
-            local_time.hour == 9 and local_time.minute == 30
-        ):
+        if self.sparse_reward and not (local_time.hour == 9 and local_time.minute == 0):
             logger.debug(f"Returning sparse reward of 0 at {local_time}")
             return 0.0
 
@@ -441,9 +436,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 continue
             try:
                 await session.close()
-                logger.debug(
-                    f"Closed aiohttp {attr} for zone {self.zone.identifier}"
-                )
+                logger.debug(f"Closed aiohttp {attr} for zone {self.zone.identifier}")
             except Exception as e:
                 logger.exception(
                     f"Error closing aiohttp {attr} for zone {self.zone.identifier}: {str(e)}"
