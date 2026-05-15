@@ -11,7 +11,7 @@
             "max_ppfd": 200.0
         },
         "timezone": "America/Edmonton",
-        "action_days": [1, 6, 11],
-        "action_inputs": [1, -1, -1]
+        "action_days": [[1, 6, 11]],
+        "action_inputs": [[1, -1, -1]]
     }
 }
