@@ -1,4 +1,5 @@
 import os
+import subprocess
 from functools import lru_cache
 from typing import List
 
@@ -41,3 +42,19 @@ def get_current_action(lightbar: Lightbar = Depends(get_lightbar)):
 @app.post("/reset", response_class=Response)
 def reset(lightbar: Annotated[Lightbar, Depends(get_lightbar)]):
     lightbar.reset()
+
+
+@app.post("/recover", response_class=Response)
+def recover(lightbar: Annotated[Lightbar, Depends(get_lightbar)]):
+    lightbar.scl_recover()
+
+
+@app.get("/scan")
+def scan():
+    result = subprocess.run(
+        ["i2cdetect", "-y", "1"],
+        capture_output=True,
+        text=True,
+        timeout=5,
+    )
+    return Response(content=result.stdout, media_type="text/plain")

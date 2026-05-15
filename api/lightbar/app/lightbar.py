@@ -46,6 +46,34 @@ class Lightbar:
         with self._lock:
             self.i2c.write_byte(0x00, 0x06)
 
+    def scl_recover(self):
+        # Bus-level recovery for a slave stuck mid-byte holding SDA low.
+        # Closes /dev/i2c-1, steals BCM 3 (SCL) as a GPIO output, pulses it
+        # 9 times so the stuck slave clocks out its remaining bits and
+        # releases SDA, restores SCL to ALT0, and reopens /dev/i2c-1.
+        # Matches perihelion_cl/i2c_recovery.py.
+        import pigpio
+
+        with self._lock:
+            self.i2c.close()
+            try:
+                pi = pigpio.pi()
+                if not pi.connected:
+                    raise RuntimeError("pigpiod is not running; cannot recover bus")
+                try:
+                    pi.set_mode(3, pigpio.OUTPUT)
+                    pi.write(3, 1)
+                    for _ in range(9):
+                        time.sleep(1 / 100000)
+                        pi.write(3, 0)
+                        time.sleep(1 / 100000)
+                        pi.write(3, 1)
+                    pi.set_mode(3, pigpio.ALT0)
+                finally:
+                    pi.stop()
+            finally:
+                self.i2c = self.get_i2c()
+
     def set_duty_cycle(self, duty_cycles: np.ndarray):
         for channel in range(len(self.channels)):
             self.set_bar_pwn(channel, duty_cycles[:, channel])
