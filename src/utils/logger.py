@@ -23,7 +23,12 @@ def expand(key, value, filter_indices=None):
             result[f"{key}.{idx_str}"] = value[idx]
         return result
     if isinstance(value, (list, tuple)):
-        return {f"{key}.{i}": v for i, v in enumerate(value)}
+        result = {}
+        for i, v in enumerate(value):
+            if filter_indices is not None and (i,) not in filter_indices:
+                continue
+            result[f"{key}.{i}"] = v
+        return result
     else:
         return {key: value}
 
