@@ -71,7 +71,7 @@ async def main():
                     "/",
                     "/data",
                 ),  # So wandb alerts when data dir is near full
-                init_timeout=600,
+                init_timeout=300,
             ),
         )
 
