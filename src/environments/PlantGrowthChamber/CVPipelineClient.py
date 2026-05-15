@@ -38,8 +38,6 @@ class CVPipelineClient:
             payload = {
                 "image_data": image_data,
             }
-            # Bounded per-call so the cv_session default (45 s) doesn't let a
-            # stalled detect chew through get_observation's 50 s wait_for budget.
             async with session.post(
                 f"{PIPELINE_URL}/pipeline/detect",
                 json=payload,

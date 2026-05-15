@@ -106,8 +106,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.time = self.get_time()
         # Hard 50 s ceiling so put_action(<=5s) + get_observation(<=50s) fits
         # inside the env's 60 s/cycle budget (sleep_until_next_step is elastic
-        # but desyncs if active work exceeds 60 s). On timeout, reuse the
-        # previous self.df / self.images so the agent still gets a step.
+        # but desyncs if active work exceeds 60 s).
         try:
             await asyncio.wait_for(self._get_observation_inner(), timeout=50)
         except asyncio.TimeoutError:
@@ -117,7 +116,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         return self.time, self.image, self.df
 
     async def _get_observation_inner(self):
-        await self.get_image()
+        # get_power has no dependency on the image, so overlap it with the
+        # camera fetch; get_plant_stats needs self.image and runs after.
+        await asyncio.gather(self.get_image(), self.get_power())
         if "left" in self.images and "right" in self.images:
             self.image = np.hstack(
                 (np.array(self.images["left"]), np.array(self.images["right"]))
@@ -128,7 +129,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             self.image = np.array(self.images["right"])
 
         await self.get_plant_stats()
-        await self.get_power()
 
         if not self.df.empty:
             self.plant_areas = self.df["area"].to_numpy().flatten()  # type: ignore
