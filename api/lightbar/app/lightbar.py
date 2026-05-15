@@ -1,9 +1,13 @@
+import logging
+import threading
 import time
 
 import numpy as np
 
 from .macros import LED0_ON_L, LED1_ON_L, LED2_ON_L, LED4_ON_L, LED5_ON_L, LED6_ON_L
 from .zones import Zone
+
+logger = logging.getLogger(__name__)
 
 
 class Lightbar:
@@ -20,13 +24,19 @@ class Lightbar:
         self.i2c = self.get_i2c()
         self.action = None
         self.safe_action = None
+        # Serializes I2C writes vs. recovery operations. With aiohttp_retry's
+        # tightened budget (start_timeout=1, per-request timeout=10) a stuck
+        # write_i2c_block_data can be racing a retry on a different threadpool
+        # thread; the lock keeps them from interleaving on the smbus2 handle.
+        self._lock = threading.Lock()
 
     def step(self, action: np.ndarray):
-        self.action = action.copy()
-        action = self.ensure_safety_limits(action)
-        self.safe_action = action
-        duty_cycle = self.convert_to_duty_cycle(action)
-        self.set_duty_cycle(duty_cycle)
+        with self._lock:
+            self.action = action.copy()
+            action = self.ensure_safety_limits(action)
+            self.safe_action = action
+            duty_cycle = self.convert_to_duty_cycle(action)
+            self.set_duty_cycle(duty_cycle)
 
     def set_duty_cycle(self, duty_cycles: np.ndarray):
         for channel in range(len(self.channels)):
@@ -56,7 +66,17 @@ class Lightbar:
         Set the PWM duty cycle for a channel on a half-bar.
         """
         command_array = self.get_command_array(channel, duty_cycle)
-        self.i2c.write_i2c_block_data(address, 3, command_array)
+        try:
+            self.i2c.write_i2c_block_data(address, 3, command_array)
+        except OSError as e:
+            logger.error(
+                "i2c write failed: addr=0x%02x register=0x%02x duty=%d err=%s",
+                address,
+                command_array[1],
+                duty_cycle,
+                e,
+            )
+            raise
         time.sleep(0.05)
 
     def get_command_array(self, channel, duty_cycle):
