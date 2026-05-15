@@ -57,7 +57,7 @@ class Lightbar:
         """
         command_array = self.get_command_array(channel, duty_cycle)
         self.i2c.write_i2c_block_data(address, 3, command_array)
-        time.sleep(0.025)
+        time.sleep(0.05)
 
     def get_command_array(self, channel, duty_cycle):
         duty_cycle = max(0, duty_cycle)
