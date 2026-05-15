@@ -62,12 +62,12 @@ CONFIGS = [
 CHANNEL_NAMES = ["blue", "cool_white", "warm_white", "orange_red", "red", "far_red"]
 CHANNEL_COLORS = ["tab:blue", "tab:cyan", "goldenrod", "tab:orange", "tab:red", "tab:brown"]
 
-# Simulate 2 full days at 1-min env-step granularity. The flash is a 1-min
-# event (wrapper checks `minute == 59`), so coarser sim steps would *miss*
-# the flash entirely - 1-min ticks match what the real chamber does. 2 days
-# = 2880 steps per zone.
+# Simulate the full 14-day deploy window at 1-min env-step granularity. The
+# flash is a 1-min event (wrapper checks `minute == 59`), so coarser sim
+# steps would *miss* the flash entirely - 1-min ticks match the real
+# chamber. 14 days = 20160 env steps per zone.
 SIM_STEP_MIN = 1
-SIM_DAYS = 2
+SIM_DAYS = 14
 N_STEPS = SIM_DAYS * 24 * 60 // SIM_STEP_MIN
 
 
