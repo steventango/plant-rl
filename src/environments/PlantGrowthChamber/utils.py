@@ -6,11 +6,11 @@ from aiohttp_retry import ExponentialRetry, RetryClient
 
 
 async def create_session():
-    # Retry config tuned to the lightbar's ~300-400 ms steady-state response
-    # (lightbar.py:50-60 does 12 I2C writes x 25 ms sleep = 300 ms server-side).
-    # Backoff and attempt count are kept small so a single put_action never
-    # exceeds one env-step duration; a dropped action is re-emitted on the
-    # next env.step (1 min later) anyway.
+    # Retry config tuned to the lightbar's ~600-700 ms steady-state response
+    # (lightbar.py set_half_bar_pwm: 12 I2C writes x 50 ms sleep = 600 ms
+    # server-side). Backoff and attempt count are kept small so a single
+    # put_action never exceeds one env-step duration; a dropped action is
+    # re-emitted on the next env.step (1 min later) anyway.
     retry_options = ExponentialRetry(
         attempts=2,
         start_timeout=1,

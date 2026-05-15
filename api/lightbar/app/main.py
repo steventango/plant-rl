@@ -51,10 +51,23 @@ def recover(lightbar: Annotated[Lightbar, Depends(get_lightbar)]):
 
 @app.get("/scan")
 def scan():
-    result = subprocess.run(
-        ["i2cdetect", "-y", "1"],
-        capture_output=True,
-        text=True,
-        timeout=5,
-    )
+    try:
+        result = subprocess.run(
+            ["i2cdetect", "-y", "1"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except FileNotFoundError:
+        return Response(
+            content="i2c-tools is not installed in this container",
+            media_type="text/plain",
+            status_code=503,
+        )
+    except subprocess.TimeoutExpired:
+        return Response(
+            content="i2cdetect timed out (bus may be wedged)",
+            media_type="text/plain",
+            status_code=504,
+        )
     return Response(content=result.stdout, media_type="text/plain")
