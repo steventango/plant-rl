@@ -1,0 +1,17 @@
+{
+    "agent": "PowerLawRamp1",
+    "problem": "PlantGrowthChamberIntensity",
+    "total_steps": 40320,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": "alliance-zone01",
+            "timezone": "Etc/GMT-9"
+        },
+        "timezone": "Etc/GMT-9",
+        "enforce_night": true,
+        "flash_photography": true,
+        "action_timestep": 720,
+        "actions": "[0.38095, 0.43321, 0.48795, 0.54512, 0.60465, 0.66648, 0.73055, 0.79681, 0.86523, 0.93574, 1.00833, 1.08293, 1.15954, 1.2381]"
+    }
+}

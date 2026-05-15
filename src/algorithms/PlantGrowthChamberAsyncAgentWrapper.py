@@ -22,6 +22,11 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
         )
         self.agent_started = False
         self.enforce_night = agent.params.get("enforce_night", True)
+        # Flash photography mode: replaces the twilight ramp with a hard
+        # 12 h square-wave photoperiod (09:00-20:59 local) preceded by a
+        # one-env-step full-intensity flash at 08:59 local (BALANCED_ACTION_105)
+        # for daily camera capture under a standardized spectrum.
+        self.flash_photography = agent.params.get("flash_photography", False)
         self.last_action_time = None
         self.tz = ZoneInfo(agent.params.get("timezone", "Etc/UTC"))
         self.tz_utc = ZoneInfo("Etc/UTC")
@@ -122,9 +127,34 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
                 self.env.update_action_trace(self.last_action_info[0])
         return self.last_action_info
 
+    def maybe_enforce_flash_photography_action(self) -> bool:
+        """Flash-photography override of maybe_enforce_action.
+
+        Imposes a hard square-wave photoperiod with a daily camera-capture flash:
+        - 09:00 - 20:59 local: 12 h daytime, agent's action passes through (returns False).
+        - 08:59 local: 1-env-step flash at BALANCED_ACTION_105 (returns True).
+        - All other times: night, zeros (returns True).
+        """
+        assert self.env_local_time is not None, (
+            "Environment local time must be set before flash-mode enforcement."
+        )
+        h = self.env_local_time.hour
+        m = self.env_local_time.minute
+        if 9 <= h <= 20:
+            return False
+        if h == 8 and m == 59:
+            self.last_action_info = (BALANCED_ACTION_105, {})
+            logger.debug(f"Flash photography capture at {self.env_local_time}")
+            return True
+        self.last_action_info = (self.get_night_action(), {})
+        logger.debug(f"Enforcing night (flash mode) at {self.env_local_time}")
+        return True
+
     def maybe_enforce_action(self):
         if not self.enforce_night:
             return False
+        if self.flash_photography:
+            return self.maybe_enforce_flash_photography_action()
         if self.is_night():
             action = self.get_night_action()
             self.last_action_info = (action, {})
@@ -172,8 +202,17 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
         assert self.env_local_time is not None, (
             "Environment local time must be set before checking action timestep."
         )
-        # Will have to change again if we go longer than a day
-        should_poll = self.env_local_time.hour == 9 and self.env_local_time.minute == 30
+        # Will have to change again if we go longer than a day.
+        # In flash_photography mode, daytime starts at 9:00 (not 9:30) — so
+        # poll at the start of that 12-hour block instead.
+        if self.flash_photography:
+            should_poll = (
+                self.env_local_time.hour == 9 and self.env_local_time.minute == 0
+            )
+        else:
+            should_poll = (
+                self.env_local_time.hour == 9 and self.env_local_time.minute == 30
+            )
 
         if time_since_last_action >= self.action_timestep or should_poll:
             logger.debug(
