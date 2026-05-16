@@ -127,7 +127,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/monitor.py --interval 300 --memory-threshold 0.9 --disk-threshold 0.9 --deploy
+    command: uv run python src/monitor.py --interval 300 --memory-threshold 0.9 --disk-threshold 0.9
 
 networks:
   plant-network:
