@@ -20,7 +20,7 @@ All three resolve through `algorithms/registry.py`'s `startswith("Constant")` ru
 
 Inherits the same flash-photography wrapper mode used in P1 (see `src/algorithms/PlantGrowthChamberAsyncAgentWrapper.py:maybe_enforce_flash_photography_action`):
 - 09:00 – 20:59 wrapper-local (chamber 18:00 – 05:59 MDT): daytime, 105 PPFD applied.
-- 08:59 wrapper-local (chamber 17:59 MDT): 1-min `BALANCED_ACTION_105` flash for daily camera capture under a standardized spectrum.
+- 08:59 wrapper-local (chamber 17:59 MDT): 1-min `BALANCED_ACTION_40` flash (40 PPFD, balanced-105 spectrum rescaled) for daily camera capture under a standardized spectrum.
 - 21:00 – 08:58 wrapper-local: night, action zeroed.
 
 The flash gives the CV pipeline one daily standardized image during incubation too, so plant-area growth is tracked from the beginning of the chamber-controlled period — important for establishing the day-0 baseline before P1's treatment arms diverge.

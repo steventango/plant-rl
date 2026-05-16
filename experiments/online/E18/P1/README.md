@@ -89,7 +89,7 @@ Numerical search over the super-linear `P(PPFD) = 9.71 + 0.164·PPFD^1.19` curve
 
 | Slot | Chamber MDT | Wrapper-local | PPFD | s = PPFD/105 | P (W) | Daily E (Wh, 4 h) | Active channels |
 |---|---|---|---|---|---|---|---|
-| **Flash** (1 min) | 17:59 | 08:59 | 105 (BALANCED_ACTION_105) | — | 51.4 | 0.9 | full balanced |
+| **Flash** (1 min) | 17:59 | 08:59 | 40 (BALANCED_ACTION_40) | — | 22.9 | 0.4 | blue + cool_white (low channels zeroed by `safe_minimum=5`) |
 | 1 (4 h) | 18:00 – 22:00 | 09:00 – 13:00 | 60 | 0.57143 | 31.14 | 125 | blue + cool_white |
 | 2 (4 h) | 22:00 – 02:00 | 13:00 – 17:00 | 126 | 1.20000 | 61.44 | 246 | full balanced (cw drive 0.910) |
 | 3 (4 h) | 02:00 – 06:00 | 17:00 – 21:00 | 60 | 0.57143 | 31.14 | 125 | blue + cool_white |
@@ -269,11 +269,11 @@ All three configs share:
 
 | Wrapper-local | Chamber wall-clock (MDT) | Behavior |
 |---|---|---|
-| 08:59 | 17:59 | **1-min flash** at `BALANCED_ACTION_105` (105 PPFD) for daily camera capture |
+| 08:59 | 17:59 | **1-min flash** at `BALANCED_ACTION_40` (balanced spectrum at 40 PPFD) for daily camera capture |
 | 09:00 – 20:59 | 18:00 – 05:59 | **12 h daytime** — agent's scheduled PPFD applies |
 | 21:00 – 08:58 | 06:00 – 17:58 | Night — wrapper zeros the action |
 
-The flash is the only deviation from a hard square-wave 12 h photoperiod. Because it fires at the same wrapper-local time every day under the same fixed `BALANCED_ACTION_105` spectrum, the daily flash frame is the canonical input for the CV plant-area pipeline — resolving the dynamic-spectrum CV bias that would otherwise confound Z1 (multi-day spectrum drift), Z2 (within-day spectrum cycling), and Z3 (constant spectrum). The `flash_photography` flag is a plain wrapper parameter, so any future fixed-schedule deploy can opt in with one line in its config JSON.
+The flash is the only deviation from a hard square-wave 12 h photoperiod. Because it fires at the same wrapper-local time every day under the same fixed `BALANCED_ACTION_40` spectrum (balanced spectrum at 40 PPFD; calibration safe_minimum gating leaves blue + cool_white active), the daily flash frame is the canonical input for the CV plant-area pipeline — resolving the dynamic-spectrum CV bias that would otherwise confound Z1 (multi-day spectrum drift), Z2 (within-day spectrum cycling), and Z3 (constant spectrum). The `flash_photography` flag is a plain wrapper parameter, so any future fixed-schedule deploy can opt in with one line in its config JSON.
 
 ## Verification
 

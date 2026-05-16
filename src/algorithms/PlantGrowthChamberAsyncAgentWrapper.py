@@ -7,7 +7,12 @@ from zoneinfo import ZoneInfo
 import numpy as np
 
 from algorithms.BaseAgent import BaseAgent
-from utils.constants import BALANCED_ACTION_105, DIM_ACTION, TWILIGHT_INTENSITIES_30_MIN
+from utils.constants import (
+    BALANCED_ACTION_40,
+    BALANCED_ACTION_105,
+    DIM_ACTION,
+    TWILIGHT_INTENSITIES_30_MIN,
+)
 from utils.RlGlue.agent import AsyncAgentWrapper
 
 logger = logging.getLogger("plant_rl.PlantGrowthChamberAsyncAgentWrapper")
@@ -131,7 +136,7 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
 
         Imposes a hard square-wave photoperiod with a daily camera-capture flash:
         - 09:00 - 20:59 local: 12 h daytime, agent's action passes through (returns False).
-        - 08:59 local: 1-env-step flash at BALANCED_ACTION_105 (returns True).
+        - 08:59 local: 1-env-step flash at BALANCED_ACTION_40 (returns True).
         - All other times: night, zeros (returns True).
         """
         assert self.env_local_time is not None, (
@@ -142,7 +147,7 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
         if 9 <= h <= 20:
             return False
         if h == 8 and m == 59:
-            self.last_action_info = (BALANCED_ACTION_105, {})
+            self.last_action_info = (BALANCED_ACTION_40, {})
             logger.debug(f"Flash photography capture at {self.env_local_time}")
             return True
         self.last_action_info = (self.get_night_action(), {})
