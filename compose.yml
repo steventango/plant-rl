@@ -24,7 +24,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E18/P0.4/PowerLawRamp1.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E18/P0/Constant1.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -58,7 +58,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E18/P0.4/Parabolic2.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E18/P0/Constant2.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -93,7 +93,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E18/P0.4/Constant3.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E18/P0/Constant3.json -i 0 --deploy
     deploy:
       resources:
         reservations:
