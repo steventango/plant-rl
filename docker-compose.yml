@@ -59,7 +59,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-data-collection:/data/plant-data-collection:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E13/P0/Spreadsheet5.json -i 17 --deploy
+    command: uv run python src/main.py -e experiments/E1/iter1/exp/Schedule_Test.json -i 0
     deploy:
       resources:
         reservations:
@@ -94,7 +94,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-data-collection:/data/plant-data-collection:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E13/P0/Spreadsheet6.json -i 18 --deploy
+    command: uv run python src/main.py -e experiments/E1/iter1/exp/Schedule6.json -i 0
     deploy:
       resources:
         reservations:
@@ -129,7 +129,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-data-collection:/data/plant-data-collection:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E13/P0/Dirichlet7.json -i 19 --deploy
+    command: uv run python src/main.py -e experiments/E1/iter1/exp/Schedule7.json -i 0
     deploy:
       resources:
         reservations:
@@ -164,7 +164,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-data-collection:/data/plant-data-collection:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E13/P0/Spreadsheet8.json -i 20 --deploy
+    command: uv run python src/main.py -e experiments/E1/iter1/exp/Schedule8.json -i 0
     deploy:
       resources:
         reservations:
@@ -199,7 +199,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-data-collection:/data/plant-data-collection:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E13/P0/Spreadsheet9.json -i 21 --deploy
+    command: uv run python src/main.py -e experiments/E1/iter1/exp/Schedule9.json -i 0
     deploy:
       resources:
         reservations:
@@ -234,7 +234,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-data-collection:/data/plant-data-collection:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E13/P0/Spreadsheet10.json -i 22 --deploy
+    command: uv run python src/main.py -e experiments/E1/iter1/exp/Schedule10.json -i 0
     deploy:
       resources:
         reservations:
@@ -269,7 +269,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-data-collection:/data/plant-data-collection:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E13/P0/Spreadsheet11.json -i 23 --deploy
+    command: uv run python src/main.py -e experiments/E1/iter1/exp/Schedule11.json -i 0
     deploy:
       resources:
         reservations:
@@ -304,7 +304,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-data-collection:/data/plant-data-collection:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E13/P0/Spreadsheet12.json -i 24 --deploy
+    command: uv run python src/main.py -e experiments/E1/iter1/exp/Schedule12.json -i 0
     deploy:
       resources:
         reservations:

@@ -7,8 +7,8 @@
         "environment": {
             "zone": "alliance-zone10",
             "timezone": "America/Edmonton",
-            "min_ppfd": 70.0,
-            "max_ppfd": 200.0
+            "min_ppfd": 50.0,
+            "max_ppfd": 170.0
         },
         "timezone": "America/Edmonton",
         "action_days": [[1, 6, 11]],
