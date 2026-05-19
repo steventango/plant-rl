@@ -18,7 +18,7 @@ The biological bet for Z1 is that during the early small-canopy days most incide
 | **Z2 (zone02)** | Daily symmetric parabola `(50, 130, 50) PPFD × 4 h` | `Parabolic2.json` | 470 Wh/day | constant | low → high → low |
 | **Z3 (zone03)** | Constant 100 PPFD | `Constant3.json` | 589 Wh/day | constant | constant |
 
-All three zones share identical wrapper settings (`enforce_night = true`, `flash_photography = true`, `timezone = "Etc/GMT-9"`, `total_steps = 40320`) so chamber-side timing artifacts cancel in cross-zone comparisons. Z1 and Z3 use `action_timestep = 720` (one new PPFD scalar per 12-h photoperiod); Z2 uses `action_timestep = 240` (three slots per photoperiod).
+All three zones share identical wrapper settings (`enforce_night = true`, `flash_photography = true`, `timezone = "Etc/GMT-2"`, `total_steps = 40320`) so chamber-side timing artifacts cancel in cross-zone comparisons. Z1 and Z3 use `action_timestep = 720` (one new PPFD scalar per 12-h photoperiod); Z2 uses `action_timestep = 240` (three slots per photoperiod).
 
 **Hypothesis.** At end of trial (DAS 25):
 - **H1 (across-day):** Z1 final rosette area ≥ Z3 final rosette area, while Z1's 14-day energy ≤ 80 % of Z3's.
@@ -27,7 +27,7 @@ All three zones share identical wrapper settings (`enforce_night = true`, `flash
 
 ## Plant cohort and calendar
 
-*Arabidopsis thaliana* (Col-0 assumed). Trial 17, sterilized seeds plated onto a 6:6:1 soil/peat/perlite mix in 24-cell trays. Pre-transplant (DAS 0–7) under unspecified PPFD in a separate germination chamber. Post-transplant (DAS 7–12) constant 105 PPFD incubation on the same 18:00→06:00 night-shifted photoperiod the agent will use.
+*Arabidopsis thaliana* (Col-0 assumed). Trial 17, sterilized seeds plated onto a 6:6:1 soil/peat/perlite mix in 24-cell trays. Pre-transplant (DAS 0–7) under unspecified PPFD in a separate germination chamber. Post-transplant (DAS 7–12) constant 105 PPFD incubation on the same 01:00→13:00 night-shifted photoperiod the agent will use.
 
 | Event | Date | DAS (sowing = day 0) | DA_sterilization | DAT |
 |---|---|---|---|---|
@@ -37,17 +37,17 @@ All three zones share identical wrapper settings (`enforce_night = true`, `flash
 | Remove domes | 3/29/2026 | 10 | 13 | 3 |
 | Mist 50 mL | 3/30/2026 | 11 | 14 | 4 |
 | 750 mL water | 3/31/2026 | 12 | 15 | 5 |
-| **Agent start (18:00 local, twilight off)** | 3/31/2026 18:00 | **12** | 15 | 5 |
-| Agent day 0 photoperiod | 3/31 18:00 → 4/1 06:00 | 12 | 15 | 5 |
-| Agent day 13 final photoperiod | 4/13 18:00 → 4/14 06:00 | 25 | 28 | 18 |
-| Trial harvest | 4/14 06:00 | 26 | 29 | 19 |
+| **Agent start (01:00 local, twilight off)** | 3/31/2026 01:00 | **12** | 15 | 5 |
+| Agent day 0 photoperiod | 3/31 01:00 → 3/31 13:00 | 12 | 15 | 5 |
+| Agent day 13 final photoperiod | 4/13 01:00 → 4/13 13:00 | 25 | 28 | 18 |
+| Trial harvest | 4/13 13:00 | 26 | 29 | 19 |
 
 Day-counting conventions in use:
 - **DAS_sowing** (literature, Carvalho): plating = day 0. Translate from spreadsheet: `DAS_sowing = DA_sterilization − 3`.
 - **DA_sterilization** (user's spreadsheet): sterilization = day 0.
 - **DAT** (env code, `WallStatsActionTraceEmbeddingPlantGrowthChamber:108`): transplant = day 0.
 
-Photoperiod is **night-shifted**: lights on 18:00, off 06:00 local. Twilight ramps are disabled before deploy, so the photoperiod is a hard 12 h square wave. The same schedule applied during the 5-d incubation period.
+Photoperiod is **night-shifted**: lights on 01:00, off 13:00 local. Twilight ramps are disabled before deploy, so the photoperiod is a hard 12 h square wave. The same schedule applied during the 5-d incubation period.
 
 ## Schedule
 
@@ -88,11 +88,11 @@ Numerical search over the super-linear `P(PPFD) = 9.71 + 0.164·PPFD^1.19` curve
 
 | Slot | Chamber MDT | Wrapper-local | PPFD | s = PPFD/100 | P (W) | Daily E (Wh, 4 h) | Active channels |
 |---|---|---|---|---|---|---|---|
-| **Flash** (1 min) | 17:59 | 08:59 | 40 (BALANCED_ACTION_40) | — | 22.9 | 0.4 | blue + cool_white (low channels zeroed by `safe_minimum=5`) |
-| 1 (4 h) | 18:00 – 22:00 | 09:00 – 13:00 | 50 | 0.5 | 26.95 | 108 | blue + cool_white |
-| 2 (4 h) | 22:00 – 02:00 | 13:00 – 17:00 | 130 | 1.3 | 63.47 | 254 | full balanced (cool_white drive ≈ 0.945; output ~88.6 PPFD, ~1.5 PPFD below the 90 safe_max) |
-| 3 (4 h) | 02:00 – 06:00 | 17:00 – 21:00 | 50 | 0.5 | 26.95 | 108 | blue + cool_white |
-| Night (12 h) | 06:00 – 17:59 | 21:00 – 08:58 | 0 | — | 0 (7.21 baseline) | 0 | none |
+| **Flash** (1 min) | 00:59 | 08:59 | 40 (BALANCED_ACTION_40) | — | 22.9 | 0.4 | blue + cool_white (low channels zeroed by `safe_minimum=5`) |
+| 1 (4 h) | 01:00 – 05:00 | 09:00 – 13:00 | 50 | 0.5 | 26.95 | 108 | blue + cool_white |
+| 2 (4 h) | 05:00 – 09:00 | 13:00 – 17:00 | 130 | 1.3 | 63.47 | 254 | full balanced (cool_white drive ≈ 0.945; output ~88.6 PPFD, ~1.5 PPFD below the 90 safe_max) |
+| 3 (4 h) | 09:00 – 13:00 | 17:00 – 21:00 | 50 | 0.5 | 26.95 | 108 | blue + cool_white |
+| Night (12 h) | 13:00 – 00:59 | 21:00 – 08:58 | 0 | — | 0 (7.21 baseline) | 0 | none |
 
 **Daily lights-on energy: 470 Wh → 79.8 % of Z3's 589 Wh.** 14-day cumulative: **6 573 Wh** vs. Z3's 8 241 Wh. Daily mean PPFD 76.67 µmol m⁻² s⁻¹ → DLI 3.31 mol m⁻² d⁻¹ — about 0.06 mol m⁻² d⁻¹ below Z1's 14-day mean.
 
@@ -102,7 +102,7 @@ Numerical search over the super-linear `P(PPFD) = 9.71 + 0.164·PPFD^1.19` curve
 
 **Discretization.** A true parabola is smooth; we approximate with three 4-h step changes. The 50 → 130 transition causes a transient ΦPSII dip (>33 %, 10–30 min — slightly larger than the previous 60 → 126 design) while Rubisco and stomatal conductance catch up; with 4-h slots, the dip is ≤ 15 % of slot time and is dominated by the 3.5 h of steady-state operation that follows. Finer discretization (e.g. 6 × 2 h or 12 × 1 h) at the same mean PPFD and energy is a follow-up refinement.
 
-**SequenceAgent details.** `action_timestep: 240` polls the agent at wrapper-local 09:00, 13:00, 17:00 (chamber 18:00, 22:00, 02:00). The 21:00 boundary lands in night, so no fourth poll. The next morning's 09:00 poll fires via both `should_poll` (flash mode: hour=9, minute=0) and `time_since_last_action ≥ 240` (16 h elapsed). The `actions` list repeats `[0.5, 1.3, 0.5]` 28 times (84 entries) so the schedule keeps cycling cleanly through the 4-week `total_steps` buffer; if the trial extends past 14 days, Z2 continues delivering its daily parabola instead of clamping to a fixed value.
+**SequenceAgent details.** `action_timestep: 240` polls the agent at wrapper-local 09:00, 13:00, 17:00 (chamber 01:00, 05:00, 09:00). The 21:00 boundary lands in night, so no fourth poll. The next morning's 09:00 poll fires via both `should_poll` (flash mode: hour=9, minute=0) and `time_since_last_action ≥ 240` (16 h elapsed). The `actions` list repeats `[0.5, 1.3, 0.5]` 28 times (84 entries) so the schedule keeps cycling cleanly through the 4-week `total_steps` buffer; if the trial extends past 14 days, Z2 continues delivering its daily parabola instead of clamping to a fixed value.
 
 ## Energy budget
 
@@ -258,9 +258,9 @@ python src/main_real.py -e "experiments/online/E18/P1/Constant3.json" -i 0 --dep
 Agent-name conventions: `SequencePowerLawRamp1` and `SequenceParabolic2` both resolve to `SequenceAgent` via `algorithms/registry.py`'s `startswith("Sequence")` rule; `Constant3` resolves to `ConstantAgent` via `startswith("Constant")`. The descriptive suffixes are for legibility — drop them and the registry would still wire the runs identically.
 
 All three configs share:
-- `timezone: "Etc/GMT-9"` — the **night-shift trick**. The chamber's wall clock is Edmonton-local (MDT, UTC-6 in our trial window), but `PlantGrowthChamberAsyncAgentWrapper` has hard-coded boundaries for night / dawn / dusk / `should_poll` keyed off wrapper-local hour 9 to 21 (originally meant for a 9:00 → 21:00 daytime photoperiod). Setting `timezone = Etc/GMT-9` (UTC+9) shifts wrapper-local by +15 h vs. Edmonton MDT, so chamber-wall-clock 18:00 MDT = UTC 00:00 = wrapper-local 09:00 and chamber 06:00 MDT = wrapper-local 21:00. The wrapper sees the night-shifted 18:00 → 06:00 photoperiod as its native 09:00 → 21:00 window, no wrapper code changes needed. (Same trick used by `experiments/online/E17/P0`.)
+- `timezone: "Etc/GMT-2"` — the **night-shift trick**. The chamber's wall clock is Edmonton-local (MDT, UTC-6 in our trial window), but `PlantGrowthChamberAsyncAgentWrapper` has hard-coded boundaries for night / dawn / dusk / `should_poll` keyed off wrapper-local hour 9 to 21 (originally meant for a 9:00 → 21:00 daytime photoperiod). Setting `timezone = Etc/GMT-2` (UTC+2) shifts wrapper-local by +8 h vs. Edmonton MDT, so chamber-wall-clock 01:00 MDT = UTC 07:00 = wrapper-local 09:00 and chamber 13:00 MDT = wrapper-local 21:00. The wrapper sees the night-shifted 01:00 → 13:00 photoperiod as its native 09:00 → 21:00 window, no wrapper code changes needed. (Same trick used by `experiments/online/E17/P0`, just at a different offset.)
 - `action_timestep` — wrapper's `time_since_last_action ≥ action_timestep` check (in minutes). **Z1 and Z3 use 720** (the full 12 h photoperiod ⇒ one new PPFD scalar per daytime block). **Z2 uses 240** (12 h / 3 = 4 h per slot ⇒ three polls per day at wrapper-local 09:00, 13:00, 17:00). Differs from the old E14–E17 default of 660 min, which was the 11 h pure-daytime portion of a 12 h photoperiod with 30 min twilights at each end — with twilight off the pure-daytime is the full 12 h.
-- `enforce_night: true` — wrapper zeros the action during wrapper-local night (chamber 06:00 → 18:00); the schedule scalar applies only inside the chamber 18:00 → 06:00 daytime block.
+- `enforce_night: true` — wrapper zeros the action during wrapper-local night (chamber 13:00 → 01:00); the schedule scalar applies only inside the chamber 01:00 → 13:00 daytime block.
 - `total_steps: 40320` — **4 weeks** worth of 1-min env steps (28 × 1440). The experiment is planned to stop at 14 days but `total_steps` provides headroom so the trial doesn't terminate prematurely if we decide to extend. Z1's `SequenceAgent` clamps to its last entry (PPFD 130) past day 13 — energy comparison vs. Z3 should still be reported over the matching 14-day window. Z2's `actions` list is intentionally pre-tiled to 84 entries (28 days × 3 polls), so it keeps cycling the parabola through the buffer rather than clamping.
 - `episode_cutoff: -1` — episode ends only when `total_steps` is reached.
 
@@ -268,9 +268,9 @@ All three configs share:
 
 | Wrapper-local | Chamber wall-clock (MDT) | Behavior |
 |---|---|---|
-| 08:59 | 17:59 | **1-min flash** at `BALANCED_ACTION_40` (balanced spectrum at 40 PPFD) for daily camera capture |
-| 09:00 – 20:59 | 18:00 – 05:59 | **12 h daytime** — agent's scheduled PPFD applies |
-| 21:00 – 08:58 | 06:00 – 17:58 | Night — wrapper zeros the action |
+| 08:59 | 00:59 | **1-min flash** at `BALANCED_ACTION_40` (balanced spectrum at 40 PPFD) for daily camera capture |
+| 09:00 – 20:59 | 01:00 – 12:59 | **12 h daytime** — agent's scheduled PPFD applies |
+| 21:00 – 08:58 | 13:00 – 00:58 | Night — wrapper zeros the action |
 
 The flash is the only deviation from a hard square-wave 12 h photoperiod. Because it fires at the same wrapper-local time every day under the same fixed `BALANCED_ACTION_40` spectrum (balanced spectrum at 40 PPFD; calibration safe_minimum gating leaves blue + cool_white active), the daily flash frame is the canonical input for the CV plant-area pipeline — resolving the dynamic-spectrum CV bias that would otherwise confound Z1 (multi-day spectrum drift), Z2 (within-day spectrum cycling), and Z3 (constant spectrum). The `flash_photography` flag is a plain wrapper parameter, so any future fixed-schedule deploy can opt in with one line in its config JSON.
 
@@ -295,7 +295,7 @@ The flash is the only deviation from a hard square-wave 12 h photoperiod. Becaus
 
 3. **Registry check** (already done): `algorithms/registry.py` resolves `SequencePowerLawRamp1` → `SequenceAgent`, `SequenceParabolic2` → `SequenceAgent`, `Constant3` → `ConstantAgent` via the prefix-matching rules (`startswith("Sequence")`, `startswith("Constant")`).
 
-4. **Smoke test.** Deploy each config with the mock chamber / dry-run flag in `main_real.py`; confirm `SequenceAgent` advances at the expected cadence (once per simulated daytime for Z1, three times per simulated daytime for Z2) and that the wrapper zeros the action during chamber 06:00 → 18:00 night.
+4. **Smoke test.** Deploy each config with the mock chamber / dry-run flag in `main_real.py`; confirm `SequenceAgent` advances at the expected cadence (once per simulated daytime for Z1, three times per simulated daytime for Z2) and that the wrapper zeros the action during chamber 13:00 → 01:00 night.
 
 CV-pipeline robustness against the dynamic Z1/Z2 spectra is handled by the `flash_photography` wrapper mode (08:59 daily flash under fixed `BALANCED_ACTION_105`). Use those frames as the canonical area time-series; in-daytime frames captured under the schedule's drifting/cycling spectrum should be treated as preliminary.
 
@@ -324,7 +324,7 @@ CV-pipeline robustness against the dynamic Z1/Z2 spectra is handled by the `flas
 - **Down-shift from acclimated 105 → carbon-starvation risk on days 0–5.** Plants have had only 5 d at 105 PPFD pre-agent (not the full 15) and now step down to the 100 PPFD agent baseline; Z1 day 0 is a ~64 % drop from incubation to ~38 PPFD (DLI ~1.65 mol m⁻² d⁻¹). Plants survive (above compensation point) but transient daytime growth restriction is plausible. The spectrum-collapse regime now extends through day 5 (PPFD 67 is just under the warm_white threshold) — one extra day relative to the old 105-baseline design. If de-risking is needed before the paired comparison, raising the Z1 floor (e.g. clamping the first few `actions` entries upward) costs a few percentage points of energy savings and is a defensible variant.
 - **Pre-transplant light history unknown.** DAS 0–7 in a separate germination chamber under unspecified PPFD. The schedule's safety margins are robust to this within the photoinhibition envelope, but absolute biomass and chloroplast density at day 0 could differ from baseline expectations.
 - **Fixed schedule — no adaptation.** This is a deterministic open-loop policy. If plants stall or surge unexpectedly the schedule doesn't react. Treat this as the baseline against which a future closed-loop / learning agent is evaluated.
-- **Dynamic-spectrum CV bias** — now addressed by the `_FlashPhotography` wrapper variant. The 1-min full-intensity flash at chamber 18:29 (wrapper-local 09:29) each day gives the CV pipeline a single image per zone under a known fixed `BALANCED_ACTION_105` spectrum. Use those frames as the canonical area time-series; any in-daytime-photoperiod frames captured under the schedule's drifting spectrum should be treated as preliminary.
+- **Dynamic-spectrum CV bias** — now addressed by the `_FlashPhotography` wrapper variant. The 1-min full-intensity flash at chamber 01:29 (wrapper-local 09:29) each day gives the CV pipeline a single image per zone under a known fixed `BALANCED_ACTION_105` spectrum. Use those frames as the canonical area time-series; any in-daytime-photoperiod frames captured under the schedule's drifting spectrum should be treated as preliminary.
 - **Twilight off.** Energy budget assumes a 12-h square wave. If twilight is left on by mistake, both zones get the same extra daily energy and the *ratio* is preserved; only absolute Wh shifts.
 - **Within-day shape (Z2).** Z2's `(50, 130, 50)` parabola sits closer to the Watanabe / Gemini Deep Research 3 design space — peak-to-edge ratio 2.6× vs Watanabe's 2.9× (190 / 65). The peak is at the cool_white channel's safe_max ceiling (90 PPFD per-channel output ⇒ ~130 PPFD total), so there is no further headroom to deepen the parabola without channel re-calibration.
 - **Z2 peak at the cool_white safe_max.** The (50, 130, 50) design parks Z2's peak slot at 130 PPFD = cool_white output ~88.6 PPFD = drive ~0.945 = ~1.5 PPFD below the channel safe_max — for **4 h/day × 14 d ≈ 56 h sustained**, vs Z1 which only reaches this drive point on agent day 13 (12 h, one-shot). The headroom is small in absolute terms; if telemetry shows cool_white drift / chromatic shift in Z2 during the trial, the obvious mitigation is dropping the peak slot to 125 PPFD (energy ratio rises to ~80.9 % — still well within spec). We've accepted the tight margin in exchange for one-decimal-clean scalars and an energy hit at almost exactly 80 %.

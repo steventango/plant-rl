@@ -6,9 +6,9 @@
     "metaParameters": {
         "environment": {
             "zone": "alliance-zone01",
-            "timezone": "Etc/GMT-4"
+            "timezone": "Etc/GMT-2"
         },
-        "timezone": "Etc/GMT-4",
+        "timezone": "Etc/GMT-2",
         "enforce_night": true,
         "flash_photography": true,
         "action_timestep": 720,
