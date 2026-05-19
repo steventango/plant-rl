@@ -4,7 +4,7 @@
 
 5-day **post-transplant incubation** for the Trial 17 cohort: constant 100 PPFD balanced-white on the same 01:00 → 13:00 night-shifted photoperiod the [P1 agent-controlled phase](../P1/README.md) will use. All three zones (alliance-zone01, 02, 03) receive the identical policy so the plants enter P1 partially acclimated to 100 PPFD with no spectrum cross-contamination across treatment arms.
 
-This phase runs from **transplant date (DAS 7)** to **agent start (DAS 12)**, after which control hands off to [E18/P1](../P1/README.md). The configs include a 5-day buffer beyond the planned 5-day incubation (`total_steps: 14400` = 10 days of 1-min env steps) so the run won't terminate prematurely if the handoff is delayed.
+This phase runs from **transplant date (DAS 7)** to **agent start (DAS 12)**, after which control hands off to [E18/P1](../P1/README.md). The configs are sized for **4 weeks** (`total_steps: 40320` = 28 days of 1-min env steps, matching P1) so the same constant-100 policy can keep running indefinitely if the handoff is delayed or the trial is repurposed as a long-duration control.
 
 ## Configs
 
@@ -37,7 +37,7 @@ Each zone is deployed independently. After the 5-day incubation completes (or ea
 
 ## Energy
 
-At constant 100 PPFD over the 12 h photoperiod, lights-on plug power = 49.05 W (per the [E18/P0.1](../P0.1/README.md) pooled fit). Per-zone daily energy ≈ 589 Wh × 5 days ≈ 2 944 Wh for the planned incubation window. Same for all three zones.
+At constant 100 PPFD over the 12 h photoperiod, lights-on plug power = 49.05 W (per the [E18/P0.1](../P0.1/README.md) pooled fit). Per-zone daily energy ≈ 589 Wh; over the full 28-day `total_steps` envelope that's ≈ 16 482 Wh (≈ 2 944 Wh for the 5-day planned-incubation subwindow). Same for all three zones.
 
 ## See also
 
