@@ -19,27 +19,27 @@ class ScheduleAgent(BaseAsyncAgent):
     def _is_night(self, t: datetime) -> bool:
         return t.hour >= self.end_hour or t.hour < self.start_hour
 
-    def _is_morning(self, t: datetime) -> bool:
-        return t.hour == self.start_hour and t.minute == 0
+    def _is_photo_time(self, t: datetime) -> bool:
+        return t.hour == self.start_hour - 1 and t.minute == 59
 
-    def _get_ppfd(self, t: datetime) -> float:
+    def _get_scalar_action(self, t: datetime) -> float:
         if self.start_date is None:
             return float(self.action_inputs[0])
         day_number = (t.date() - self.start_date).days + 1
-        ppfd = float(self.action_inputs[0])
+        scalar_action = float(self.action_inputs[0])
         for day, value in zip(self.action_days, self.action_inputs, strict=False):
             if day_number >= day:
-                ppfd = float(value)
+                scalar_action = float(value)
             else:
                 break
-        return ppfd
+        return scalar_action
 
     def _get_action(self, t: datetime) -> float | np.ndarray:
         if self._is_night(t):
             return np.zeros(6)
-        if self._is_morning(t):
-            return 0.5 * BALANCED_ACTION_100
-        return self._get_ppfd(t)
+        if self._is_photo_time(t):
+            return 0.4 * BALANCED_ACTION_100
+        return self._get_scalar_action(t)
 
     async def start(self, observation, extra=None):
         t, _ = observation
