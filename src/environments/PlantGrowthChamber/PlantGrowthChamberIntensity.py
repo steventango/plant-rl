@@ -7,7 +7,6 @@ from utils.constants import BALANCED_ACTION_100
 class PlantGrowthChamberIntensity(PlantGrowthChamber):
     def __init__(self, min_ppfd: float = 0.0, max_ppfd: float = 100.0, **kwargs):
         super().__init__(**kwargs)
-        self.duration = timedelta(minutes=10)
         self.min_ppfd = min_ppfd
         self.max_ppfd = max_ppfd
 

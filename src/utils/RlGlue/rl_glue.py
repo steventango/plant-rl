@@ -223,10 +223,8 @@ class AsyncRLGlue:
         return img_path.name if img_path else None
 
     def log(self):
-        if self.is_mock_env:
-            return
-        # Only execute the rest if minutes are divisible by 5
-        if self.environment.time.minute % 5 != 0:  # type: ignore
+        # logging frequency is every 10 minutes
+        if self.environment.time.minute % 10 != 0:  # type: ignore
             return
         img_name = self.save_images(self.dataset_path, self.images_save_keys)
         raw_csv_path = self.dataset_path / "raw.csv"

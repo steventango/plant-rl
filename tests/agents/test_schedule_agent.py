@@ -60,11 +60,11 @@ class TestScheduleAgent:
         await agent.start(dt(START, 10))
 
         cases = [
-            (0, 100.0),   # day 1
-            (3, 100.0),   # day 4
-            (4, 150.0),   # day 5
-            (8, 150.0),   # day 9
-            (9, 200.0),   # day 10
+            (0, 100.0),  # day 1
+            (3, 100.0),  # day 4
+            (4, 150.0),  # day 5
+            (8, 150.0),  # day 9
+            (9, 200.0),  # day 10
             (14, 200.0),  # day 15
         ]
         for day_offset, expected_ppfd in cases:
