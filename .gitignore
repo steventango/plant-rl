@@ -7,7 +7,7 @@ results.tar*
 .tmp/
 *.out
 in_progress/
-notes/
+.notes/
 
 # Checkpoints
 checkpoints/
