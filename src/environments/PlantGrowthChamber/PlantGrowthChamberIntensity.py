@@ -26,9 +26,11 @@ class PlantGrowthChamberIntensity(PlantGrowthChamber):
         if isinstance(action, np.ndarray):
             self.agent_action = None
             return await super().step(action)
-        
+
         self.agent_action = action
-        ppfd = self.min_ppfd + (action + 1) / 2 * (self.max_ppfd - self.min_ppfd)  # map scalar action in [-1, 1] to ppfd in [min_ppfd, max_ppfd]
+        ppfd = self.min_ppfd + (action + 1) / 2 * (
+            self.max_ppfd - self.min_ppfd
+        )  # map scalar action in [-1, 1] to ppfd in [min_ppfd, max_ppfd]
         return await super().step(BALANCED_ACTION_100 * ppfd / 100)
 
     def get_info(self):

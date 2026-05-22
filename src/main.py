@@ -25,6 +25,8 @@ from utils.RlGlue.rl_glue import AsyncRLGlue
 
 logger = logging.getLogger("plant-data")
 
+WANDB_MODE = "online"
+
 
 async def main():
     # ------------------
@@ -65,7 +67,7 @@ async def main():
             id=run_id,
             resume="allow",
             config={},
-            mode="offline",
+            mode=WANDB_MODE,
             settings=wandb.Settings(
                 x_stats_disk_paths=(
                     "/",
