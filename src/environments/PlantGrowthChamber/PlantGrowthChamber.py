@@ -9,7 +9,6 @@ import numpy as np
 from PIL import Image
 
 from environments.PlantGrowthChamber.utils import create_session
-from utils.averaging import UnbiasedExponentialMovingAverage as UEMA
 from utils.RlGlue.environment import BaseAsyncEnvironment
 
 from .cv import process_image
@@ -39,11 +38,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.daily_mean_clean_areas = defaultdict(float)
         self.n_step = 0
         self.duration = timedelta(minutes=1)
-        self.clean_area_lower, self.clean_area_upper = 0.1, 0.3
-        self.uema_areas = [UEMA(alpha=0.1) for _ in range(self.zone.num_plants)]
-        self.area_count = 0
-        self.minimum_area_count = 5
-        self.prev_plant_areas = np.zeros(self.zone.num_plants)
 
         self.last_action = np.zeros(6)
         self.last_calibrated_action = np.zeros(6)
@@ -96,21 +90,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         if np.sum(self.last_action) == 0:
             return np.zeros(len(plant_areas))
         else:
-            clean_area = plant_areas.copy()
-            mean = np.array(
-                [self.uema_areas[i].compute() for i in range(self.zone.num_plants)]
-            ).flatten()
-            cond = (self.area_count > self.minimum_area_count) & (
-                (plant_areas < (1 - self.clean_area_lower) * mean)
-                | (plant_areas > (1 + self.clean_area_upper) * mean)
-            )
-            clean_area[cond] = self.prev_plant_areas[cond]
-            self.prev_plant_areas[~cond] = plant_areas[~cond]
-            for i, area in enumerate(plant_areas):
-                if area > 0:
-                    self.uema_areas[i].update(area)
-            self.area_count += 1
-            return clean_area
+            return plant_areas.copy()
 
     def get_time(self):
         return datetime.now(tz=self.tz_utc)
@@ -244,17 +224,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 "df": self.df,
                 "env_time": self.time.timestamp(),
             }
-        mean = np.array(
-            [self.uema_areas[i].compute() for i in range(self.zone.num_plants)]
-        ).flatten()
-        upper = mean * (1 + self.clean_area_upper)
-        lower = mean * (1 - self.clean_area_lower)
         return {
             "df": self.df,
             "mean_clean_area": np.mean(self.clean_areas[-1]),
-            "uema_area": mean,
-            "upper_area": upper,
-            "lower_area": lower,
             "env_time": self.time.timestamp(),
         }
 

@@ -34,23 +34,6 @@ class PlantGrowthChamberIntensity(PlantGrowthChamber):
         return await super().step(BALANCED_ACTION_100 * ppfd / 100)
 
     def get_info(self):
-        if self.df.empty:
-            return {
-                "df": self.df,
-                "env_time": self.time.timestamp(),
-                "scalar_action": self.scalar_action,
-            }
-        mean = np.array(
-            [self.uema_areas[i].compute() for i in range(self.zone.num_plants)]
-        ).flatten()
-        upper = mean * (1 + self.clean_area_upper)
-        lower = mean * (1 - self.clean_area_lower)
-        return {
-            "df": self.df,
-            "mean_clean_area": np.mean(self.clean_areas[-1]),
-            "uema_area": mean,
-            "upper_area": upper,
-            "lower_area": lower,
-            "env_time": self.time.timestamp(),
-            "scalar_action": self.scalar_action,
-        }
+        info = super().get_info()
+        info["scalar_action"] = self.scalar_action
+        return info
