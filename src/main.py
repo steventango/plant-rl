@@ -25,7 +25,7 @@ from utils.RlGlue.rl_glue import AsyncRLGlue
 
 logger = logging.getLogger("plant-data")
 
-WANDB_MODE = "offline"
+WANDB_MODE = "online"
 
 
 async def main():
