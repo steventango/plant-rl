@@ -23,7 +23,7 @@ dependencies = [
     'altair<6',
     'pandas[excel]',
     'supervision',
-    'wandb[media]',
+    "wandb[media]",
     'aiohttp>=3.11.18',
     'aiohttp-retry',
     'jinja2',

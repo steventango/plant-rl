@@ -31,6 +31,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.image = None
         self.tz = ZoneInfo(timezone)
         self.tz_utc = ZoneInfo("Etc/UTC")
+        self.timezone = timezone
         self.time = self.get_time()
         self.session = None
 
