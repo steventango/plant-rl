@@ -59,13 +59,9 @@ async def main():
         logger.setLevel(logging.DEBUG)
 
     for idx in args.idxs:
-        run_id = args.exp.replace("/", "-").removesuffix(".json")
-
         wandb_run = wandb.init(
             entity="anffanychen-university-of-alberta",
             project="plant-data-collection",
-            id=run_id,
-            resume="allow",
             config={},
             mode=WANDB_MODE,
             settings=wandb.Settings(
