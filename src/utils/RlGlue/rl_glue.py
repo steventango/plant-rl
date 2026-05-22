@@ -142,37 +142,73 @@ class AsyncRLGlue:
     def append_csv(
         self, chk, raw_csv_path: Path, img_name: str, interaction: Interaction
     ):
+        def _normalize_csv_value(value: Any) -> Any:
+            if isinstance(value, np.ndarray):
+                if value.ndim == 0:
+                    return value.item()
+                return value.tolist()
+            if isinstance(value, np.generic):
+                return value.item()
+            if isinstance(value, (list, tuple)):
+                return [_normalize_csv_value(v) for v in value]
+            if isinstance(value, dict):
+                return {k: _normalize_csv_value(v) for k, v in value.items()}
+            if hasattr(value, "tolist") and not isinstance(value, (str, bytes)):
+                try:
+                    return _normalize_csv_value(value.tolist())
+                except Exception:
+                    pass
+            return value
+
+        def _to_csv_cell(value: Any) -> Any:
+            value = _normalize_csv_value(value)
+            if isinstance(value, (dict, list, tuple)):
+                try:
+                    return json.dumps(value)
+                except Exception:
+                    return str(value)
+            return value
+
         start_time = time.time()
         data_dict = {
-            "time": [self.environment.time],  # type: ignore
-            "frame": [self.num_steps],
+            "time": self.environment.time,  # type: ignore
+            "timezone": self.environment.timezone,  # type: ignore
+            "frame": self.num_steps,
             **expand("action", self.environment.last_action),  # type: ignore
             **expand("calibrated_action", self.environment.last_calibrated_action),  # type: ignore
-            "steps": [self.num_steps],
-            "image_name": [img_name],
-            "episode": [chk["episode"] if chk is not None else None],
+            "steps": self.num_steps,
+            "image_name": img_name,
+            "episode": chk["episode"] if chk is not None else None,
         }
         expanded_info = {}
         if interaction is not None:
             interaction_data = {
-                **expand("state", interaction.o),
-                "agent_action": [interaction.a],
-                "reward": [interaction.r],
-                "terminal": [interaction.t],
-                "return": [self.total_reward if interaction.t else None],
+                "agent_action": interaction.a,
+                "reward": interaction.r,
+                "terminal": interaction.t,
+                "return": self.total_reward if interaction.t else None,
             }
             data_dict.update(interaction_data)
             for key, value in interaction.extra.items():
                 if isinstance(value, pd.DataFrame):
                     continue
                 elif isinstance(value, np.ndarray):
-                    expanded_info.update(expand(key, value))
+                    if key == "agent_state":
+                        state_indices_to_log = [(i,) for i in range(20)]
+                        expanded_info.update(
+                            expand(key, value, filter_indices=state_indices_to_log)
+                        )
+                    else:
+                        expanded_info.update(expand(key, value))
                 else:
                     expanded_info.update(expand(key, value))
             data_dict.update(expanded_info)
 
         logger.debug("Creating DataFrame from data_dict")
-        df = pd.DataFrame(data_dict)
+        normalized_row = {k: _to_csv_cell(v) for k, v in data_dict.items()}
+        df = pd.DataFrame(index=[0])
+        for key, value in normalized_row.items():
+            df.at[0, key] = value
         if interaction is not None:
             logger.debug("Processing interaction.extra['df'] for merging")
             interaction.extra["df"].reset_index(inplace=True, drop=True)
@@ -187,9 +223,8 @@ class AsyncRLGlue:
                 right_on=["frame"],
             )
         if raw_csv_path.exists():
-            logger.debug(f"{raw_csv_path} exists, reading and backing up")
+            logger.debug(f"{raw_csv_path} exists, reading")
             df_old = pd.read_csv(raw_csv_path)
-            shutil.copy(raw_csv_path, raw_csv_path.with_suffix(".bak"))
             with warnings.catch_warnings():
                 warnings.filterwarnings(
                     "ignore",
@@ -199,7 +234,9 @@ class AsyncRLGlue:
             logger.debug("Concatenating old and new DataFrames")
             df = pd.concat([df_old, df], ignore_index=True)
         logger.debug(f"Saving DataFrame to {raw_csv_path}")
-        df.to_csv(raw_csv_path, index=False)
+        raw_csv_path_tmp = raw_csv_path.with_suffix(".tmp.csv")
+        df.to_csv(raw_csv_path_tmp, index=False)
+        shutil.move(raw_csv_path_tmp, raw_csv_path)
         end_time = time.time()
         logger.debug(f"append_csv took {end_time - start_time:.4f} seconds")
 

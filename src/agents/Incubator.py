@@ -17,7 +17,7 @@ class Incubator(BaseAsyncAgent):
 
     def _is_night(self, t: datetime) -> bool:
         return t.hour >= self.end_hour or t.hour < self.start_hour
-    
+
     def _is_photo_time(self, t: datetime) -> bool:
         return t.hour == self.start_hour - 1 and t.minute == 59
 

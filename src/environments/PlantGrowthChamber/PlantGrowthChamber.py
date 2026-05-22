@@ -265,7 +265,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         local_now = self.get_local_time()
         if local_now.hour != 9 or local_now.minute != 0:
             return 0
-        
+
         today_morning_local_date = local_now.replace(second=0, microsecond=0)
         yesterday_morning_local_date = today_morning_local_date - timedelta(days=1)
 
