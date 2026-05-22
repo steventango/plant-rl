@@ -39,10 +39,7 @@ class AsyncRLGlue:
         self.dataset_path = (
             dataset_path if dataset_path is not None else Path("/data/temp")
         )
-        self.is_mock_env = self.environment.__class__.__name__.startswith(
-            "Mock"
-        ) or self.environment.__class__.__name__.endswith("Simulator")
-        if not self.is_mock_env and dataset_path is not None:
+        if dataset_path is not None:
             dataset_path.mkdir(parents=True, exist_ok=True)
         if images_save_keys is None:
             self.images_save_keys = default_save_keys
