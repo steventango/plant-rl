@@ -22,9 +22,12 @@ class PlantGrowthChamberIntensity(PlantGrowthChamber):
     async def get_observation(self):  # type: ignore
         epoch_time, _, df = await super().get_observation()
         local_time = epoch_time.astimezone(self.tz)
-
-        plant_areas = df["area"].to_numpy().flatten()
-        mean_area = self.get_mean_area(plant_areas)
+        
+        if not df.empty:
+            plant_areas = df["area"].to_numpy().flatten()
+            mean_area = self.get_mean_area(plant_areas)
+        else: 
+            mean_area = 0.0
 
         return [local_time, mean_area]
 

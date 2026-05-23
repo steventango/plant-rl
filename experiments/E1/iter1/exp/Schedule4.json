@@ -6,11 +6,11 @@
     "metaParameters": {
         "environment": {
             "zone": "alliance-zone04",
-            "timezone": "Etc/GMT-9",
+            "timezone": "Etc/GMT+9",
             "min_ppfd": 100.0,
             "max_ppfd": 170.0
         },
-        "timezone": "Etc/GMT-9",
+        "timezone": "Etc/GMT+9",
         "action_days": [[1]],
         "action_inputs": [[-1]]
     }
