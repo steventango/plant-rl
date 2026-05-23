@@ -22,10 +22,10 @@ class Incubator(BaseAsyncAgent):
         return t.hour == self.start_hour - 1 and t.minute == 59
 
     def _get_action(self, t: datetime) -> np.ndarray:
-        if self._is_night(t):
-            return np.zeros(6)
         if self._is_photo_time(t):
             return 0.4 * BALANCED_ACTION_100
+        elif self._is_night(t):
+            return np.zeros(6)
         return self.incubation_ppfd / 100 * BALANCED_ACTION_100
 
     async def start(self, observation, extra=None):

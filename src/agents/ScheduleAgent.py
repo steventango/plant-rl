@@ -35,10 +35,10 @@ class ScheduleAgent(BaseAsyncAgent):
         return scalar_action
 
     def _get_action(self, t: datetime) -> float | np.ndarray:
-        if self._is_night(t):
-            return np.zeros(6)
         if self._is_photo_time(t):
             return 0.4 * BALANCED_ACTION_100
+        elif self._is_night(t):
+            return np.zeros(6)
         return self._get_scalar_action(t)
 
     async def start(self, observation, extra=None):
