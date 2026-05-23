@@ -8,6 +8,7 @@ results.tar*
 *.out
 in_progress/
 .notes/
+.old/
 
 # Checkpoints
 checkpoints/

@@ -10,14 +10,21 @@ class PlantGrowthChamberIntensity(PlantGrowthChamber):
         self.min_ppfd = min_ppfd
         self.max_ppfd = max_ppfd
 
+    def get_mean_area(self, plant_areas):
+        if np.sum(self.last_action) == 0:
+            return 0.0
+        else:
+            areas = np.array(plant_areas)
+            low, high = np.percentile(areas, 25), np.percentile(areas, 75)
+            trimmed = areas[(areas >= low) & (areas <= high)]
+            return float(np.mean(trimmed)) if len(trimmed) > 0 else 0.0
+
     async def get_observation(self):  # type: ignore
         epoch_time, _, df = await super().get_observation()
         local_time = epoch_time.astimezone(self.tz)
 
-        if not df.empty:
-            mean_area = df["clean_area"].mean()
-        else:
-            mean_area = 0.0
+        plant_areas = df["area"].to_numpy().flatten()
+        mean_area = self.get_mean_area(plant_areas)
 
         return [local_time, mean_area]
 

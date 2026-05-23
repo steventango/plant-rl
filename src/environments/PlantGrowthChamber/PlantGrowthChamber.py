@@ -24,7 +24,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self,
         zone: str | None = None,
         timezone: str = "Etc/UTC",
-        normalize_reward: bool = False,
         **kwargs,
     ):
         if zone is not None:
@@ -40,7 +39,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.cv_client = CVPipelineClient()
         self.cv_state = None
         self.last_cv_time = None
-        self.cv_interval = timedelta(minutes=5)
+        self.cv_interval = timedelta(minutes=10)
         self.df = pd.DataFrame()
 
         self.clean_areas = []
@@ -50,7 +49,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         self.last_action = np.zeros(6)
         self.last_calibrated_action = np.zeros(6)
-        self.plant_areas = np.array([])
         self.last_step_time = None
 
     async def _ensure_session(self):
@@ -63,6 +61,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.time = self.get_time()
 
         await self.get_image()
+
         if "left" in self.images and "right" in self.images:
             self.image = np.hstack(
                 (np.array(self.images["left"]), np.array(self.images["right"]))
@@ -75,8 +74,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         await self.get_plant_stats()
 
         if not self.df.empty:
-            self.plant_areas = self.df["area"].to_numpy().flatten()  # type: ignore
-
             if "clean_area" in self.df.columns:
                 clean_area = self.df["clean_area"].to_numpy()
                 self.clean_areas.append(clean_area)
@@ -138,11 +135,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 else:
                     self.df = pd.DataFrame()
 
-                if not self.df.empty and "area" in self.df.columns:
-                    self.df["clean_area"] = self.get_clean_area(
-                        self.df["area"].to_numpy()
-                    )
-
                 if "visualization_data" in response and response["visualization_data"]:
                     try:
                         vis_data = base64.b64decode(response["visualization_data"])
@@ -154,12 +146,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         except Exception:
             logger.exception("Error during CV processing")
             self.df = pd.DataFrame()
-
-    def get_clean_area(self, plant_areas):
-        if np.sum(self.last_action) == 0:
-            return np.zeros(len(plant_areas))
-        else:
-            return plant_areas.copy()
 
     def get_time(self):
         return datetime.now(tz=self.tz_utc)
@@ -288,16 +274,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         await self.sleep_until(next_step_time)
 
     def get_info(self):
-        if self.df.empty:
-            return {
-                "df": self.df,
-                "env_time": self.time.timestamp(),
-            }
-        return {
-            "df": self.df,
-            "mean_clean_area": np.mean(self.clean_areas[-1]),
-            "env_time": self.time.timestamp(),
-        }
+        return {}
 
     def get_terminal(self) -> bool:
         return False

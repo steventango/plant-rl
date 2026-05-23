@@ -155,15 +155,13 @@ def log(
             expanded_info.update(expand(key, value))
         else:
             expanded_info.update(expand(key, value))
-    if a is None:
-        a_arr = np.zeros(6)
-    elif not isinstance(a, np.ndarray):
-        a_arr = np.array([a, 0, 0, 0, 0, 0])
+    if isinstance(a, np.ndarray):
+        scalar_action = None
     else:
-        a_arr = a
+        scalar_action = a
     data = {
         **expand("state", s),
-        **expand("agent_action", a_arr),
+        **expand("agent_action", scalar_action),
         "steps": glue.num_steps,
         **expanded_info,
     }
