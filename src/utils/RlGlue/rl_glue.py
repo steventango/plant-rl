@@ -183,7 +183,7 @@ class AsyncRLGlue:
         expanded_info = {}
         if interaction is not None:
             interaction_data = {
-                "agent_action": interaction.a,
+                "agent_action": None if isinstance(interaction.a, np.ndarray) else interaction.a,
                 "reward": interaction.r,
                 "terminal": interaction.t,
                 "return": self.total_reward if interaction.t else None,
