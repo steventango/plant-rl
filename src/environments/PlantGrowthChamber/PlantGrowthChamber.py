@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import io
 import logging
 from collections import defaultdict
@@ -6,12 +7,13 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import numpy as np
+import pandas as pd
 from PIL import Image
 
 from environments.PlantGrowthChamber.utils import create_session
 from utils.RlGlue.environment import BaseAsyncEnvironment
 
-from .cv import process_image
+from .CVPipelineClient import CVPipelineClient
 from .zones import load_zone_from_config
 
 logger = logging.getLogger("plant-data.PlantGrowthChamber")
@@ -34,6 +36,12 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.timezone = timezone
         self.time = self.get_time()
         self.session = None
+
+        self.cv_client = CVPipelineClient()
+        self.cv_state = None
+        self.last_cv_time = None
+        self.cv_interval = timedelta(minutes=5)
+        self.df = pd.DataFrame()
 
         self.clean_areas = []
         self.daily_mean_clean_areas = defaultdict(float)
@@ -64,28 +72,88 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         elif "right" in self.images:
             self.image = np.array(self.images["right"])
 
-        self.get_plant_stats()
+        await self.get_plant_stats()
 
         if not self.df.empty:
             self.plant_areas = self.df["area"].to_numpy().flatten()  # type: ignore
 
-            clean_area = self.get_clean_area(self.plant_areas)
-            self.df["clean_area"] = clean_area
+            if "clean_area" in self.df.columns:
+                clean_area = self.df["clean_area"].to_numpy()
+                self.clean_areas.append(clean_area)
 
-            self.clean_areas.append(clean_area)
-
-            current_local_date = self.get_local_time().replace(second=0, microsecond=0)
-            mean_area_this_step = np.mean(clean_area) if clean_area.size > 0 else 0.0
-            self.daily_mean_clean_areas[current_local_date] = float(mean_area_this_step)
+                current_local_date = self.get_local_time().replace(
+                    second=0, microsecond=0
+                )
+                mean_area_this_step = (
+                    np.mean(clean_area) if clean_area.size > 0 else 0.0
+                )
+                self.daily_mean_clean_areas[current_local_date] = float(
+                    mean_area_this_step
+                )
 
         return self.time, self.image, self.df
 
-    def get_plant_stats(self):
+    def is_daylight(self):
+        local_time = self.get_local_time()
+        return 9 <= local_time.hour < 21
+
+    async def get_plant_stats(self):
         assert self.image is not None, "Image must be fetched before processing."
-        self.df, self.detections = process_image(
-            self.image, self.zone.trays, self.images
-        )
-        self.plant_stats = np.array(self.df, dtype=np.float32)
+
+        if not self.is_daylight():
+            self.df = pd.DataFrame()
+            return
+
+        now = self.get_time()
+        if (
+            self.last_cv_time is not None
+            and (now - self.last_cv_time) < self.cv_interval
+        ):
+            return
+
+        session = await self._ensure_session()
+        try:
+            if self.cv_state is None:
+                response = await self.cv_client.detect(session, self.image)
+            else:
+                response = await self.cv_client.propagate(
+                    session, self.image, self.cv_state
+                )
+
+            if response:
+                self.last_cv_time = now
+                if "state" in response:
+                    self.cv_state = response["state"]
+
+                plant_stats = response.get("plant_stats", {})
+                if plant_stats and not isinstance(plant_stats, list):
+                    stats_list = [
+                        {**stats, "pot_id": pot_id}
+                        for pot_id, stats in plant_stats.items()
+                        if stats and "error" not in stats
+                    ]
+                    self.df = pd.DataFrame(stats_list)
+                elif isinstance(plant_stats, list):
+                    self.df = pd.DataFrame(plant_stats)
+                else:
+                    self.df = pd.DataFrame()
+
+                if not self.df.empty and "area" in self.df.columns:
+                    self.df["clean_area"] = self.get_clean_area(
+                        self.df["area"].to_numpy()
+                    )
+
+                if "visualization_data" in response and response["visualization_data"]:
+                    try:
+                        vis_data = base64.b64decode(response["visualization_data"])
+                        self.images["visualization"] = Image.open(io.BytesIO(vis_data))
+                    except Exception:
+                        logger.warning(
+                            "Failed to decode visualization image", exc_info=True
+                        )
+        except Exception:
+            logger.exception("Error during CV processing")
+            self.df = pd.DataFrame()
 
     def get_clean_area(self, plant_areas):
         if np.sum(self.last_action) == 0:
