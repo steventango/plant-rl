@@ -49,28 +49,6 @@ class TestLightbar:
         lightbar.set_half_bar_pwm(0x71, 0, 1365)
         assert lightbar.i2c.data[0x71][3][0] == [0, 0x06, 0, 0, 0x55, 0x05]
 
-    def test_ensure_safety_limits(self, lightbar: Lightbar):
-        action = np.ones((2, 6))
-        action = lightbar.ensure_safety_limits(action)
-        assert action.shape == (2, 6)
-        np.testing.assert_array_equal(action, np.ones((2, 6)) / 3)
-
-        action = np.zeros((2, 6))
-        action[0, 0] = 100
-        action[1, :0] = -100
-        action = lightbar.ensure_safety_limits(action)
-        assert action.shape == (2, 6)
-        np.testing.assert_array_equal(
-            action, np.array([[2, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]])
-        )
-
-        action = np.zeros((2, 6))
-        action = lightbar.ensure_safety_limits(action)
-        assert action.shape == (2, 6)
-        np.testing.assert_array_equal(
-            action, np.array([[0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]])
-        )
-
     def test_convert_to_duty_cycle_zeros(self, lightbar: Lightbar):
         action = np.zeros((2, 6))
         duty_cycle = lightbar.convert_to_duty_cycle(action)

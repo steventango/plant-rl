@@ -23,7 +23,6 @@ class Lightbar:
 
     def step(self, action: np.ndarray):
         self.action = action.copy()
-        action = self.ensure_safety_limits(action)
         self.safe_action = action
         duty_cycle = self.convert_to_duty_cycle(action)
         self.set_duty_cycle(duty_cycle)
@@ -31,16 +30,6 @@ class Lightbar:
     def set_duty_cycle(self, duty_cycles: np.ndarray):
         for channel in range(len(self.channels)):
             self.set_bar_pwn(channel, duty_cycles[:, channel])
-
-    def ensure_safety_limits(self, action: np.ndarray):
-        # safety limits
-        # action should be 0.5 max per channel
-        action /= 2
-        # sum of all channels should be at most 2
-        cond = action.sum(axis=1) > 2
-        action[cond] /= action[cond].sum(axis=1, keepdims=True)
-        action[cond] *= 2
-        return action
 
     def convert_to_duty_cycle(self, action: np.ndarray):
         duty_cycle = action * 4095
