@@ -18,9 +18,15 @@ class Calibration:
     orange_red: list[float] | None
     red: list[float] | None
     far_red: list[float] | None
+    maximum_values: np.ndarray = field(init=False)
+
     def __post_init__(self):
+        """
+        Load the maximum values from the calibration file after the object is created.
+        """
         config_dir = Path(__file__).parent / "configs"
-        with open(config_dir / "calibration.json") as f:
+        maximum_file = config_dir / "calibration.json"
+        with open(maximum_file) as f:
             data = json.load(f)
         keys = [
             "blue",
@@ -30,6 +36,7 @@ class Calibration:
             "red",
             "far_red",
         ]
+        self.maximum_values = np.array([data["maximum"][key] for key in keys])
         self.safe_maximum_values = np.array([data["safe_maximum"][key] for key in keys])
         self.safe_minimum_values = np.array([data["safe_minimum"][key] for key in keys])
 
@@ -144,6 +151,9 @@ class Calibration:
         return ppfd
 
     def to_dict(self) -> dict:
+        """
+        Convert the Calibration object to a dictionary, excluding maximum_values.
+        """
         return {
             "action": self.action,
             "blue": self.blue,
