@@ -6,7 +6,7 @@ Three-arm 14-day comparison testing whether *temporal redistribution* of a const
 
 - **Z1 — across-day lever**: smooth power law in plant age, effectively `PPFD(t) = 0.7045 · DAS_sowing(t)^1.6059` under the new 100 PPFD reference (same exponent as before; coefficient implicitly rescaled by the 105 → 100 baseline shift), ramping from ≈ 38 µmol m⁻² s⁻¹ on agent day 0 to ≈ 124 on day 13. Within-day intensity constant.
 - **Z2 — within-day lever**: symmetric daily parabola, three 4-h slots of `(50, 130, 50)` PPFD. Across-day intensity constant.
-- **Z3 — control**: constant 100 PPFD, no redistribution.
+- **Z11 — control**: constant 100 PPFD, no redistribution.
 
 The biological bet for Z1 is that during the early small-canopy days most incident PPFD misses the leaves anyway (Beer–Lambert with LAI ≪ 1), so dropping PPFD then sacrifices little growth, and the low-PPFD spectrum collapse (blue + cool_white only) actually *favors* the 2D rosette-area metric via cry1-activated flat rosettes and miR156/SPL juvenile-leaf shape. The biological bet for Z2 is the Watanabe 2023 finding that a parabolic within-day profile suppresses the morning NPQ overshoot and increases daily integral of net CO₂ assimilation at the *same* DLI as a square wave.
 
@@ -16,14 +16,14 @@ The biological bet for Z1 is that during the early small-canopy days most incide
 |---|---|---|---|---|---|
 | **Z1 (zone01)** | Power-law ramp `PPFD ≈ 0.7045·DAS^1.6059` (effective; same JSON scalars as before, reinterpreted under the new 100 PPFD reference) | `PowerLawRamp1.json` | 473 Wh/day avg | super-linear in DAS | constant |
 | **Z2 (zone02)** | Daily symmetric parabola `(50, 130, 50) PPFD × 4 h` | `Parabolic2.json` | 470 Wh/day | constant | low → high → low |
-| **Z3 (zone03)** | Constant 100 PPFD | `Constant3.json` | 589 Wh/day | constant | constant |
+| **Z11 (zone11)** | Constant 100 PPFD | `Constant11.json` | 589 Wh/day | constant | constant |
 
-All three zones share identical wrapper settings (`enforce_night = true`, `flash_photography = true`, `timezone = "Etc/GMT-2"`, `total_steps = 40320`) so chamber-side timing artifacts cancel in cross-zone comparisons. Z1 and Z3 use `action_timestep = 720` (one new PPFD scalar per 12-h photoperiod); Z2 uses `action_timestep = 240` (three slots per photoperiod).
+All three zones share identical wrapper settings (`enforce_night = true`, `flash_photography = true`, `timezone = "Etc/GMT-2"`, `total_steps = 40320`) so chamber-side timing artifacts cancel in cross-zone comparisons. Z1 and Z11 use `action_timestep = 720` (one new PPFD scalar per 12-h photoperiod); Z2 uses `action_timestep = 240` (three slots per photoperiod).
 
 **Hypothesis.** At end of trial (DAS 25):
-- **H1 (across-day):** Z1 final rosette area ≥ Z3 final rosette area, while Z1's 14-day energy ≤ 80 % of Z3's.
-- **H2 (within-day):** Z2 final rosette area ≥ Z3 final rosette area, while Z2's 14-day energy ≤ 80 % of Z3's.
-- **H3 (lever comparison):** Z1 and Z2 share approximately the same 14-day cumulative energy (6 623 / 6 573 Wh, 80.37 % / 79.76 % of Z3) at similar 14-day mean PPFD (Z1 ≈ 78.1, Z2 ≈ 76.7 µmol m⁻² s⁻¹), so the Z1↔Z2 contrast still isolates the effect of *where the redistribution happens* (across-day vs within-day). The original "matched mean PPFD" property is now slightly broken (~1.4 PPFD apart) because the (50, 130, 50) Z2 design trades mean PPFD for cleaner one-decimal scalars — H3 is consequently a *primarily* energy-matched contrast, with mean PPFD as a minor confound to control for in the analysis.
+- **H1 (across-day):** Z1 final rosette area ≥ Z11 final rosette area, while Z1's 14-day energy ≤ 80 % of Z11's.
+- **H2 (within-day):** Z2 final rosette area ≥ Z11 final rosette area, while Z2's 14-day energy ≤ 80 % of Z11's.
+- **H3 (lever comparison):** Z1 and Z2 share approximately the same 14-day cumulative energy (6 623 / 6 573 Wh, 80.37 % / 79.76 % of Z11) at similar 14-day mean PPFD (Z1 ≈ 78.1, Z2 ≈ 76.7 µmol m⁻² s⁻¹), so the Z1↔Z2 contrast still isolates the effect of *where the redistribution happens* (across-day vs within-day). The original "matched mean PPFD" property is now slightly broken (~1.4 PPFD apart) because the (50, 130, 50) Z2 design trades mean PPFD for cleaner one-decimal scalars — H3 is consequently a *primarily* energy-matched contrast, with mean PPFD as a minor confound to control for in the analysis.
 
 ## Plant cohort and calendar
 
@@ -82,7 +82,7 @@ Z2 explores the orthogonal lever: within-day redistribution. The same 12 h photo
 
 **Closed-form derivation.** Three slot PPFDs `(a, b, a)`, each held for 4 h:
 
-- Energy target: `2·P(a) + P(b) = 3 · 39.24 W = 117.72 W` (= 80 % of Z3's 49.05 W mean).
+- Energy target: `2·P(a) + P(b) = 3 · 39.24 W = 117.72 W` (= 80 % of Z11's 49.05 W mean).
 
 Numerical search over the super-linear `P(PPFD) = 9.71 + 0.164·PPFD^1.19` curve, prioritizing one-decimal-clean scalars, yields **a = 50, b = 130** (energy −0.35 W vs target → 99.7 % of target; cleanest one-decimal pair near the ridge). Peak-to-edge ratio 2.6× — closer to Watanabe's 2.9× (190 / 65) than the previous (60, 126, 60) design's 2.1×. A small concession: the mean-PPFD-matched-to-Z1 constraint that the previous design held no longer applies — Z2 mean PPFD = 76.67 vs Z1 = 78.11. See the H3 wording and the Risks section.
 
@@ -94,7 +94,7 @@ Numerical search over the super-linear `P(PPFD) = 9.71 + 0.164·PPFD^1.19` curve
 | 3 (4 h) | 09:00 – 13:00 | 17:00 – 21:00 | 50 | 0.5 | 26.95 | 108 | blue + cool_white |
 | Night (12 h) | 13:00 – 00:59 | 21:00 – 08:58 | 0 | — | 0 (7.21 baseline) | 0 | none |
 
-**Daily lights-on energy: 470 Wh → 79.8 % of Z3's 589 Wh.** 14-day cumulative: **6 573 Wh** vs. Z3's 8 241 Wh. Daily mean PPFD 76.67 µmol m⁻² s⁻¹ → DLI 3.31 mol m⁻² d⁻¹ — about 0.06 mol m⁻² d⁻¹ below Z1's 14-day mean.
+**Daily lights-on energy: 470 Wh → 79.8 % of Z11's 589 Wh.** 14-day cumulative: **6 573 Wh** vs. Z11's 8 241 Wh. Daily mean PPFD 76.67 µmol m⁻² s⁻¹ → DLI 3.31 mol m⁻² d⁻¹ — about 0.06 mol m⁻² d⁻¹ below Z1's 14-day mean.
 
 **Why symmetric edges (50 at both ends).** Three reasons: (1) it's the shape Watanabe 2023 actually tested — symmetric peak-at-midday parabola mimicking the natural diurnal solar curve; (2) symmetric Z2 centers the within-day light distribution on the photoperiod midpoint, keeping the *first temporal moment* of light delivery the same as Z1 (whose within-day shape is constant), so the Z1↔Z2 contrast is purely about shape, not phase; (3) the two asymmetric arguments — "low-early / high-late" tracking ΦPSII decline through the day vs "high-early / low-late" priming the starch reserves for the night — directly contradict each other in the literature. Pre-baking a sign we haven't verified would risk a false negative. Asymmetric variants are the natural P2 follow-up if symmetric Z2 wins.
 
@@ -112,16 +112,16 @@ $$P(\text{PPFD}) = 9.71 + 0.164 \cdot \text{PPFD}^{1.19} \;\text{W} \qquad P_\te
 
 | | PPFD | Lights-on P | Daily energy (12 h) | 14-day cumulative |
 |---|---|---|---|---|
-| Z3 — constant 100 baseline | 100 | 49.05 W | **589 Wh/d** | **8 241 Wh** |
+| Z11 — constant 100 baseline | 100 | 49.05 W | **589 Wh/d** | **8 241 Wh** |
 | Z1 — across-day power-law ramp | mean 78.1 | mean 39.42 W | mean **473 Wh/d** | **6 623 Wh** |
 | Z2 — within-day parabola (50, 130, 50) | mean 76.7 | mean 39.13 W | **470 Wh/d** | **6 573 Wh** |
 | 80 % target | — | 39.24 W | 471 Wh/d | 6 592 Wh |
 
-**Z1 / Z3 = 80.37 %; Z2 / Z3 = 79.76 % → both treatment arms ≈ 20 % savings.** Z1 and Z2 differ in cumulative energy by 50 Wh (~0.8 %) — comparable to the meter-calibration floor.
+**Z1 / Z11 = 80.37 %; Z2 / Z11 = 79.76 % → both treatment arms ≈ 20 % savings.** Z1 and Z2 differ in cumulative energy by 50 Wh (~0.8 %) — comparable to the meter-calibration floor.
 
-Per-day predicted Wh (Z1 vs Z3):
+Per-day predicted Wh (Z1 vs Z11):
 
-| Day | Z1 P (W) | Z1 Wh | Z3 Wh |
+| Day | Z1 P (W) | Z1 Wh | Z11 Wh |
 |---|---|---|---|
 | 0 | 22.19 | 266 | 589 |
 | 1 | 24.25 | 291 | 589 |
@@ -138,7 +138,7 @@ Per-day predicted Wh (Z1 vs Z3):
 | 12 | 56.63 | 680 | 589 |
 | 13 | 60.44 | 725 | 589 |
 
-Z1 crosses the Z3 daily-energy line on day 10 (PPFD ≈ 101) — after that point Z1 is *spending more* than Z3 per day, but the late-stage canopy is large enough that the marginal photons actually contribute productively.
+Z1 crosses the Z11 daily-energy line on day 10 (PPFD ≈ 101) — after that point Z1 is *spending more* than Z11 per day, but the late-stage canopy is large enough that the marginal photons actually contribute productively.
 
 ## Energy detectability vs. sensor noise
 
@@ -153,7 +153,7 @@ Smart-plug telemetry per E18/P0.1:
 | Systematic per-zone meter cal (±3 % on 8 241) | ±247 Wh | **6.5 ×** |
 | Random within-day power noise (`√14 · 0.3`) | ±1.1 Wh | **1 470 ×** |
 
-The 80 % spec is comfortably above sensor noise — ~7× the systematic factory floor. Comparing Z1 to its own predicted curve (rather than to Z3) cancels the per-zone systematic; daily within-zone energy *ratios* are limited only by the random floor (~1 % of daily Wh).
+The 80 % spec is comfortably above sensor noise — ~7× the systematic factory floor. Comparing Z1 to its own predicted curve (rather than to Z11) cancels the per-zone systematic; daily within-zone energy *ratios* are limited only by the random floor (~1 % of daily Wh).
 
 ## Literature report
 
@@ -211,7 +211,7 @@ From **Gemini Deep Research 2** (independent Z1 expansion):
 From **Gemini Deep Research 3** (Z2 validation):
 - Numerical confirmation of the original Z2 parabola design (`a = 60, b = 126`, ~80 % energy ratio, matched-to-Z1 mean PPFD). The current implementation is `a = 50, b = 130` under the 100 PPFD baseline — same ~80 % energy ratio, steeper peak-to-edge ratio (2.6× vs 2.1×), and a small mean-PPFD mismatch to Z1 (76.67 vs 78.11) accepted in exchange for one-decimal-clean scalars.
 - The PsbS / xanthophyll-cycle mechanism for why the parabolic shape beats square-wave — square-wave dawn forces an unavoidable morning NPQ overshoot before Calvin–Benson enzymes activate; a parabolic ramp lets enzyme activation and stomatal conductance rise in sync with photon flux.
-- **CRY1 / HY5 PLA confound (important)**: 8 of 12 h of the Z2 photoperiod runs under the blue + cool_white spectrum, hyper-activating CRY1 → HY5 → repressed PIFs → compact, prostrate rosette. A zenith camera captures more of a flat rosette's true leaf area (PLA ∝ cos(leaf_angle)). Z2 may register higher PLA than Z3 partly via morphology rather than via greater biomass accumulation — see the corresponding risks-section entry.
+- **CRY1 / HY5 PLA confound (important)**: 8 of 12 h of the Z2 photoperiod runs under the blue + cool_white spectrum, hyper-activating CRY1 → HY5 → repressed PIFs → compact, prostrate rosette. A zenith camera captures more of a flat rosette's true leaf area (PLA ∝ cos(leaf_angle)). Z2 may register higher PLA than Z11 partly via morphology rather than via greater biomass accumulation — see the corresponding risks-section entry.
 - **Transient ΦPSII dip at slot boundaries** (~33 %, 10–30 min) is a small cost (≤ 15 % of slot time) of the 3-step discretization; finer slot counts (6 × 2 h, 12 × 1 h) are the natural follow-up.
 
 ## Biological mechanisms favoring plant area at reduced PPFD
@@ -222,7 +222,7 @@ These three mechanisms are drawn from the Gemini Deep Research and Gemini Feedba
 2. **Juvenile-leaf shape advantage (miR156/SPL).** Sustained low light upregulates miR156/miR157, repressing the SPL transcription factors that ordinarily push the juvenile → adult transition. Phenotypic consequence: leaves stay rounder and less serrated longer. Round, unserrated leaves *project* a more continuous overhead canopy — the 2D measurement is higher per unit dry mass.
 3. **cry1-driven flat rosette under blue-enriched spectrum.** Days 0–5 of the schedule sit below the calibration safe_min for red, warm_white, and orange_red; only blue + cool_white channels actuate. The high relative blue fraction keeps cry1 heavily activated, which suppresses petiole hyponasty and keeps the rosette pressed flat against the substrate rather than tilting toward overhead light. Flat rosette → maximum orthogonal overhead area.
 
-The countervailing risk — transient nighttime carbon starvation on days 0–5 — is mitigated by the schedule's rapid super-linear ramp: PPFD ≥ 73 (DLI > 3 mol m⁻² d⁻¹) by day 6, well above any standard "minimum" growth-light recommendation for Arabidopsis. Net of these effects, the prediction is that Z1 plant area at DAS 25 will be statistically equivalent to or greater than Z3.
+The countervailing risk — transient nighttime carbon starvation on days 0–5 — is mitigated by the schedule's rapid super-linear ramp: PPFD ≥ 73 (DLI > 3 mol m⁻² d⁻¹) by day 6, well above any standard "minimum" growth-light recommendation for Arabidopsis. Net of these effects, the prediction is that Z1 plant area at DAS 25 will be statistically equivalent to or greater than Z11.
 
 ## Spectrum collapse note
 
@@ -251,17 +251,17 @@ python src/main_real.py -e "experiments/online/E18/P1/PowerLawRamp1.json" -i 0 -
 # Z2: within-day parabolic energy saver
 python src/main_real.py -e "experiments/online/E18/P1/Parabolic2.json" -i 0 --deploy
 
-# Z3: constant 100 control
-python src/main_real.py -e "experiments/online/E18/P1/Constant3.json" -i 0 --deploy
+# Z11: constant 100 control
+python src/main_real.py -e "experiments/online/E18/P1/Constant11.json" -i 0 --deploy
 ```
 
-Agent-name conventions: `SequencePowerLawRamp1` and `SequenceParabolic2` both resolve to `SequenceAgent` via `algorithms/registry.py`'s `startswith("Sequence")` rule; `Constant3` resolves to `ConstantAgent` via `startswith("Constant")`. The descriptive suffixes are for legibility — drop them and the registry would still wire the runs identically.
+Agent-name conventions: `SequencePowerLawRamp1` and `SequenceParabolic2` both resolve to `SequenceAgent` via `algorithms/registry.py`'s `startswith("Sequence")` rule; `Constant11` resolves to `ConstantAgent` via `startswith("Constant")`. The descriptive suffixes are for legibility — drop them and the registry would still wire the runs identically.
 
 All three configs share:
 - `timezone: "Etc/GMT-2"` — the **night-shift trick**. The chamber's wall clock is Edmonton-local (MDT, UTC-6 in our trial window), but `PlantGrowthChamberAsyncAgentWrapper` has hard-coded boundaries for night / dawn / dusk / `should_poll` keyed off wrapper-local hour 9 to 21 (originally meant for a 9:00 → 21:00 daytime photoperiod). Setting `timezone = Etc/GMT-2` (UTC+2) shifts wrapper-local by +8 h vs. Edmonton MDT, so chamber-wall-clock 01:00 MDT = UTC 07:00 = wrapper-local 09:00 and chamber 13:00 MDT = wrapper-local 21:00. The wrapper sees the night-shifted 01:00 → 13:00 photoperiod as its native 09:00 → 21:00 window, no wrapper code changes needed. (Same trick used by `experiments/online/E17/P0`, just at a different offset.)
-- `action_timestep` — wrapper's `time_since_last_action ≥ action_timestep` check (in minutes). **Z1 and Z3 use 720** (the full 12 h photoperiod ⇒ one new PPFD scalar per daytime block). **Z2 uses 240** (12 h / 3 = 4 h per slot ⇒ three polls per day at wrapper-local 09:00, 13:00, 17:00). Differs from the old E14–E17 default of 660 min, which was the 11 h pure-daytime portion of a 12 h photoperiod with 30 min twilights at each end — with twilight off the pure-daytime is the full 12 h.
+- `action_timestep` — wrapper's `time_since_last_action ≥ action_timestep` check (in minutes). **Z1 and Z11 use 720** (the full 12 h photoperiod ⇒ one new PPFD scalar per daytime block). **Z2 uses 240** (12 h / 3 = 4 h per slot ⇒ three polls per day at wrapper-local 09:00, 13:00, 17:00). Differs from the old E14–E17 default of 660 min, which was the 11 h pure-daytime portion of a 12 h photoperiod with 30 min twilights at each end — with twilight off the pure-daytime is the full 12 h.
 - `enforce_night: true` — wrapper zeros the action during wrapper-local night (chamber 13:00 → 01:00); the schedule scalar applies only inside the chamber 01:00 → 13:00 daytime block.
-- `total_steps: 40320` — **4 weeks** worth of 1-min env steps (28 × 1440). The experiment is planned to stop at 14 days but `total_steps` provides headroom so the trial doesn't terminate prematurely if we decide to extend. Z1's `SequenceAgent` clamps to its last entry (PPFD ≈ 124) past day 13 — energy comparison vs. Z3 should still be reported over the matching 14-day window. Z2's `actions` list is intentionally pre-tiled to 84 entries (28 days × 3 polls), so it keeps cycling the parabola through the buffer rather than clamping.
+- `total_steps: 40320` — **4 weeks** worth of 1-min env steps (28 × 1440). The experiment is planned to stop at 14 days but `total_steps` provides headroom so the trial doesn't terminate prematurely if we decide to extend. Z1's `SequenceAgent` clamps to its last entry (PPFD ≈ 124) past day 13 — energy comparison vs. Z11 should still be reported over the matching 14-day window. Z2's `actions` list is intentionally pre-tiled to 84 entries (28 days × 3 polls), so it keeps cycling the parabola through the buffer rather than clamping.
 - `episode_cutoff: -1` — episode ends only when `total_steps` is reached.
 
 **Photoperiod & flash photography.** Both configs set `flash_photography: true`. This activates a new branch in `PlantGrowthChamberAsyncAgentWrapper.maybe_enforce_action` that overrides the wrapper's default 11 h-daytime-with-twilight-ramps behavior:
@@ -272,7 +272,7 @@ All three configs share:
 | 09:00 – 20:59 | 01:00 – 12:59 | **12 h daytime** — agent's scheduled PPFD applies |
 | 21:00 – 08:58 | 13:00 – 00:58 | Night — wrapper zeros the action |
 
-The flash is the only deviation from a hard square-wave 12 h photoperiod. Because it fires at the same wrapper-local time every day under the same fixed `BALANCED_ACTION_40` spectrum (balanced spectrum at 40 PPFD; calibration safe_minimum gating leaves blue + cool_white active), the daily flash frame is the canonical input for the CV plant-area pipeline — resolving the dynamic-spectrum CV bias that would otherwise confound Z1 (multi-day spectrum drift), Z2 (within-day spectrum cycling), and Z3 (constant spectrum). The `flash_photography` flag is a plain wrapper parameter, so any future fixed-schedule deploy can opt in with one line in its config JSON.
+The flash is the only deviation from a hard square-wave 12 h photoperiod. Because it fires at the same wrapper-local time every day under the same fixed `BALANCED_ACTION_40` spectrum (balanced spectrum at 40 PPFD; calibration safe_minimum gating leaves blue + cool_white active), the daily flash frame is the canonical input for the CV plant-area pipeline — resolving the dynamic-spectrum CV bias that would otherwise confound Z1 (multi-day spectrum drift), Z2 (within-day spectrum cycling), and Z11 (constant spectrum). The `flash_photography` flag is a plain wrapper parameter, so any future fixed-schedule deploy can opt in with one line in its config JSON.
 
 ## Verification
 
@@ -280,8 +280,8 @@ The flash is the only deviation from a hard square-wave 12 h photoperiod. Becaus
 
 1. **Energy check** (already done):
    ```text
-   14-day cumulative   Z1: 6 623 Wh   Z2: 6 573 Wh   Z3: 8 241 Wh
-   Ratio vs Z3         Z1: 80.37 %   Z2: 79.76 %
+   14-day cumulative   Z1: 6 623 Wh   Z2: 6 573 Wh   Z11: 8 241 Wh
+   Ratio vs Z11         Z1: 80.37 %   Z2: 79.76 %
    ```
    Reproduces with the power-law fit from [`../P0.1/analyze_power.py`](../P0.1/analyze_power.py).
 
@@ -293,7 +293,7 @@ The flash is the only deviation from a hard square-wave 12 h photoperiod. Becaus
    - Z2 edge slot (s=0.5): blue + cool_white only ✓ (PPFD 50)
    - Z2 peak slot (s=1.3): full balanced; cool_white drive ≈ 0.945 (1.5 PPFD below safe_max 90; sustained 4 h/day for 14 days) ✓
 
-3. **Registry check** (already done): `algorithms/registry.py` resolves `SequencePowerLawRamp1` → `SequenceAgent`, `SequenceParabolic2` → `SequenceAgent`, `Constant3` → `ConstantAgent` via the prefix-matching rules (`startswith("Sequence")`, `startswith("Constant")`).
+3. **Registry check** (already done): `algorithms/registry.py` resolves `SequencePowerLawRamp1` → `SequenceAgent`, `SequenceParabolic2` → `SequenceAgent`, `Constant11` → `ConstantAgent` via the prefix-matching rules (`startswith("Sequence")`, `startswith("Constant")`).
 
 4. **Smoke test.** Deploy each config with the mock chamber / dry-run flag in `main_real.py`; confirm `SequenceAgent` advances at the expected cadence (once per simulated daytime for Z1, three times per simulated daytime for Z2) and that the wrapper zeros the action during chamber 13:00 → 01:00 night.
 
@@ -306,7 +306,7 @@ CV-pipeline robustness against the dynamic Z1/Z2 spectra is handled by the `flas
    rsync -azP --include='*.csv' --include='*/' --exclude='*' archcraft:/data/plant-rl/online/E18 /data/plant-rl/online/
    ```
 
-2. **Daily energy check.** Integrate measured `power` over the lights-on minutes per zone; compare to the predicted Wh column above ± 3 % systematic. Diagnostic signatures: Z1's daily energy curve should *climb* (266 → 725 Wh), Z2's should be *flat* at ~470 Wh/day, Z3's flat at ~589 Wh/day. Cumulative Z1 vs Z3 and Z2 vs Z3 should each diverge by ~1 600 Wh over 14 days; cumulative Z1 vs Z2 should differ by only ~50 Wh (comparable to meter noise). Within-zone energy *ratios* (each day's actual vs. predicted) are limited only by the ~1 % random floor and should align tightly.
+2. **Daily energy check.** Integrate measured `power` over the lights-on minutes per zone; compare to the predicted Wh column above ± 3 % systematic. Diagnostic signatures: Z1's daily energy curve should *climb* (266 → 725 Wh), Z2's should be *flat* at ~470 Wh/day, Z11's flat at ~589 Wh/day. Cumulative Z1 vs Z11 and Z2 vs Z11 should each diverge by ~1 600 Wh over 14 days; cumulative Z1 vs Z2 should differ by only ~50 Wh (comparable to meter noise). Within-zone energy *ratios* (each day's actual vs. predicted) are limited only by the ~1 % random floor and should align tightly.
 
 3. **Plant-area check.** From the camera-derived rosette-area time series (from the daily 08:59 flash frames):
    - Final rosette area per zone at DAS 25.
@@ -314,23 +314,23 @@ CV-pipeline robustness against the dynamic Z1/Z2 spectra is handled by the `flas
    - Area-vs-day curves with shaded confidence intervals.
 
    **Win conditions:**
-   - **H1 (across-day):** Z1 final area ≥ Z3 final area at ≤ 80 % Z3 energy.
-   - **H2 (within-day):** Z2 final area ≥ Z3 final area at ≤ 80 % Z3 energy.
+   - **H1 (across-day):** Z1 final area ≥ Z11 final area at ≤ 80 % Z11 energy.
+   - **H2 (within-day):** Z2 final area ≥ Z11 final area at ≤ 80 % Z11 energy.
    - **H3 (lever):** Z1 vs Z2 ordering at matched 14-day energy + DLI tells us which redistribution lever — across-day or within-day — wins.
 
 ## Risks and open items
 
 - **Species/cultivar assumption.** Plan assumes Col-0. If trays contain a different ecotype, recompute against that ecotype's tolerance where literature exists. Carvalho PI50 is Col-0-specific.
-- **Down-shift from acclimated 100 → carbon-starvation risk on days 0–5.** Plants have had only 5 d at 100 PPFD pre-agent (not the full 15) and now stay at 100 PPFD as the Z3 baseline while Z1 drops to ~38 PPFD on day 0 (DLI ~1.65 mol m⁻² d⁻¹) — a ~62 % drop vs incubation. Plants survive (above compensation point) but transient daytime growth restriction is plausible. The spectrum-collapse regime now extends through day 5 (PPFD 67 is just under the warm_white threshold) — one extra day relative to the old 105-baseline design. If de-risking is needed before the paired comparison, raising the Z1 floor (e.g. clamping the first few `actions` entries upward) costs a few percentage points of energy savings and is a defensible variant.
+- **Down-shift from acclimated 100 → carbon-starvation risk on days 0–5.** Plants have had only 5 d at 100 PPFD pre-agent (not the full 15) and now stay at 100 PPFD as the Z11 baseline while Z1 drops to ~38 PPFD on day 0 (DLI ~1.65 mol m⁻² d⁻¹) — a ~62 % drop vs incubation. Plants survive (above compensation point) but transient daytime growth restriction is plausible. The spectrum-collapse regime now extends through day 5 (PPFD 67 is just under the warm_white threshold) — one extra day relative to the old 105-baseline design. If de-risking is needed before the paired comparison, raising the Z1 floor (e.g. clamping the first few `actions` entries upward) costs a few percentage points of energy savings and is a defensible variant.
 - **Pre-transplant light history unknown.** DAS 0–7 in a separate germination chamber under unspecified PPFD. The schedule's safety margins are robust to this within the photoinhibition envelope, but absolute biomass and chloroplast density at day 0 could differ from baseline expectations.
 - **Fixed schedule — no adaptation.** This is a deterministic open-loop policy. If plants stall or surge unexpectedly the schedule doesn't react. Treat this as the baseline against which a future closed-loop / learning agent is evaluated.
 - **Dynamic-spectrum CV bias** — now addressed by the `_FlashPhotography` wrapper variant. The 1-min flash at chamber 00:59 (wrapper-local 08:59) each day gives the CV pipeline a single image per zone under a known fixed `BALANCED_ACTION_40` spectrum. Use those frames as the canonical area time-series; any in-daytime-photoperiod frames captured under the schedule's drifting spectrum should be treated as preliminary.
 - **Twilight off.** Energy budget assumes a 12-h square wave. If twilight is left on by mistake, both zones get the same extra daily energy and the *ratio* is preserved; only absolute Wh shifts.
 - **Within-day shape (Z2).** Z2's `(50, 130, 50)` parabola sits closer to the Watanabe / Gemini Deep Research 3 design space — peak-to-edge ratio 2.6× vs Watanabe's 2.9× (190 / 65). The peak is at the cool_white channel's safe_max ceiling (90 PPFD per-channel output ⇒ ~130 PPFD total), so there is no further headroom to deepen the parabola without channel re-calibration.
 - **Z2 peak at the cool_white safe_max.** The (50, 130, 50) design parks Z2's peak slot at 130 PPFD = cool_white output ~88.6 PPFD = drive ~0.945 = ~1.5 PPFD below the channel safe_max — for **4 h/day × 14 d ≈ 56 h sustained**, vs Z1 which only reaches this drive point on agent day 13 (12 h, one-shot). The headroom is small in absolute terms; if telemetry shows cool_white drift / chromatic shift in Z2 during the trial, the obvious mitigation is dropping the peak slot to 125 PPFD (energy ratio rises to ~80.9 % — still well within spec). We've accepted the tight margin in exchange for one-decimal-clean scalars and an energy hit at almost exactly 80 %.
-- **Z2 CRY1 / HY5 PLA confound (per Gemini Deep Research 3).** Z2's edge slots (8 h of 12 h daytime, 66 % of the photoperiod) run blue + cool_white only — a high blue : red environment that hyper-activates CRY1, stabilizes HY5, represses PIFs, and forces a flatter, prostrate rosette (short petioles, leaves pressed against substrate). A zenith camera captures *more* of a flat rosette's leaf area than a vertically-angled one (PLA ∝ cos(leaf_angle)). **Z2 may register higher PLA than Z3 partly because its rosette is morphologically flatter, not because it accumulated more biomass.** The 08:59 flash standardizes the *imaging* spectrum but not the *growth* spectrum that shaped the morphology. A clean conclusion will need either a destructive-biomass spot check at end-of-trial or a leaf-angle correction in the CV pipeline. The Z1 vs Z2 PLA contrast is less affected because Z1 spends only days 0–4 under heavily blue-shifted spectrum while Z2 spends 8 h every day there.
+- **Z2 CRY1 / HY5 PLA confound (per Gemini Deep Research 3).** Z2's edge slots (8 h of 12 h daytime, 66 % of the photoperiod) run blue + cool_white only — a high blue : red environment that hyper-activates CRY1, stabilizes HY5, represses PIFs, and forces a flatter, prostrate rosette (short petioles, leaves pressed against substrate). A zenith camera captures *more* of a flat rosette's leaf area than a vertically-angled one (PLA ∝ cos(leaf_angle)). **Z2 may register higher PLA than Z11 partly because its rosette is morphologically flatter, not because it accumulated more biomass.** The 08:59 flash standardizes the *imaging* spectrum but not the *growth* spectrum that shaped the morphology. A clean conclusion will need either a destructive-biomass spot check at end-of-trial or a leaf-angle correction in the CV pipeline. The Z1 vs Z2 PLA contrast is less affected because Z1 spends only days 0–4 under heavily blue-shifted spectrum while Z2 spends 8 h every day there.
 - **Z2 transient ΦPSII dip at slot boundaries.** Each 50 → 130 step at the 4-h boundary causes a >33 % transient ΦPSII dip lasting 10–30 min while Rubisco and stomatal conductance catch up — slightly larger than the previous (60 → 126) design's dip given the steeper step. With 4-h slots, the dip is still ≤ 15 % of slot time and shouldn't dominate daily assimilation, but it is a real cost of the 3-step discretization. Finer slot counts (6 × 2 h or 12 × 1 h, same mean PPFD and energy) are the natural P2 refinement.
-- **Z2 symmetric-vs-asymmetric edges (follow-up split).** Edge slots are equal (50, 130, 50) for this round — see the "Why symmetric edges" subsection in the Z2 schedule. If symmetric Z2 beats Z3 on plant area, the natural P2 follow-up is to split the win between two asymmetric variants tracking ΦPSII decline ("low-early / high-late") vs starch-priming ("high-early / low-late"). Both can be designed at the same ~80 % energy constraint by the same numerical search.
+- **Z2 symmetric-vs-asymmetric edges (follow-up split).** Edge slots are equal (50, 130, 50) for this round — see the "Why symmetric edges" subsection in the Z2 schedule. If symmetric Z2 beats Z11 on plant area, the natural P2 follow-up is to split the win between two asymmetric variants tracking ΦPSII decline ("low-early / high-late") vs starch-priming ("high-early / low-late"). Both can be designed at the same ~80 % energy constraint by the same numerical search.
 - **Z1 vs Z2 daily-DLI mismatch within the trial.** Z1's daily DLI varies ~1.65 → ~5.35 mol m⁻² d⁻¹; Z2's is constant at ~3.31. The 14-day means are now also slightly mismatched (Z1 ~3.37, Z2 ~3.31; ~2 % apart, where the old design had them equal). Report cumulative-area-day integrals and end-of-trial area, not single-day snapshots; include 14-day mean PPFD as a covariate when interpreting the Z1↔Z2 contrast.
 
 ## See also

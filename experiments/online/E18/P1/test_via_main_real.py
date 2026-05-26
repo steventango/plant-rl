@@ -1,4 +1,4 @@
-"""Run the Z1/Z2/Z3 deploy configs through the same Problem + Env + RLGlue
+"""Run the Z1/Z2/Z11 deploy configs through the same Problem + Env + RLGlue
 path that main_real uses, but against the mock chamber (no wandb, no
 hardware, no checkpointing) — purely as a pre-deploy smoke test.
 
@@ -42,7 +42,7 @@ os.environ.setdefault("WANDB_DISABLED", "true")
 
 from experiment.ExperimentModel import ExperimentModel  # noqa: E402  (after sys.path edit)
 from problems.registry import getProblem  # noqa: E402
-from utils.constants import BALANCED_ACTION_105  # noqa: E402
+from utils.constants import BALANCED_ACTION_100  # noqa: E402
 from utils.RlGlue.rl_glue import AsyncRLGlue  # noqa: E402
 
 HERE = Path(__file__).parent
@@ -56,7 +56,7 @@ MOCK_ZONE_ID = 1  # only used for filtering the mock dataset
 CONFIGS = [
     ("Z1 power-law ramp", HERE / "PowerLawRamp1.json"),
     ("Z2 within-day parabola", HERE / "Parabolic2.json"),
-    ("Z3 constant 105", HERE / "Constant3.json"),
+    ("Z11 constant 100", HERE / "Constant11.json"),
 ]
 
 CHANNEL_NAMES = ["blue", "cool_white", "warm_white", "orange_red", "red", "far_red"]
@@ -96,14 +96,14 @@ def _promote_to_six_channel(a_raw) -> np.ndarray:
     """Mirror PlantGrowthChamberIntensity.step's scalar -> 6-channel scaling.
 
     SequenceAgent/ConstantAgent emit scalar s; the env multiplies by
-    BALANCED_ACTION_105. Wrapper-enforced (night/flash) actions are already
+    BALANCED_ACTION_100. Wrapper-enforced (night/flash) actions are already
     6-vectors and pass through unchanged.
     """
     arr = np.asarray(a_raw, dtype=float)
     if arr.shape == (6,):
         return arr
     if arr.ndim == 0 or arr.size == 1:
-        return float(arr.ravel()[0] if arr.size == 1 else arr) * BALANCED_ACTION_105
+        return float(arr.ravel()[0] if arr.size == 1 else arr) * BALANCED_ACTION_100
     raise ValueError(f"unexpected action shape {arr.shape!r}")
 
 

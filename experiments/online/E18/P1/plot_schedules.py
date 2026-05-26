@@ -1,4 +1,4 @@
-"""Plot and self-test the three E18/P1 deploy configs (Z1 / Z2 / Z3).
+"""Plot and self-test the three E18/P1 deploy configs (Z1 / Z2 / Z11).
 
 Reads the three JSON configs, walks the wrapper's polling logic across a
 simulated 14-day timeline at 1-min resolution, and renders:
@@ -31,7 +31,7 @@ from algorithms.PlantGrowthChamberAsyncAgentWrapper import (  # noqa: E402
     PlantGrowthChamberAsyncAgentWrapper,
 )
 from algorithms.registry import getAgent  # noqa: E402
-from utils.constants import BALANCED_ACTION_105  # noqa: E402
+from utils.constants import BALANCED_ACTION_100  # noqa: E402
 
 HERE = Path(__file__).parent
 FIG_DIR = HERE / "figures"
@@ -40,13 +40,13 @@ FIG_DIR.mkdir(exist_ok=True)
 CONFIGS = {
     "Z1 power-law ramp": HERE / "PowerLawRamp1.json",
     "Z2 within-day parabola": HERE / "Parabolic2.json",
-    "Z3 constant 105": HERE / "Constant3.json",
+    "Z11 constant 100": HERE / "Constant11.json",
 }
 
 ZONE_COLOR = {
     "Z1 power-law ramp": "tab:blue",
     "Z2 within-day parabola": "tab:orange",
-    "Z3 constant 105": "tab:green",
+    "Z11 constant 100": "tab:green",
 }
 
 ENV_STEP_MIN = 1
@@ -66,7 +66,7 @@ def lights_on_power(ppfd_total: np.ndarray) -> np.ndarray:
 
 def lights_on_only_power(ppfd_total: np.ndarray) -> np.ndarray:
     """Lights-on plug power, zero when off. Used for the lights-on-only Wh sum
-    that matches the plan's 6921 / 6931 / 8636 Wh figures."""
+    that matches the README's 6623 / 6573 / 8241 Wh figures."""
     return np.where(
         ppfd_total > 0, 9.71 + 0.164 * np.power(np.maximum(ppfd_total, 1e-9), 1.19), 0.0
     )
@@ -79,15 +79,15 @@ def _promote_to_balanced(action) -> np.ndarray:
     """Mirror PlantGrowthChamberIntensity.step's scalar -> 6-channel scaling.
 
     SequenceAgent / ConstantAgent return scalar `s`; the env multiplies by
-    BALANCED_ACTION_105. Wrapper-enforced (night/dawn/flash) actions are
+    BALANCED_ACTION_100. Wrapper-enforced (night/dawn/flash) actions are
     already 6-vectors and pass through.
     """
     arr = np.asarray(action, dtype=float)
     if arr.ndim == 0:
-        return float(arr) * BALANCED_ACTION_105
+        return float(arr) * BALANCED_ACTION_100
     if arr.shape == (6,):
         return arr
-    return float(arr.ravel()[0]) * BALANCED_ACTION_105
+    return float(arr.ravel()[0]) * BALANCED_ACTION_100
 
 
 def _build_agent(cfg_path: Path):
@@ -214,16 +214,16 @@ def self_test(results) -> bool:
 
     `cum_Wh` here is *lights-on only* (excludes the 7.21 W idle baseline that
     runs continuously); this matches the per-zone numbers in the README's
-    energy-budget table (6 921 / 6 931 / 8 636 Wh over 14 days).
+    energy-budget table (6 623 / 6 573 / 8 241 Wh over 14 days).
     """
     expected = {
         "Z1 power-law ramp": dict(
-            min_ppfd=40, max_ppfd=130, cum_min=6850, cum_max=7000
+            min_ppfd=38, max_ppfd=124, cum_min=6600, cum_max=6650
         ),
         "Z2 within-day parabola": dict(
-            min_ppfd=60, max_ppfd=126, cum_min=6850, cum_max=7000
+            min_ppfd=40, max_ppfd=130, cum_min=6550, cum_max=6600
         ),
-        "Z3 constant 105": dict(min_ppfd=105, max_ppfd=105, cum_min=8550, cum_max=8700),
+        "Z11 constant 100": dict(min_ppfd=40, max_ppfd=100, cum_min=8230, cum_max=8260),
     }
     ok = True
     print()
