@@ -221,10 +221,10 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         observation = await self.get_observation()
         await self.sleep_until_next_step(self.duration)
         self.last_step_time = self.get_time()
-        self.n_step = 1
         return observation, self.get_info()
 
     async def step(self, action: np.ndarray):
+        self.n_step += 1
         logger.debug(
             f"Local time: {self.get_local_time()}. Step {self.n_step} with action {action}"
         )
@@ -252,8 +252,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         logger.debug(
             f"Local time: {self.get_local_time()}. Step {self.n_step} completed. Reward: {reward}, Terminal: {terminal}"
         )
-        self.n_step += 1
-
         return reward, observation, terminal, self.get_info()
 
     def get_next_step_time(self, duration: timedelta):
