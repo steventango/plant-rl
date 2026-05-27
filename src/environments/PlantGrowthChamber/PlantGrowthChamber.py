@@ -62,15 +62,17 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
     async def get_observation(self):
         self.time = self.get_time()
 
+        current_bucket = self.time.replace(
+            minute=(self.time.minute // 10) * 10, second=0, microsecond=0
+        )
         should_capture = (
-            self.last_image_time is None
-            or (self.time - self.last_image_time) >= self.image_interval
+            self.last_image_time is None or current_bucket > self.last_image_time
         )
         self.images_captured = should_capture
 
         if should_capture:
+            self.last_image_time = current_bucket
             await self.get_image()
-            self.last_image_time = self.time
 
             if "left" in self.images and "right" in self.images:
                 self.image = np.hstack(
