@@ -1,4 +1,4 @@
-"""Run the Z1/Z2/Z11 deploy configs through the same Problem + Env + RLGlue
+"""Run the Z1/Z2/Z3/Z4/Z5/Z11 deploy configs through the same Problem + Env + RLGlue
 path that main_real uses, but against the mock chamber (no wandb, no
 hardware, no checkpointing) — purely as a pre-deploy smoke test.
 
@@ -56,6 +56,9 @@ MOCK_ZONE_ID = 1  # only used for filtering the mock dataset
 CONFIGS = [
     ("Z1 power-law ramp", HERE / "PowerLawRamp1.json"),
     ("Z2 within-day parabola", HERE / "Parabolic2.json"),
+    ("Z3 flat low-DLI", HERE / "ConstantLow3.json"),
+    ("Z4 70% ramp", HERE / "SeventyPercentRamp4.json"),
+    ("Z5 late-biased ramp", HERE / "LateRamp5.json"),
     ("Z11 constant 100", HERE / "Constant11.json"),
 ]
 

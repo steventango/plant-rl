@@ -1,6 +1,6 @@
-"""Plot and self-test the three E18/P1 deploy configs (Z1 / Z2 / Z11).
+"""Plot and self-test the six E18/P1 deploy configs (Z1 / Z2 / Z3 / Z4 / Z5 / Z11).
 
-Reads the three JSON configs, walks the wrapper's polling logic across a
+Reads the six JSON configs, walks the wrapper's polling logic across a
 simulated 14-day timeline at 1-min resolution, and renders:
   * PPFD vs wrapper-local time (1 panel per zone, 14 days stacked)
   * Mean daily PPFD profile (1 panel; collapses 14 days onto a 24 h axis)
@@ -40,12 +40,18 @@ FIG_DIR.mkdir(exist_ok=True)
 CONFIGS = {
     "Z1 power-law ramp": HERE / "PowerLawRamp1.json",
     "Z2 within-day parabola": HERE / "Parabolic2.json",
+    "Z3 flat low-DLI": HERE / "ConstantLow3.json",
+    "Z4 70% ramp": HERE / "SeventyPercentRamp4.json",
+    "Z5 late-biased ramp": HERE / "LateRamp5.json",
     "Z11 constant 100": HERE / "Constant11.json",
 }
 
 ZONE_COLOR = {
     "Z1 power-law ramp": "tab:blue",
     "Z2 within-day parabola": "tab:orange",
+    "Z3 flat low-DLI": "tab:purple",
+    "Z4 70% ramp": "tab:red",
+    "Z5 late-biased ramp": "tab:brown",
     "Z11 constant 100": "tab:green",
 }
 
@@ -138,7 +144,9 @@ def simulate_all() -> dict[str, dict[str, np.ndarray]]:
 
 
 def plot_ppfd_timeline(results) -> None:
-    fig, axes = plt.subplots(3, 1, figsize=(11, 7.5), sharex=True)
+    n = len(results)
+    fig, axes = plt.subplots(n, 1, figsize=(11, 2.5 * n), sharex=True)
+    axes = np.atleast_1d(axes)
     t_hours = np.arange(TOTAL_MIN) / 60.0
     for ax, (label, data) in zip(axes, results.items(), strict=False):
         ax.plot(t_hours, data["ppfd"], color=ZONE_COLOR[label], linewidth=0.7)
@@ -213,8 +221,8 @@ def self_test(results) -> bool:
     """Hard assertions: each zone must match its planned daily energy and PPFD range.
 
     `cum_Wh` here is *lights-on only* (excludes the 7.21 W idle baseline that
-    runs continuously); this matches the per-zone numbers in the README's
-    energy-budget table (6 623 / 6 573 / 8 241 Wh over 14 days).
+    runs continuously) and includes the fixed 1-min daily flash. It should land
+    about 5.4 Wh above the README's schedule-only 14-day energy table.
     """
     expected = {
         "Z1 power-law ramp": dict(
@@ -222,6 +230,13 @@ def self_test(results) -> bool:
         ),
         "Z2 within-day parabola": dict(
             min_ppfd=40, max_ppfd=130, cum_min=6550, cum_max=6600
+        ),
+        "Z3 flat low-DLI": dict(min_ppfd=40, max_ppfd=78, cum_min=6540, cum_max=6570),
+        "Z4 70% ramp": dict(
+            min_ppfd=40, max_ppfd=95, cum_min=5790, cum_max=5825
+        ),
+        "Z5 late-biased ramp": dict(
+            min_ppfd=40, max_ppfd=130, cum_min=6570, cum_max=6600
         ),
         "Z11 constant 100": dict(min_ppfd=40, max_ppfd=100, cum_min=8230, cum_max=8260),
     }
@@ -256,7 +271,7 @@ def self_test(results) -> bool:
 
 
 def main() -> int:
-    print("Simulating 14-day timeline for all three configs...")
+    print("Simulating 14-day timeline for all six configs...")
     results = simulate_all()
     print("Rendering PDF plots...")
     plot_ppfd_timeline(results)
