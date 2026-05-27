@@ -263,7 +263,8 @@ class AsyncRLGlue:
         if self.environment.time.minute % 10 != 0:  # type: ignore
             return
         img_name = self.save_images(self.dataset_path, self.images_save_keys)
-        raw_csv_path = self.dataset_path / "raw.csv"
+        dt = self.environment.time
+        raw_csv_path = self.dataset_path / f"raw_{dt.date().isoformat()}.csv"
         self.append_csv(None, raw_csv_path, img_name, self.last_interaction)  # type: ignore
 
 
