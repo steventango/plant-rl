@@ -38,9 +38,11 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         self.cv_client = CVPipelineClient()
         self.cv_state = None
-        self.last_cv_time = None
-        self.cv_interval = timedelta(minutes=10)
         self.df = pd.DataFrame()
+
+        self.image_interval = timedelta(minutes=10)
+        self.last_image_time: datetime | None = None
+        self.images_captured: bool = False
 
         self.clean_areas = []
         self.daily_mean_clean_areas = defaultdict(float)
@@ -60,32 +62,35 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
     async def get_observation(self):
         self.time = self.get_time()
 
-        await self.get_image()
+        should_capture = (
+            self.last_image_time is None
+            or (self.time - self.last_image_time) >= self.image_interval
+        )
+        self.images_captured = should_capture
 
-        if "left" in self.images and "right" in self.images:
-            self.image = np.hstack(
-                (np.array(self.images["left"]), np.array(self.images["right"]))
-            )
-        elif "left" in self.images:
-            self.image = np.array(self.images["left"])
-        elif "right" in self.images:
-            self.image = np.array(self.images["right"])
+        if should_capture:
+            await self.get_image()
+            self.last_image_time = self.time
 
-        await self.get_plant_stats()
+            if "left" in self.images and "right" in self.images:
+                self.image = np.hstack(
+                    (np.array(self.images["left"]), np.array(self.images["right"]))
+                )
+            elif "left" in self.images:
+                self.image = np.array(self.images["left"])
+            elif "right" in self.images:
+                self.image = np.array(self.images["right"])
 
-        if not self.df.empty:
-            if "clean_area" in self.df.columns:
+            await self.get_plant_stats()
+
+            if not self.df.empty and "clean_area" in self.df.columns:
                 clean_area = self.df["clean_area"].to_numpy()
                 self.clean_areas.append(clean_area)
-
                 current_local_date = self.get_local_time().replace(
                     second=0, microsecond=0
                 )
-                mean_area_this_step = (
-                    np.mean(clean_area) if clean_area.size > 0 else 0.0
-                )
                 self.daily_mean_clean_areas[current_local_date] = float(
-                    mean_area_this_step
+                    np.mean(clean_area) if clean_area.size > 0 else 0.0
                 )
 
         return self.time, self.image, self.df
@@ -101,13 +106,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             self.df = pd.DataFrame()
             return
 
-        now = self.get_time()
-        if (
-            self.last_cv_time is not None
-            and (now - self.last_cv_time) < self.cv_interval
-        ):
-            return
-
         session = await self._ensure_session()
         try:
             if self.cv_state is None:
@@ -118,7 +116,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 )
 
             if response:
-                self.last_cv_time = now
                 if "state" in response:
                     self.cv_state = response["state"]
 

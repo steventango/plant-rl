@@ -260,8 +260,7 @@ class AsyncRLGlue:
         return img_path.name if img_path else None
 
     def log(self):
-        # logging frequency is every 10 minutes
-        if self.environment.time.minute % 10 != 0:  # type: ignore
+        if not self.environment.images_captured:  # type: ignore
             return
         img_name = self.save_images(self.dataset_path, self.images_save_keys)
         dt = self.environment.time

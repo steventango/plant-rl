@@ -155,41 +155,8 @@ async def main():
                     chk.load_from_checkpoint(loaded_chk, load_params.get("config"))
 
                 interaction = await glue.start()
-                episode = chk["episode"]
-                log(
-                    env,
-                    glue,
-                    wandb_run,
-                    interaction.o,
-                    interaction.a,
-                    interaction.extra,
-                    episode=episode,
-                )
-
-            for _step in range(glue.total_steps, exp.total_steps):
-                interaction = await glue.step()
-
-                episodic_return = glue.total_reward if interaction.t else None
-                episode = chk["episode"]
-                log(
-                    env,
-                    glue,
-                    wandb_run,
-                    interaction.o,
-                    interaction.a,
-                    interaction.extra,
-                    r=interaction.r,
-                    t=interaction.t,
-                    episodic_return=episodic_return,
-                    episode=episode,
-                )
-
-                if interaction.t or (
-                    exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff
-                ):
-                    chk["episode"] += 1
-
-                    interaction = await glue.start()
+                if env.images_captured:
+                    episode = chk["episode"]
                     log(
                         env,
                         glue,
@@ -197,7 +164,43 @@ async def main():
                         interaction.o,
                         interaction.a,
                         interaction.extra,
+                        episode=episode,
                     )
+
+            for _step in range(glue.total_steps, exp.total_steps):
+                interaction = await glue.step()
+
+                if env.images_captured:
+                    episodic_return = glue.total_reward if interaction.t else None
+                    episode = chk["episode"]
+                    log(
+                        env,
+                        glue,
+                        wandb_run,
+                        interaction.o,
+                        interaction.a,
+                        interaction.extra,
+                        r=interaction.r,
+                        t=interaction.t,
+                        episodic_return=episodic_return,
+                        episode=episode,
+                    )
+
+                if interaction.t or (
+                    exp.episode_cutoff > -1 and glue.num_steps >= exp.episode_cutoff
+                ):
+                    chk["episode"] += 1
+
+                    interaction = await glue.start()
+                    if env.images_captured:
+                        log(
+                            env,
+                            glue,
+                            wandb_run,
+                            interaction.o,
+                            interaction.a,
+                            interaction.extra,
+                        )
         except Exception as e:
             logger.exception(e)
             raise e
