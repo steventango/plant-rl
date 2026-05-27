@@ -211,15 +211,16 @@ class AsyncRLGlue:
         df = pd.DataFrame(index=[0])
         for key, value in normalized_row.items():
             df.at[0, key] = value
-        if interaction is not None:
-            logger.debug("Processing interaction.extra['df'] for merging")
-            interaction.extra["df"].reset_index(inplace=True, drop=True)
-            interaction.extra["df"]["plant_id"] = interaction.extra["df"].index
-            interaction.extra["df"]["frame"] = self.num_steps
+        if interaction is not None and not self.environment.df.empty:  # type: ignore
+            logger.debug("Processing environment df for merging")
+            plant_df = self.environment.df.copy()  # type: ignore
+            plant_df.reset_index(inplace=True, drop=True)
+            plant_df["plant_id"] = plant_df.index
+            plant_df["frame"] = self.num_steps
             logger.debug("Merging DataFrames on 'frame'")
             df = pd.merge(
                 df,
-                interaction.extra["df"],
+                plant_df,
                 how="left",
                 left_on=["frame"],
                 right_on=["frame"],
