@@ -184,7 +184,7 @@ class AsyncRLGlue:
         if interaction is not None:
             interaction_data = {
                 "agent_action": None
-                if isinstance(interaction.a, np.ndarray)
+                if isinstance(interaction.a, np.ndarray)   # convention: non-environmental actions (i.e. not night nor flash) are scalars in this repo
                 else interaction.a,
                 "reward": interaction.r,
                 "terminal": interaction.t,
