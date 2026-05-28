@@ -66,6 +66,10 @@ def main():
             & (df["local_time"].dt.minute == MORNING_MINUTE)
         )
         df = df[mask]
+        if "area" not in df.columns:
+            print(f"  Skipping {fpath}: missing 'area' column")
+            counter += 1
+            continue
         df = df[df["area"] > 0]
 
         for _, plant_row in df.iterrows():
