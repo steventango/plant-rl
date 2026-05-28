@@ -10,8 +10,8 @@ import pandas as pd
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 FOLDER_PATHS = [
-    ROOT / 'data/plant-rl/online/P1/',
-    ROOT / 'data/plant-rl/online/P2',
+    '/data/plant-rl/online/E16/P1/',
+    '/data/plant-rl/online/E16/P2',
 ]
 
 ACTION_COLS = [f'action.{i}' for i in range(6)]
