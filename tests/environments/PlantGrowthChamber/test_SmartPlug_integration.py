@@ -49,7 +49,7 @@ async def test_get_power_carryover_records_null_on_failure(kasa_creds, monkeypat
 
 @pytest.mark.asyncio
 async def test_get_power_is_noop_when_zone_has_no_plug(kasa_creds):
-    chamber = PlantGrowthChamber(zone="alliance-zone03", timezone="Etc/UTC")
+    chamber = PlantGrowthChamber(zone="mitacs-zone03", timezone="Etc/UTC")
     assert chamber.zone.smart_plug_host is None
     assert chamber.smart_plug_client is None
 
