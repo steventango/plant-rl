@@ -32,7 +32,14 @@ def iqr_mean(x):
 
 
 def decode_agent_action(val, action_0, tol=1.0):
-    parsed = ast.literal_eval(val) if isinstance(val, str) else val
+    if isinstance(val, str):
+        try:
+            parsed = ast.literal_eval(val)
+        except (ValueError, SyntaxError):
+            # handle numpy array repr like "[0 1 0]" (space-separated, no commas)
+            parsed = [int(x) for x in val.strip('[] ').split()]
+    else:
+        parsed = val
     if not isinstance(parsed, (list, tuple, np.ndarray)):
         return parsed
     arr = tuple(int(v) for v in parsed)
