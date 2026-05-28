@@ -96,10 +96,10 @@ def main():
             rows.append(
                 {
                     "time": plant_row["local_time"],
-                    "plant_id": plant_row["plant_id"],
+                    "plant_id": int(plant_row["plant_id"]),
                     "area": plant_row["area"],
                     "solidity": plant_row["solidity"],
-                    "agent_action": decode_agent_action(action_vec) if action_vec is not None else None,
+                    "agent_next_action": decode_agent_action(action_vec) if action_vec is not None else None,
                 }
             )
 
