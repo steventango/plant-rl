@@ -63,6 +63,7 @@ def main():
         print(' ', f)
 
     rows = []
+    counter = 0
     for fpath in csv_files:
         df = pd.read_csv(fpath)
 
@@ -84,6 +85,9 @@ def main():
                 row[col] = group[col].iloc[0]
             row['agent_action'] = decode_agent_action(group['agent_action'].iloc[0], row['action.0'])
             rows.append(row)
+        
+        counter += 1
+        print(f'Completed {counter} files.')
 
     minimal_df = pd.DataFrame(rows).sort_values('time').reset_index(drop=True)
     minimal_df.to_csv(output_path, index=False)
