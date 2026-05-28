@@ -24,6 +24,8 @@ ACTION_TOL = 0.01
 
 MORNING_HOUR = 9
 MORNING_MINUTE = 30
+ACTION_HOUR = 9
+ACTION_MINUTE = 40
 
 MAX_FILES = 20  # set to an int to limit to the first N files (by date)
 
@@ -64,27 +66,40 @@ def main():
         df["time"] = pd.to_datetime(df["time"], utc=True)
         df["local_time"] = df["time"].dt.tz_convert(tz)
 
-        mask = (
-            df["plant_id"].notna()
-            & (df["local_time"].dt.hour == MORNING_HOUR)
-            & (df["local_time"].dt.minute == MORNING_MINUTE)
-        )
-        df = df[mask]
         if "area" not in df.columns:
             print(f"  Skipping {fpath}: missing 'area' column")
             counter += 1
             continue
+
+        # build date -> action_vector lookup from 9:40am rows
+        action_mask = (
+            (df["local_time"].dt.hour == ACTION_HOUR)
+            & (df["local_time"].dt.minute == ACTION_MINUTE)
+        )
+        action_lookup = {}
+        for _, row in df[action_mask].iterrows():
+            date = row["local_time"].date()
+            if date not in action_lookup:
+                action_lookup[date] = [row[col] for col in ACTION_COLS]
+
+        morning_mask = (
+            df["plant_id"].notna()
+            & (df["local_time"].dt.hour == MORNING_HOUR)
+            & (df["local_time"].dt.minute == MORNING_MINUTE)
+        )
+        df = df[morning_mask]
         df = df[df["area"] > 0]
 
         for _, plant_row in df.iterrows():
-            action_vec = [plant_row[col] for col in ACTION_COLS]
+            date = plant_row["local_time"].date()
+            action_vec = action_lookup.get(date)
             rows.append(
                 {
                     "time": plant_row["local_time"],
                     "plant_id": plant_row["plant_id"],
                     "area": plant_row["area"],
                     "solidity": plant_row["solidity"],
-                    "agent_action": decode_agent_action(action_vec),
+                    "agent_action": decode_agent_action(action_vec) if action_vec is not None else None,
                 }
             )
 
