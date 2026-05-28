@@ -1,5 +1,4 @@
 import argparse
-import ast
 import glob
 import os
 import pathlib
@@ -17,10 +16,12 @@ FOLDER_PATHS = [
 ACTION_COLS = [f'action.{i}' for i in range(6)]
 
 # needed for plant-rl E16 data only
-_AGENT_ACTION_MAP = {
-    (1, 0, 0): (1,  11.841679),
-    (0, 0, 1): (-1, 59.5),
-}
+_AGENT_ACTION_MAP = [
+    (-1, [59.5, 38.06567251461989, 4.161520467836257, 0.0, 3.2728070175438595, 0.0]),
+    ( 1, [11.841678939617085, 43.43770741286205, 4.748816887579775, 0.0, 46.15, 0.0]),
+]
+
+ACTION_TOL = 0.01
 
 IQR_MIN = 20
 IQR_MAX = 80
@@ -31,24 +32,11 @@ def iqr_mean(x):
     return float(np.mean(trimmed)) if len(trimmed) > 0 else 0.0
 
 
-def decode_agent_action(val, action_0, tol=1.0):
-    if isinstance(val, str):
-        try:
-            parsed = ast.literal_eval(val)
-        except (ValueError, SyntaxError):
-            # handle numpy array repr like "[0 1 0]" (space-separated, no commas)
-            parsed = [int(x) for x in val.strip('[] ').split()]
-    else:
-        parsed = val
-    if not isinstance(parsed, (list, tuple, np.ndarray)):
-        return parsed
-    arr = tuple(int(v) for v in parsed)
-    if arr not in _AGENT_ACTION_MAP:
-        return None
-    scalar, expected_action_0 = _AGENT_ACTION_MAP[arr]
-    if not np.isclose(action_0, expected_action_0, atol=tol):
-        return None
-    return scalar
+def decode_agent_action(action_vec):
+    for scalar, expected in _AGENT_ACTION_MAP:
+        if np.allclose(action_vec, expected, atol=ACTION_TOL):
+            return scalar
+    return None
 
 
 def main():
@@ -90,7 +78,7 @@ def main():
             }
             for col in ACTION_COLS:
                 row[col] = group[col].iloc[0]
-            row['agent_action'] = decode_agent_action(group['agent_action'].iloc[0], row['action.0'])
+            row['agent_action'] = decode_agent_action([row[col] for col in ACTION_COLS])
             rows.append(row)
         
         counter += 1

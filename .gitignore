@@ -5,6 +5,7 @@ results.tar*
 
 # Temporary files
 .tmp/
+temp/
 *.out
 in_progress/
 .notes/
