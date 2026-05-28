@@ -25,6 +25,8 @@ ACTION_TOL = 0.01
 MORNING_HOUR = 9
 MORNING_MINUTE = 30
 
+MAX_FILES = 20  # set to an int to limit to the first N files (by date)
+
 
 def decode_agent_action(action_vec):
     for scalar, expected in _AGENT_ACTION_MAP:
@@ -46,6 +48,8 @@ def main():
     for fp in FOLDER_PATHS:
         pattern = os.path.join(fp, "*", zone_str, "raw_*.csv")
         csv_files.extend(sorted(glob.glob(pattern)))
+
+    csv_files = sorted(csv_files)[:MAX_FILES]
 
     print(f"Found {len(csv_files)} CSV files for zone {zone_id}:")
     for f in csv_files:
