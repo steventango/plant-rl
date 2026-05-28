@@ -9,13 +9,13 @@ import pandas as pd
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 FOLDER_PATHS = [
-    '/data/plant-rl/online/E16/P1/',
-    '/data/plant-rl/online/E16/P2',
+    '/data/plant-rl/online/E17/P1/',
+    '/data/plant-rl/online/E17/P2',
 ]
 
 ACTION_COLS = [f'action.{i}' for i in range(6)]
 
-# needed for plant-rl E16 data only
+# needed for plant-rl E17 data only
 _AGENT_ACTION_MAP = [
     (-1, [59.5, 38.06567251461989, 4.161520467836257, 0.0, 3.2728070175438595, 0.0]),
     ( 1, [11.841678939617085, 43.43770741286205, 4.748816887579775, 0.0, 46.15, 0.0]),
@@ -46,7 +46,7 @@ def main():
 
     zone_id = args.zone
     zone_str = f"alliance-zone{zone_id:02d}"
-    output_path = ROOT / f'analysis/data/E16_zone{zone_id:02d}.csv'
+    output_path = ROOT / f'analysis/data/E17_zone{zone_id:02d}.csv'
 
     csv_files = []
     for fp in FOLDER_PATHS:
