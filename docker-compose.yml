@@ -304,7 +304,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-data-collection:/data/plant-data-collection:cached
     restart: unless-stopped
-    command: uv run python src/main.py -e experiments/exp1/iter1/experiment/Schedule12.json -i 0
+    command: uv run python src/main.py -e experiments/exp1/iter1/incubation/Incubator12.json -i 0
     deploy:
       resources:
         reservations:
