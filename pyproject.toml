@@ -30,6 +30,7 @@ dependencies = [
     'matplotlib',
     'seaborn',
     'scipy<1.16',
+    "pyarrow>=24.0.0",
 ]
 
 [dependency-groups]

@@ -9,7 +9,7 @@ temp/
 *.out
 in_progress/
 .notes/
-.old/
+old/
 
 # Checkpoints
 checkpoints/
