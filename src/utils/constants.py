@@ -22,10 +22,12 @@ def adjust_ppfd(action: np.ndarray, ppfd: float) -> np.ndarray:
 
 
 BALANCED_ACTION_105 = np.array([19.5, 71.53, 7.82, 0.0, 6.15, 14.12])
+BALANCED_ACTION_105[-1] = 0.0
 BALANCED_ACTION_120 = adjust_ppfd(BALANCED_ACTION_105, 120.0)
 BALANCED_ACTION_100 = adjust_ppfd(BALANCED_ACTION_105, 100.0)
 
 DIM_ACTION = 0.675 * BALANCED_ACTION_100.copy()
 
-RED_ACTION = get_modified_action(ppfd=105.0, channel=4, offset=40.0)
+# NOTE: manually adjusted RED PPFD for -3 measured PPFD offset for RED color.
+RED_ACTION = get_modified_action(ppfd=108.0, channel=4, offset=40.0)
 BLUE_ACTION = get_modified_action(ppfd=105.0, channel=0, offset=40.0)
