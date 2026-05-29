@@ -5,9 +5,9 @@ from experiment.ExperimentModel import ExperimentModel
 from problems.BaseAsyncProblem import BaseAsyncProblem
 
 
-class IntensityExperiment(BaseAsyncProblem):
+class IntensityControl(BaseAsyncProblem):
     def __init__(self, exp: ExperimentModel, idx: int):
         super().__init__(exp, idx)
         self.env = Env(**self.env_params)
         self.actions = 1
-        self.observations = (1,)
+        self.observations = (2,)

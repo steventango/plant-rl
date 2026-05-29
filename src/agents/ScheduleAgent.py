@@ -36,7 +36,7 @@ class ScheduleAgent(BaseAsyncAgent):
 
     def _get_action(self, t: datetime) -> float | np.ndarray:
         if self._is_photo_time(t):
-            return 0.4 * BALANCED_ACTION_100
+            return 0.4 * BALANCED_ACTION_100  # 40 ppfd of flash for camera image
         elif self._is_night(t):
             return np.zeros(6)
         return self._get_scalar_action(t)
