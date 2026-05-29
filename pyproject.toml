@@ -31,6 +31,7 @@ dependencies = [
     'seaborn',
     'scipy<1.16',
     "pyarrow>=24.0.0",
+    "python-kasa>=0.10.2",
 ]
 
 [dependency-groups]

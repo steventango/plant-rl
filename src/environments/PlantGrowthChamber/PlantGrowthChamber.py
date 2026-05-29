@@ -14,6 +14,7 @@ from environments.PlantGrowthChamber.utils import create_session
 from utils.RlGlue.environment import BaseAsyncEnvironment
 
 from .CVPipelineClient import CVPipelineClient
+from .SmartPlugClient import POWER_KEYS, SmartPlugClient
 from .zones import load_zone_from_config
 
 logger = logging.getLogger("plant-data.PlantGrowthChamber")
@@ -37,6 +38,15 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.session = None
 
         self.cv_client = CVPipelineClient()
+
+        self.smart_plug_client = (
+            SmartPlugClient()
+            if zone is not None and self.zone.smart_plug_host is not None
+            else None
+        )
+        self.power = dict.fromkeys(POWER_KEYS, 0.0)
+        self.power_record: dict = {}
+
         self.cv_state = None
         self.df = pd.DataFrame()
 
@@ -72,7 +82,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         if should_capture:
             self.last_image_time = current_bucket
-            await self.get_image()
+            await asyncio.gather(self.get_image(), self.get_power())
 
             if "left" in self.images and "right" in self.images:
                 self.image = np.hstack(
@@ -145,6 +155,16 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         except Exception:
             logger.exception("Error during CV processing")
             self.df = pd.DataFrame()
+
+    async def get_power(self):
+        if self.smart_plug_client is None or self.zone.smart_plug_host is None:
+            return
+        reading = await self.smart_plug_client.read(self.zone.smart_plug_host)
+        if reading is not None:
+            self.power = reading
+            self.power_record = reading
+        else:
+            self.power_record = dict.fromkeys(POWER_KEYS)
 
     def get_time(self):
         return datetime.now(tz=self.tz_utc)
@@ -271,7 +291,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         await self.sleep_until(next_step_time)
 
     def get_info(self):
-        return {}
+        info = {}
+        info.update(self.power_record)
+        return info
 
     def get_terminal(self) -> bool:
         return False

@@ -4,6 +4,7 @@
         "camera_left_url": "http://alliance-zone08-camera01.ccis.ualberta.ca:8080/observation",
         "camera_right_url": null,
         "lightbar_url": "http://142.244.191.33:8080/action",
+        "smart_plug_host": "142.244.4.76",
         "calibration": {
             "action": [
                 0.25,
