@@ -50,7 +50,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.cv_state = None
         self.df = pd.DataFrame()
 
-        self.image_interval = timedelta(minutes=10)
+        self.image_interval = 1  # minutes between image capture and power reading
         self.last_image_time: datetime | None = None
         self.images_captured: bool = False
 
@@ -73,7 +73,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.time = self.get_time()
 
         current_bucket = self.time.replace(
-            minute=(self.time.minute // 10) * 10, second=0, microsecond=0
+            minute=(self.time.minute // self.image_interval) * self.image_interval, second=0, microsecond=0
         )
         should_capture = (
             self.last_image_time is None or current_bucket > self.last_image_time
