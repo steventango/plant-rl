@@ -52,7 +52,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         self.image_interval = 10  # minutes between image capture and power reading
         self.last_image_time: datetime | None = None
-        self.images_captured: bool = False
+        self.should_capture: bool = False
 
         self.clean_areas = []
         self.daily_mean_clean_areas = defaultdict(float)
@@ -73,15 +73,17 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.time = self.get_time()
 
         current_bucket = self.time.replace(
-            minute=(self.time.minute // self.image_interval) * self.image_interval, second=0, microsecond=0
+            minute=(self.time.minute // self.image_interval) * self.image_interval,
+            second=0,
+            microsecond=0,
         )
-        should_capture = (
+        self.should_capture = (
             self.last_image_time is None or current_bucket > self.last_image_time
         )
-        self.images_captured = should_capture
 
-        if should_capture:
+        if self.should_capture:
             self.last_image_time = current_bucket
+
             await asyncio.gather(self.get_image(), self.get_power())
 
             if "left" in self.images and "right" in self.images:
@@ -98,10 +100,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             if not self.df.empty and "clean_area" in self.df.columns:
                 clean_area = self.df["clean_area"].to_numpy()
                 self.clean_areas.append(clean_area)
-                current_local_date = self.get_local_time().replace(
-                    second=0, microsecond=0
-                )
-                self.daily_mean_clean_areas[current_local_date] = float(
+
+                last_image_local_time = self.last_image_time.astimezone(self.tz)
+                self.daily_mean_clean_areas[last_image_local_time] = float(
                     np.mean(clean_area) if clean_area.size > 0 else 0.0
                 )
 
@@ -255,7 +256,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         # Sleep until the next minute
         await self.sleep_until_next_step(self.duration)
         observation = await self.get_observation()
-        reward = self.reward_function()
+        reward = self.reward_function() if self.should_capture else 0
         current_time = self.get_time()
         if self.last_step_time:
             cycle_time = current_time - self.last_step_time
@@ -299,18 +300,24 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         return False
 
     def reward_function(self):
-        local_now = self.get_local_time()
-        if local_now.hour != 9 or local_now.minute != 0:
+        if self.last_image_time is None:
             return 0
 
-        today_morning_local_date = local_now.replace(second=0, microsecond=0)
-        yesterday_morning_local_date = today_morning_local_date - timedelta(days=1)
+        last_image_local_time = self.last_image_time.astimezone(self.tz)
+
+        if last_image_local_time.hour != 9 or last_image_local_time.minute != 0:
+            return 0
+
+        today_morning_local_time = last_image_local_time.replace(
+            second=0, microsecond=0
+        )
+        yesterday_morning_local_time = today_morning_local_time - timedelta(days=1)
 
         today_morning_mean_area = self.daily_mean_clean_areas.get(
-            today_morning_local_date, 0.0
+            today_morning_local_time, 0.0
         )
         yesterday_morning_mean_area = self.daily_mean_clean_areas.get(
-            yesterday_morning_local_date, 0.0
+            yesterday_morning_local_time, 0.0
         )
 
         if yesterday_morning_mean_area == 0:
