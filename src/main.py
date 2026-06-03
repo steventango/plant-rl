@@ -155,7 +155,7 @@ async def main():
                     chk.load_from_checkpoint(loaded_chk, load_params.get("config"))
 
                 interaction = await glue.start()
-                if env.images_captured:
+                if env.should_capture:
                     episode = chk["episode"]
                     log(
                         env,
@@ -170,7 +170,7 @@ async def main():
             for _step in range(glue.total_steps, exp.total_steps):
                 interaction = await glue.step()
 
-                if env.images_captured:
+                if env.should_capture:
                     episodic_return = glue.total_reward if interaction.t else None
                     episode = chk["episode"]
                     log(
@@ -192,7 +192,7 @@ async def main():
                     chk["episode"] += 1
 
                     interaction = await glue.start()
-                    if env.images_captured:
+                    if env.should_capture:
                         log(
                             env,
                             glue,
