@@ -11,6 +11,6 @@
         "timezone": "Etc/GMT-2",
         "action_days": [[1, 5, 10]],
         "action_inputs": [[1, 1, -1]],
-        "local_start_date": "2026-05-31"
+        "local_start_date": "2026-06-01"
     }
 }
