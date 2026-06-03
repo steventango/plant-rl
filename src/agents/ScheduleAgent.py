@@ -1,11 +1,9 @@
 import numpy as np
-from datetime import datetime
+from datetime import datetime, date
 from utils.RlGlue.agent import BaseAsyncAgent
 from utils.constants import BALANCED_ACTION_100
-from utils.checkpoint import checkpointable
 
 
-@checkpointable(("start_date",))
 class ScheduleAgent(BaseAsyncAgent):
     def __init__(self, observations, actions, params, seed):
         self._init_args = (observations, actions, params, seed)
@@ -14,7 +12,7 @@ class ScheduleAgent(BaseAsyncAgent):
         self.action_inputs = params.get("action_inputs", [0.0])
         self.start_hour = 9
         self.end_hour = 21
-        self.start_date = None
+        self.start_date = date.fromisoformat(params.get("local_start_date"))
 
     def _is_night(self, t: datetime) -> bool:
         return t.hour >= self.end_hour or t.hour < self.start_hour
@@ -23,8 +21,6 @@ class ScheduleAgent(BaseAsyncAgent):
         return t.hour == self.start_hour - 1 and t.minute == 59
 
     def _get_scalar_action(self, t: datetime) -> float:
-        if self.start_date is None:
-            return float(self.action_inputs[0])
         day_number = (t.date() - self.start_date).days + 1
         scalar_action = float(self.action_inputs[0])
         for day, value in zip(self.action_days, self.action_inputs, strict=False):
@@ -43,7 +39,6 @@ class ScheduleAgent(BaseAsyncAgent):
 
     async def start(self, observation, extra=None):
         t, _ = observation
-        self.start_date = t.date()
         return self._get_action(t), {}
 
     async def step(self, reward: float, observation, extra):

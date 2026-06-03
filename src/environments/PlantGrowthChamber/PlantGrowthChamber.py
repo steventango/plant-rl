@@ -50,7 +50,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.cv_state = None
         self.df = pd.DataFrame()
 
-        self.image_interval = 10  # minutes between image capture and power reading
+        self.image_interval = 10  # minutes between image/power reading
         self.last_image_time: datetime | None = None
         self.should_capture: bool = False
 
