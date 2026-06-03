@@ -62,6 +62,8 @@ async def main():
         wandb_run = wandb.init(
             entity="anffanychen-university-of-alberta",
             project="plant-data-collection",
+            id="22ar39bz",
+            resume="must",
             config={},
             mode=WANDB_MODE,
             settings=wandb.Settings(
