@@ -8,10 +8,10 @@ Each schedule specifies `action_days` — the days within a cycle on which an in
 
 | Schedule | Action Days | Action Inputs 
 | Schedule6 | [1, 5, 10] | [-1, -1, +1] |
-| Schedule7 | [1, 6, 11] | [-1, +1, -1] |
-| Schedule8 | [1, 6, 11] | [-1, +1, +1] |
-| Schedule9 | [1, 6, 11] | [+1, -1, -1] | 
-| Schedule10 | [1, 6, 11] | [+1, -1, +1] | 
+| Schedule7 | [1, 5, 10] | [-1, +1, -1] |
+| Schedule8 | [1, 5, 10] | [-1, +1, +1] |
+| Schedule9 | [1, 5, 10] | [+1, -1, -1] | 
+| Schedule10 | [1, 5, 10] | [+1, -1, +1] | 
 
 **Note:** 
 - PPFD is fixed at 105 during the experiment. 
@@ -25,8 +25,8 @@ Network issue caused severe interuption to the experiments. No camera images wer
 
 New scheulde: 
 | Schedule | Action Days | Action Inputs 
-| Schedule6 | [1, 6, 11] | [-1, -1, +1] |
-| Schedule7 | [1, 6, 11] | [-1, +1, -1] |
-| Schedule8 | [1, 6, 11] | [-1, +1, +1] |
-| Schedule9 | [1, 6, 11] | [+1, -1, -1] | 
-| Schedule10 | [1, 6, 11] | [+1, -1, +1] | 
+| Schedule6 | [1, 5, 10] | [-1, -1, +1] |
+| Schedule7 | [1, 5, 10] | [-1, +1, +1] |
+| Schedule8 | [1 ] | [-1 ] |
+| Schedule9 | [1, 5, 10] | [+1, -1, -1] | 
+| Schedule10 | [1, 5, 10] | [+1, +1, -1] | 

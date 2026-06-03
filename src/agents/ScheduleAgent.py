@@ -2,6 +2,9 @@ import numpy as np
 from datetime import datetime, date
 from utils.RlGlue.agent import BaseAsyncAgent
 from utils.constants import BALANCED_ACTION_100
+import logging
+
+logger = logging.getLogger("plant-data.ScheduleAgent")
 
 
 class ScheduleAgent(BaseAsyncAgent):
@@ -39,6 +42,7 @@ class ScheduleAgent(BaseAsyncAgent):
 
     async def start(self, observation, extra=None):
         t, _ = observation
+        logger.debug(f"Today is Day {(t.date() - self.start_date).days + 1}.")
         return self._get_action(t), {}
 
     async def step(self, reward: float, observation, extra):
