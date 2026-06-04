@@ -25,9 +25,17 @@ from algorithms.tc.QL import QL
 from algorithms.tc.SoftmaxAC import SoftmaxAC
 from algorithms.tc.tc_replay.ESARSA import ESARSA as ReplayESARSA
 from algorithms.tc.tc_replay.QL import QL as QLReplay
+from algorithms.ScheduleAgent import ScheduleAgent
+from algorithms.Incubator import Incubator
 
 
 def getAgent(name) -> Type[BaseAgent]:
+    if name.startswith("Schedule"):
+        return ScheduleAgent
+
+    if name.startswith("Incubator"):
+        return Incubator
+
     if name.startswith("DQN"):
         return DQN
 

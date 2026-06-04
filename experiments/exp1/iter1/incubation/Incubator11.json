@@ -1,0 +1,14 @@
+{
+    "agent": "Incubator11",
+    "problem": "IntensityControl",
+    "total_steps": 43200,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": "alliance-zone11",
+            "timezone": "Etc/GMT-2"
+        },
+        "timezone": "Etc/GMT-2",
+        "incubation_ppfd": 100
+    }
+}
