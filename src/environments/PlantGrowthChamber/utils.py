@@ -2,6 +2,7 @@ from datetime import datetime
 
 import aiohttp
 import numpy as np
+import pandas as pd
 from aiohttp_retry import ExponentialRetry, RetryClient
 
 
@@ -36,3 +37,14 @@ def get_one_hot_time_observation(local_time: datetime):
     index = max(0, min(12, local_time.hour - 9))
     one_hot[index] = 1.0
     return one_hot
+
+
+def mean_clean_area(df: pd.DataFrame) -> float:
+    if df.empty or "clean_area" not in df.columns:
+        return 0.0
+    return float(df["clean_area"].mean())
+
+
+def hours_normalized(local_time: datetime) -> float:
+    hours_since_start = (local_time.hour - 9) + ((local_time.minute - 30) / 60)
+    return float(np.clip(hours_since_start / 11.0, 0, 1))

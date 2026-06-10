@@ -10,6 +10,7 @@ from zoneinfo import ZoneInfo
 import numpy as np
 from PIL import Image
 
+from environments.PlantGrowthChamber.specs.observations import RawObservation
 from environments.PlantGrowthChamber.utils import create_session
 from utils.constants import BALANCED_ACTION_105, DIM_ACTION
 from utils.functions import normalize
@@ -89,7 +90,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.dataset_path = path
         self.cv_client.set_dataset_path(path)
 
-    async def get_observation(self):
+    async def get_raw_observation(self):
         self.time = self.get_time()
 
         await self.get_image()
@@ -124,7 +125,11 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                     mean_area_this_step
                 )
 
-        return self.time, self.image, self.df
+        return RawObservation(
+            local_time=self.get_local_time(),
+            df=self.df,
+            dli=self.dli,
+        )
 
     def is_daylight(self):
         local_time = self.get_local_time()
@@ -294,7 +299,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.clean_areas = []
         self.plant_cleaning_states = []  # Reset cleaning states on start
         self.daily_mean_clean_areas = defaultdict(float)
-        observation = await self.get_observation()
+        observation = await self.get_raw_observation()
         self.last_step_time = self.get_time()
         self.n_step = 1
         return observation, self.get_info()
@@ -315,7 +320,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         # Sleep until the next minute
         await self.sleep_until_next_step(self.duration)
-        observation = await self.get_observation()
+        observation = await self.get_raw_observation()
         reward = self.reward_function()
         current_time = self.get_time()
         if self.last_step_time:

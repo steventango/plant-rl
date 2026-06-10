@@ -7,9 +7,7 @@ import numpy as np
 import polars as pl
 import pytest
 
-from environments.PlantGrowthChamber.MockWallStatsActionTraceEmbeddingPlantGrowthChamberColorTriangle import (
-    MockWallStatsActionTraceEmbeddingPlantGrowthChamberColorTriangle,
-)
+from environments.PlantGrowthChamber.factory import create_plant_growth_chamber
 
 logging.basicConfig(level=logging.INFO)
 
@@ -66,7 +64,10 @@ async def test_mock_triangle_chamber_cv():
             "PLANT_RL_PCA_MODEL_PATH to run this test."
         )
 
-    env = MockWallStatsActionTraceEmbeddingPlantGrowthChamberColorTriangle(
+    env = create_plant_growth_chamber(
+        backend="mock",
+        observation="wall_stats_embedding",
+        action="color_triangle",
         mock_stats=False,
         experiment=15,
         zone_id=2,
@@ -102,7 +103,6 @@ async def test_mock_triangle_chamber_cv():
     assert len(obs) == 816
     assert_observation(obs, rows[0])
 
-    # Test step
     action = np.array([0.0, 1.0, 0.0], dtype=np.float32)
     env.update_action_trace(action)
     reward, observation, terminal, info = await env.step(action)
@@ -112,7 +112,6 @@ async def test_mock_triangle_chamber_cv():
 
     assert_observation(observation, rows[1])
 
-    # Test step
     action = np.array([0.0, 1.0, 0.0], dtype=np.float32)
     env.update_action_trace(action)
     reward, observation, terminal, info = await env.step(action)
