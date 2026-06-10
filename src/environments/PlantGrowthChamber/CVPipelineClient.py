@@ -7,6 +7,7 @@ from pathlib import Path
 
 import aiohttp
 import numpy as np
+from aiohttp_retry import RetryClient
 from PIL import Image
 
 logger = logging.getLogger("plant_rl.CVPipelineClient")
@@ -24,7 +25,9 @@ class CVPipelineClient:
             (self.dataset_path / "visualization").mkdir(parents=True, exist_ok=True)
 
     async def detect(
-        self, session: aiohttp.ClientSession, image: np.ndarray | Image.Image
+        self,
+        session: aiohttp.ClientSession | RetryClient,
+        image: np.ndarray | Image.Image,
     ):
         """
         Initializes tracking by calling the pipeline detect endpoint.
@@ -36,7 +39,9 @@ class CVPipelineClient:
                 "image_data": image_data,
             }
             async with session.post(
-                f"{PIPELINE_URL}/pipeline/detect", json=payload
+                f"{PIPELINE_URL}/pipeline/detect",
+                json=payload,
+                timeout=aiohttp.ClientTimeout(total=35),
             ) as resp:
                 resp.raise_for_status()
                 return await resp.json()
@@ -46,7 +51,7 @@ class CVPipelineClient:
 
     async def propagate(
         self,
-        session: aiohttp.ClientSession,
+        session: aiohttp.ClientSession | RetryClient,
         image: np.ndarray | Image.Image,
         state: dict | str,
     ):
@@ -61,7 +66,9 @@ class CVPipelineClient:
                 "state": state,
             }
             async with session.post(
-                f"{PIPELINE_URL}/pipeline/propagate", json=payload
+                f"{PIPELINE_URL}/pipeline/propagate",
+                json=payload,
+                timeout=aiohttp.ClientTimeout(total=35),
             ) as resp:
                 resp.raise_for_status()
                 return await resp.json()

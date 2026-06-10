@@ -2,18 +2,18 @@
 
 # Define lightbar hostnames in an array
 hostnames=(
-  # "alliance-zone1"
-  "alliance-zone2"
-  # "alliance-zone3"
-  # "alliance-zone4"
-  # "alliance-zone5"
-  # "alliance-zone6"
-  # "alliance-zone7"
-  # "alliance-zone8"
-  # "alliance-zone9"
-  # "alliance-zone10"
-  # "alliance-zone11"
-  # "alliance-zone12"
+  "zone01"
+  "zone02"
+  "zone03"
+  "zone04"
+  "zone05"
+  "zone06"
+  "zone07"
+  "zone08"
+  "zone09"
+  "zone10"
+  "zone11"
+  "zone12"
 )
 
 # Loop through each lightbar hostname and update in parallel

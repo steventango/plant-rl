@@ -1,14 +1,14 @@
 {
-    "agent": "Constant2",
+    "agent": "Constant3",
     "problem": "PlantGrowthChamberIntensity",
     "total_steps": 40320,
     "episode_cutoff": -1,
     "metaParameters": {
         "environment": {
-            "zone": "alliance-zone02",
-            "timezone": "Etc/GMT-2"
+            "zone": "alliance-zone03",
+            "timezone": "Etc/GMT-4"
         },
-        "timezone": "Etc/GMT-2",
+        "timezone": "Etc/GMT-4",
         "enforce_night": true,
         "flash_photography": true,
         "action_timestep": 720,

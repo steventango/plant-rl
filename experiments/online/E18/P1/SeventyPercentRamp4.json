@@ -1,17 +1,17 @@
 {
-    "agent": "Constant2",
+    "agent": "SequenceSeventyPercentRamp4",
     "problem": "PlantGrowthChamberIntensity",
     "total_steps": 40320,
     "episode_cutoff": -1,
     "metaParameters": {
         "environment": {
-            "zone": "alliance-zone02",
+            "zone": "alliance-zone04",
             "timezone": "Etc/GMT-2"
         },
         "timezone": "Etc/GMT-2",
         "enforce_night": true,
         "flash_photography": true,
         "action_timestep": 720,
-        "constant_action": 1.0
+        "actions": "[0.4, 0.44231, 0.48462, 0.52692, 0.56923, 0.61154, 0.65385, 0.69615, 0.73846, 0.78077, 0.82308, 0.86538, 0.90769, 0.95]"
     }
 }

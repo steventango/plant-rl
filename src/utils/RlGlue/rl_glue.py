@@ -188,7 +188,6 @@ class AsyncRLGlue:
         expanded_info = {}
         if interaction is not None:
             interaction_data = {
-                **expand("state", interaction.o[:20]),
                 "agent_action": interaction.a,
                 "reward": interaction.r,
                 "terminal": interaction.t,

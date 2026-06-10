@@ -1,26 +1,26 @@
-# Experiment E18 / Phase P0 — Constant 105 PPFD incubation
+# Experiment E18 / Phase P0 — Constant 100 PPFD incubation
 
 ## Overview
 
-5-day **post-transplant incubation** for the Trial 17 cohort: constant 105 PPFD balanced-white on the same 18:00 → 06:00 night-shifted photoperiod the [P1 agent-controlled phase](../P1/README.md) will use. All three zones (alliance-zone01, 02, 03) receive the identical policy so the plants enter P1 partially acclimated to 105 PPFD with no spectrum cross-contamination across treatment arms.
+5-day **post-transplant incubation** for the Trial 17 cohort: constant 100 PPFD balanced-white on the same 01:00 → 13:00 night-shifted photoperiod the [P1 agent-controlled phase](../P1/README.md) will use. All three zones (alliance-zone01, 02, 03) receive the identical policy so the plants enter P1 partially acclimated to 100 PPFD with no spectrum cross-contamination across treatment arms.
 
-This phase runs from **transplant date (DAS 7)** to **agent start (DAS 12)**, after which control hands off to [E18/P1](../P1/README.md). The configs include a 9-day buffer (`total_steps: 14400`) so the run won't terminate prematurely if the handoff is delayed.
+This phase runs from **transplant date (DAS 7)** to **agent start (DAS 12)**, after which control hands off to [E18/P1](../P1/README.md). The configs are sized for **4 weeks** (`total_steps: 40320` = 28 days of 1-min env steps, matching P1) so the same constant-100 policy can keep running indefinitely if the handoff is delayed or the trial is repurposed as a long-duration control.
 
 ## Configs
 
 | Zone | Config | Agent | Wrapper settings |
 |---|---|---|---|
-| Z1 (zone01) | `Constant1.json` | `ConstantAgent` (`constant_action: 1.0`) | `flash_photography: true`, `enforce_night: true`, `timezone: "Etc/GMT-9"` |
+| Z1 (zone01) | `Constant1.json` | `ConstantAgent` (`constant_action: 1.0`) | `flash_photography: true`, `enforce_night: true`, `timezone: "Etc/GMT-2"` |
 | Z2 (zone02) | `Constant2.json` | same | same |
 | Z3 (zone03) | `Constant3.json` | same | same |
 
-All three resolve through `algorithms/registry.py`'s `startswith("Constant")` rule to `ConstantAgent`. `constant_action: 1.0` multiplies by `BALANCED_ACTION_105` in `PlantGrowthChamberIntensity` to emit 105 PPFD across the balanced 5-channel spectrum.
+All three resolve through `algorithms/registry.py`'s `startswith("Constant")` rule to `ConstantAgent`. `constant_action: 1.0` multiplies by `BALANCED_ACTION_100` (the `PlantGrowthChamberIntensity` reference spectrum) to emit 100 PPFD across the balanced 5-channel spectrum.
 
 ## Photoperiod & flash
 
 Inherits the same flash-photography wrapper mode used in P1 (see `src/algorithms/PlantGrowthChamberAsyncAgentWrapper.py:maybe_enforce_flash_photography_action`):
-- 09:00 – 20:59 wrapper-local (chamber 18:00 – 05:59 MDT): daytime, 105 PPFD applied.
-- 08:59 wrapper-local (chamber 17:59 MDT): 1-min `BALANCED_ACTION_105` flash for daily camera capture under a standardized spectrum.
+- 09:00 – 20:59 wrapper-local (chamber 01:00 – 12:59 MDT): daytime, 100 PPFD applied.
+- 08:59 wrapper-local (chamber 00:59 MDT): 1-min `BALANCED_ACTION_40` flash (40 PPFD on the balanced 5-channel spectrum) for daily camera capture under a standardized spectrum.
 - 21:00 – 08:58 wrapper-local: night, action zeroed.
 
 The flash gives the CV pipeline one daily standardized image during incubation too, so plant-area growth is tracked from the beginning of the chamber-controlled period — important for establishing the day-0 baseline before P1's treatment arms diverge.
@@ -37,7 +37,7 @@ Each zone is deployed independently. After the 5-day incubation completes (or ea
 
 ## Energy
 
-At constant 105 PPFD over the 12 h photoperiod, lights-on plug power = 51.4 W (per the [E18/P0.1](../P0.1/README.md) pooled fit). Per-zone daily energy ≈ 617 Wh × 5 days ≈ 3 085 Wh for the planned incubation window. Same for all three zones.
+At constant 100 PPFD over the 12 h photoperiod, lights-on plug power = 49.05 W (per the [E18/P0.1](../P0.1/README.md) pooled fit). Per-zone daily energy ≈ 589 Wh; over the full 28-day `total_steps` envelope that's ≈ 16 482 Wh (≈ 2 944 Wh for the 5-day planned-incubation subwindow). Same for all three zones.
 
 ## See also
 
