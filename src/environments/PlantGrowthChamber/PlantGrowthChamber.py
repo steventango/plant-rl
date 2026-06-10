@@ -89,7 +89,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.dataset_path = path
         self.cv_client.set_dataset_path(path)
 
-    async def get_observation(self):
+    async def get_raw_observation(self):
         self.time = self.get_time()
 
         await self.get_image()
@@ -294,7 +294,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.clean_areas = []
         self.plant_cleaning_states = []  # Reset cleaning states on start
         self.daily_mean_clean_areas = defaultdict(float)
-        observation = await self.get_observation()
+        observation = await self.get_raw_observation()
         self.last_step_time = self.get_time()
         self.n_step = 1
         return observation, self.get_info()
@@ -315,7 +315,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         # Sleep until the next minute
         await self.sleep_until_next_step(self.duration)
-        observation = await self.get_observation()
+        observation = await self.get_raw_observation()
         reward = self.reward_function()
         current_time = self.get_time()
         if self.last_step_time:
