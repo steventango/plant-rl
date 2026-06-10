@@ -56,7 +56,6 @@ dependencies = [
     "pyarrow>=21.0.0",
     "flashbax>=0.1.3",
     "distrax>=0.1.7",
-    'flask',
     "flax>=0.12.0",
     "jaxlib>=0.8.1",
     "tfp-nightly>=0.26.0.dev20251210",

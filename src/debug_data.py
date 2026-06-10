@@ -8,33 +8,12 @@ import seaborn as sns
 from PIL import Image, ImageDraw
 
 from environments.PlantGrowthChamber.cv import process_image
-from environments.PlantGrowthChamber.zones import Rect, Tray, Zone
+from environments.PlantGrowthChamber.zones import deserialize_zone
 from utils.metrics import UnbiasedExponentialMovingWelford as UEMW  # type: ignore
 
 
 def get_zone_from_config(config):
-    config_zone = config["zone"]
-    zone = Zone(
-        identifier=config_zone["identifier"],
-        camera_left_url=config_zone["camera_left_url"],
-        camera_right_url=config_zone["camera_right_url"],
-        lightbar_url=config_zone["lightbar_url"],
-        calibration=None,
-        trays=[
-            Tray(
-                n_wide=tray["n_wide"],
-                n_tall=tray["n_tall"],
-                rect=Rect(
-                    top_left=tuple(tray["rect"]["top_left"]),
-                    top_right=tuple(tray["rect"]["top_right"]),
-                    bottom_left=tuple(tray["rect"]["bottom_left"]),
-                    bottom_right=tuple(tray["rect"]["bottom_right"]),
-                ),
-            )
-            for tray in config_zone["trays"]
-        ],
-    )
-    return zone
+    return deserialize_zone(config["zone"])
 
 
 def clean_area(df):
@@ -208,7 +187,7 @@ def process_one_image(zone, out_dir, path, index):
     isoformat = path.stem.split("_")[0]
     image = np.array(Image.open(path))
     debug_images = {}
-    df, _ = process_image(image, zone.trays, debug_images)
+    df, _ = process_image(image, debug_images)
     df["frame"] = index
     for key, image in debug_images.items():
         image.save(out_dir / f"{isoformat}_{key}.jpg")

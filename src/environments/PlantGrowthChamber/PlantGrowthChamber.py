@@ -41,7 +41,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.tz_utc = ZoneInfo("Etc/UTC")
         self.time = self.get_time()
         self.session = None
-        self.pot_quads = None
         self.dataset_path = None
         self.cv_client = CVPipelineClient()
 

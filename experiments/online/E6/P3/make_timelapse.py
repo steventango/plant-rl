@@ -23,8 +23,8 @@ def get_image(image_path, zone_identifier: str):
     timestamp = datetime.fromisoformat(iso_format)
     timestamp_str = timestamp.strftime("%Y-%m-%d %H:%M:%S")
     debug_images = {}
-    zone = load_zone_from_config(zone_identifier)
-    process_image(image, zone.trays, debug_images)
+    load_zone_from_config(zone_identifier)
+    process_image(image, debug_images)
     shape_image = debug_images["shape_image"]
     shape_image = np.array(shape_image)
     text_size = cv2.getTextSize(timestamp_str, cv2.FONT_HERSHEY_SIMPLEX, 2, 1)[0]

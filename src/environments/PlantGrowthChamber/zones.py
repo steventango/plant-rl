@@ -1,5 +1,5 @@
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 
 from environments.PlantGrowthChamber.Calibration import Calibration
@@ -8,37 +8,13 @@ CONFIG_DIR = Path(__file__).parent / "configs"
 
 
 @dataclass
-class Rect:
-    top_left: tuple[int, int]
-    top_right: tuple[int, int]
-    bottom_left: tuple[int, int]
-    bottom_right: tuple[int, int]
-
-
-@dataclass
-class Tray:
-    n_tall: int
-    n_wide: int
-    rect: Rect
-    num_plants: int = field(init=False)
-
-    def __post_init__(self):
-        self.num_plants = self.n_tall * self.n_wide
-
-
-@dataclass
 class Zone:
     identifier: str
     camera_left_url: str | None
     camera_right_url: str | None
     lightbar_url: str | None
-    trays: list[Tray]
     calibration: Calibration | None
     smart_plug_host: str | None = None
-
-    @property
-    def num_plants(self) -> int:
-        return sum(tray.num_plants for tray in self.trays)
 
 
 def deserialize_zone(zone: dict) -> Zone:
@@ -52,19 +28,6 @@ def deserialize_zone(zone: dict) -> Zone:
         lightbar_url=zone.get("lightbar_url"),
         smart_plug_host=zone.get("smart_plug_host"),
         calibration=calibration,
-        trays=[
-            Tray(
-                n_wide=tray["n_wide"],
-                n_tall=tray["n_tall"],
-                rect=Rect(
-                    top_left=tray["rect"]["top_left"],
-                    top_right=tray["rect"]["top_right"],
-                    bottom_left=tray["rect"]["bottom_left"],
-                    bottom_right=tray["rect"]["bottom_right"],
-                ),
-            )
-            for tray in zone["trays"]
-        ],
     )
 
 
@@ -78,19 +41,6 @@ def serialize_zone(zone: Zone) -> dict:
         "lightbar_url": zone.lightbar_url,
         "smart_plug_host": zone.smart_plug_host,
         "calibration": calibration_data,
-        "trays": [
-            {
-                "n_wide": tray.n_wide,
-                "n_tall": tray.n_tall,
-                "rect": {
-                    "top_left": tray.rect.top_left,
-                    "top_right": tray.rect.top_right,
-                    "bottom_left": tray.rect.bottom_left,
-                    "bottom_right": tray.rect.bottom_right,
-                },
-            }
-            for tray in zone.trays
-        ],
     }
 
 
@@ -120,7 +70,3 @@ ZONE_IDENTIFIERS = [
     # "mitacs-zone08",
     # "mitacs-zone09",
 ]
-
-SCALE = 4
-POT_HEIGHT = 60 * SCALE
-POT_WIDTH = 60 * SCALE

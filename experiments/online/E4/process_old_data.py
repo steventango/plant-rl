@@ -8,7 +8,7 @@ from PIL import Image
 from tqdm.contrib.concurrent import process_map
 
 from environments.PlantGrowthChamber.cv import process_image
-from environments.PlantGrowthChamber.zones import Rect, Tray, Zone
+from environments.PlantGrowthChamber.zones import Zone
 from utils.metrics import iqm
 
 timeframes = [
@@ -54,18 +54,7 @@ def main():
         camera_left_url=None,
         camera_right_url="http://mitacs-zone02-camera02.ccis.ualberta.ca:8080/observation",
         lightbar_url="http://mitacs-zone2.ccis.ualberta.ca:8080/action",
-        trays=[
-            Tray(
-                n_wide=4,
-                n_tall=4,
-                rect=Rect(
-                    top_left=(1241, 978),
-                    top_right=(2017, 952),
-                    bottom_left=(1258, 1804),
-                    bottom_right=(1972, 1667),
-                ),
-            )
-        ],
+        calibration=None,
     )
     zone_dir = Path("data/first_exp/z2cR")
     out_dir = Path("results") / zone_dir
@@ -120,7 +109,7 @@ def process_one_image(args):
     timestamp = datetime.datetime.fromisoformat(path.stem)
     image = np.array(Image.open(path))
     debug_images = {}
-    df, _ = process_image(image, zone.trays, debug_images)
+    df, _ = process_image(image, debug_images)
     df["timestamp"] = timestamp
 
     avg = iqm(jnp.array(df["area"]), 0.05)

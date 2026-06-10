@@ -23,8 +23,6 @@ class EmbeddingDayStatsTracePlantGrowthChamber(PlantGrowthChamber):
         # 2. Mean Clean Plant Stats
         mean_clean_area = 0.0
         if not df.empty and "clean_area" in df.columns:
-            # We assume df is ordered by plant index corresponding to self.zone.num_plants
-            # But process_plants returns a list based on pot_quads.
             clean_areas = df["clean_area"].to_numpy(dtype=np.float32)
             if clean_areas.size > 0:
                 mean_clean_area = np.mean(clean_areas)
