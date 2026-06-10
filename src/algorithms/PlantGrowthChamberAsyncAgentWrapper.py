@@ -10,7 +10,6 @@ from algorithms.BaseAgent import BaseAgent
 from utils.constants import (
     BALANCED_ACTION_40,
     BALANCED_ACTION_105,
-    DIM_ACTION,
     TWILIGHT_INTENSITIES_30_MIN,
 )
 from utils.RlGlue.agent import AsyncAgentWrapper
@@ -262,23 +261,3 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
             )
 
         self.last_action_info = state.get("last_action_info")
-
-
-class PlantGrowthChamberAsyncAgentWrapper_BrightTwilight(
-    PlantGrowthChamberAsyncAgentWrapper
-):
-    def get_dawn_action(self) -> np.ndarray:
-        return BALANCED_ACTION_105
-
-    def get_dusk_action(self) -> np.ndarray:
-        return BALANCED_ACTION_105
-
-
-class PlantGrowthChamberAsyncAgentWrapper_DimTwilight(
-    PlantGrowthChamberAsyncAgentWrapper
-):
-    def get_dawn_action(self) -> np.ndarray:
-        return DIM_ACTION
-
-    def get_dusk_action(self) -> np.ndarray:
-        return DIM_ACTION

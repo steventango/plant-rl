@@ -10,6 +10,7 @@ from zoneinfo import ZoneInfo
 import numpy as np
 from PIL import Image
 
+from environments.PlantGrowthChamber.specs.observations import RawObservation
 from environments.PlantGrowthChamber.utils import (
     create_action_session,
     create_cv_session,
@@ -50,7 +51,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         # blowing the env step's 60 s/cycle budget.
         self.action_session = None
         self.cv_session = None
-        self.pot_quads = None
         self.dataset_path = None
         self.cv_client = CVPipelineClient()
 
@@ -105,7 +105,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.dataset_path = path
         self.cv_client.set_dataset_path(path)
 
-    async def get_observation(self):
+    async def get_raw_observation(self):
         self.time = self.get_time()
         # Hard 50 s ceiling so put_action(<=5s) + get_observation(<=50s) fits
         # inside the env's 60 s/cycle budget (sleep_until_next_step is elastic
@@ -114,7 +114,11 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             await asyncio.wait_for(self._get_observation_inner(), timeout=50)
         except asyncio.TimeoutError:
             logger.warning("get_observation exceeded 50 s; reusing previous frame/df")
-        return self.time, self.image, self.df
+        return RawObservation(
+            local_time=self.get_local_time(),
+            df=self.df,
+            dli=self.dli,
+        )
 
     async def _get_observation_inner(self):
         # get_power has no dependency on the image, so overlap it with the
@@ -314,7 +318,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.clean_areas = []
         self.plant_cleaning_states = []  # Reset cleaning states on start
         self.daily_mean_clean_areas = defaultdict(float)
-        observation = await self.get_observation()
+        observation = await self.get_raw_observation()
         self.last_step_time = self.get_time()
         self.n_step = 1
         return observation, self.get_info()
@@ -335,7 +339,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         # Sleep until the next minute
         await self.sleep_until_next_step(self.duration)
-        observation = await self.get_observation()
+        observation = await self.get_raw_observation()
         reward = self.reward_function()
         current_time = self.get_time()
         if self.last_step_time:

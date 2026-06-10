@@ -4,7 +4,7 @@ hardware, no checkpointing) — purely as a pre-deploy smoke test.
 
 We:
   1. Load the deploy JSON via `ExperimentModel` (same loader main_real uses).
-  2. Override `problem` to `MockAreaPlantGrowthChamberIntensity` and inject
+  2. Override `problem` to `PlantGrowthChamber` with mock/area/intensity and inject
      `dataset_path` / `experiment` / `zone_id` so the Mock env replays a real
      14-day chunk of E17 data from `/data/plant-rl/offline/v27/mixed-v27.parquet`.
   3. Construct the Problem, env, and wrapped agent exactly as
@@ -85,9 +85,12 @@ def _mocktest_exp(src_path: Path) -> ExperimentModel:
     """Load the deploy JSON, swap to the Mock problem and inject the mock env
     params, return an in-memory ExperimentModel (no tempfile required)."""
     d = json.loads(src_path.read_text())
-    d["problem"] = "MockAreaPlantGrowthChamberIntensity"
+    d["problem"] = "PlantGrowthChamber"
     d["total_steps"] = N_STEPS
     env = d["metaParameters"]["environment"]
+    env["backend"] = "mock"
+    env["observation"] = "area"
+    env["action"] = "intensity"
     env["dataset_path"] = str(MOCK_DATASET)
     env["experiment"] = MOCK_EXPERIMENT
     env["zone_id"] = MOCK_ZONE_ID
@@ -96,7 +99,7 @@ def _mocktest_exp(src_path: Path) -> ExperimentModel:
 
 
 def _promote_to_six_channel(a_raw) -> np.ndarray:
-    """Mirror PlantGrowthChamberIntensity.step's scalar -> 6-channel scaling.
+    """Mirror intensity action spec scalar -> 6-channel scaling.
 
     SequenceAgent/ConstantAgent emit scalar s; the env multiplies by
     BALANCED_ACTION_100. Wrapper-enforced (night/flash) actions are already

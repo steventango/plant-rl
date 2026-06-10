@@ -38,6 +38,7 @@ test.json
 
 # ignore editor settings
 .vscode
+.DS_Store
 
 # ignore build folder
 build

@@ -1,4 +1,0 @@
-litserve>=0.2.8
-pillow>=11.2.1
-torch>=2.7.0
-transformers>=4.51.2
