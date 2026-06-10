@@ -6,7 +6,8 @@
     "metaParameters": {
         "environment": {
             "zone": "alliance-zone10",
-            "timezone": "America/Edmonton"
+            "timezone": "America/Edmonton",
+            "twilight_type": "bright"
         },
         "timezone": "America/Edmonton"
     }
