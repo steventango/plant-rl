@@ -38,22 +38,22 @@ class ComposedPlantGrowthChamber(BaseAsyncEnvironment):
 
     async def get_observation(self) -> np.ndarray:
         raw = await self._backend.get_raw_observation()
-        return await self._observation_spec.encode(raw, self._backend)
+        return await self._observation_spec.encode(raw)
 
     async def start(self):
         raw_obs, info = await self._backend.start()
-        encoded = await self._observation_spec.encode(raw_obs, self._backend)
+        encoded = await self._observation_spec.encode(raw_obs)
         return encoded, info
 
     async def step(self, action: Any):
-        decoded = self._action_spec.decode(action, self._backend)
+        decoded = self._action_spec.decode(action)
         reward, raw_obs, terminal, info = await self._backend.step(decoded)
-        encoded = await self._observation_spec.encode(raw_obs, self._backend)
+        encoded = await self._observation_spec.encode(raw_obs)
         return reward, encoded, terminal, info
 
     def update_action_trace(self, action: Any) -> None:
-        trace_action = self._action_spec.trace_action(action, self._backend)
-        self._observation_spec.update_action_trace(trace_action, self._backend)
+        trace_action = self._action_spec.trace_action(action)
+        self._observation_spec.update_action_trace(trace_action)
 
     async def close(self):
         await self._backend.close()

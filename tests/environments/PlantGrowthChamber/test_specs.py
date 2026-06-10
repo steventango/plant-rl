@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 
 import numpy as np
+import pandas as pd
 
 from environments.PlantGrowthChamber.factory import ComposedPlantGrowthChamber
 from environments.PlantGrowthChamber.specs import (
@@ -10,6 +11,7 @@ from environments.PlantGrowthChamber.specs import (
     DiscreteAction,
     IntensityAction,
     OneHotTimeObservation,
+    RawObservation,
     create_observation_spec,
 )
 from utils.constants import BALANCED_ACTION_105, DIM_ACTION
@@ -17,20 +19,20 @@ from utils.constants import BALANCED_ACTION_105, DIM_ACTION
 
 def test_intensity_action_scales_scalar():
     spec = IntensityAction()
-    result = spec.decode(1.0, backend=None)
+    result = spec.decode(1.0)
     np.testing.assert_array_equal(result, BALANCED_ACTION_105)
 
 
 def test_discrete_action_maps_indices():
     spec = DiscreteAction()
-    np.testing.assert_array_equal(spec.decode(0, None), DIM_ACTION)
-    np.testing.assert_array_equal(spec.decode(1, None), BALANCED_ACTION_105)
+    np.testing.assert_array_equal(spec.decode(0), DIM_ACTION)
+    np.testing.assert_array_equal(spec.decode(1), BALANCED_ACTION_105)
 
 
 def test_color_triangle_decodes_simplex():
     spec = ColorTriangleAction()
     action = np.array([0.0, 1.0, 0.0])
-    result = spec.decode(action, None)
+    result = spec.decode(action)
     np.testing.assert_array_equal(result, BALANCED_ACTION_105)
 
 
@@ -43,19 +45,19 @@ def test_color_triangle_trace_dim():
 
 def test_intensity_trace_action_decodes_scalar():
     spec = IntensityAction()
-    result = spec.trace_action(0.8, backend=None)
+    result = spec.trace_action(0.8)
     np.testing.assert_allclose(result, BALANCED_ACTION_105 * 0.8)
 
 
 def test_color_triangle_trace_action_keeps_coefficients():
     spec = ColorTriangleAction()
     action = np.array([0.2, 0.5, 0.3])
-    np.testing.assert_array_equal(spec.trace_action(action, None), action)
+    np.testing.assert_array_equal(spec.trace_action(action), action)
 
 
 def test_color_triangle_trace_action_projects_six_channel():
     spec = ColorTriangleAction()
-    result = spec.trace_action(np.zeros(6), None)
+    result = spec.trace_action(np.zeros(6))
     assert result.shape == (3,)
 
 
@@ -93,13 +95,14 @@ def test_one_hot_time_observation_shape():
     from datetime import datetime
     from zoneinfo import ZoneInfo
 
-    class FakeBackend:
-        tz = ZoneInfo("Etc/UTC")
-
     async def run():
         spec = OneHotTimeObservation()
-        raw = (datetime(2025, 6, 10, 12, 0, tzinfo=ZoneInfo("Etc/UTC")), None, None)
-        return await spec.encode(raw, FakeBackend())
+        raw = RawObservation(
+            local_time=datetime(2025, 6, 10, 12, 0, tzinfo=ZoneInfo("Etc/UTC")),
+            df=pd.DataFrame(),
+            dli=0.0,
+        )
+        return await spec.encode(raw)
 
     obs = asyncio.run(run())
     assert obs.shape == (13,)

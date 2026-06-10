@@ -15,12 +15,12 @@ class ActionSpec(ABC):
     trace_dim: int = 6
 
     @abstractmethod
-    def decode(self, action: Any, backend: Any) -> np.ndarray:
+    def decode(self, action: Any) -> np.ndarray:
         pass
 
-    def trace_action(self, action: Any, backend: Any) -> np.ndarray:
+    def trace_action(self, action: Any) -> np.ndarray:
         """Convert an action to trace_dim for UEMA updates."""
-        return self.decode(action, backend)
+        return self.decode(action)
 
 
 @dataclass(frozen=True)
@@ -29,7 +29,7 @@ class PPFD6Action(ActionSpec):
     n_actions: int = 6
     trace_dim: int = 6
 
-    def decode(self, action: Any, backend: Any) -> np.ndarray:
+    def decode(self, action: Any) -> np.ndarray:
         return np.asarray(action, dtype=np.float64)
 
 
@@ -39,7 +39,7 @@ class IntensityAction(ActionSpec):
     n_actions: int = 1
     trace_dim: int = 6
 
-    def decode(self, action: Any, backend: Any) -> np.ndarray:
+    def decode(self, action: Any) -> np.ndarray:
         if isinstance(action, np.ndarray) and action.ndim > 0:
             return np.asarray(action, dtype=np.float64)
         return BALANCED_ACTION_105 * float(action)
@@ -51,7 +51,7 @@ class DiscreteAction(ActionSpec):
     n_actions: int = 2
     trace_dim: int = 6
 
-    def decode(self, action: Any, backend: Any) -> np.ndarray:
+    def decode(self, action: Any) -> np.ndarray:
         if isinstance(action, np.ndarray):
             return np.asarray(action, dtype=np.float64)
         action_map = {0: DIM_ACTION, 1: BALANCED_ACTION_105}
@@ -64,7 +64,7 @@ class ColorAction(ActionSpec):
     n_actions: int = 3
     trace_dim: int = 6
 
-    def decode(self, action: Any, backend: Any) -> np.ndarray:
+    def decode(self, action: Any) -> np.ndarray:
         if isinstance(action, np.ndarray):
             return np.asarray(action, dtype=np.float64)
         action_map = {
@@ -81,14 +81,14 @@ class ColorTriangleAction(ActionSpec):
     n_actions: int = 3
     trace_dim: int = 3
 
-    def decode(self, action: Any, backend: Any) -> np.ndarray:
+    def decode(self, action: Any) -> np.ndarray:
         action = np.asarray(action, dtype=np.float64)
         if action.shape[0] == 6:
             return action
         basis = np.column_stack([RED_ACTION, BALANCED_ACTION_105, BLUE_ACTION])
         return basis @ action
 
-    def trace_action(self, action: Any, backend: Any) -> np.ndarray:
+    def trace_action(self, action: Any) -> np.ndarray:
         action = np.asarray(action, dtype=np.float64)
         if action.shape[0] == self.trace_dim:
             return action

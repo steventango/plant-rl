@@ -20,6 +20,13 @@ from utils.functions import normalize
 from utils.metrics import UnbiasedExponentialMovingAverage, iqm
 
 
+@dataclass(frozen=True)
+class RawObservation:
+    local_time: datetime
+    df: pd.DataFrame
+    dli: float
+
+
 class ObservationSpec(ABC):
     name: str
     shape: tuple[int, ...]
@@ -28,12 +35,10 @@ class ObservationSpec(ABC):
         pass
 
     @abstractmethod
-    async def encode(
-        self, raw: tuple[datetime, Any, pd.DataFrame], backend: Any
-    ) -> np.ndarray:
+    async def encode(self, raw: RawObservation) -> np.ndarray:
         pass
 
-    def update_action_trace(self, action: Any, backend: Any) -> None:
+    def update_action_trace(self, action: Any) -> None:
         pass
 
 
@@ -42,11 +47,8 @@ class AreaObservation(ObservationSpec):
     name: str = "area"
     shape: tuple[int, ...] = (1,)
 
-    async def encode(
-        self, raw: tuple[datetime, Any, pd.DataFrame], backend: Any
-    ) -> np.ndarray:
-        _, _, df = raw
-        return np.array([mean_clean_area(df)])
+    async def encode(self, raw: RawObservation) -> np.ndarray:
+        return np.array([mean_clean_area(raw.df)])
 
 
 @dataclass(frozen=True)
@@ -54,11 +56,8 @@ class TimestampObservation(ObservationSpec):
     name: str = "timestamp"
     shape: tuple[int, ...] = (1,)
 
-    async def encode(
-        self, raw: tuple[datetime, Any, pd.DataFrame], backend: Any
-    ) -> np.ndarray:
-        epoch_time, _, _ = raw
-        return np.array([epoch_time.timestamp()])
+    async def encode(self, raw: RawObservation) -> np.ndarray:
+        return np.array([raw.local_time.timestamp()])
 
 
 @dataclass(frozen=True)
@@ -66,12 +65,8 @@ class OneHotTimeObservation(ObservationSpec):
     name: str = "one_hot_time"
     shape: tuple[int, ...] = (13,)
 
-    async def encode(
-        self, raw: tuple[datetime, Any, pd.DataFrame], backend: Any
-    ) -> np.ndarray:
-        epoch_time, _, _ = raw
-        local_time = epoch_time.astimezone(backend.tz)
-        return get_one_hot_time_observation(local_time)
+    async def encode(self, raw: RawObservation) -> np.ndarray:
+        return get_one_hot_time_observation(raw.local_time)
 
 
 @dataclass(frozen=True)
@@ -79,13 +74,9 @@ class TimeAreaObservation(ObservationSpec):
     name: str = "time_area"
     shape: tuple[int, ...] = (2,)
 
-    async def encode(
-        self, raw: tuple[datetime, Any, pd.DataFrame], backend: Any
-    ) -> np.ndarray:
-        epoch_time, _, df = raw
-        area = mean_clean_area(df)
-        local_time = epoch_time.astimezone(backend.tz)
-        normalized_hours = hours_normalized(local_time)
+    async def encode(self, raw: RawObservation) -> np.ndarray:
+        area = mean_clean_area(raw.df)
+        normalized_hours = hours_normalized(raw.local_time)
         normalized_area = np.clip(normalize(area, 0, 680), 0, 0.9999)
         return np.array([normalized_hours, normalized_area])
 
@@ -95,13 +86,9 @@ class TimeDLIObservation(ObservationSpec):
     name: str = "time_dli"
     shape: tuple[int, ...] = (2,)
 
-    async def encode(
-        self, raw: tuple[datetime, Any, pd.DataFrame], backend: Any
-    ) -> np.ndarray:
-        epoch_time, _, _ = raw
-        dli = np.clip(normalize(backend.dli, 0, 660), 0, 1)
-        local_time = epoch_time.astimezone(backend.tz)
-        normalized_hours = hours_normalized(local_time)
+    async def encode(self, raw: RawObservation) -> np.ndarray:
+        dli = np.clip(normalize(raw.dli, 0, 660), 0, 1)
+        normalized_hours = hours_normalized(raw.local_time)
         return np.array([normalized_hours, dli])
 
 
@@ -126,12 +113,9 @@ class DayAreaTraceObservation(ObservationSpec):
         self.normalize_values = env_params.get("normalize", self.normalize_values)
         self.start_date = backend.get_local_time().date()
 
-    async def encode(
-        self, raw: tuple[datetime, Any, pd.DataFrame], backend: Any
-    ) -> np.ndarray:
-        _, _, df = raw
-        if not df.empty:
-            area = float(iqm(jnp.asarray(df["clean_area"]), 0.25, 0.9))
+    async def encode(self, raw: RawObservation) -> np.ndarray:
+        if not raw.df.empty:
+            area = float(iqm(jnp.asarray(raw.df["clean_area"]), 0.25, 0.9))
         else:
             area = 0.0
 
@@ -142,7 +126,7 @@ class DayAreaTraceObservation(ObservationSpec):
         else:
             normalized_area = area
 
-        day = (backend.get_local_time().date() - self.start_date).days
+        day = (raw.local_time.date() - self.start_date).days
         if self.normalize_values:
             normalized_day = (day - self.day_min) / (self.day_max - self.day_min)
         else:
@@ -152,7 +136,7 @@ class DayAreaTraceObservation(ObservationSpec):
         action_trace = self.action_uema.compute()
         return np.array([normalized_day, normalized_area, *action_trace])
 
-    def update_action_trace(self, action: Any, backend: Any) -> None:
+    def update_action_trace(self, action: Any) -> None:
         assert self.action_uema is not None
         self.action_uema.update(jnp.array(action)[None])
 
@@ -235,27 +219,21 @@ class WallStatsEmbeddingObservation(ObservationSpec):
         )
         self.pca = joblib.load(pca_path)
 
-    async def encode(
-        self, raw: tuple[datetime, Any, pd.DataFrame], backend: Any
-    ) -> np.ndarray:
-        _, _, df = raw
-        local_time = backend.get_local_time()
+    async def encode(self, raw: RawObservation) -> np.ndarray:
+        local_time = raw.local_time
+        df = raw.df
         assert self.start_date is not None
         assert self.action_uema is not None
         assert self.pca is not None
 
-        wall_time = (
-            (local_time - self.start_date.astimezone(backend.tz)).total_seconds()
-            / 60
-            / 60
-            / 24
-        )
+        start = self.start_date.astimezone(local_time.tzinfo)
+        wall_time = (local_time - start).total_seconds() / 60 / 60 / 24
 
         def days_since(date):
             if date is None:
                 return 0.0
             if isinstance(date, str):
-                date = datetime.fromisoformat(date).replace(tzinfo=backend.tz)
+                date = datetime.fromisoformat(date).replace(tzinfo=local_time.tzinfo)
             return (local_time - date).total_seconds() / 60 / 60 / 24
 
         action_trace = self.action_uema.compute().flatten()
@@ -311,7 +289,7 @@ class WallStatsEmbeddingObservation(ObservationSpec):
             np.float32
         )
 
-    def update_action_trace(self, action: Any, backend: Any) -> None:
+    def update_action_trace(self, action: Any) -> None:
         assert self.action_uema is not None
         self.action_uema.update(jnp.array(action))
 

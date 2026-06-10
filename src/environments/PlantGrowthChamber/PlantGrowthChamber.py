@@ -10,6 +10,7 @@ from zoneinfo import ZoneInfo
 import numpy as np
 from PIL import Image
 
+from environments.PlantGrowthChamber.specs.observations import RawObservation
 from environments.PlantGrowthChamber.utils import create_session
 from utils.constants import BALANCED_ACTION_105, DIM_ACTION
 from utils.functions import normalize
@@ -124,7 +125,11 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                     mean_area_this_step
                 )
 
-        return self.time, self.image, self.df
+        return RawObservation(
+            local_time=self.get_local_time(),
+            df=self.df,
+            dli=self.dli,
+        )
 
     def is_daylight(self):
         local_time = self.get_local_time()
