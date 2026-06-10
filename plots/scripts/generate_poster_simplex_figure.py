@@ -331,12 +331,12 @@ def main():
     parser.add_argument(
         "--exp_path",
         type=str,
-        default="src/algorithms/nn/inac/data/JAX/output/plant-rl/continuous-v8/0/0_run",
+        default="src/algorithms/nn/inac/data/JAX/output/plant-data/mixed-v23/0/0_run",
         help="Path to experiment directory with trained model",
     )
     parser.add_argument(
         "--dataset",
-        default="plant-rl/continuous-v8",
+        default="plant-data/mixed-v23",
         type=str,
         help="Dataset name",
     )

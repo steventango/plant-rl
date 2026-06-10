@@ -188,7 +188,7 @@ def main():
     parser.add_argument(
         "--checkpoint_dir",
         type=str,
-        default="src/algorithms/nn/inac/data/JAX/output/plant-rl/continuous-v3/continuous_v0/0_run",
+        default="src/algorithms/nn/inac/data/JAX/output/plant-data/mixed-v23/0/0_run",
         help="Path to checkpoint directory (contains 'parameters' subdirectory)",
     )
     parser.add_argument(
@@ -200,7 +200,7 @@ def main():
     parser.add_argument(
         "--dataset",
         type=str,
-        default="plant-rl/continuous-v3",
+        default="plant-data/mixed-v23",
         help="Dataset name to load observations from",
     )
     parser.add_argument("--seed", type=int, default=0, help="Random seed")
