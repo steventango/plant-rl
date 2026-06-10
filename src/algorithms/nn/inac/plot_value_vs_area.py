@@ -51,7 +51,7 @@ def load_states_from_dataset(dataset):
 def get_area_normalization_params():
     """
     Get area normalization parameters from the dataset generation code.
-    These should match the values used in datasets/env.py MockEnv._get_observation()
+    These should match the values used in plant-data/env.py MockEnv._get_observation()
 
     Returns:
         clean_area_min: Minimum clean area value
