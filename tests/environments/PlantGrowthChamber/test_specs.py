@@ -63,9 +63,9 @@ def test_color_triangle_trace_action_projects_six_channel():
 
 def test_update_action_trace_decodes_before_uema_update():
     backend = MagicMock()
-    backend.get_local_time.return_value.date.return_value = __import__(
-        "datetime"
-    ).date(2025, 1, 1)
+    backend.get_local_time.return_value.date.return_value = __import__("datetime").date(
+        2025, 1, 1
+    )
     obs_spec = DayAreaTraceObservation(trace_dim=6)
     action_spec = IntensityAction()
     env = ComposedPlantGrowthChamber(backend, obs_spec, action_spec, {})
@@ -78,9 +78,9 @@ def test_update_action_trace_decodes_before_uema_update():
 
 def test_update_action_trace_handles_six_channel_night_action_for_color_triangle():
     backend = MagicMock()
-    backend.get_local_time.return_value.date.return_value = __import__(
-        "datetime"
-    ).date(2025, 1, 1)
+    backend.get_local_time.return_value.date.return_value = __import__("datetime").date(
+        2025, 1, 1
+    )
     obs_spec = DayAreaTraceObservation(trace_dim=3)
     action_spec = ColorTriangleAction()
     env = ComposedPlantGrowthChamber(backend, obs_spec, action_spec, {})

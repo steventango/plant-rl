@@ -4,7 +4,9 @@ from typing import Any
 
 import numpy as np
 
-from environments.PlantGrowthChamber.MockPlantGrowthChamber import MockPlantGrowthChamber
+from environments.PlantGrowthChamber.MockPlantGrowthChamber import (
+    MockPlantGrowthChamber,
+)
 from environments.PlantGrowthChamber.PlantGrowthChamber import PlantGrowthChamber
 from environments.PlantGrowthChamber.specs import (
     ActionSpec,

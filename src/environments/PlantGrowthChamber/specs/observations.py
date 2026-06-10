@@ -32,14 +32,14 @@ class ObservationSpec(ABC):
     shape: tuple[int, ...]
 
     def setup(self, backend: Any, env_params: dict[str, Any]) -> None:
-        pass
+        del backend, env_params
 
     @abstractmethod
     async def encode(self, raw: RawObservation) -> np.ndarray:
         pass
 
     def update_action_trace(self, action: Any) -> None:
-        pass
+        del action
 
 
 @dataclass(frozen=True)
