@@ -232,9 +232,7 @@ def self_test(results) -> bool:
             min_ppfd=40, max_ppfd=130, cum_min=6550, cum_max=6600
         ),
         "Z3 flat low-DLI": dict(min_ppfd=40, max_ppfd=78, cum_min=6540, cum_max=6570),
-        "Z4 70% ramp": dict(
-            min_ppfd=40, max_ppfd=95, cum_min=5790, cum_max=5825
-        ),
+        "Z4 70% ramp": dict(min_ppfd=40, max_ppfd=95, cum_min=5790, cum_max=5825),
         "Z5 late-biased ramp": dict(
             min_ppfd=40, max_ppfd=130, cum_min=6570, cum_max=6600
         ),
