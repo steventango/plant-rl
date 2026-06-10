@@ -7,12 +7,12 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from environments.PlantGrowthChamber.specs.base import (
-    ObservationSpec,
+from environments.PlantGrowthChamber.specs.base import ObservationSpec
+from environments.PlantGrowthChamber.utils import (
+    get_one_hot_time_observation,
     hours_normalized,
     mean_clean_area,
 )
-from environments.PlantGrowthChamber.utils import get_one_hot_time_observation
 from utils.functions import normalize
 
 
