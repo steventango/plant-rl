@@ -17,8 +17,8 @@ from environments.PlantGrowthChamber.specs.observations import (
     TimestampObservation,
     WALL_STATS_COLS,
     WallStatsEmbeddingObservation,
+    create_observation_spec,
 )
-from environments.PlantGrowthChamber.specs.registry import create_observation_spec
 
 __all__ = [
     "ACTION_SPECS",
