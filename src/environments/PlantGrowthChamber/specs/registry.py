@@ -2,16 +2,17 @@ from __future__ import annotations
 
 from typing import Any
 
-from environments.PlantGrowthChamber.specs.base import ActionSpec, ObservationSpec
-from environments.PlantGrowthChamber.specs.day_area_trace import DayAreaTraceObservation
-from environments.PlantGrowthChamber.specs.simple_observations import (
+from environments.PlantGrowthChamber.specs.actions import ActionSpec
+from environments.PlantGrowthChamber.specs.observations import (
     AreaObservation,
+    DayAreaTraceObservation,
+    ObservationSpec,
     OneHotTimeObservation,
     TimeAreaObservation,
     TimeDLIObservation,
     TimestampObservation,
+    WallStatsEmbeddingObservation,
 )
-from environments.PlantGrowthChamber.specs.wall_stats import WallStatsEmbeddingObservation
 
 
 def create_observation_spec(

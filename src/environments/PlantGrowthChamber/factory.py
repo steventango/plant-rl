@@ -52,7 +52,8 @@ class ComposedPlantGrowthChamber(BaseAsyncEnvironment):
         return reward, encoded, terminal, info
 
     def update_action_trace(self, action: Any) -> None:
-        self._observation_spec.update_action_trace(action, self._backend)
+        trace_action = self._action_spec.trace_action(action, self._backend)
+        self._observation_spec.update_action_trace(trace_action, self._backend)
 
     async def close(self):
         await self._backend.close()

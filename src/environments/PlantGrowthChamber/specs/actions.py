@@ -1,12 +1,26 @@
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
 
-from environments.PlantGrowthChamber.specs.base import ActionSpec
 from utils.constants import BALANCED_ACTION_105, BLUE_ACTION, DIM_ACTION, RED_ACTION
+
+
+class ActionSpec(ABC):
+    name: str
+    n_actions: int
+    trace_dim: int = 6
+
+    @abstractmethod
+    def decode(self, action: Any, backend: Any) -> np.ndarray:
+        pass
+
+    def trace_action(self, action: Any, backend: Any) -> np.ndarray:
+        """Convert an action to trace_dim for UEMA updates."""
+        return self.decode(action, backend)
 
 
 @dataclass(frozen=True)
@@ -73,6 +87,17 @@ class ColorTriangleAction(ActionSpec):
             return action
         basis = np.column_stack([RED_ACTION, BALANCED_ACTION_105, BLUE_ACTION])
         return basis @ action
+
+    def trace_action(self, action: Any, backend: Any) -> np.ndarray:
+        action = np.asarray(action, dtype=np.float64)
+        if action.shape[0] == self.trace_dim:
+            return action
+        if action.shape[0] == 6:
+            basis = np.column_stack([RED_ACTION, BALANCED_ACTION_105, BLUE_ACTION])
+            return np.linalg.lstsq(basis, action, rcond=None)[0]
+        raise ValueError(
+            f"Expected action with {self.trace_dim} or 6 elements, got {action.shape[0]}"
+        )
 
 
 ACTION_SPECS: dict[str, ActionSpec] = {

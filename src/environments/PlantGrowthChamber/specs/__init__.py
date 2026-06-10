@@ -1,25 +1,24 @@
 from environments.PlantGrowthChamber.specs.actions import (
     ACTION_SPECS,
+    ActionSpec,
     ColorAction,
     ColorTriangleAction,
     DiscreteAction,
     IntensityAction,
     PPFD6Action,
 )
-from environments.PlantGrowthChamber.specs.base import ActionSpec, ObservationSpec
-from environments.PlantGrowthChamber.specs.day_area_trace import DayAreaTraceObservation
-from environments.PlantGrowthChamber.specs.registry import create_observation_spec
-from environments.PlantGrowthChamber.specs.simple_observations import (
+from environments.PlantGrowthChamber.specs.observations import (
     AreaObservation,
+    DayAreaTraceObservation,
+    ObservationSpec,
     OneHotTimeObservation,
     TimeAreaObservation,
     TimeDLIObservation,
     TimestampObservation,
-)
-from environments.PlantGrowthChamber.specs.wall_stats import (
     WALL_STATS_COLS,
     WallStatsEmbeddingObservation,
 )
+from environments.PlantGrowthChamber.specs.registry import create_observation_spec
 
 __all__ = [
     "ACTION_SPECS",
