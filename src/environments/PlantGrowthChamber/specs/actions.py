@@ -105,8 +105,7 @@ class ContinuousColorAction(ActionSpec):
     """Scalar [-1, 1] color action: -1 = all-blue, 0 = balanced, +1 = all-red.
 
     Maps linearly between BLUE_ACTION, BALANCED_ACTION_105, and RED_ACTION
-    at a fixed 105 ppfd total, matching the PlantGrowthChamberColor convention
-    from plant-data-collection.
+    at a fixed 105 ppfd total
     """
 
     name: str = "continuous_color"
