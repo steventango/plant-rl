@@ -1,0 +1,20 @@
+{
+    "agent": "Schedule9",
+    "problem": "PlantGrowthChamber",
+    "total_steps": 43200,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": "alliance-zone09",
+            "timezone": "Etc/GMT-2",
+            "action": "continuous_color"
+        },
+        "timezone": "Etc/GMT-2",
+        "enforce_night": true,
+        "flash_photography": true,
+        "action_timestep": 660,
+        "action_days": [1, 5, 10],
+        "action_inputs": [1.0, -1.0, -1.0],
+        "local_start_date": "2026-06-01"
+    }
+}
