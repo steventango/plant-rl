@@ -14,6 +14,7 @@
         "flash_photography": true,
         "action_timestep": 660,
         "local_start_date": "2026-06-01",
-        "actions": "[-1.0, -1.0, -1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]"
+        "action_days": [1, 5, 10],
+        "action_inputs": [-1.0, 1.0, 1.0]
     }
 }
