@@ -3,6 +3,7 @@ from typing import Type
 from algorithms.BaseAgent import BaseAgent
 from algorithms.BernoulliAgent import BernoulliAgent
 from algorithms.ConstantAgent import ConstantAgent
+from algorithms.IncubatorAgent import IncubatorAgent
 from algorithms.ContinuousRandomAgent import ContinuousRandomAgent
 from algorithms.ContinuousRandomSimplexAgent import ContinuousRandomSimplexAgent
 from algorithms.DirichletAgent import DirichletAgent
@@ -72,6 +73,9 @@ def getAgent(name) -> Type[BaseAgent]:
     """
     if name == "SoftmaxAC":
         return SoftmaxAC
+
+    if name.startswith("Incubator"):
+        return IncubatorAgent
 
     if name.startswith("Constant"):
         return ConstantAgent
