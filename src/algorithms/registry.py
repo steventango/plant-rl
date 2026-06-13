@@ -16,6 +16,7 @@ from algorithms.nn.GreedyAC.GreedyACDiscrete import GreedyAC as GreedyACDiscrete
 from algorithms.nn.GreedyAC.GreedyACContinuous import GreedyAC as GreedyACContinuous
 from algorithms.nn.inac.InAC import InAC
 from algorithms.PoissonAgent import PoissonAgent
+from algorithms.ScheduleAgent import ScheduleAgent
 from algorithms.SequenceAgent import SequenceAgent
 from algorithms.SpreadsheetAgent import SpreadsheetAgent
 from algorithms.tc.batch.ESARSA import ESARSA as BatchESARSA
@@ -87,6 +88,9 @@ def getAgent(name) -> Type[BaseAgent]:
 
     if name.startswith("Dirichlet"):
         return DirichletAgent
+
+    if name.startswith("Schedule"):
+        return ScheduleAgent
 
     if name.startswith("Sequence"):
         return SequenceAgent

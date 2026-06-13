@@ -100,10 +100,36 @@ class ColorTriangleAction(ActionSpec):
         )
 
 
+@dataclass(frozen=True)
+class ContinuousColorAction(ActionSpec):
+    """Scalar [-1, 1] color action: -1 = all-blue, 0 = balanced, +1 = all-red.
+
+    Maps linearly between BLUE_ACTION, BALANCED_ACTION_105, and RED_ACTION
+    at a fixed 105 ppfd total, matching the PlantGrowthChamberColor convention
+    from plant-data-collection.
+    """
+
+    name: str = "continuous_color"
+    n_actions: int = 1
+    trace_dim: int = 6
+
+    def decode(self, action: Any) -> np.ndarray:
+        if isinstance(action, np.ndarray) and action.ndim > 0:
+            return np.asarray(action, dtype=np.float64)
+        a = float(action)
+        if a == 0.0:
+            return BALANCED_ACTION_105.copy()
+        if a < 0.0:
+            abs_a = abs(a)
+            return (1.0 - abs_a) * BALANCED_ACTION_105 + abs_a * BLUE_ACTION
+        return (1.0 - a) * BALANCED_ACTION_105 + a * RED_ACTION
+
+
 ACTION_SPECS: dict[str, ActionSpec] = {
     "ppfd6": PPFD6Action(),
     "intensity": IntensityAction(),
     "discrete": DiscreteAction(),
     "color": ColorAction(),
     "color_triangle": ColorTriangleAction(),
+    "continuous_color": ContinuousColorAction(),
 }
