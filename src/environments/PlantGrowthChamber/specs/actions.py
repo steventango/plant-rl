@@ -116,18 +116,24 @@ class ContinuousColorAction(ActionSpec):
 
     name: str = "continuous_color"
     n_actions: int = 1
-    trace_dim: int = 6
 
     def decode(self, action: Any) -> np.ndarray:
-        if isinstance(action, np.ndarray) and action.ndim > 0:
-            return np.asarray(action, dtype=np.float64)
-        a = float(action)
+        arr = np.asarray(action, dtype=np.float64).ravel()
+        if arr.shape[0] == 6:
+            return arr
+        a = float(arr[0])
         if a == 0.0:
             return BALANCED_ACTION_105.copy()
         if a < 0.0:
             abs_a = abs(a)
             return (1.0 - abs_a) * BALANCED_ACTION_105 + abs_a * BLUE_ACTION
         return (1.0 - a) * BALANCED_ACTION_105 + a * RED_ACTION
+
+    def trace_action(self, action: Any) -> np.ndarray:
+        arr = np.asarray(action, dtype=np.float64).ravel()
+        if arr.shape[0] == 1:
+            return arr
+        return arr[:1]
 
 
 ACTION_SPECS: dict[str, ActionSpec] = {

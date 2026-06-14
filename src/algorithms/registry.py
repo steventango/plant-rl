@@ -17,6 +17,7 @@ from algorithms.nn.GreedyAC.GreedyACContinuous import GreedyAC as GreedyACContin
 from algorithms.nn.inac.InAC import InAC
 from algorithms.PoissonAgent import PoissonAgent
 from algorithms.SequenceAgent import SequenceAgent
+from algorithms.PPOAgent import PPOAgent
 from algorithms.SpreadsheetAgent import SpreadsheetAgent
 from algorithms.tc.batch.ESARSA import ESARSA as BatchESARSA
 from algorithms.tc.batch.QL import QL as BatchQL
@@ -91,6 +92,9 @@ def getAgent(name) -> Type[BaseAgent]:
 
     if name.startswith("Sequence"):
         return SequenceAgent
+
+    if name.startswith("PPO"):
+        return PPOAgent
 
     if name.startswith("Spreadsheet"):
         return SpreadsheetAgent

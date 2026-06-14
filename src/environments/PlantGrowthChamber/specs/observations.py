@@ -304,6 +304,61 @@ class WallStatsEmbeddingObservation(ObservationSpec):
         self.action_uema.update(jnp.array(action))
 
 
+class DayAreaColorTraceObservation(ObservationSpec):
+    """Observation = [normalized_day, normalized_area, red_trace, blue_trace].
+
+    red_trace  = lam * red_trace  + (1 - lam) * max(action,  0)
+    blue_trace = lam * blue_trace + (1 - lam) * max(-action, 0)
+
+    Shape is (4,).  lam is read from env_params["lam"] at setup time.
+    """
+
+    def __init__(self, normalize_values: bool = True):
+        self.name = "day_area_color_trace"
+        self.shape = (4,)
+        self.normalize_values = normalize_values
+        self.lam: float = 0.9
+        self.red_trace: float = 0.0
+        self.blue_trace: float = 0.0
+        self.start_date = None
+        self.day_min = 0.0
+        self.day_max = 14.0
+        self.clean_area_min = 14.3125
+        self.clean_area_max = 1211.0
+
+    def setup(self, backend: Any, env_params: dict[str, Any]) -> None:
+        self.lam = env_params.get("action_trace_lambda", 0.9)
+        self.normalize_values = env_params.get("normalize", self.normalize_values)
+
+    async def encode(self, raw: RawObservation) -> np.ndarray:
+        if self.start_date is None:
+            self.start_date = raw.local_time.date()
+        if not raw.df.empty:
+            area = float(iqm(jnp.asarray(raw.df["clean_area"]), 0.25, 0.9))
+        else:
+            area = 0.0
+
+        if self.normalize_values:
+            normalized_area = (area - self.clean_area_min) / (
+                self.clean_area_max - self.clean_area_min
+            )
+        else:
+            normalized_area = area
+
+        day = (raw.local_time.date() - self.start_date).days
+        if self.normalize_values:
+            normalized_day = (day - self.day_min) / (self.day_max - self.day_min)
+        else:
+            normalized_day = day
+
+        return np.array([normalized_day, normalized_area, self.red_trace, self.blue_trace])
+
+    def update_action_trace(self, action: Any) -> None:
+        a = float(np.asarray(action).ravel()[0])
+        self.red_trace  = self.lam * self.red_trace  + (1 - self.lam) * max(a,  0)
+        self.blue_trace = self.lam * self.blue_trace + (1 - self.lam) * max(-a, 0)
+
+
 def create_observation_spec(
     name: str, action_spec: ActionSpec, env_params: dict[str, Any]
 ) -> ObservationSpec:
@@ -321,6 +376,8 @@ def create_observation_spec(
         return TimeDLIObservation()
     if name == "day_area_trace":
         return DayAreaTraceObservation(trace_dim=action_spec.trace_dim)
+    if name == "day_area_color_trace":
+        return DayAreaColorTraceObservation()
     if name == "wall_stats_embedding":
         return WallStatsEmbeddingObservation(trace_dim=action_spec.trace_dim)
     raise ValueError(f"Unknown observation spec: {name}")

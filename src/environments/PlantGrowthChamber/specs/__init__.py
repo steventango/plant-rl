@@ -10,6 +10,7 @@ from environments.PlantGrowthChamber.specs.actions import (
 )
 from environments.PlantGrowthChamber.specs.observations import (
     AreaObservation,
+    DayAreaColorTraceObservation,
     DayAreaTraceObservation,
     ObservationSpec,
     OneHotTimeObservation,
@@ -29,6 +30,7 @@ __all__ = [
     "ColorAction",
     "ColorTriangleAction",
     "ContinuousColorAction",
+    "DayAreaColorTraceObservation",
     "DayAreaTraceObservation",
     "DiscreteAction",
     "IntensityAction",

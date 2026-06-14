@@ -55,6 +55,7 @@ dependencies = [
     "plant-models",
     "ml-instrument>=0.4.2",
     "scikit-learn==1.7.2",
+    "stable-baselines3>=2.0.0",
     "python-kasa>=0.10.2",
     "orbax>=0.1.9",
 ]
