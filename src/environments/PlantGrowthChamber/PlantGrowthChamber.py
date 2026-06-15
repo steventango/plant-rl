@@ -17,7 +17,7 @@ from environments.PlantGrowthChamber.utils import (
     create_cv_session,
     create_image_session,
     GET_OBSERVATION_TIMEOUT_S,
-    IMAGE_BUDGET_S,
+    LAN_BUDGET_S,
 )
 from utils.constants import BALANCED_ACTION_105, DIM_ACTION
 from utils.functions import normalize
@@ -135,9 +135,18 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         )
 
     async def _get_observation_inner(self):
-        # get_power has no dependency on the image, so overlap it with the
-        # camera fetch; get_plant_stats needs self.image and runs after.
-        await asyncio.gather(self.get_image(), self.get_power())
+        # Cameras and power run in parallel under one LAN budget; CV runs after.
+        try:
+            await asyncio.wait_for(
+                asyncio.gather(self.get_image(), self.get_power()),
+                timeout=LAN_BUDGET_S,
+            )
+        except Exception:
+            logger.warning(
+                "LAN observation (cameras + power) exceeded %ss budget",
+                LAN_BUDGET_S,
+                exc_info=True,
+            )
         if "left" in self.images and "right" in self.images:
             self.image = np.hstack(
                 (np.array(self.images["left"]), np.array(self.images["right"]))
@@ -276,14 +285,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 self._fetch_image(session, self.zone.camera_right_url, "right")
             )
         if tasks:
-            try:
-                await asyncio.wait_for(asyncio.gather(*tasks), timeout=IMAGE_BUDGET_S)
-            except Exception:
-                logger.warning(
-                    "Camera fetch failed within %ss budget, re-using previous images",
-                    IMAGE_BUDGET_S,
-                    exc_info=True,
-                )
+            await asyncio.gather(*tasks)
 
     async def _fetch_image(self, session, url, side):
         try:
