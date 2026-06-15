@@ -51,9 +51,7 @@ def test_schedule_round_trip():
 
 
 def test_schedule_bad_timezone():
-    response = client.put(
-        "/schedule", json={"timezone": "Not/AZone", "entries": []}
-    )
+    response = client.put("/schedule", json={"timezone": "Not/AZone", "entries": []})
     assert response.status_code == 422
 
 

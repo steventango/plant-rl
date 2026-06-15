@@ -340,7 +340,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             logger.info(f"Set fallback schedule on {schedule_url}: {payload_entries}")
             return True
         except Exception:
-            logger.exception(f"Error: failed to set fallback schedule on {schedule_url}")
+            logger.exception(
+                f"Error: failed to set fallback schedule on {schedule_url}"
+            )
             return False
 
     async def start(self):

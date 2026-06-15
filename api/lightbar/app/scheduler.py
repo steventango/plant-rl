@@ -92,7 +92,9 @@ def entries_due_between(
 class Scheduler:
     """Holds the current schedule and applies it on a background daemon thread."""
 
-    def __init__(self, get_lightbar, schedule_path=SCHEDULE_PATH, tick_seconds=TICK_SECONDS):
+    def __init__(
+        self, get_lightbar, schedule_path=SCHEDULE_PATH, tick_seconds=TICK_SECONDS
+    ):
         self._get_lightbar = get_lightbar
         self._schedule_path = Path(schedule_path)
         self._tick_seconds = tick_seconds
@@ -235,4 +237,6 @@ class Scheduler:
             self._get_lightbar().step(np.array(entry["action"]))
             logger.info("scheduler applied entry time=%s", entry.get("time"))
         except Exception:
-            logger.exception("scheduler failed to apply entry time=%s", entry.get("time"))
+            logger.exception(
+                "scheduler failed to apply entry time=%s", entry.get("time")
+            )
