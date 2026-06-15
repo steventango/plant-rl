@@ -128,6 +128,12 @@ class MockPlantGrowthChamber(PlantGrowthChamber):
         logger.debug(f"action: {action}")
         self.last_action = action
 
+    async def put_schedule(self, entries) -> bool:
+        # No hardware/network in offline replay; report success so the wrapper
+        # marks the fallback set and does not retry every step.
+        logger.debug(f"put_schedule: {entries}")
+        return True
+
     async def sleep_until(self, wake_time: datetime):
         while (
             self.time_index + 1 < len(self.unique_wall_times)

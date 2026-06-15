@@ -278,16 +278,18 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             )
             # Keep previous image if available, otherwise this side will be missing
 
-    async def put_action(self, action):
-        """Send action to the lightbar using aiohttp with retry logic"""
-        last_calibrated_action = (
+    def calibrate_action(self, action):
+        """Calibrate a raw action and clip it to the lightbar's [.., 1] range."""
+        calibrated = (
             self.zone.calibration.get_calibrated_action(action)
             if self.zone.calibration
             else action
         )
+        return np.clip(calibrated, None, 1)
 
-        # clip action to have max value 1
-        last_calibrated_action = np.clip(last_calibrated_action, None, 1)
+    async def put_action(self, action):
+        """Send action to the lightbar using aiohttp with retry logic"""
+        last_calibrated_action = self.calibrate_action(action)
         action_to_send = np.tile(last_calibrated_action, (2, 1))
 
         try:
@@ -311,6 +313,37 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                     f"Warning: {self.zone.lightbar_url} after retries, last action was identical",
                     exc_info=True,
                 )
+
+    async def put_schedule(self, entries) -> bool:
+        """Push an on-device fallback schedule to the lightbar.
+
+        ``entries`` is a list of ``(time_str "HH:MM", raw 6-channel action)``. Each
+        action is calibrated and tiled exactly like ``put_action`` so the device
+        stores the same calibrated ``[2, 6]`` array it would receive live. Returns
+        True when the schedule was delivered (or there is nothing to send), False
+        when the PUT failed, so the caller can retry instead of assuming success.
+        Failures are logged, never raised (same posture as ``put_action``).
+        """
+        schedule_url = self.zone.schedule_url
+        if not schedule_url:
+            return True
+        payload_entries = []
+        for time_str, action in entries:
+            calibrated = self.calibrate_action(np.asarray(action, dtype=float))
+            payload_entries.append(
+                {"time": time_str, "action": np.tile(calibrated, (2, 1)).tolist()}
+            )
+        body = {"timezone": self.timezone, "entries": payload_entries}
+        try:
+            session = await self._ensure_action_session()
+            await session.put(schedule_url, json=body, timeout=5)
+            logger.info(f"Set fallback schedule on {schedule_url}: {payload_entries}")
+            return True
+        except Exception:
+            logger.exception(
+                f"Error: failed to set fallback schedule on {schedule_url}"
+            )
+            return False
 
     async def start(self):
         logger.debug(f"Local time: {self.get_local_time()}. Step 0")

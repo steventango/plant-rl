@@ -33,6 +33,44 @@ def test_action_latest():
     }
 
 
+def test_schedule_round_trip():
+    entries = [
+        {"time": "08:59", "action": (np.ones((2, 6)) * 0.1).tolist()},
+        {"time": "21:00", "action": np.zeros((2, 6)).tolist()},
+    ]
+    response = client.put(
+        "/schedule", json={"timezone": "Etc/GMT-2", "entries": entries}
+    )
+    assert response.status_code == 200
+
+    response = client.get("/schedule")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["timezone"] == "Etc/GMT-2"
+    assert data["entries"] == entries
+
+
+def test_schedule_bad_timezone():
+    response = client.put("/schedule", json={"timezone": "Not/AZone", "entries": []})
+    assert response.status_code == 422
+
+
+def test_schedule_delete():
+    client.put(
+        "/schedule",
+        json={
+            "timezone": "Etc/GMT-2",
+            "entries": [{"time": "08:59", "action": np.zeros((2, 6)).tolist()}],
+        },
+    )
+    response = client.delete("/schedule")
+    assert response.status_code == 200
+
+    data = client.get("/schedule").json()
+    assert data["timezone"] is None
+    assert data["entries"] == []
+
+
 def test_action():
     response = client.put("/action", json={"array": np.ones((2, 6)).tolist()})
     assert response.status_code == 200

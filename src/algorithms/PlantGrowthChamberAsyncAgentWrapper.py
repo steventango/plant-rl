@@ -16,6 +16,12 @@ from utils.RlGlue.agent import AsyncAgentWrapper
 
 logger = logging.getLogger("plant_rl.PlantGrowthChamberAsyncAgentWrapper")
 
+# Single source of truth for the flash/fallback photoperiod boundaries (local
+# time). Used by both the live flash-photography enforcement and the on-device
+# fallback schedule so the two can never drift apart.
+PHOTOPERIOD_ON = (8, 59)  # lights on; 1-min flash at BALANCED_ACTION_40
+PHOTOPERIOD_OFF = (21, 0)  # lights off
+
 
 class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
     def __init__(self, agent: BaseAgent, env=None):
@@ -27,6 +33,10 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
         self.agent_started = False
         self.enforce_night = agent.params.get("enforce_night", True)
         self.flash_photography = agent.params.get("flash_photography", False)
+        # Push an on-device fallback schedule to the lightbar at agent start so the
+        # photoperiod still turns on/off on time if the network to the device drops.
+        self.fallback_schedule = agent.params.get("fallback_schedule", True)
+        self._fallback_set = False
         # In flash mode the daytime block starts at 09:00; in normal mode dawn
         # finishes at 09:30 and the agent is first polled then.
         self.poll_at_minute = 0 if self.flash_photography else 30
@@ -118,6 +128,7 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
         if extra is None:
             extra = {}
         self.update_time_from_extra(extra)
+        await self.maybe_set_fallback_schedule()
 
         if not self.maybe_enforce_action():
             logger.debug(f"Starting agent at {self.env_local_time}")
@@ -130,6 +141,35 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
                 self.env.update_action_trace(self.last_action_info[0])
         return self.last_action_info
 
+    async def maybe_set_fallback_schedule(self) -> None:
+        """Push the on-device fallback schedule to the lightbar once, at start.
+
+        Mirrors the flash-photography photoperiod as a coarse square wave: lights
+        on at 08:59 (40 PPFD) and off at 21:00, in the configured timezone. The
+        device fires these transitions itself, guaranteeing the photoperiod even
+        when the network to the device is down.
+        """
+        if not self.fallback_schedule or self._fallback_set:
+            return
+        if self.env is None or not hasattr(self.env, "put_schedule"):
+            return
+        on_h, on_m = PHOTOPERIOD_ON
+        off_h, off_m = PHOTOPERIOD_OFF
+        try:
+            # Only mark as set once the device actually accepted the schedule,
+            # otherwise retry on the next step (a transient network drop at start
+            # must not permanently disable the fallback).
+            delivered = await self.env.put_schedule(
+                [
+                    (f"{on_h:02d}:{on_m:02d}", BALANCED_ACTION_40),
+                    (f"{off_h:02d}:{off_m:02d}", np.zeros(6)),
+                ]
+            )
+            if delivered:
+                self._fallback_set = True
+        except Exception:
+            logger.exception("Failed to set fallback lighting schedule")
+
     def maybe_enforce_flash_photography_action(self) -> bool:
         """Flash-photography override of maybe_enforce_action.
 
@@ -141,11 +181,10 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
         assert self.env_local_time is not None, (
             "Environment local time must be set before flash-mode enforcement."
         )
-        h = self.env_local_time.hour
-        m = self.env_local_time.minute
-        if 9 <= h <= 20:
+        now = (self.env_local_time.hour, self.env_local_time.minute)
+        if PHOTOPERIOD_ON < now < PHOTOPERIOD_OFF:
             return False
-        if h == 8 and m == 59:
+        if now == PHOTOPERIOD_ON:
             self.last_action_info = (BALANCED_ACTION_40, {})
             logger.debug(f"Flash photography capture at {self.env_local_time}")
             return True
@@ -179,6 +218,8 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
         self, reward: float, observation: Any, extra: dict[str, Any]
     ) -> tuple[Any, dict[str, Any]]:
         self.update_time_from_extra(extra)
+        # Retry until the device accepts it; a no-op once _fallback_set is True.
+        await self.maybe_set_fallback_schedule()
 
         if self.maybe_enforce_action():
             return self.last_action_info
@@ -231,6 +272,7 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
         state = {
             "__args": (self.agent, self.env),
             "agent_started": self.agent_started,
+            "fallback_set": self._fallback_set,
             "last_action_time": self.last_action_time.timestamp()
             if self.last_action_time
             else None,
@@ -245,6 +287,7 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
     def __setstate__(self, state):
         self.__init__(*state["__args"])
         self.agent_started = state.get("agent_started", False)
+        self._fallback_set = state.get("fallback_set", False)
 
         # Restore datetime objects from timestamps
         if state.get("last_action_time") is not None:
