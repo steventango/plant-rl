@@ -23,6 +23,12 @@ async def _create_session(*, attempts: int, total_timeout: float) -> RetryClient
     )
 
 
+CV_REQUEST_TIMEOUT_S = 45
+CAMERA_REQUEST_TIMEOUT_S = 5
+# Cameras run in parallel before CV; keep headroom for that phase.
+GET_OBSERVATION_TIMEOUT_S = CV_REQUEST_TIMEOUT_S + CAMERA_REQUEST_TIMEOUT_S
+
+
 async def create_action_session() -> RetryClient:
     """Fast-fail session for LAN endpoints (lightbar PUT and camera GET).
 
@@ -38,13 +44,13 @@ async def create_action_session() -> RetryClient:
 async def create_cv_session() -> RetryClient:
     """Generous-timeout session for the CV pipeline only.
 
-    CV detect/propagate can take ~40 s when multiple chambers compete for
+    CV detect/propagate can take ~45 s when multiple chambers compete for
     one CV server, so per-request timeout must accommodate that. No retries
     within an env.step (attempts=1) - if CV doesn't respond, the previous
     frame's df is reused via the asyncio.wait_for fallback on
     get_observation.
     """
-    return await _create_session(attempts=1, total_timeout=50)
+    return await _create_session(attempts=1, total_timeout=CV_REQUEST_TIMEOUT_S)
 
 
 def get_one_hot_time_observation(local_time: datetime):

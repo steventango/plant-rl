@@ -12,8 +12,10 @@ from PIL import Image
 
 from environments.PlantGrowthChamber.specs.observations import RawObservation
 from environments.PlantGrowthChamber.utils import (
+    CAMERA_REQUEST_TIMEOUT_S,
     create_action_session,
     create_cv_session,
+    GET_OBSERVATION_TIMEOUT_S,
 )
 from utils.constants import BALANCED_ACTION_105, DIM_ACTION
 from utils.functions import normalize
@@ -46,7 +48,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.time = self.get_time()
         # Two aiohttp sessions: fast-fail for LAN endpoints (lightbar +
         # cameras), generous-timeout for the CV pipeline. They have very
-        # different latency profiles (lightbar ~400 ms, CV ~40 s under load)
+        # different latency profiles (lightbar ~400 ms, CV ~45 s under load)
         # so a shared retry budget can't serve both without one or the other
         # blowing the env step's 60 s/cycle budget.
         self.action_session = None
@@ -107,13 +109,18 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     async def get_raw_observation(self):
         self.time = self.get_time()
-        # Hard 50 s ceiling so put_action(<=5s) + get_observation(<=50s) fits
-        # inside the env's 60 s/cycle budget (sleep_until_next_step is elastic
-        # but desyncs if active work exceeds 60 s).
+        # Hard ceiling so put_action(<=5s) + get_observation fits inside the
+        # env's 60 s/cycle budget (sleep_until_next_step is elastic but
+        # desyncs if active work exceeds 60 s).
         try:
-            await asyncio.wait_for(self._get_observation_inner(), timeout=50)
+            await asyncio.wait_for(
+                self._get_observation_inner(), timeout=GET_OBSERVATION_TIMEOUT_S
+            )
         except asyncio.TimeoutError:
-            logger.warning("get_observation exceeded 50 s; reusing previous frame/df")
+            logger.warning(
+                "get_observation exceeded %s s; reusing previous frame/df",
+                GET_OBSERVATION_TIMEOUT_S,
+            )
         return RawObservation(
             local_time=self.get_local_time(),
             df=self.df,
@@ -269,7 +276,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
     async def _fetch_image(self, session, url, side):
         """Helper method to fetch a single image with retry logic"""
         try:
-            async with session.get(url, timeout=10) as response:
+            async with session.get(
+                url, timeout=CAMERA_REQUEST_TIMEOUT_S
+            ) as response:
                 image_data = await response.read()
                 self.images[side] = Image.open(io.BytesIO(image_data))
                 logger.debug(f"Successfully fetched image from {url}")
