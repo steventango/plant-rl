@@ -6,10 +6,10 @@
     "metaParameters": {
         "environment": {
             "zone": "alliance-zone08",
-            "timezone": "Etc/GMT-2",
+            "timezone": "America/Edmonton",
             "action": "intensity"
         },
-        "timezone": "Etc/GMT-2",
+        "timezone": "America/Edmonton",
         "enforce_night": true,
         "flash_photography": true,
         "action_timestep": 720,
