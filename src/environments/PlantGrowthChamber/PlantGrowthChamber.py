@@ -166,13 +166,14 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             self.df = pd.DataFrame()
             return
 
-        # Check update frequency (every 5 minutes or if never run)
+        # Run on 5-minute clock boundaries or if the last run is overdue.
         now = self.get_time()
-        if (
-            self.last_cv_time is not None
-            and (now - self.last_cv_time) < self.cv_interval
-        ):
-            # Not time to update yet, keep existing df/image or use empty if none
+        on_boundary = now.minute % 5 == 0
+        overdue = (
+            self.last_cv_time is None
+            or (now - self.last_cv_time) > self.cv_interval
+        )
+        if not (on_boundary or overdue):
             return
 
         session = await self._ensure_cv_session()
