@@ -46,7 +46,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.time = self.get_time()
         # Two aiohttp sessions: fast-fail for LAN endpoints (lightbar +
         # cameras), generous-timeout for the CV pipeline. They have very
-        # different latency profiles (lightbar ~400 ms, CV ~30 s under load)
+        # different latency profiles (lightbar ~400 ms, CV ~40 s under load)
         # so a shared retry budget can't serve both without one or the other
         # blowing the env step's 60 s/cycle budget.
         self.action_session = None

@@ -41,7 +41,7 @@ class CVPipelineClient:
             async with session.post(
                 f"{PIPELINE_URL}/pipeline/detect",
                 json=payload,
-                timeout=aiohttp.ClientTimeout(total=35),
+                timeout=aiohttp.ClientTimeout(total=40),
             ) as resp:
                 resp.raise_for_status()
                 return await resp.json()
@@ -68,7 +68,7 @@ class CVPipelineClient:
             async with session.post(
                 f"{PIPELINE_URL}/pipeline/propagate",
                 json=payload,
-                timeout=aiohttp.ClientTimeout(total=35),
+                timeout=aiohttp.ClientTimeout(total=40),
             ) as resp:
                 resp.raise_for_status()
                 return await resp.json()

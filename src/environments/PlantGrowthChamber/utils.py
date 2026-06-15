@@ -38,13 +38,13 @@ async def create_action_session() -> RetryClient:
 async def create_cv_session() -> RetryClient:
     """Generous-timeout session for the CV pipeline only.
 
-    CV detect/propagate can take ~30 s when multiple chambers compete for
+    CV detect/propagate can take ~40 s when multiple chambers compete for
     one CV server, so per-request timeout must accommodate that. No retries
     within an env.step (attempts=1) - if CV doesn't respond, the previous
     frame's df is reused via the asyncio.wait_for fallback on
     get_observation.
     """
-    return await _create_session(attempts=1, total_timeout=45)
+    return await _create_session(attempts=1, total_timeout=50)
 
 
 def get_one_hot_time_observation(local_time: datetime):
