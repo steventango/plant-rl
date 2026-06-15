@@ -16,6 +16,17 @@ class Zone:
     calibration: Calibration | None
     smart_plug_host: str | None = None
 
+    @property
+    def schedule_url(self) -> str | None:
+        """The lightbar's ``/schedule`` endpoint, derived from its ``/action`` URL.
+
+        Returns None when there is no lightbar URL or it does not follow the
+        ``.../action`` convention, so callers skip rather than POST to a wrong URL.
+        """
+        if not self.lightbar_url or not self.lightbar_url.endswith("/action"):
+            return None
+        return self.lightbar_url[: -len("/action")] + "/schedule"
+
 
 def deserialize_zone(zone: dict) -> Zone:
     calibration_data = zone.get("calibration")
