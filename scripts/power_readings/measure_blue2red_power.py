@@ -51,6 +51,10 @@ async def set_lightbar(
         resp.raise_for_status()
 
 
+async def reset_lightbar(session: aiohttp.ClientSession, url: str) -> None:
+    await set_lightbar(session, url, np.zeros(6))
+
+
 async def read_power_avg(
     client: SmartPlugClient, host: str, n: int, interval: float
 ) -> float | None:
@@ -66,13 +70,13 @@ async def read_power_avg(
 
 async def measure_zone(
     zone_id: str,
+    zone,
     client: SmartPlugClient,
     session: aiohttp.ClientSession,
     wait: float,
     reads: int,
     dry_run: bool,
 ) -> list[float | None]:
-    zone = load_zone_from_config(zone_id)
     if zone.lightbar_url is None:
         print(f"  [{zone_id}] No lightbar_url — skipping")
         return [None] * 21
@@ -133,11 +137,18 @@ async def main(zone_ids: list[str], wait: float, reads: int, dry_run: bool) -> N
     async with aiohttp.ClientSession(timeout=timeout) as session:
         for zone_id in zone_ids:
             print(f"\n=== {zone_id} ===")
+            zone = load_zone_from_config(zone_id)
             power_readings = await measure_zone(
-                zone_id, client, session, wait, reads, dry_run
+                zone_id, zone, client, session, wait, reads, dry_run
             )
             if not dry_run:
                 append_to_csv(timestamp, zone_id, power_readings)
+                if zone.lightbar_url is not None:
+                    try:
+                        await reset_lightbar(session, zone.lightbar_url)
+                        print(f"  [{zone_id}] Light turned off")
+                    except Exception as e:
+                        print(f"  [{zone_id}] Failed to turn light off: {e}")
 
     print("\nDone.")
 
