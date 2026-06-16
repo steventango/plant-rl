@@ -2,8 +2,8 @@
 Sweep the lightbar through 21 color steps (BLUE → BALANCED → RED) for each
 alliance zone and append smartplug power readings to a CSV file.
 
-Usage (from repo root):
-    KASA_USERNAME=<u> KASA_PASSWORD=<p> uv run python scripts/power_readings/measure_blue2red_power.py
+Usage (from repo root, with KASA_USERNAME/KASA_PASSWORD set in .env):
+    uv run python scripts/power_readings/measure_blue2red_power.py
     uv run python scripts/power_readings/measure_blue2red_power.py --zones 1,2 --wait 5 --reads 3
     uv run python scripts/power_readings/measure_blue2red_power.py --dry-run
 
@@ -11,6 +11,7 @@ Output: scripts/power_readings/blue2red_power.csv
     Columns: timestamp, zone, scalar_action, power_w
     New runs append rows; existing data is never overwritten.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -28,7 +29,10 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from environments.PlantGrowthChamber.SmartPlugClient import SmartPlugClient
 from environments.PlantGrowthChamber.specs.actions import ContinuousColorAction
-from environments.PlantGrowthChamber.zones import ZONE_IDENTIFIERS, load_zone_from_config
+from environments.PlantGrowthChamber.zones import (
+    ZONE_IDENTIFIERS,
+    load_zone_from_config,
+)
 
 CSV_PATH = Path(__file__).parent / "blue2red_power.csv"
 CSV_HEADER = ["timestamp", "zone", "scalar_action", "power_w"]
@@ -38,14 +42,18 @@ SCALAR_ACTIONS = np.linspace(-1.0, 1.0, 21)
 ACTIONS = [_spec.decode(a) for a in SCALAR_ACTIONS]  # 21 × 6-dim vectors
 
 
-async def set_lightbar(session: aiohttp.ClientSession, url: str, action: np.ndarray) -> None:
+async def set_lightbar(
+    session: aiohttp.ClientSession, url: str, action: np.ndarray
+) -> None:
     calibrated = np.clip(action, None, 1.0)
     tiled = np.tile(calibrated, (2, 1))
     async with session.put(url, json={"array": tiled.tolist()}) as resp:
         resp.raise_for_status()
 
 
-async def read_power_avg(client: SmartPlugClient, host: str, n: int, interval: float) -> float | None:
+async def read_power_avg(
+    client: SmartPlugClient, host: str, n: int, interval: float
+) -> float | None:
     readings: list[float] = []
     for i in range(n):
         result = await client.read(host)
@@ -77,7 +85,11 @@ async def measure_zone(
     for i, raw_action in enumerate(ACTIONS):
         scalar = float(SCALAR_ACTIONS[i])
         label = f"a={scalar:+.1f}"
-        action = zone.calibration.get_calibrated_action(raw_action) if zone.calibration else raw_action
+        action = (
+            zone.calibration.get_calibrated_action(raw_action)
+            if zone.calibration
+            else raw_action
+        )
 
         if dry_run:
             print(f"  [{zone_id}] {label}  action={np.round(action, 4).tolist()}")
@@ -100,7 +112,9 @@ async def measure_zone(
     return power_readings
 
 
-def append_to_csv(timestamp: str, zone_id: str, power_readings: list[float | None]) -> None:
+def append_to_csv(
+    timestamp: str, zone_id: str, power_readings: list[float | None]
+) -> None:
     write_header = not CSV_PATH.exists()
     with open(CSV_PATH, "a", newline="") as f:
         writer = csv.writer(f)
@@ -119,7 +133,9 @@ async def main(zone_ids: list[str], wait: float, reads: int, dry_run: bool) -> N
     async with aiohttp.ClientSession(timeout=timeout) as session:
         for zone_id in zone_ids:
             print(f"\n=== {zone_id} ===")
-            power_readings = await measure_zone(zone_id, client, session, wait, reads, dry_run)
+            power_readings = await measure_zone(
+                zone_id, client, session, wait, reads, dry_run
+            )
             if not dry_run:
                 append_to_csv(timestamp, zone_id, power_readings)
 
@@ -127,15 +143,29 @@ async def main(zone_ids: list[str], wait: float, reads: int, dry_run: bool) -> N
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    p = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     p.add_argument(
         "--zones",
         default=None,
         help="Comma-separated zone numbers to run, e.g. 1,3,5 (default: all 1–12)",
     )
-    p.add_argument("--wait", type=float, default=5.0, help="Seconds to wait after setting light (default: 5)")
-    p.add_argument("--reads", type=int, default=3, help="Power readings to average per step (default: 3)")
-    p.add_argument("--dry-run", action="store_true", help="Print actions without touching hardware")
+    p.add_argument(
+        "--wait",
+        type=float,
+        default=5.0,
+        help="Seconds to wait after setting light (default: 5)",
+    )
+    p.add_argument(
+        "--reads",
+        type=int,
+        default=3,
+        help="Power readings to average per step (default: 3)",
+    )
+    p.add_argument(
+        "--dry-run", action="store_true", help="Print actions without touching hardware"
+    )
     return p.parse_args()
 
 
