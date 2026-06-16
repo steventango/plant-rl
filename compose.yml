@@ -173,6 +173,181 @@ services:
               capabilities:
                 - gpu
 
+  zone6:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - plant-network
+    user: "${HOST_UID}:${HOST_GID}"
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
+      - /data/plant-rl:/data/plant-rl:cached
+    restart: unless-stopped
+    command: uv run python scripts/power_readings/measure_blue2red_power.py --zones 6 --wait 5 --reads 3
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  zone7:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - plant-network
+    user: "${HOST_UID}:${HOST_GID}"
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
+      - /data/plant-rl:/data/plant-rl:cached
+    restart: unless-stopped
+    command: uv run python scripts/power_readings/measure_blue2red_power.py --zones 7 --wait 5 --reads 3
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  zone8:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - plant-network
+    user: "${HOST_UID}:${HOST_GID}"
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
+      - /data/plant-rl:/data/plant-rl:cached
+    restart: unless-stopped
+    command: uv run python scripts/power_readings/measure_blue2red_power.py --zones 8 --wait 5 --reads 3
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  zone9:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - plant-network
+    user: "${HOST_UID}:${HOST_GID}"
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
+      - /data/plant-rl:/data/plant-rl:cached
+    restart: unless-stopped
+    command: uv run python scripts/power_readings/measure_blue2red_power.py --zones 9 --wait 5 --reads 3
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  zone10:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - plant-network
+    user: "${HOST_UID}:${HOST_GID}"
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
+      - /data/plant-rl:/data/plant-rl:cached
+    restart: unless-stopped
+    command: uv run python scripts/power_readings/measure_blue2red_power.py --zones 10 --wait 5 --reads 3
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
   zone11:
     build:
       context: .
