@@ -198,7 +198,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python scripts/power_readings/measure_blue2red_power.py --zones 6 --wait 5 --reads 3
+    command: uv run python -u scripts/power_readings/measure_blue2red_power.py --zones 6 --wait 5 --reads 3
     deploy:
       resources:
         reservations:
@@ -233,7 +233,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python scripts/power_readings/measure_blue2red_power.py --zones 7 --wait 5 --reads 3
+    command: uv run python -u scripts/power_readings/measure_blue2red_power.py --zones 7 --wait 5 --reads 3
     deploy:
       resources:
         reservations:
@@ -268,7 +268,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python scripts/power_readings/measure_blue2red_power.py --zones 8 --wait 5 --reads 3
+    command: uv run python -u scripts/power_readings/measure_blue2red_power.py --zones 8 --wait 5 --reads 3
     deploy:
       resources:
         reservations:
@@ -303,7 +303,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python scripts/power_readings/measure_blue2red_power.py --zones 9 --wait 5 --reads 3
+    command: uv run python -u scripts/power_readings/measure_blue2red_power.py --zones 9 --wait 5 --reads 3
     deploy:
       resources:
         reservations:
@@ -338,7 +338,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python scripts/power_readings/measure_blue2red_power.py --zones 10 --wait 5 --reads 3
+    command: uv run python -u scripts/power_readings/measure_blue2red_power.py --zones 10 --wait 5 --reads 3
     deploy:
       resources:
         reservations:
