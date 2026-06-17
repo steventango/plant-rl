@@ -2,8 +2,12 @@ from unittest.mock import MagicMock
 
 import numpy as np
 import pandas as pd
+import pickle
 
-from environments.PlantGrowthChamber.factory import ComposedPlantGrowthChamber
+from environments.PlantGrowthChamber.factory import (
+    ComposedPlantGrowthChamber,
+    create_plant_growth_chamber,
+)
 from environments.PlantGrowthChamber.specs import (
     ACTION_SPECS,
     ColorTriangleAction,
@@ -88,6 +92,18 @@ def test_update_action_trace_handles_six_channel_night_action_for_color_triangle
     env.update_action_trace(np.zeros(6))
     assert obs_spec.action_uema is not None
     assert np.asarray(obs_spec.action_uema.compute()).reshape(-1).shape == (3,)
+
+
+def test_composed_plant_growth_chamber_survives_checkpoint_roundtrip():
+    env = create_plant_growth_chamber(
+        backend="mock",
+        observation="scalar",
+        action="ppfd6",
+        zone="alliance-zone08",
+    )
+    loaded = pickle.loads(pickle.dumps(env))
+    assert isinstance(loaded, ComposedPlantGrowthChamber)
+    assert type(loaded._backend) is type(env._backend)
 
 
 def test_one_hot_time_observation_shape():

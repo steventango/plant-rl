@@ -36,7 +36,23 @@ class ComposedPlantGrowthChamber(BaseAsyncEnvironment):
         observation_spec.setup(backend, env_params)
 
     def __getattr__(self, name: str) -> Any:
-        return getattr(self._backend, name)
+        if name.startswith("__"):
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute '{name}'"
+            ) from None
+        try:
+            backend = object.__getattribute__(self, "_backend")
+        except AttributeError:
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute '{name}'"
+            ) from None
+        return getattr(backend, name)
+
+    def __getstate__(self) -> dict[str, Any]:
+        return self.__dict__.copy()
+
+    def __setstate__(self, state: dict[str, Any]) -> None:
+        self.__dict__.update(state)
 
     async def get_observation(self) -> np.ndarray:
         raw = await self._backend.get_raw_observation()
