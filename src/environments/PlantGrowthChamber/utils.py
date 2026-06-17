@@ -5,10 +5,9 @@ import numpy as np
 import pandas as pd
 from aiohttp_retry import ExponentialRetry, RetryClient
 
-# Per-step budgets (LAN_RETRIES=2 → one retry; per-attempt timeout = budget / 2).
+# Per-step budgets
 # Worst-case active work on a CV step: action + lan + cv + agent.
 STEP_CYCLE_S = 60
-LAN_RETRIES = 2
 ACTION_BUDGET_S = 5
 LAN_BUDGET_S = 5  # parallel camera fetch + smart-plug read
 CV_REQUEST_TIMEOUT_S = 45
@@ -34,16 +33,12 @@ async def _create_session(*, attempts: int, total_timeout: float) -> RetryClient
 
 async def create_image_session() -> RetryClient:
     """Camera GET: 2 attempts, each capped at half the LAN budget."""
-    return await _create_session(
-        attempts=LAN_RETRIES, total_timeout=LAN_BUDGET_S / LAN_RETRIES
-    )
+    return await _create_session(attempts=1, total_timeout=LAN_BUDGET_S)
 
 
 async def create_action_session() -> RetryClient:
     """Lightbar PUT: 2 attempts, each capped at half the action budget."""
-    return await _create_session(
-        attempts=LAN_RETRIES, total_timeout=ACTION_BUDGET_S / LAN_RETRIES
-    )
+    return await _create_session(attempts=1, total_timeout=ACTION_BUDGET_S)
 
 
 async def create_cv_session() -> RetryClient:
