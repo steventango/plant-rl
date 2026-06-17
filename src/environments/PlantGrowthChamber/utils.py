@@ -8,8 +8,8 @@ from aiohttp_retry import ExponentialRetry, RetryClient
 # Per-step budgets
 # Worst-case active work on a CV step: action + lan + cv + agent.
 STEP_CYCLE_S = 60
-ACTION_BUDGET_S = 5
-LAN_BUDGET_S = 5  # parallel camera fetch + smart-plug read
+ACTION_BUDGET_S = 4
+LAN_BUDGET_S = 6  # parallel camera fetch + smart-plug read
 CV_REQUEST_TIMEOUT_S = 45
 GET_OBSERVATION_TIMEOUT_S = LAN_BUDGET_S + CV_REQUEST_TIMEOUT_S
 
