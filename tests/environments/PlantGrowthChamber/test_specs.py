@@ -18,13 +18,13 @@ from environments.PlantGrowthChamber.specs import (
     RawObservation,
     create_observation_spec,
 )
-from utils.constants import BALANCED_ACTION_105, DIM_ACTION
+from utils.constants import BALANCED_ACTION_100, BALANCED_ACTION_105, DIM_ACTION
 
 
 def test_intensity_action_scales_scalar():
     spec = IntensityAction()
     result = spec.decode(1.0)
-    np.testing.assert_array_equal(result, BALANCED_ACTION_105)
+    np.testing.assert_array_equal(result, BALANCED_ACTION_100)
 
 
 def test_discrete_action_maps_indices():
@@ -50,7 +50,7 @@ def test_color_triangle_trace_dim():
 def test_intensity_trace_action_decodes_scalar():
     spec = IntensityAction()
     result = spec.trace_action(0.8)
-    np.testing.assert_allclose(result, BALANCED_ACTION_105 * 0.8)
+    np.testing.assert_allclose(result, BALANCED_ACTION_100 * 0.8)
 
 
 def test_color_triangle_trace_action_keeps_coefficients():
@@ -77,7 +77,7 @@ def test_update_action_trace_decodes_before_uema_update():
     env.update_action_trace(0.8)
     assert obs_spec.action_uema is not None
     trace = np.asarray(obs_spec.action_uema.compute()).reshape(-1)
-    np.testing.assert_allclose(trace, BALANCED_ACTION_105 * 0.8)
+    np.testing.assert_allclose(trace, BALANCED_ACTION_100 * 0.8)
 
 
 def test_update_action_trace_handles_six_channel_night_action_for_color_triangle():
