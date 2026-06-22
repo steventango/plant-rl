@@ -14,7 +14,7 @@
         "enforce_night": true,
         "flash_photography": true,
         "action_timestep": 720,
-        "checkpoint_path": "/home/plant/Desktop/plant-rl/checkpoints",
+        "checkpoint_path": "/app/checkpoints/checkpoint",
         "policy": "eval",
         "obs_dim": 1,
         "action_dim": 1,
