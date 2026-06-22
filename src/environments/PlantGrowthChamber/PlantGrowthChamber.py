@@ -18,6 +18,7 @@ from environments.PlantGrowthChamber.utils import (
     create_image_session,
     GET_OBSERVATION_TIMEOUT_S,
     LAN_BUDGET_S,
+    mean_clean_area,
 )
 from utils.constants import BALANCED_ACTION_105, DIM_ACTION
 from utils.functions import normalize
@@ -233,6 +234,13 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 else:
                     self.df = pd.DataFrame()
 
+                if not self.df.empty:
+                    logger.debug(
+                        "CV plant stats: n=%d, mean_clean_area=%.2f",
+                        len(self.df),
+                        mean_clean_area(self.df),
+                    )
+
                 # Visualization
                 if "visualization_data" in response and response["visualization_data"]:
                     try:
@@ -375,8 +383,10 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                     f"Cycle time ({cycle_time}) exceeded duration ({self.duration})"
                 )
         self.last_step_time = current_time
+        area = mean_clean_area(observation.df)
         logger.debug(
-            f"Local time: {self.get_local_time()}. Step {self.n_step} completed. Reward: {reward}, Terminal: {terminal}"
+            f"Local time: {self.get_local_time()}. Step {self.n_step} completed. "
+            f"Reward: {reward}, Terminal: {terminal}, mean_clean_area: {area:.2f}"
         )
         self.n_step += 1
 
@@ -431,7 +441,8 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         if yesterday_morning_mean_area == 0:
             logger.debug(
-                "Yesterday's morning mean area is 0, returning 0 reward to avoid division by zero."
+                "Yesterday's morning mean area is 0 (today=%.2f), returning 0 reward.",
+                today_morning_mean_area,
             )
             return 0.0
 
@@ -443,6 +454,12 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         reward = np.log(today_morning_mean_area + 1) - np.log(
             yesterday_morning_mean_area + 1
+        )
+        logger.debug(
+            "Area reward: today_morning=%.2f, yesterday_morning=%.2f, reward=%.4f",
+            today_morning_mean_area,
+            yesterday_morning_mean_area,
+            reward,
         )
 
         if np.isnan(reward):
