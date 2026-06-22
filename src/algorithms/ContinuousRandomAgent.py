@@ -20,6 +20,7 @@ class ContinuousRandomAgent(BaseAgent):
         self.updates = 0
         self.low = params.get("action_min", 0)
         self.high = params.get("action_max", 1)
+        self._action_size = None if self.actions == 1 else self.actions
 
     # ----------------------
     # -- RLGlue interface --
@@ -27,12 +28,12 @@ class ContinuousRandomAgent(BaseAgent):
     def start(  # type: ignore
         self, observation: np.ndarray, extra: Dict[str, Any]
     ) -> Tuple[np.ndarray, Dict[str, Any]]:
-        return self.rng.uniform(self.low, self.high, self.actions), {}
+        return self.rng.uniform(self.low, self.high, self._action_size), {}
 
     def step(
         self, reward: float, observation: np.ndarray | None, extra: Dict[str, Any]
     ):
-        return self.rng.uniform(self.low, self.high, self.actions), {}
+        return self.rng.uniform(self.low, self.high, self._action_size), {}
 
     def end(self, reward: float, extra: Dict[str, Any]):
         return {}
