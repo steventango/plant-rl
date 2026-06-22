@@ -10,6 +10,7 @@ from wandb.sdk.wandb_run import Run
 import wandb
 
 logger = logging.getLogger(__name__)
+plant_rl_logger = logging.getLogger("plant_rl")
 # logger.setLevel(logging.DEBUG)
 
 
@@ -154,6 +155,9 @@ def log(
     episodic_return=None,
     episode=None,
 ):
+    if a is not None:
+        plant_rl_logger.debug("agent_action: %s", np.asarray(a))
+
     start_time = time.time()
     expanded_info = {}
     state_indices_to_log = [(0,), (3,), (28,), (33,), (38,), (39,), (40,), (41,)]
