@@ -52,6 +52,16 @@ class AreaObservation(ObservationSpec):
 
 
 @dataclass(frozen=True)
+class LogAreaObservation(ObservationSpec):
+    name: str = "log_area"
+    shape: tuple[int, ...] = (1,)
+
+    async def encode(self, raw: RawObservation) -> np.ndarray:
+        area = np.nan_to_num(mean_clean_area(raw.df), nan=0.0)
+        return np.log(np.array([max(area, 1e-6)]))
+
+
+@dataclass(frozen=True)
 class TimestampObservation(ObservationSpec):
     name: str = "timestamp"
     shape: tuple[int, ...] = (1,)
@@ -299,6 +309,8 @@ def create_observation_spec(
 ) -> ObservationSpec:
     if name in ("scalar", "area"):
         return AreaObservation()
+    if name == "log_area":
+        return LogAreaObservation()
     if name == "timestamp":
         return TimestampObservation()
     if name == "one_hot_time":

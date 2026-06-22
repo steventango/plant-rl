@@ -8,7 +8,7 @@
             "zone": "alliance-zone02",
             "timezone": "Etc/GMT-2",
             "action": "intensity",
-            "observation": "area"
+            "observation": "log_area"
         },
         "timezone": "Etc/GMT-2",
         "enforce_night": true,
