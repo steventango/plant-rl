@@ -1,5 +1,5 @@
 {
-    "agent": "ContinuousRandom",
+    "agent": "ContinuousRandom5",
     "problem": "PlantGrowthChamber",
     "total_steps": 40320,
     "episode_cutoff": -1,

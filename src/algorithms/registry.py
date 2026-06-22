@@ -80,7 +80,7 @@ def getAgent(name) -> Type[BaseAgent]:
     if name.startswith("DiscreteRandom"):
         return DiscreteRandomAgent
 
-    if name == "ContinuousRandom":
+    if name.startswith("ContinuousRandom"):
         return ContinuousRandomAgent
 
     if name.startswith("ContinuousRandomSimplex"):
@@ -104,7 +104,7 @@ def getAgent(name) -> Type[BaseAgent]:
     if name.startswith("InAC"):
         return InAC
 
-    if name == "PPOPolicy":
+    if name.startswith("PPOPolicy"):
         return PPOPolicy
 
     raise Exception("Unknown algorithm")
