@@ -1,11 +1,11 @@
 {
-    "agent": "SequenceRBR",
+    "agent": "SequenceRBR_z9",
     "problem": "PlantGrowthChamber",
     "total_steps": 40320,
     "episode_cutoff": -1,
     "metaParameters": {
         "environment": {
-            "zone": "alliance-zone10",
+            "zone": "alliance-zone09",
             "timezone": "Etc/GMT-2",
             "action": "continuous_color"
         },
