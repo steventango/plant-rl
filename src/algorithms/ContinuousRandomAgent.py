@@ -18,8 +18,8 @@ class ContinuousRandomAgent(BaseAgent):
         super().__init__(observations, actions, params, collector, seed)
         self.steps = 0
         self.updates = 0
-        self.low = 0
-        self.high = 1
+        self.low = params.get("action_min", 0)
+        self.high = params.get("action_max", 1)
 
     # ----------------------
     # -- RLGlue interface --
