@@ -26,7 +26,7 @@ class PPOAgent(BaseAgent):
     ):
         super().__init__(observations, actions, params, collector, seed)
         frozen_agent_path: str = params["frozen_agent_path"]
-        self.model = PPO.load(frozen_agent_path)
+        self.model = PPO.load(frozen_agent_path, device="cpu")
 
     def policy(self, obs: np.ndarray) -> Tuple[Any, Dict]:
         obs = self.process_observation(obs)
@@ -47,4 +47,4 @@ class PPOAgent(BaseAgent):
 
     def __setstate__(self, state):
         super().__setstate__(state)
-        self.model = PPO.load(state["frozen_agent_path"])
+        self.model = PPO.load(state["frozen_agent_path"], device="cpu")
