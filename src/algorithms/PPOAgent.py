@@ -1,7 +1,13 @@
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any, Dict, Tuple
+
+# Must be set before torch/triton are imported to prevent segfault on machines
+# with incompatible CUDA drivers (triton probes the driver at import time).
+os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
+os.environ.setdefault("TORCHDYNAMO_DISABLE", "1")
 
 import numpy as np
 from PyExpUtils.collection.Collector import Collector
