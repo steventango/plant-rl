@@ -12,7 +12,7 @@ from algorithms.BaseAgent import BaseAgent
 class PPOAgent(BaseAgent):
     """Wraps a pre-trained Stable-Baselines3 PPO model as a BaseAgent.
 
-    Expects params["model_path"] pointing to the .zip file produced by PPO.save().
+    Expects params["frozen_agent_path"] pointing to the .zip file produced by PPO.save().
     The model is loaded once at construction; start/step just call predict().
     """
 
@@ -25,8 +25,8 @@ class PPOAgent(BaseAgent):
         seed: int,
     ):
         super().__init__(observations, actions, params, collector, seed)
-        model_path: str = params["model_path"]
-        self.model = PPO.load(model_path)
+        frozen_agent_path: str = params["frozen_agent_path"]
+        self.model = PPO.load(frozen_agent_path)
 
     def policy(self, obs: np.ndarray) -> Tuple[Any, Dict]:
         obs = self.process_observation(obs)
@@ -42,9 +42,9 @@ class PPOAgent(BaseAgent):
     # Checkpointing: model weights live in the .zip file, not in agent state.
     def __getstate__(self):
         state = super().__getstate__()
-        state["model_path"] = self.params["model_path"]
+        state["frozen_agent_path"] = self.params["frozen_agent_path"]
         return state
 
     def __setstate__(self, state):
         super().__setstate__(state)
-        self.model = PPO.load(state["model_path"])
+        self.model = PPO.load(state["frozen_agent_path"])

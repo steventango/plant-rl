@@ -18,6 +18,7 @@ from environments.PlantGrowthChamber.utils import (
 )
 from utils.functions import normalize
 from utils.metrics import UnbiasedExponentialMovingAverage, iqm
+from utils.rout import rout_outliers
 
 
 @dataclass(frozen=True)
@@ -323,18 +324,18 @@ class DayAreaColorTraceObservation(ObservationSpec):
         self.start_date = None
         self.day_min = 0.0
         self.day_max = 14.0
-        self.clean_area_min = 14.3125
-        self.clean_area_max = 1211.0
+        self.clean_area_min = 0.1
+        self.clean_area_max = 5.0
 
     def setup(self, backend: Any, env_params: dict[str, Any]) -> None:
-        self.lam = env_params.get("action_trace_lambda", 0.9)
+        self.lam = env_params.get("action_trace_lambda", 0.85)
         self.normalize_values = env_params.get("normalize", self.normalize_values)
+        self.start_date = backend.get_local_time().date()
 
     async def encode(self, raw: RawObservation) -> np.ndarray:
-        if self.start_date is None:
-            self.start_date = raw.local_time.date()
         if not raw.df.empty:
-            area = float(iqm(jnp.asarray(raw.df["clean_area"]), 0.25, 0.9))
+            _, clean_values, _ = rout_outliers(raw.df["clean_area"].to_numpy())
+            area = float(np.mean(clean_values)) if len(clean_values) > 0 else 0.0
         else:
             area = 0.0
 

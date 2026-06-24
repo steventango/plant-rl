@@ -16,7 +16,7 @@ class PPOPlantGrowthChamber(BasePlantGrowthChamberAsyncProblem):
         observation : "day_area_color_trace"
         zone        : e.g. "alliance-zone01"
         timezone    : e.g. "Etc/GMT-2"
-        model_path  : path to the .zip produced by PPO.save()
+        frozen_agent_path  : path to the .zip produced by PPO.save()
     """
 
     def __init__(self, exp: ExperimentModel, idx: int, collector: Collector):
