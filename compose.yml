@@ -373,7 +373,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E19/P0/Constant11.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/A1/zone11.json -i 0 --deploy
     deploy:
       resources:
         reservations:
