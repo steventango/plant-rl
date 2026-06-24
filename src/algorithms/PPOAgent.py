@@ -29,9 +29,9 @@ class PPOAgent(BaseAgent):
     ):
         super().__init__(observations, actions, params, collector, seed)
         frozen_agent_path: str = params["frozen_agent_path"]
-        logger.info(f"Loading PPO model from {frozen_agent_path!r} on cpu")
+        print(f"[PPOAgent] Loading model from {frozen_agent_path!r} on cpu", flush=True)
         self.model = PPO.load(frozen_agent_path, device="cpu")
-        logger.info(f"PPO model loaded successfully (policy: {self.model.policy})")
+        print(f"[PPOAgent] Model loaded successfully (policy: {self.model.policy})", flush=True)
 
     def policy(self, obs: np.ndarray) -> Tuple[Any, Dict]:
         obs = self.process_observation(obs)
@@ -41,11 +41,10 @@ class PPOAgent(BaseAgent):
         return action, {}
 
     def start(self, observation: np.ndarray, extra: Dict | None = None) -> Tuple[Any, Dict]:
-        logger.info(f"Agent start, obs shape={np.shape(observation)}, obs={observation}")
+        print(f"[PPOAgent] start obs={observation}", flush=True)
         return self.policy(observation)
 
     def step(self, reward: float, observation: np.ndarray, extra: Dict | None = None) -> Tuple[Any, Dict]:
-        logger.debug(f"Agent step, reward={reward}, obs={observation}")
         return self.policy(observation)
 
     # Checkpointing: model weights live in the .zip file, not in agent state.
@@ -56,5 +55,5 @@ class PPOAgent(BaseAgent):
 
     def __setstate__(self, state):
         super().__setstate__(state)
-        logger.info(f"Restoring PPO model from {state['frozen_agent_path']!r}")
+        print(f"[PPOAgent] Restoring model from {state['frozen_agent_path']!r}", flush=True)
         self.model = PPO.load(state["frozen_agent_path"], device="cpu")
