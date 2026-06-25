@@ -15,6 +15,6 @@
         "enforce_night": true,
         "flash_photography": true,
         "action_timestep": 1,
-        "frozen_agent_path": "experiments/online/A1/agent1.zip"        
+        "policy_path": "experiments/online/A1/agent1.pt"        
     }
 }

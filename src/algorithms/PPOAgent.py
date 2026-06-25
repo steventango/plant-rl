@@ -9,9 +9,9 @@ from typing import Any, Dict, Tuple
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "")
 os.environ.setdefault("TORCHDYNAMO_DISABLE", "1")
 
+import torch
 import numpy as np
 from PyExpUtils.collection.Collector import Collector
-from stable_baselines3 import PPO
 
 from algorithms.BaseAgent import BaseAgent
 
@@ -19,10 +19,11 @@ logger = logging.getLogger(__name__)
 
 
 class PPOAgent(BaseAgent):
-    """Wraps a pre-trained Stable-Baselines3 PPO model as a BaseAgent.
+    """Wraps a pre-trained SB3 PPO policy as a BaseAgent.
 
-    Expects params["frozen_agent_path"] pointing to the .zip file produced by PPO.save().
-    The model is loaded once at construction; start/step just call predict().
+    Expects params["policy_path"] pointing to the .pt file produced by
+    torch.save(agent.policy, ...) in train_agent.py.
+    The policy is loaded once at construction; start/step just call predict().
     """
 
     def __init__(
@@ -34,10 +35,11 @@ class PPOAgent(BaseAgent):
         seed: int,
     ):
         super().__init__(observations, actions, params, collector, seed)
-        frozen_agent_path: str = params["frozen_agent_path"]
-        print(f"[PPOAgent] Loading model from {frozen_agent_path!r} on cpu", flush=True)
-        self.model = PPO.load(frozen_agent_path, device="cpu")
-        print(f"[PPOAgent] Model loaded successfully (policy: {self.model.policy})", flush=True)
+        policy_path: str = params["policy_path"]
+        print(f"[PPOAgent] Loading policy from {policy_path!r} on cpu", flush=True)
+        self.model = torch.load(policy_path, map_location="cpu", weights_only=False)
+        self.model.set_training_mode(False)
+        print(f"[PPOAgent] Policy loaded successfully ({self.model})", flush=True)
 
     def policy(self, obs: np.ndarray) -> Tuple[Any, Dict]:
         obs = self.process_observation(obs)
@@ -52,14 +54,3 @@ class PPOAgent(BaseAgent):
 
     def step(self, reward: float, observation: np.ndarray, extra: Dict | None = None) -> Tuple[Any, Dict]:
         return self.policy(observation)
-
-    # Checkpointing: model weights live in the .zip file, not in agent state.
-    def __getstate__(self):
-        state = super().__getstate__()
-        state["frozen_agent_path"] = self.params["frozen_agent_path"]
-        return state
-
-    def __setstate__(self, state):
-        super().__setstate__(state)
-        print(f"[PPOAgent] Restoring model from {state['frozen_agent_path']!r}", flush=True)
-        self.model = PPO.load(state["frozen_agent_path"], device="cpu")
