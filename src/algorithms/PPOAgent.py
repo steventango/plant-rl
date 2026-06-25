@@ -23,10 +23,9 @@ class PPOAgent(BaseAgent):
     ):
         super().__init__(observations, actions, params, collector, seed)
         policy_path: str = params["policy_path"]
-        print(f"[PPOAgent] Loading policy from {policy_path!r} on cpu", flush=True)
         self.model = torch.load(policy_path, map_location="cpu", weights_only=False)
         self.model.set_training_mode(False)
-        print(f"[PPOAgent] Policy loaded successfully", flush=True)
+        print(f"[PPOAgent] Loaded policy from {policy_path!r} on cpu", flush=True)
 
     def policy(self, obs: np.ndarray) -> Tuple[Any, Dict]:
         obs = self.process_observation(obs)
