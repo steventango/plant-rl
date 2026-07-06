@@ -29,8 +29,7 @@ BALANCED_ACTION_40 = adjust_ppfd(BALANCED_ACTION_105, 40.0)
 
 DIM_ACTION = 0.675 * BALANCED_ACTION_100.copy()
 
-# NOTE: manually adjusted RED PPFD for -3 measured PPFD offset for RED color.
-RED_ACTION = get_modified_action(ppfd=108.0, channel=4, offset=40.0)
+RED_ACTION = get_modified_action(ppfd=105.0, channel=4, offset=40.0)
 BLUE_ACTION = get_modified_action(ppfd=105.0, channel=0, offset=40.0)
 
 TWILIGHT_INTENSITIES_30_MIN = np.array(
