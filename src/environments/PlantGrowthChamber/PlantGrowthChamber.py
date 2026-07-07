@@ -33,6 +33,7 @@ class ConnectionIssueTracker:
         self._alert_sent = False
         return was_alerted
 
+
 import numpy as np
 from PIL import Image
 
@@ -354,7 +355,8 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             now = self.get_time()
             if tracker.record_failure(now):
                 logger.warning(
-                    f"Warning: {url} after retries, re-using previous image", exc_info=True
+                    f"Warning: {url} after retries, re-using previous image",
+                    exc_info=True,
                 )
             else:
                 logger.debug(
