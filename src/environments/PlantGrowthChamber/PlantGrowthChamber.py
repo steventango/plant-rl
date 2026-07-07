@@ -7,6 +7,32 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
+
+class ConnectionIssueTracker:
+    """Suppress transient connection warnings; send one alert after 4 consecutive minutes of failures."""
+
+    ALERT_THRESHOLD = timedelta(minutes=4)
+
+    def __init__(self):
+        self._first_failure: datetime | None = None
+        self._alert_sent = False
+
+    def record_failure(self, now: datetime) -> bool:
+        """Return True the first time the failure window crosses ALERT_THRESHOLD."""
+        if self._first_failure is None:
+            self._first_failure = now
+        if not self._alert_sent and (now - self._first_failure) >= self.ALERT_THRESHOLD:
+            self._alert_sent = True
+            return True
+        return False
+
+    def record_success(self) -> bool:
+        """Return True if an alert was previously sent (connectivity now resolved)."""
+        was_alerted = self._alert_sent
+        self._first_failure = None
+        self._alert_sent = False
+        return was_alerted
+
 import numpy as np
 from PIL import Image
 
@@ -95,6 +121,10 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         self.df = pd.DataFrame()
 
+        self._camera_trackers: dict[str, ConnectionIssueTracker] = {}
+        self._lightbar_tracker = ConnectionIssueTracker()
+        self._lan_tracker = ConnectionIssueTracker()
+
     async def _ensure_action_session(self):
         """RetryClient for lightbar PUT."""
         if self.action_session is None:
@@ -137,16 +167,30 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     async def _get_observation_inner(self):
         # Cameras and power run in parallel under one LAN budget; CV runs after.
+        lan_ok = True
         try:
             await asyncio.wait_for(
                 asyncio.gather(self.get_image(), self.get_power()),
                 timeout=LAN_BUDGET_S,
             )
         except Exception:
-            logger.warning(
-                "LAN observation (cameras + power) exceeded %ss budget",
-                LAN_BUDGET_S,
-                exc_info=True,
+            lan_ok = False
+            now = self.get_time()
+            if self._lan_tracker.record_failure(now):
+                logger.warning(
+                    "LAN observation (cameras + power) exceeded %ss budget",
+                    LAN_BUDGET_S,
+                    exc_info=True,
+                )
+            else:
+                logger.debug(
+                    "Transient: LAN observation exceeded %ss budget",
+                    LAN_BUDGET_S,
+                    exc_info=True,
+                )
+        if lan_ok and self._lan_tracker.record_success():
+            logger.info(
+                "LAN observation (cameras + power) connectivity restored after sustained outage"
             )
         if "left" in self.images and "right" in self.images:
             self.image = np.hstack(
@@ -296,15 +340,26 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             await asyncio.gather(*tasks)
 
     async def _fetch_image(self, session, url, side):
+        tracker = self._camera_trackers.setdefault(side, ConnectionIssueTracker())
         try:
             async with session.get(url) as response:
                 image_data = await response.read()
                 self.images[side] = Image.open(io.BytesIO(image_data))
                 logger.debug(f"Successfully fetched image from {url}")
+                if tracker.record_success():
+                    logger.info(
+                        f"Camera {side} ({url}) connectivity restored after sustained outage"
+                    )
         except Exception:
-            logger.warning(
-                f"Warning: {url} after retries, re-using previous image", exc_info=True
-            )
+            now = self.get_time()
+            if tracker.record_failure(now):
+                logger.warning(
+                    f"Warning: {url} after retries, re-using previous image", exc_info=True
+                )
+            else:
+                logger.debug(
+                    f"Transient: {url} failed, re-using previous image", exc_info=True
+                )
 
     async def put_action(self, action):
         """Send action to the lightbar using aiohttp."""
@@ -330,16 +385,34 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             )
             self.last_action = action
             self.last_calibrated_action = last_calibrated_action
+            if self._lightbar_tracker.record_success():
+                logger.info(
+                    f"Lightbar ({self.zone.lightbar_url}) connectivity restored after sustained outage"
+                )
         except Exception:
+            now = self.get_time()
+            should_alert = self._lightbar_tracker.record_failure(now)
             if not np.array_equal(action, self.last_action):
-                logger.exception(
-                    f"Error: {self.zone.lightbar_url} after retries, re-using last action: {self.last_action}"
-                )
+                if should_alert:
+                    logger.exception(
+                        f"Error: {self.zone.lightbar_url} after retries, re-using last action: {self.last_action}"
+                    )
+                else:
+                    logger.debug(
+                        f"Transient: {self.zone.lightbar_url} failed, re-using last action: {self.last_action}",
+                        exc_info=True,
+                    )
             else:
-                logger.warning(
-                    f"Warning: {self.zone.lightbar_url} after retries, last action was identical",
-                    exc_info=True,
-                )
+                if should_alert:
+                    logger.warning(
+                        f"Warning: {self.zone.lightbar_url} after retries, last action was identical",
+                        exc_info=True,
+                    )
+                else:
+                    logger.debug(
+                        f"Transient: {self.zone.lightbar_url} failed, last action was identical",
+                        exc_info=True,
+                    )
 
     async def start(self):
         logger.debug(f"Local time: {self.get_local_time()}. Step 0")
