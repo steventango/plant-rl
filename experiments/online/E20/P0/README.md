@@ -21,7 +21,7 @@ This phase runs from **transplant date (2026-07-07, DAS 7)** to **agent start (2
 | Z9 (zone09) | `Constant9.json` | same | same |
 | Z10 (zone10) | `Constant10.json` | same | same |
 | Z11 (zone11) | `Constant11.json` | same | same |
-| Z12 (zone12) | `Constant12.json` | same | same |
+| Z12 (zone12) | `Constant12.json` | same | same, plus `enable_cv_pipeline: false` |
 
 All twelve resolve through `algorithms/registry.py`'s `startswith("Constant")` rule to `ConstantAgent`. `constant_action: 1.0` multiplies by `BALANCED_ACTION_100` (the `PlantGrowthChamberIntensity` reference spectrum) to emit 100 PPFD across the balanced 5-channel spectrum.
 
