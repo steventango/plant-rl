@@ -24,7 +24,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E18/P1/PowerLawRamp1.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E19/P1/Z1.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -58,7 +58,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E18/P1/Parabolic2.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E19/P1/Z2.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -93,7 +93,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E18/P1/ConstantLow3.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E19/P1/Z3.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -128,7 +128,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E18/P1/SeventyPercentRamp4.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E19/P1/Z4.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -163,7 +163,182 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E18/P1/LateRamp5.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E19/P1/Z5.json -i 0 --deploy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  zone6:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - plant-network
+    user: "${HOST_UID}:${HOST_GID}"
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
+      - /data/plant-rl:/data/plant-rl:cached
+    restart: unless-stopped
+    command: uv run python src/main_real.py -e experiments/online/A0/SequenceR_z6.json -i 0 --deploy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  zone7:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - plant-network
+    user: "${HOST_UID}:${HOST_GID}"
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
+      - /data/plant-rl:/data/plant-rl:cached
+    restart: unless-stopped
+    command: uv run python src/main_real.py -e experiments/online/A0/SequenceB_z7.json -i 0 --deploy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  zone8:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - plant-network
+    user: "${HOST_UID}:${HOST_GID}"
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
+      - /data/plant-rl:/data/plant-rl:cached
+    restart: unless-stopped
+    command: uv run python src/main_real.py -e experiments/online/A0/SequenceBRB_z8.json -i 0 --deploy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  zone9:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - plant-network
+    user: "${HOST_UID}:${HOST_GID}"
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
+      - /data/plant-rl:/data/plant-rl:cached
+    restart: unless-stopped
+    command: uv run python src/main_real.py -e experiments/online/A0/SequenceRBR_z9.json -i 0 --deploy
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities:
+                - gpu
+
+  zone10:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USERNAME: ${USERNAME}
+        USER_UID: ${HOST_UID}
+        USER_GID: ${HOST_GID}
+    env_file: .env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - plant-network
+    user: "${HOST_UID}:${HOST_GID}"
+    volumes:
+      - .:/app:cached
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.ssh:/home/${USERNAME}/.ssh:cached
+      - ~/.gitconfig:/home/${USERNAME}/.gitconfig:cached
+      - ~/.config:/home/${USERNAME}/.config:cached
+      - ~/.wakatime.cfg:/home/${USERNAME}/.wakatime.cfg:cached
+      - ~/.cache:/home/${USERNAME}/.cache:cached
+      - ~/.netrc:/home/${USERNAME}/.netrc:cached
+      - /data/plant-rl:/data/plant-rl:cached
+    restart: unless-stopped
+    command: uv run python src/main_real.py -e experiments/online/A0/SequenceW_z10.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -198,7 +373,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E18/P1/Constant11.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E19/P0/Constant11.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -233,7 +408,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E18/P0/Constant12.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E19/P0/Constant12.json -i 0 --deploy
     deploy:
       resources:
         reservations:

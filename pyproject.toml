@@ -56,6 +56,7 @@ dependencies = [
     "ml-instrument>=0.4.2",
     "scikit-learn==1.7.2",
     "python-kasa>=0.10.2",
+    "orbax>=0.1.9",
 ]
 
 [dependency-groups]

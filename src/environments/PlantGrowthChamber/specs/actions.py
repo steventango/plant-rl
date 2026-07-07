@@ -6,7 +6,13 @@ from typing import Any
 
 import numpy as np
 
-from utils.constants import BALANCED_ACTION_105, BLUE_ACTION, DIM_ACTION, RED_ACTION
+from utils.constants import (
+    BALANCED_ACTION_100,
+    BALANCED_ACTION_105,
+    BLUE_ACTION,
+    DIM_ACTION,
+    RED_ACTION,
+)
 
 
 class ActionSpec(ABC):
@@ -42,7 +48,7 @@ class IntensityAction(ActionSpec):
     def decode(self, action: Any) -> np.ndarray:
         if isinstance(action, np.ndarray) and action.ndim > 0:
             return np.asarray(action, dtype=np.float64)
-        return BALANCED_ACTION_105 * float(action)
+        return BALANCED_ACTION_100 * float(action)
 
 
 @dataclass(frozen=True)

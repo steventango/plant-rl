@@ -5,12 +5,20 @@ import numpy as np
 import pandas as pd
 from aiohttp_retry import ExponentialRetry, RetryClient
 
+# Per-step budgets
+# Worst-case active work on a CV step: action + lan + cv + agent.
+STEP_CYCLE_S = 60
+ACTION_BUDGET_S = 4
+LAN_BUDGET_S = 6  # parallel camera fetch + smart-plug read
+CV_REQUEST_TIMEOUT_S = 45
+GET_OBSERVATION_TIMEOUT_S = LAN_BUDGET_S + CV_REQUEST_TIMEOUT_S
+
 
 async def _create_session(*, attempts: int, total_timeout: float) -> RetryClient:
     retry_options = ExponentialRetry(
         attempts=attempts,
-        start_timeout=1,
-        max_timeout=4,
+        start_timeout=0,
+        max_timeout=0,
         factor=1,
         statuses={500, 502, 503, 504, 429},
     )
@@ -23,28 +31,19 @@ async def _create_session(*, attempts: int, total_timeout: float) -> RetryClient
     )
 
 
-async def create_action_session() -> RetryClient:
-    """Fast-fail session for LAN endpoints (lightbar PUT and camera GET).
+async def create_image_session() -> RetryClient:
+    """Camera GET: 2 attempts, each capped at half the LAN budget."""
+    return await _create_session(attempts=1, total_timeout=LAN_BUDGET_S)
 
-    Lightbar steady-state response is ~600-800 ms (lightbar.py:50-60 does
-    12 I2C writes x 50 ms sleep = 600 ms server-side); cameras on the same
-    LAN respond comparably. Aggressive retry budget so a stuck call can't
-    push env.step past its 60 s/cycle budget - a dropped call is re-emitted
-    on the next env.step anyway.
-    """
-    return await _create_session(attempts=2, total_timeout=15)
+
+async def create_action_session() -> RetryClient:
+    """Lightbar PUT: 2 attempts, each capped at half the action budget."""
+    return await _create_session(attempts=1, total_timeout=ACTION_BUDGET_S)
 
 
 async def create_cv_session() -> RetryClient:
-    """Generous-timeout session for the CV pipeline only.
-
-    CV detect/propagate can take ~30 s when multiple chambers compete for
-    one CV server, so per-request timeout must accommodate that. No retries
-    within an env.step (attempts=1) - if CV doesn't respond, the previous
-    frame's df is reused via the asyncio.wait_for fallback on
-    get_observation.
-    """
-    return await _create_session(attempts=1, total_timeout=45)
+    """CV pipeline: single attempt."""
+    return await _create_session(attempts=1, total_timeout=CV_REQUEST_TIMEOUT_S)
 
 
 def get_one_hot_time_observation(local_time: datetime):

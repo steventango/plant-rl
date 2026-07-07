@@ -18,6 +18,8 @@ from utils.logger import expand
 from utils.RlGlue.agent import BaseAgent, BaseAsyncAgent
 from utils.RlGlue.environment import BaseAsyncEnvironment
 
+AGENT_STEP_TIMEOUT_S = 2
+
 logger = logging.getLogger("rlglue")
 logger.setLevel(logging.DEBUG)
 
@@ -90,7 +92,10 @@ class AsyncRLGlue:
         if term:
             return await self.end(reward, s, term, env_info)
         async with lock:
-            self.last_action, agent_info = await self.agent.step(reward, s, env_info)
+            self.last_action, agent_info = await asyncio.wait_for(
+                self.agent.step(reward, s, env_info),
+                timeout=AGENT_STEP_TIMEOUT_S,
+            )
         info = {**env_info, **agent_info}
         self.last_interaction = Interaction(
             o=s,

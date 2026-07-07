@@ -10,6 +10,8 @@ import numpy as np
 from aiohttp_retry import RetryClient
 from PIL import Image
 
+from environments.PlantGrowthChamber.utils import CV_REQUEST_TIMEOUT_S
+
 logger = logging.getLogger("plant_rl.CVPipelineClient")
 
 PIPELINE_URL = os.getenv("PIPELINE_URL", "http://localhost:8800")
@@ -41,7 +43,7 @@ class CVPipelineClient:
             async with session.post(
                 f"{PIPELINE_URL}/pipeline/detect",
                 json=payload,
-                timeout=aiohttp.ClientTimeout(total=35),
+                timeout=aiohttp.ClientTimeout(total=CV_REQUEST_TIMEOUT_S),
             ) as resp:
                 resp.raise_for_status()
                 return await resp.json()
@@ -68,7 +70,7 @@ class CVPipelineClient:
             async with session.post(
                 f"{PIPELINE_URL}/pipeline/propagate",
                 json=payload,
-                timeout=aiohttp.ClientTimeout(total=35),
+                timeout=aiohttp.ClientTimeout(total=CV_REQUEST_TIMEOUT_S),
             ) as resp:
                 resp.raise_for_status()
                 return await resp.json()
