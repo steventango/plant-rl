@@ -74,6 +74,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         self.timezone = timezone
         self.tz = ZoneInfo(timezone)
         self.sparse_reward = kwargs.get("sparse_reward", False)
+        self.enable_cv_pipeline = kwargs.get("enable_cv_pipeline", True)
         self.tz_utc = ZoneInfo("Etc/UTC")
         self.time = self.get_time()
         # Two aiohttp sessions: fast-fail for LAN endpoints (lightbar +
@@ -243,6 +244,11 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
         if not self.is_daylight():
             logger.debug("Not daylight, skipping plant stats.")
+            self.df = pd.DataFrame()
+            return
+
+        if not self.enable_cv_pipeline:
+            logger.debug("CV pipeline disabled, skipping plant stats.")
             self.df = pd.DataFrame()
             return
 
