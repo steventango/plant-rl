@@ -168,28 +168,39 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
 
     async def _get_observation_inner(self):
         # Cameras and power run in parallel under one LAN budget; CV runs after.
+        # return_exceptions so a smart-plug timeout does not cancel camera fetches.
         lan_ok = True
+        lan_error: BaseException | None = None
         try:
-            await asyncio.wait_for(
-                asyncio.gather(self.get_image(), self.get_power()),
+            results = await asyncio.wait_for(
+                asyncio.gather(
+                    self.get_image(),
+                    self.get_power(),
+                    return_exceptions=True,
+                ),
                 timeout=LAN_BUDGET_S,
             )
-        except Exception:
+            for result in results:
+                if isinstance(result, BaseException):
+                    lan_ok = False
+                    lan_error = result
+                    break
+        except Exception as e:
             lan_ok = False
+            lan_error = e
+        if not lan_ok:
             now = self.get_time()
             if self._lan_tracker.record_failure(now):
                 logger.warning(
-                    "LAN observation (cameras + power) exceeded %ss budget",
-                    LAN_BUDGET_S,
-                    exc_info=True,
+                    "LAN observation (cameras + power) failed",
+                    exc_info=lan_error,
                 )
             else:
                 logger.debug(
-                    "Transient: LAN observation exceeded %ss budget",
-                    LAN_BUDGET_S,
-                    exc_info=True,
+                    "Transient: LAN observation (cameras + power) failed",
+                    exc_info=lan_error,
                 )
-        if lan_ok and self._lan_tracker.record_success():
+        elif self._lan_tracker.record_success():
             logger.info(
                 "LAN observation (cameras + power) connectivity restored after sustained outage"
             )
@@ -313,7 +324,12 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         if not (on_boundary or overdue):
             return
 
-        reading = await self.smart_plug_client.read(self.zone.smart_plug_host)
+        try:
+            reading = await self.smart_plug_client.read(self.zone.smart_plug_host)
+        except Exception:
+            self.power_record = dict.fromkeys(POWER_KEYS)
+            raise
+
         self.last_smart_plug_time = now
         if reading is not None:
             self.power = reading

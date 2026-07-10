@@ -44,8 +44,9 @@ class SmartPlugClient:
                 return None
             return reading
         except KasaException:
-            logger.warning("kasa error reading %s", host, exc_info=True)
-            return None
+            # Propagate so PlantGrowthChamber._lan_tracker can suppress transients.
+            logger.debug("kasa error reading %s", host, exc_info=True)
+            raise
         except Exception:
             logger.warning("unexpected error reading %s", host, exc_info=True)
             return None

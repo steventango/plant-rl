@@ -49,13 +49,14 @@ async def test_read_returns_none_without_credentials(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_read_returns_none_on_kasa_exception(kasa_creds):
+async def test_read_reraises_kasa_exception(kasa_creds):
     with patch(
         "environments.PlantGrowthChamber.SmartPlugClient.Discover.discover_single",
         AsyncMock(side_effect=KasaException("boom")),
     ):
         client = SmartPlugClient()
-        assert await client.read("142.244.4.73") is None
+        with pytest.raises(KasaException, match="boom"):
+            await client.read("142.244.4.73")
 
 
 @pytest.mark.asyncio

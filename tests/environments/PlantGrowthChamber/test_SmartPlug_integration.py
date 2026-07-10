@@ -1,8 +1,10 @@
+import logging
 from datetime import datetime
 from unittest.mock import AsyncMock
 from zoneinfo import ZoneInfo
 
 import pytest
+from kasa.exceptions import TimeoutError as KasaTimeoutError
 
 from environments.PlantGrowthChamber.PlantGrowthChamber import PlantGrowthChamber
 
@@ -45,6 +47,25 @@ async def test_get_power_carryover_records_null_on_failure(kasa_creds, monkeypat
     assert info["power"] is None
     assert info["voltage"] is None
     assert info["current"] is None
+
+
+@pytest.mark.asyncio
+async def test_get_power_kasa_timeout_nulls_record_and_reraises(
+    kasa_creds, monkeypatch
+):
+    chamber = PlantGrowthChamber(zone="alliance-zone01", timezone="Etc/UTC")
+    _pin_time(chamber, monkeypatch, minute=5)
+    chamber.power = {"power": 5.0, "voltage": 120.0, "current": 0.04}
+    chamber.smart_plug_client.read = AsyncMock(
+        side_effect=KasaTimeoutError("Timed out getting discovery response")
+    )
+
+    with pytest.raises(KasaTimeoutError):
+        await chamber.get_power()
+
+    assert chamber.power == {"power": 5.0, "voltage": 120.0, "current": 0.04}
+    assert chamber.power_record == {"power": None, "voltage": None, "current": None}
+    assert chamber.last_smart_plug_time is None
 
 
 @pytest.mark.asyncio
@@ -99,3 +120,42 @@ async def test_get_power_recovers_when_boundary_is_missed(kasa_creds, monkeypatc
     _pin_time(chamber, monkeypatch, minute=11)
     await chamber.get_power()
     assert chamber.smart_plug_client.read.await_count == 2
+
+
+@pytest.mark.asyncio
+async def test_lan_tracker_suppresses_smart_plug_timeouts(
+    kasa_creds, monkeypatch, caplog
+):
+    chamber = PlantGrowthChamber(zone="alliance-zone01", timezone="Etc/UTC")
+    chamber.smart_plug_client.read = AsyncMock(
+        side_effect=KasaTimeoutError("Timed out getting discovery response")
+    )
+    chamber.get_image = AsyncMock()
+    chamber.get_plant_stats = AsyncMock()
+
+    clock = {"minute": 0}
+
+    def get_time():
+        return datetime(2026, 5, 6, 12, clock["minute"], tzinfo=UTC)
+
+    monkeypatch.setattr(chamber, "get_time", get_time)
+
+    with caplog.at_level(logging.DEBUG, logger="plant_rl.PlantGrowthChamber"):
+        for minute in range(4):
+            clock["minute"] = minute
+            await chamber._get_observation_inner()
+        assert not any(
+            r.levelno >= logging.WARNING and "LAN observation" in r.getMessage()
+            for r in caplog.records
+        )
+
+        clock["minute"] = 4
+        await chamber._get_observation_inner()
+
+    warnings = [
+        r
+        for r in caplog.records
+        if r.levelno >= logging.WARNING and "LAN observation" in r.getMessage()
+    ]
+    assert len(warnings) == 1
+    assert chamber.smart_plug_client.read.await_count == 5
