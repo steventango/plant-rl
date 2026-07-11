@@ -57,6 +57,7 @@ dependencies = [
     "scikit-learn==1.7.2",
     "python-kasa>=0.10.2",
     "orbax>=0.1.9",
+    "gymnax",
 ]
 
 [dependency-groups]
@@ -99,3 +100,4 @@ useLibraryCodeForTypes = true
 
 [tool.uv.sources]
 plant-models = { git = "https://github.com/steventango/plant-models.git" }
+gymnax = { git = "https://github.com/steventango/gymnax" }

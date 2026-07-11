@@ -25,6 +25,7 @@ from algorithms.tc.QL import QL
 from algorithms.tc.SoftmaxAC import SoftmaxAC
 from algorithms.tc.tc_replay.ESARSA import ESARSA as ReplayESARSA
 from algorithms.tc.tc_replay.QL import QL as QLReplay
+from algorithms.jax.AdaptivePPOPolicy import AdaptivePPOPolicy
 from algorithms.jax.PPOPolicy import PPOPolicy
 
 
@@ -103,6 +104,9 @@ def getAgent(name) -> Type[BaseAgent]:
 
     if name.startswith("InAC"):
         return InAC
+
+    if name.startswith("AdaptivePPOPolicy"):
+        return AdaptivePPOPolicy
 
     if name.startswith("PPOPolicy"):
         return PPOPolicy
