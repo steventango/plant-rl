@@ -243,7 +243,7 @@ class AdaptivePPOPolicy(PPOPolicy):
         self._retrain = None
 
     def _setup_retrain(self, now: datetime) -> None:
-        logger.info(
+        logger.debug(
             "Starting nightly retrain (%s, %d transitions: %d offline + %d online)",
             self._reward_mode,
             self._pointer,
@@ -296,7 +296,7 @@ class AdaptivePPOPolicy(PPOPolicy):
         r["model_steps_done"] += steps
         if r["model_steps_done"] >= total:
             loss = float(np.asarray(history["loss"])[-1])
-            logger.info("Model update done (%d steps, loss %.5f)", total, loss)
+            logger.debug("Model update done (%d steps, loss %.5f)", total, loss)
             self._setup_ppo()
 
     def _setup_ppo(self) -> None:
@@ -363,7 +363,7 @@ class AdaptivePPOPolicy(PPOPolicy):
         network, _, obs_norm, _ = self._retrain["runner_state"][0]
         self._network = network
         self._obs_norm = obs_norm
-        logger.info(
+        logger.debug(
             "Nightly retrain complete after %d PPO updates; new policy active",
             self._retrain["updates_done"],
         )
