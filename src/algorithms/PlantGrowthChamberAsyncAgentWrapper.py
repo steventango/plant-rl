@@ -221,8 +221,23 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
             self.last_action_time = self.env_time
             if self.env and hasattr(self.env, "update_action_trace"):
                 self.env.update_action_trace(self.last_action_info[0])
+            self._log_heartbeat(extra)
 
         return self.last_action_info
+
+    def _log_heartbeat(self, extra: dict[str, Any]) -> None:
+        area = extra.get("mean_clean_area")
+        area_str = (
+            f"{area:.2f}"
+            if isinstance(area, (int, float)) and not np.isnan(area)
+            else "n/a"
+        )
+        zone = getattr(self.env, "zone", None)
+        logger.info(
+            "Daily heartbeat\n"
+            f"Zone: {zone.identifier if zone is not None else 'n/a'}, time={self.env_local_time}\n"
+            f"mean_clean_area={area_str}, agent_action={self.last_action_info[0]}"
+        )
 
     # -------------------
     # -- Checkpointing --
