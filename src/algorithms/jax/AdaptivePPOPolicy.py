@@ -8,6 +8,7 @@ import jax.numpy as jnp
 import numpy as np
 import optax
 import orbax.checkpoint as ocp
+import pandas as pd
 from flax import nnx
 
 from algorithms.jax.mbrl import hparams
@@ -22,9 +23,16 @@ from algorithms.jax.mbrl.ppo import (
     make_train_state,
 )
 from algorithms.jax.mbrl.wrappers import ClipAction, LogWrapper, VecEnv
-from algorithms.jax.PPOPolicy import _CPU, PPOPolicy
+from algorithms.jax.PPOPolicy import _CPU, MAX_DAY_INDEX, PPOPolicy
 
 logger = logging.getLogger("plant_rl.AdaptivePPOPolicy")
+
+# Per-plant reward (Δ log-area) outlier band, matching plant-data's offline
+# transform_outlier_detection(q1=0.01, q2=0.99).
+_OUTLIER_Q_LOW = 0.01
+_OUTLIER_Q_HIGH = 0.99
+# Minimum plants in a day's batch before the quantile trim is meaningful.
+_MIN_PLANTS_FOR_IQR = 8
 
 
 def _unstack(batched, i):
@@ -88,9 +96,11 @@ class AdaptivePPOPolicy(PPOPolicy):
         self._chunk_updates: int = mbrl_params.get("chunk_updates", 8)
         self._model_steps_per_slice: int = mbrl_params.get("model_steps_per_slice", 500)
 
+        # Online transitions are per-plant (~one per pot per daily poll), so a
+        # whole experiment adds days * plants rows on top of the offline data.
         with jax.default_device(_CPU):
             self._load_offline_buffer(
-                params["dataset_npz"], params.get("buffer_headroom", 64)
+                params["dataset_npz"], params.get("buffer_headroom", 4096)
             )
             self._restore_model(params["checkpoint_path"])
 
@@ -98,8 +108,10 @@ class AdaptivePPOPolicy(PPOPolicy):
         self._phase = "idle"
         self._retrain: dict | None = None
         self._last_retrain_date = None
-        self._prev_obs: np.ndarray | None = None
+        # Per-pot log clean-area from the previous poll, for day-to-day matching.
+        self._prev_plants: dict | None = None
         self._prev_action: float | None = None
+        self._prev_day: int = 0
 
     # ------------------
     # -- Construction --
@@ -171,34 +183,95 @@ class AdaptivePPOPolicy(PPOPolicy):
     # -------------------------
     # -- Acting / transitions --
     # -------------------------
-    def _append_transition(self, next_obs: np.ndarray) -> None:
-        if self._prev_obs is None or self._prev_action is None:
-            return
+    def _plant_log_areas(self, extra: Any) -> dict:
+        """``{pot_id: log(clean_area)}`` for valid plants in ``extra['df']``.
+
+        The world model is trained on individual per-plant transitions, so each
+        daily poll should yield one transition per plant, not a single zone
+        aggregate. Dead plants (``clean_area <= 0``) and CV failures (NaN) are
+        dropped. Plants are keyed on ``pot_id`` (the stable physical pot present
+        in both the live CV output and the replay data), falling back to
+        ``plant_id`` then row index.
+        """
+        df = extra.get("df") if isinstance(extra, dict) else None
+        if df is None or len(df) == 0 or "clean_area" not in df.columns:
+            return {}
+        id_col = next((c for c in ("pot_id", "plant_id") if c in df.columns), None)
+        areas = np.asarray(pd.to_numeric(df["clean_area"], errors="coerce"), dtype=float)
+        ids = np.asarray(df[id_col]) if id_col is not None else np.arange(len(areas))
+        return {
+            pid: float(np.log(a))
+            for pid, a in zip(ids, areas, strict=False)
+            if np.isfinite(a) and a > 0.0
+        }
+
+    def _obs_vector(self, log_area: float, day: int) -> np.ndarray:
+        if self._obs_dim == 2:
+            return np.array(
+                [log_area, float(min(day, MAX_DAY_INDEX))], dtype=np.float32
+            )
+        return np.array([log_area], dtype=np.float32)
+
+    def _append_row(self, obs_vec: np.ndarray, next_vec: np.ndarray) -> bool:
         i = self._pointer
         if i >= self._buffer_obs.shape[0]:
             logger.warning("online transition buffer full; dropping transition")
-            return
-        self._buffer_obs[i] = self._prev_obs
+            return False
+        self._buffer_obs[i] = obs_vec
         self._buffer_action[i] = self._prev_action
-        self._buffer_next_obs[i] = next_obs
-        self._buffer_reward[i] = 0.0  # oracle reward is recomputed at retrain time
+        self._buffer_next_obs[i] = next_vec
+        self._buffer_reward[i] = 0.0  # oracle recomputes reward at retrain time
         self._buffer_terminated[i] = False
         self._buffer_truncated[i] = False
         self._pointer = i + 1
+        return True
+
+    def _collect_transitions(self, curr_plants: dict) -> int:
+        """Append one transition per pot seen on both the previous and this poll.
+
+        Mirrors the offline per-plant dataset: matches plants day-to-day by pot
+        id and, like plant-data's transform_outlier_detection, drops per-plant
+        Δlog-area (reward) outside the [1%, 99%] quantiles of the day's batch.
+        """
+        if self._prev_plants is None or self._prev_action is None:
+            return 0
+        shared = [pid for pid in curr_plants if pid in self._prev_plants]
+        if not shared:
+            return 0
+        prev = np.array([self._prev_plants[pid] for pid in shared], dtype=np.float32)
+        nxt = np.array([curr_plants[pid] for pid in shared], dtype=np.float32)
+        delta = nxt - prev  # per-plant reward (Δ log clean-area)
+        keep = np.isfinite(delta)
+        if int(keep.sum()) >= _MIN_PLANTS_FOR_IQR:
+            valid = delta[keep]
+            lo = np.quantile(valid, _OUTLIER_Q_LOW)
+            hi = np.quantile(valid, _OUTLIER_Q_HIGH)
+            keep &= (delta >= lo) & (delta <= hi)
+        count = 0
+        for j in np.nonzero(keep)[0]:
+            obs_vec = self._obs_vector(float(prev[j]), self._prev_day)
+            next_vec = self._obs_vector(float(nxt[j]), self._day)
+            count += int(self._append_row(obs_vec, next_vec))
+        return count
 
     def start(self, observation: Any, extra: dict[str, Any] | None = None):
         self._day = 0
         obs = np.asarray(self._assemble_obs(observation))
         action = self._policy_action(jnp.asarray(obs))
-        self._prev_obs, self._prev_action = obs, action
+        self._prev_plants = self._plant_log_areas(extra)
+        self._prev_action = action
+        self._prev_day = self._day
         return action, {}
 
     def step(self, reward: float, observation: Any, extra: Any):
         self._day += 1
         obs = np.asarray(self._assemble_obs(observation))
-        self._append_transition(obs)
+        curr_plants = self._plant_log_areas(extra)
+        self._collect_transitions(curr_plants)
         action = self._policy_action(jnp.asarray(obs))
-        self._prev_obs, self._prev_action = obs, action
+        self._prev_plants = curr_plants
+        self._prev_action = action
+        self._prev_day = self._day
         return action, {}
 
     # ---------------------------------
@@ -384,8 +457,9 @@ class AdaptivePPOPolicy(PPOPolicy):
         state["obs_norm_state"] = _numpy_state(self._obs_norm)
         state["model_state"] = _numpy_state(self._model)
         state["last_retrain_date"] = self._last_retrain_date
-        state["prev_obs"] = self._prev_obs
+        state["prev_plants"] = self._prev_plants
         state["prev_action"] = self._prev_action
+        state["prev_day"] = self._prev_day
         return state
 
     def __setstate__(self, state):
@@ -406,5 +480,6 @@ class AdaptivePPOPolicy(PPOPolicy):
         self._buffer_next_obs[n : n + count] = online["next_obs"]
         self._pointer = n + count
         self._last_retrain_date = state["last_retrain_date"]
-        self._prev_obs = state["prev_obs"]
+        self._prev_plants = state.get("prev_plants")
         self._prev_action = state["prev_action"]
+        self._prev_day = state.get("prev_day", 0)

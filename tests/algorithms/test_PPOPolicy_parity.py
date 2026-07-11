@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import TypeVar
 
 import numpy as np
+import pandas as pd
 import pytest
 
 import jax.numpy as jnp
@@ -66,6 +67,12 @@ def make_agent(
 ) -> AgentT:
     params = {**zone_params(zone), **overrides}
     return cls((1,), 1, params, None, seed)
+
+
+def plant_extra(areas, ids=None) -> dict:
+    """A per-poll ``extra`` with a per-plant df, like the real env supplies."""
+    ids = list(range(len(areas))) if ids is None else ids
+    return {"df": pd.DataFrame({"pot_id": ids, "clean_area": list(areas)})}
 
 
 def grid_actions(agent, grid) -> list[float]:
@@ -192,9 +199,12 @@ class TestAdaptivePPOPolicy:
                 "chunk_updates": 2,
             },
         )
-        agent.start(np.array([0.5], dtype=np.float32), {})
-        agent.step(0.0, np.array([0.55], dtype=np.float32), {})
-        assert agent._pointer == agent._offline_count + 1
+        # One daily poll of 20 plants (equal Δ, so the IQR trim keeps all)
+        # yields 20 per-plant transitions.
+        areas0 = np.full(20, 12.0)
+        agent.start(np.array([0.5], dtype=np.float32), plant_extra(areas0))
+        agent.step(0.0, np.array([0.55], dtype=np.float32), plant_extra(areas0 * 1.05))
+        assert agent._pointer == agent._offline_count + 20
 
         phases = []
         for _ in range(100):
@@ -210,15 +220,59 @@ class TestAdaptivePPOPolicy:
         agent.plan()
         assert agent._phase == "idle"
 
-        action, _ = agent.step(0.0, np.array([0.6], dtype=np.float32), {})
+        action, _ = agent.step(
+            0.0, np.array([0.6], dtype=np.float32), plant_extra(areas0 * 1.1)
+        )
         assert 0.4 <= action <= 1.3
+
+    def test_per_plant_collection_one_transition_per_pot(self):
+        agent = make_agent(ADAPTIVE_ZONES["analytic"], cls=AdaptivePPOPolicy)
+        n0 = agent._offline_count
+        # Below the IQR-trim threshold, so every matched pot is kept and the
+        # per-pot day-to-day mapping is exact.
+        ids = list(range(7))
+        a0 = np.exp(np.linspace(-1.0, 0.5, 7))
+        agent.start(np.array([0.5], dtype=np.float32), plant_extra(a0, ids))
+        assert agent._pointer == n0  # start collects nothing (no previous poll)
+
+        agent.step(0.0, np.array([0.5], dtype=np.float32), plant_extra(a0 * 1.04, ids))
+        assert agent._pointer - n0 == 7  # one transition per pot, matched by id
+
+        obs = agent._buffer_obs[n0 : agent._pointer, 0]
+        nxt = agent._buffer_next_obs[n0 : agent._pointer, 0]
+        # Rows are per-plant log-areas, chained per pot: next = obs + log(1.04).
+        np.testing.assert_allclose(np.sort(obs), np.sort(np.log(a0)), atol=1e-4)
+        np.testing.assert_allclose(nxt - obs, np.log(1.04), atol=1e-4)
+
+    def test_reward_iqr_drops_extreme_growth(self):
+        agent = make_agent(ADAPTIVE_ZONES["analytic"], cls=AdaptivePPOPolicy)
+        n0 = agent._offline_count
+        ids = list(range(20))
+        a0 = np.full(20, 10.0)
+        a1 = a0 * 1.02  # 18 plants grow normally...
+        a1[0] = a0[0] * 5.0  # ...one wild CV over-detection
+        a1[1] = a0[1] * 0.1  # ...one collapse
+        agent.start(np.array([0.5], dtype=np.float32), plant_extra(a0, ids))
+        agent.step(0.0, np.array([0.5], dtype=np.float32), plant_extra(a1, ids))
+        assert agent._pointer - n0 == 18  # the two Δlog outliers are trimmed
+
+    def test_dead_plants_and_nan_are_dropped(self):
+        agent = make_agent(ADAPTIVE_ZONES["analytic"], cls=AdaptivePPOPolicy)
+        n0 = agent._offline_count
+        ids = [0, 1, 2, 3, 4]
+        a0 = np.array([10.0, 20.0, 0.0, np.nan, 15.0])  # pot2 dead, pot3 CV failure
+        a1 = np.array([11.0, 22.0, 0.0, np.nan, 16.0])
+        agent.start(np.array([0.5], dtype=np.float32), plant_extra(a0, ids))
+        agent.step(0.0, np.array([0.5], dtype=np.float32), plant_extra(a1, ids))
+        assert agent._pointer - n0 == 3  # only pots 0, 1, 4 valid on both polls
 
     def test_checkpoint_roundtrip(self, setup_checkpoint_test, tmpdir):
         params = zone_params("Z5")
 
         def collect(agent):
-            agent.start(np.array([0.4], dtype=np.float32), {})
-            agent.step(0.0, np.array([0.5], dtype=np.float32), {})
+            a0 = np.exp(np.linspace(-0.5, 0.5, 16))
+            agent.start(np.array([0.4], dtype=np.float32), plant_extra(a0))
+            agent.step(0.0, np.array([0.5], dtype=np.float32), plant_extra(a0 * 1.03))
 
         original, loaded = setup_checkpoint_test(
             tmpdir,
@@ -228,11 +282,11 @@ class TestAdaptivePPOPolicy:
             actions=1,
             init_func=collect,
         )
-        assert loaded._pointer == original._pointer
+        assert loaded._pointer == original._pointer == original._offline_count + 16
         assert loaded._day == original._day
-        obs = jnp.asarray(original._prev_obs)
-        assert loaded._policy_action(obs) == pytest.approx(
-            original._policy_action(obs), abs=1e-6
+        probe = jnp.asarray(np.array([0.5], dtype=np.float32))
+        assert loaded._policy_action(probe) == pytest.approx(
+            original._policy_action(probe), abs=1e-6
         )
 
     @pytest.mark.slow

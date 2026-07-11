@@ -123,3 +123,66 @@ def test_one_hot_time_observation_shape():
     obs = asyncio.run(run())
     assert obs.shape == (13,)
     assert obs.sum() == 1.0
+
+
+def test_iqm_log_clean_area_is_robust_to_dead_nan_and_cv_failures():
+    import pytest
+
+    from environments.PlantGrowthChamber.specs.observations import iqm_log_clean_area
+
+    # Ten healthy plants, plus a dead plant (0), a CV failure (NaN), and a
+    # spurious huge detection (1e6) that a plain mean would be dragged by.
+    areas = [
+        10.0,
+        11.0,
+        12.0,
+        13.0,
+        14.0,
+        15.0,
+        16.0,
+        17.0,
+        18.0,
+        19.0,
+        0.0,
+        np.nan,
+        1e6,
+    ]
+    df = pd.DataFrame({"pot_id": range(len(areas)), "clean_area": areas})
+
+    value = iqm_log_clean_area(df)
+
+    # Reproduce the spec: drop non-finite/non-positive, IQM over log-areas.
+    cleaned = np.array([a for a in areas if np.isfinite(a) and a > 0.0])
+    log_a = np.log(cleaned)
+    lo, hi = np.quantile(log_a, [0.25, 0.75])
+    expected = log_a[(log_a >= lo) & (log_a <= hi)].mean()
+    assert value == pytest.approx(expected, abs=1e-4)
+    # Robust: the 1e6 outlier is trimmed, so the estimate stays in the healthy band.
+    assert value < np.log(50)
+
+
+def test_iqm_log_clean_area_empty_falls_back_to_floor():
+    import pytest
+
+    from environments.PlantGrowthChamber.specs.observations import iqm_log_clean_area
+
+    floor = float(np.log(1e-6))
+    assert iqm_log_clean_area(pd.DataFrame()) == pytest.approx(floor)
+    all_dead = pd.DataFrame({"pot_id": [0, 1], "clean_area": [0.0, np.nan]})
+    assert iqm_log_clean_area(all_dead) == pytest.approx(floor)
+
+
+def test_log_area_observation_uses_iqm():
+    import asyncio
+
+    from environments.PlantGrowthChamber.specs.observations import (
+        LogAreaObservation,
+        iqm_log_clean_area,
+    )
+
+    areas = [10.0, 12.0, 14.0, 16.0, 18.0, 0.0, np.nan, 1e6]
+    df = pd.DataFrame({"pot_id": range(len(areas)), "clean_area": areas})
+    raw = RawObservation(local_time=None, df=df, dli=0.0)  # type: ignore[arg-type]
+    obs = asyncio.run(LogAreaObservation().encode(raw))
+    assert obs.shape == (1,)
+    assert float(obs[0]) == iqm_log_clean_area(df)

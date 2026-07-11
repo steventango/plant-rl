@@ -51,14 +51,32 @@ class AreaObservation(ObservationSpec):
         return np.array([mean_clean_area(raw.df)])
 
 
+def iqm_log_clean_area(df: pd.DataFrame, q1: float = 0.25) -> float:
+    """Interquantile mean of per-plant log clean-area (robust zone estimate).
+
+    Drops dead plants (``clean_area <= 0``) and CV failures (NaN / non-finite),
+    then takes the mean over the central ``[q1, 1 - q1]`` quantile band of the
+    surviving ``log(clean_area)`` values so extreme detections don't bias the
+    observation. Falls back to ``log(1e-6)`` when no valid plant remains.
+    """
+    floor = float(np.log(1e-6))
+    if df.empty or "clean_area" not in df.columns:
+        return floor
+    areas = np.asarray(pd.to_numeric(df["clean_area"], errors="coerce"), dtype=float)
+    areas = areas[np.isfinite(areas) & (areas > 0.0)]
+    if areas.size == 0:
+        return floor
+    value = float(iqm(jnp.asarray(np.log(areas)), q1))
+    return floor if not np.isfinite(value) else value
+
+
 @dataclass(frozen=True)
 class LogAreaObservation(ObservationSpec):
     name: str = "log_area"
     shape: tuple[int, ...] = (1,)
 
     async def encode(self, raw: RawObservation) -> np.ndarray:
-        area = np.nan_to_num(mean_clean_area(raw.df), nan=0.0)
-        return np.log(np.array([max(area, 1e-6)]))
+        return np.array([iqm_log_clean_area(raw.df)])
 
 
 @dataclass(frozen=True)
