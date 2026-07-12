@@ -338,27 +338,29 @@ class TestConfigsConsistent:
 
 
 class TestZ12Derisk:
-    """Z12 is the hardware rehearsal for Z5 — it must not drift from it."""
+    """Z12 is the hardware rehearsal for the masked adaptive arm Z11 — it must
+    not drift from it (mirrors Z11 to derisk the masked path on hardware)."""
 
-    def test_z12_mirrors_z5_except_zone_and_timezone(self):
-        z5 = json.loads((CONFIG_DIR / "Z5.json").read_text())
+    def test_z12_mirrors_z11_except_zone_and_timezone(self):
+        z11 = json.loads((CONFIG_DIR / "Z11.json").read_text())
         z12 = json.loads((CONFIG_DIR / "Z12.json").read_text())
         assert z12["agent"] == "AdaptivePPOPolicy12"
 
-        m5, m12 = z5["metaParameters"], z12["metaParameters"]
+        m11, m12 = z11["metaParameters"], z12["metaParameters"]
         assert m12["environment"]["zone"] == "alliance-zone12"
         assert m12["environment"]["timezone"] == "America/Edmonton"
         assert m12["timezone"] == "America/Edmonton"
+        assert m12["reward_mode"] == "masked" and m12["obs_dim"] == 2
         # Z12 runs the full observation pipeline: CV must not be disabled.
         assert m12["environment"].get("enable_cv_pipeline", True)
 
         excluded = {"zone", "timezone"}
-        env5 = {k: v for k, v in m5["environment"].items() if k not in excluded}
+        env11 = {k: v for k, v in m11["environment"].items() if k not in excluded}
         env12 = {k: v for k, v in m12["environment"].items() if k not in excluded}
-        assert env5 == env12
-        rest5 = {k: v for k, v in m5.items() if k not in ("environment", "timezone")}
+        assert env11 == env12
+        rest11 = {k: v for k, v in m11.items() if k not in ("environment", "timezone")}
         rest12 = {k: v for k, v in m12.items() if k not in ("environment", "timezone")}
-        assert rest5 == rest12
+        assert rest11 == rest12
 
     def test_z12_agent_constructs_with_edmonton_tz(self, frozen_date):
         agent = make_agent("Z12", cls=AdaptivePPOPolicy)

@@ -25,7 +25,7 @@ two reward variants:
 | Z4 (zone04) | `Z4.json` | `PPOPolicy4` | masked | `ppo_explore` | sample | — |
 | Z5 (zone05) | `Z5.json` | `AdaptivePPOPolicy5` | analytic | `ppo_explore` | sample | `reward_mode: analytic` |
 | Z11 (zone11) | `Z11.json` | `AdaptivePPOPolicy11` | masked | `ppo_explore` | sample | `reward_mode: masked` |
-| Z12 (zone12) | `Z12.json` | `AdaptivePPOPolicy12` | analytic | `ppo_explore` | sample | `reward_mode: analytic` — **hardware derisk of Z5**, timezone `America/Edmonton`, CV pipeline re-enabled |
+| Z12 (zone12) | `Z12.json` | `AdaptivePPOPolicy12` | masked | `ppo_explore` | sample | `reward_mode: masked` — **hardware derisk of Z11** (masked path: obs_dim 2, day-index, masked retrain), timezone `America/Edmonton`, CV pipeline re-enabled |
 
 Explore heads were trained purely on the ENN's EIG exploration bonus
 (alpha=0, beta=1); eval heads purely on the extrinsic reward. Sampled zones

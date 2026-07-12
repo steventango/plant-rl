@@ -61,9 +61,12 @@ _BASELINE_AREWARD = jnp.asarray(
     ],
     dtype=jnp.float32,
 )
-# Off-target-only surplus ranges (max ≈ 0 just below the gate).
-_SURPLUS_AREA_MIN, _SURPLUS_AREA_MAX = -2.8661479977575706, -0.00020755512026238154
-_SURPLUS_LOG_MIN, _SURPLUS_LOG_MAX = -3.581414804561168, -0.000393623307581914
+# Off-target-only surplus ranges (max ≈ 0 just below the gate). Recomputed for
+# next-area gating over the visu-v2-v27 training transitions (next_area vs the
+# next-day baseline, off-target next-obs rows only — excludes each trajectory's
+# day-0 start, which is never a resulting area).
+_SURPLUS_AREA_MIN, _SURPLUS_AREA_MAX = -2.3802201747894287, -0.00020757317543029785
+_SURPLUS_LOG_MIN, _SURPLUS_LOG_MAX = -2.5805110931396484, -0.0002942085266113281
 _SURPLUS_AREWARD_MIN, _SURPLUS_AREWARD_MAX = (
     -0.6668615682048681,
     -1.0169467895559947e-06,
@@ -212,9 +215,10 @@ class PlantEnv(environment.Environment[PlantEnvState, PlantEnvParams]):
     ) -> jax.Array:
         """Oracle reward for model-based rollouts and visualization.
 
-        ``time`` is the current day index (0..14). Masked modes need it for the
-        per-day Zone-11 baseline; when omitted (e.g. reward-landscape plots) day
-        0 is used.
+        ``time`` is the current day index (0..14). Masked modes evaluate the
+        *resulting* area (``next_obs``) against the *next* day's Zone-11 baseline
+        (``time + 1``), so the action is credited for the area it produces; when
+        ``time`` is omitted (e.g. reward-landscape plots) day 0 is used.
         """
         growth = (next_obs - obs)[..., 0]
         mode = self._reward_mode
@@ -230,20 +234,23 @@ class PlantEnv(environment.Environment[PlantEnvState, PlantEnvParams]):
 
         day = jnp.asarray(0 if time is None else time, dtype=jnp.int32)
         day = jnp.clip(day, 0, _BASELINE_AREA.shape[0] - 1)
+        # Area-level masked modes gate the resulting area (next_obs) against the
+        # next day's baseline; masked_areward keeps its current-day growth gate.
+        next_day = jnp.clip(day + 1, 0, _BASELINE_AREA.shape[0] - 1)
         energy = (_P0 + _P_SLOPE * action[..., 0]) * _HOURS
         energy_norm = (energy - _E_MIN_WH) / (_E_MAX_WH - _E_MIN_WH)
         on_reward = 1.0 - energy_norm
 
         if mode in ("masked", "masked_log"):
-            baseline = _BASELINE_AREA[day]
+            baseline = _BASELINE_AREA[next_day]
             threshold = _MASK_F * baseline
-            clean_area = jnp.exp(obs[..., 0])
+            clean_area = jnp.exp(next_obs[..., 0])
             on_target = clean_area >= threshold
             if mode == "masked":
                 surplus = clean_area - threshold
                 s_min, s_max = _SURPLUS_AREA_MIN, _SURPLUS_AREA_MAX
             else:
-                surplus = obs[..., 0] - jnp.log(threshold)
+                surplus = next_obs[..., 0] - jnp.log(threshold)
                 s_min, s_max = _SURPLUS_LOG_MIN, _SURPLUS_LOG_MAX
         elif mode == "masked_areward":
             baseline = _BASELINE_AREWARD[day]
