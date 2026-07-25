@@ -239,17 +239,36 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         local_time = self.get_local_time()
         return 9 <= local_time.hour <= 20
 
+    def _plant_stats_to_df(self, plant_stats) -> pd.DataFrame:
+        """Convert CV plant_stats payload to a DataFrame (possibly empty)."""
+        if plant_stats and not isinstance(plant_stats, list):
+            # plant_stats is {pot_id: stats_dict, ...}
+            stats_list = []
+            for pot_id, stats in plant_stats.items():
+                if stats and "error" not in stats:
+                    stats["pot_id"] = pot_id
+                    stats_list.append(stats)
+            return pd.DataFrame(stats_list)
+        if isinstance(plant_stats, list):
+            return pd.DataFrame(plant_stats)
+        return pd.DataFrame()
+
+    def _reuse_last_df(self, reason: str) -> None:
+        """Keep the last valid plant-stats df; never floor the policy on CV gaps."""
+        if self.df.empty:
+            logger.warning("%s; no prior df to reuse", reason)
+        else:
+            logger.warning("%s; reusing last valid df (n=%d)", reason, len(self.df))
+
     async def get_plant_stats(self):
         assert self.image is not None, "Image must be fetched before processing."
 
         if not self.is_daylight():
             logger.debug("Not daylight, skipping plant stats.")
-            self.df = pd.DataFrame()
             return
 
         if not self.enable_cv_pipeline:
             logger.debug("CV pipeline disabled, skipping plant stats.")
-            self.df = pd.DataFrame()
             return
 
         # Run on 5-minute clock boundaries or if the last run is overdue.
@@ -273,49 +292,40 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                     session, self.image, self.cv_state
                 )
 
-            if response:
-                self.last_cv_time = now
+            if not response:
+                self._reuse_last_df("CV returned no response")
+                return
 
-                # Update state
-                if "state" in response:
-                    self.cv_state = response["state"]
+            self.last_cv_time = now
 
-                # Update Dataframe
-                plant_stats = response.get("plant_stats", {})
-                if plant_stats and not isinstance(plant_stats, list):
-                    # Convert dict of dicts to list of dicts for DataFrame
-                    # plant_stats is {pot_id: stats_dict, ...}
-                    stats_list = []
-                    for pot_id, stats in plant_stats.items():
-                        if stats and "error" not in stats:
-                            stats["pot_id"] = pot_id
-                            stats_list.append(stats)
-                    self.df = pd.DataFrame(stats_list)
-                elif isinstance(plant_stats, list):
-                    self.df = pd.DataFrame(plant_stats)
-                else:
-                    self.df = pd.DataFrame()
+            # Update state
+            if "state" in response:
+                self.cv_state = response["state"]
 
-                if not self.df.empty:
-                    logger.debug(
-                        "CV plant stats: n=%d, mean_clean_area=%.2f",
-                        len(self.df),
-                        mean_clean_area(self.df),
+            new_df = self._plant_stats_to_df(response.get("plant_stats", {}))
+            if new_df.empty:
+                self._reuse_last_df("CV returned empty plant_stats")
+            else:
+                self.df = new_df
+                logger.debug(
+                    "CV plant stats: n=%d, mean_clean_area=%.2f",
+                    len(self.df),
+                    mean_clean_area(self.df),
+                )
+
+            # Visualization
+            if "visualization_data" in response and response["visualization_data"]:
+                try:
+                    vis_data = base64.b64decode(response["visualization_data"])
+                    self.images["visualization"] = Image.open(io.BytesIO(vis_data))
+                except Exception:
+                    logger.warning(
+                        "Failed to decode visualization image", exc_info=True
                     )
-
-                # Visualization
-                if "visualization_data" in response and response["visualization_data"]:
-                    try:
-                        vis_data = base64.b64decode(response["visualization_data"])
-                        self.images["visualization"] = Image.open(io.BytesIO(vis_data))
-                    except Exception:
-                        logger.warning(
-                            "Failed to decode visualization image", exc_info=True
-                        )
 
         except Exception:
             logger.exception("Error during CV processing")
-            self.df = pd.DataFrame()
+            self._reuse_last_df("CV processing failed")
 
     async def get_power(self):
         if self.smart_plug_client is None or self.zone.smart_plug_host is None:
