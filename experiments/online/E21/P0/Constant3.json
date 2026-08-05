@@ -7,7 +7,8 @@
         "environment": {
             "zone": "alliance-zone03",
             "timezone": "Etc/GMT-2",
-            "action": "intensity"
+            "action": "intensity",
+            "enable_cv_pipeline": false
         },
         "timezone": "Etc/GMT-2",
         "enforce_night": true,
