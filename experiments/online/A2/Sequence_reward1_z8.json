@@ -1,0 +1,18 @@
+{
+    "agent": "Sequence_reward1_z8",
+    "problem": "PlantGrowthChamber",
+    "total_steps": 40320,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": "alliance-zone08",
+            "timezone": "Etc/GMT-2",
+            "action": "continuous_color"
+        },
+        "timezone": "Etc/GMT-2",
+        "enforce_night": true,
+        "flash_photography": true,
+        "action_timestep": 720,
+        "actions": "[-1.0, -1.0, -0.9999, -1.0, -0.9999, -1.0, -1.0, -0.9999, -1.0, -0.1707, 0.9998, 0.9999, 1.0, 0.7558]"
+    }
+}
