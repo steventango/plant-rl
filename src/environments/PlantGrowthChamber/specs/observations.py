@@ -51,23 +51,35 @@ class AreaObservation(ObservationSpec):
         return np.array([mean_clean_area(raw.df)])
 
 
-def iqm_log_clean_area(df: pd.DataFrame, q1: float = 0.25) -> float:
+# Fallback observation when no valid plant area is available (e.g. the very
+# first CV detect fails, so PlantGrowthChamber._reuse_last_df has no prior df).
+# The day-0 interquantile mean log clean-area of the plant-data/visu-v28
+# training set (1004 day-0 rows, IQM of log area = -1.0744, i.e. area 0.34): a
+# realistic freshly-transplanted plant, and well inside the range the deployed
+# policies were trained on. log(1e-6) = -13.8 would be far out of distribution
+# and make the policy extrapolate.
+FALLBACK_LOG_AREA = -1.0744097232818604
+
+
+def iqm_log_clean_area(
+    df: pd.DataFrame, q1: float = 0.25, fallback: float = FALLBACK_LOG_AREA
+) -> float:
     """Interquantile mean of per-plant log clean-area (robust zone estimate).
 
     Drops dead plants (``clean_area <= 0``) and CV failures (NaN / non-finite),
     then takes the mean over the central ``[q1, 1 - q1]`` quantile band of the
     surviving ``log(clean_area)`` values so extreme detections don't bias the
-    observation. Falls back to ``log(1e-6)`` when no valid plant remains.
+    observation. Returns ``fallback`` (a plausible in-distribution day-0 area)
+    when no valid plant remains.
     """
-    floor = float(np.log(1e-6))
     if df.empty or "clean_area" not in df.columns:
-        return floor
+        return fallback
     areas = np.asarray(pd.to_numeric(df["clean_area"], errors="coerce"), dtype=float)
     areas = areas[np.isfinite(areas) & (areas > 0.0)]
     if areas.size == 0:
-        return floor
+        return fallback
     value = float(iqm(jnp.asarray(np.log(areas)), q1))
-    return floor if not np.isfinite(value) else value
+    return fallback if not np.isfinite(value) else value
 
 
 @dataclass(frozen=True)

@@ -205,7 +205,9 @@ class AdaptivePPOPolicy(PPOPolicy):
         if df is None or len(df) == 0 or "clean_area" not in df.columns:
             return {}
         id_col = next((c for c in ("pot_id", "plant_id") if c in df.columns), None)
-        areas = np.asarray(pd.to_numeric(df["clean_area"], errors="coerce"), dtype=float)
+        areas = np.asarray(
+            pd.to_numeric(df["clean_area"], errors="coerce"), dtype=float
+        )
         ids = np.asarray(df[id_col]) if id_col is not None else np.arange(len(areas))
         return {
             pid: float(np.log(a))
@@ -242,6 +244,19 @@ class AdaptivePPOPolicy(PPOPolicy):
         Δlog-area (reward) outside the [1%, 99%] quantiles of the day's batch.
         """
         if self._prev_plants is None or self._prev_action is None:
+            return 0
+        # When the CV pipeline fails, PlantGrowthChamber._reuse_last_df hands the
+        # previous frame back verbatim so the policy keeps acting on a plausible
+        # area. That is right for acting but wrong for learning: every pot would
+        # yield an exactly-zero Δ log-area, teaching the world model a growth
+        # response that was never observed. Real CV output never repeats
+        # bit-for-bit, so identical readings mean a reused frame — skip it.
+        if curr_plants == self._prev_plants:
+            logger.warning(
+                "Plant readings identical to the previous poll (reused CV frame); "
+                "skipping %d fabricated zero-growth transitions",
+                len(curr_plants),
+            )
             return 0
         shared = [pid for pid in curr_plants if pid in self._prev_plants]
         if not shared:

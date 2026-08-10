@@ -275,6 +275,26 @@ class TestAdaptiveArms:
         )
         assert agent._retrain_archive_dir is None
 
+    @pytest.mark.parametrize("mode", sorted(ADAPTIVE_ZONES))
+    def test_reused_cv_frame_is_not_learned_from(self, mode):
+        """A CV failure reuses the last frame; those Δ=0 rows must not be kept."""
+        agent = make_agent(ADAPTIVE_ZONES[mode], cls=AdaptivePPOPolicy)
+        n = agent._offline_count
+        areas = np.linspace(8.0, 12.0, 60)
+        agent.start(np.array([0.5], dtype=np.float32), plant_extra(areas))
+        # CV fails -> the env hands back the identical df.
+        agent.step(0.0, np.array([0.5], dtype=np.float32), plant_extra(areas))
+        assert agent._pointer == n, "fabricated zero-growth rows entered the buffer"
+
+        # A genuine next-day reading is still collected normally.
+        agent.step(0.0, np.array([0.5], dtype=np.float32), plant_extra(areas * 1.04))
+        assert agent._pointer - n == 60
+        delta = (
+            agent._buffer_next_obs[n : agent._pointer, 0]
+            - agent._buffer_obs[n : agent._pointer, 0]
+        )
+        np.testing.assert_allclose(delta, np.log(1.04), atol=1e-4)
+
     def test_checkpoint_roundtrip(self, setup_checkpoint_test, tmpdir):
         def collect(agent):
             a0 = np.exp(np.linspace(-0.5, 0.5, 16))

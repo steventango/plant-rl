@@ -161,15 +161,20 @@ def test_iqm_log_clean_area_is_robust_to_dead_nan_and_cv_failures():
     assert value < np.log(50)
 
 
-def test_iqm_log_clean_area_empty_falls_back_to_floor():
+def test_iqm_log_clean_area_empty_uses_in_distribution_fallback():
     import pytest
 
-    from environments.PlantGrowthChamber.specs.observations import iqm_log_clean_area
+    from environments.PlantGrowthChamber.specs.observations import (
+        FALLBACK_LOG_AREA,
+        iqm_log_clean_area,
+    )
 
-    floor = float(np.log(1e-6))
-    assert iqm_log_clean_area(pd.DataFrame()) == pytest.approx(floor)
+    # Never the old log(1e-6) = -13.8 floor: that is far outside the range the
+    # deployed policies were trained on, so they would extrapolate.
+    assert iqm_log_clean_area(pd.DataFrame()) == pytest.approx(FALLBACK_LOG_AREA)
     all_dead = pd.DataFrame({"pot_id": [0, 1], "clean_area": [0.0, np.nan]})
-    assert iqm_log_clean_area(all_dead) == pytest.approx(floor)
+    assert iqm_log_clean_area(all_dead) == pytest.approx(FALLBACK_LOG_AREA)
+    assert iqm_log_clean_area(pd.DataFrame()) > float(np.log(1e-6))
 
 
 def test_log_area_observation_uses_iqm():
@@ -186,3 +191,24 @@ def test_log_area_observation_uses_iqm():
     obs = asyncio.run(LogAreaObservation().encode(raw))
     assert obs.shape == (1,)
     assert float(obs[0]) == iqm_log_clean_area(df)
+
+
+def test_iqm_log_clean_area_fallback_is_in_distribution():
+    """No-plant fallback must be a plausible day-0 area, not a -13.8 floor."""
+    import pytest
+
+    from environments.PlantGrowthChamber.specs.observations import (
+        FALLBACK_LOG_AREA,
+        iqm_log_clean_area,
+    )
+
+    # plant-data/visu-v28 day-0 interquantile mean log clean-area.
+    assert FALLBACK_LOG_AREA == pytest.approx(-1.0744097232818604)
+    # Well inside the log-area range the deployed policies were trained on.
+    assert -3.10 < FALLBACK_LOG_AREA < 2.41
+
+    assert iqm_log_clean_area(pd.DataFrame()) == pytest.approx(FALLBACK_LOG_AREA)
+    no_plants = pd.DataFrame({"pot_id": [0, 1], "clean_area": [0.0, np.nan]})
+    assert iqm_log_clean_area(no_plants) == pytest.approx(FALLBACK_LOG_AREA)
+    # A caller may still override it explicitly.
+    assert iqm_log_clean_area(pd.DataFrame(), fallback=-2.0) == pytest.approx(-2.0)
