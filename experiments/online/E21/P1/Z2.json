@@ -1,0 +1,27 @@
+{
+    "agent": "PPOPolicy2",
+    "problem": "PlantGrowthChamber",
+    "total_steps": 40320,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": "alliance-zone02",
+            "timezone": "Etc/GMT-2",
+            "action": "intensity",
+            "observation": "log_area"
+        },
+        "timezone": "Etc/GMT-2",
+        "enforce_night": true,
+        "flash_photography": true,
+        "action_timestep": 720,
+        "action_dim": 1,
+        "hidden_dim": 64,
+        "activation": "tanh",
+        "action_min": 0.4,
+        "action_max": 1.3,
+        "checkpoint_path": "/app/checkpoints/E21/P1/masked_log/checkpoint",
+        "policy": "eval",
+        "action_selection": "mean",
+        "obs_dim": 2
+    }
+}

@@ -1,6 +1,7 @@
 # Vendored from model-uncertainty-exploration (plant_env.py); gymnax's generic
 # Environment typing does not model our env/params subclasses, so structural
 # type noise is silenced file-wide to keep the port byte-comparable upstream.
+# Plotting-only landscape helpers are stripped; everything else is verbatim.
 # pyright: reportIncompatibleMethodOverride=false, reportInvalidTypeArguments=false
 # pyright: reportReturnType=false
 from typing import Any, Literal
@@ -14,12 +15,14 @@ from gymnax.environments import environment, spaces
 _P0, _P_SLOPE, _E_CONST_WH, _HOURS = 3.3, 44.9, 571.6, 12.0
 _EP_LEN = 14.0
 
-# Masked-reward constants from plant-data join_zones on the mixed-e18-e19
-# daily-v27 parquet (f=0.9). Off-target uses min-max of surplus over
-# *off-target rows only*, shifted to [-1, 0].
+# Masked-reward constants from plant-data join_zones on the mixed-e18-e19-e20
+# subsampled-daily-v28 parquet (f=0.9). Off-target uses min-max of surplus over
+# *off-target rows only*, shifted to [-1, 0]. The Zone-11 baselines below are
+# pinned to E18 Z11 and so are unchanged from the v27 parquet; only the energy
+# range and the surplus ranges move with the added E20 data.
 _MASK_F = 0.9
-_E_MIN_WH = 260.6372500000001
-_E_MAX_WH = 797.8933333333331
+_E_MIN_WH = 260.484666666669
+_E_MAX_WH = 798.6427500000027
 _BASELINE_AREA = jnp.asarray(
     [
         0.2845042592930029,
@@ -40,8 +43,8 @@ _BASELINE_AREA = jnp.asarray(
     ],
     dtype=jnp.float32,
 )
-# Day 0 has no area_reward baseline in Zone 11; fill with day-1 so t=0 is defined.
-_BASELINE_AREWARD = jnp.asarray(
+# Day 0 has no growth baseline in Zone 11; fill with day-1 so t=0 is defined.
+_BASELINE_GROWTH = jnp.asarray(
     [
         0.1421117135405597,
         0.1421117135405597,
@@ -61,19 +64,28 @@ _BASELINE_AREWARD = jnp.asarray(
     ],
     dtype=jnp.float32,
 )
-# Off-target-only surplus ranges (max ≈ 0 just below the gate). Recomputed for
-# next-area gating over the visu-v2-v27 training transitions (next_area vs the
-# next-day baseline, off-target next-obs rows only — excludes each trajectory's
-# day-0 start, which is never a resulting area).
-_SURPLUS_AREA_MIN, _SURPLUS_AREA_MAX = -2.3802201747894287, -0.00020757317543029785
-_SURPLUS_LOG_MIN, _SURPLUS_LOG_MAX = -2.5805110931396484, -0.0002942085266113281
-_SURPLUS_AREWARD_MIN, _SURPLUS_AREWARD_MAX = (
-    -0.6668615682048681,
-    -1.0169467895559947e-06,
-)
+# Off-target-only surplus ranges (max ≈ 0 just below the gate), from
+# scripts/recompute_masked_surplus.py over the visu-v28 training transitions.
+# Both modes gate against the *next* day's baseline: masked_log gates the
+# resulting area (next_obs vs the next-day area baseline, off-target next-obs
+# rows only — excludes each trajectory's day-0 start, which is never a
+# resulting area); masked_growth gates the resulting growth against the
+# next day's growth baseline.
+_SURPLUS_LOG_MIN, _SURPLUS_LOG_MAX = -3.548095226287842, -2.7120113372802734e-06
+_SURPLUS_GROWTH_MIN, _SURPLUS_GROWTH_MAX = -1.5482633113861084, -3.904104232788086e-06
 
-RewardMode = Literal["area", "analytic", "masked", "masked_log", "masked_areward"]
-_MASKED_MODES = frozenset({"masked", "masked_log", "masked_areward"})
+RewardMode = Literal["area", "analytic", "masked_log", "masked_growth"]
+_MASKED_MODES = frozenset({"masked_log", "masked_growth"})
+
+
+def reward_mode_requires_time(reward_mode: RewardMode) -> bool:
+    """Whether ``reward_mode`` *needs* the day index in the observation.
+
+    Masked modes gate on a day-dependent baseline, so their obs must carry time.
+    Other modes may still opt in (``PlantEnv(include_time=True)``) to let the
+    policy and dynamics model condition on the day.
+    """
+    return reward_mode in _MASKED_MODES
 
 
 @struct.dataclass
@@ -103,20 +115,27 @@ class PlantEnv(environment.Environment[PlantEnvState, PlantEnvParams]):
 
     For masked reward modes the observation is ``[log_area, time]`` so the
     policy can condition on the day-dependent gate; otherwise it is
-    ``[log_area]``.
+    ``[log_area]`` unless ``include_time`` opts in.
     """
 
     def __init__(
         self,
         act_dim: int,
         reward_mode: RewardMode = "analytic",
+        include_time: bool = False,
     ):
         self._act_dim = act_dim
-        self._reward_mode = reward_mode
+        self._reward_mode: RewardMode = reward_mode
+        self._include_time = include_time
 
     @property
     def obs_includes_time(self) -> bool:
-        return self._reward_mode in _MASKED_MODES
+        """True when obs is ``[log_area, time]``.
+
+        Forced on for masked modes, which cannot compute their gate without the
+        day; otherwise controlled by ``include_time``.
+        """
+        return self._include_time or reward_mode_requires_time(self._reward_mode)
 
     @property
     def obs_dim(self) -> int:
@@ -234,30 +253,27 @@ class PlantEnv(environment.Environment[PlantEnvState, PlantEnvParams]):
 
         day = jnp.asarray(0 if time is None else time, dtype=jnp.int32)
         day = jnp.clip(day, 0, _BASELINE_AREA.shape[0] - 1)
-        # Area-level masked modes gate the resulting area (next_obs) against the
-        # next day's baseline; masked_areward keeps its current-day growth gate.
+        # Both masked modes gate the resulting quantity against the next day's
+        # baseline: masked_log gates the resulting area, masked_growth gates
+        # the resulting growth.
         next_day = jnp.clip(day + 1, 0, _BASELINE_AREA.shape[0] - 1)
         energy = (_P0 + _P_SLOPE * action[..., 0]) * _HOURS
         energy_norm = (energy - _E_MIN_WH) / (_E_MAX_WH - _E_MIN_WH)
         on_reward = 1.0 - energy_norm
 
-        if mode in ("masked", "masked_log"):
+        if mode == "masked_log":
             baseline = _BASELINE_AREA[next_day]
             threshold = _MASK_F * baseline
             clean_area = jnp.exp(next_obs[..., 0])
             on_target = clean_area >= threshold
-            if mode == "masked":
-                surplus = clean_area - threshold
-                s_min, s_max = _SURPLUS_AREA_MIN, _SURPLUS_AREA_MAX
-            else:
-                surplus = next_obs[..., 0] - jnp.log(threshold)
-                s_min, s_max = _SURPLUS_LOG_MIN, _SURPLUS_LOG_MAX
-        elif mode == "masked_areward":
-            baseline = _BASELINE_AREWARD[day]
+            surplus = next_obs[..., 0] - jnp.log(threshold)
+            s_min, s_max = _SURPLUS_LOG_MIN, _SURPLUS_LOG_MAX
+        elif mode == "masked_growth":
+            baseline = _BASELINE_GROWTH[next_day]
             threshold = _MASK_F * baseline
             on_target = growth >= threshold
             surplus = growth - threshold
-            s_min, s_max = _SURPLUS_AREWARD_MIN, _SURPLUS_AREWARD_MAX
+            s_min, s_max = _SURPLUS_GROWTH_MIN, _SURPLUS_GROWTH_MAX
         else:
             raise ValueError(f"Unknown reward_mode: {mode!r}")
 

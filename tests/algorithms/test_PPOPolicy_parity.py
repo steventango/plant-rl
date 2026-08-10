@@ -188,6 +188,14 @@ class TestAdaptivePPOPolicy:
 
     @pytest.mark.parametrize("mode", sorted(ADAPTIVE_ZONES))
     def test_nightly_retrain_completes(self, mode):
+        if mode == "masked":
+            pytest.skip(
+                "E20/P1 is retired: its Z11 config uses reward_mode 'masked', which "
+                "was renamed/removed when the reward moved to next-area gating "
+                "(now masked_log/masked_growth). Its checkpoint was trained on the "
+                "removed area-surplus reward, so this retrain is unreproducible. "
+                "E21/P1 covers the current masked_log path."
+            )
         agent = make_agent(
             ADAPTIVE_ZONES[mode],
             cls=AdaptivePPOPolicy,
@@ -215,6 +223,9 @@ class TestAdaptivePPOPolicy:
         assert "model" in phases and "ppo" in phases
         assert agent._phase == "idle" and agent._retrain is None
         assert agent._last_retrain_date is not None
+        # plan() swallows exceptions and still returns to "idle", so returning to
+        # idle is NOT evidence of success — assert the swap actually happened.
+        assert agent._retrain_count == 1
 
         # Same night: no second cycle.
         agent.plan()

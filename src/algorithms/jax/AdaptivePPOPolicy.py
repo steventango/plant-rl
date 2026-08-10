@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from datetime import datetime
@@ -85,6 +86,9 @@ class AdaptivePPOPolicy(PPOPolicy):
         self._reward_mode: RewardMode = params["reward_mode"]
         self._retrain_after_hour: int = params.get("retrain_after_hour", 21)
         self._retrain_deadline_hour: int = params.get("retrain_deadline_hour", 8)
+        # Where to archive each night's retrain artifacts for later inspection;
+        # None disables archiving.
+        self._retrain_archive_dir: str | None = params.get("retrain_archive_dir")
 
         mbrl_params = params.get("mbrl", {})
         self._ppo_config = derive_config(
@@ -108,6 +112,10 @@ class AdaptivePPOPolicy(PPOPolicy):
         self._phase = "idle"
         self._retrain: dict | None = None
         self._last_retrain_date = None
+        # Completed retrains that actually swapped in a new policy. A failed
+        # cycle is swallowed by plan()'s except and still returns to "idle", so
+        # this is the only positive evidence that a retrain succeeded.
+        self._retrain_count = 0
         # Per-pot log clean-area from the previous poll, for day-to-day matching.
         self._prev_plants: dict | None = None
         self._prev_action: float | None = None
@@ -375,7 +383,18 @@ class AdaptivePPOPolicy(PPOPolicy):
     def _setup_ppo(self) -> None:
         assert self._retrain is not None
         r = self._retrain
-        env = PlantEnv(int(self._buffer_action.shape[1]), reward_mode=self._reward_mode)
+        # include_time keyed off the agent's own obs_dim so the retrain env's
+        # observation always matches the deployed policy's input (masked modes
+        # force time on regardless; non-masked modes may still opt in).
+        env = PlantEnv(
+            int(self._buffer_action.shape[1]),
+            reward_mode=self._reward_mode,
+            include_time=self._obs_dim == 2,
+        )
+        if env.obs_dim != self._obs_dim:
+            raise ValueError(
+                f"retrain env obs_dim {env.obs_dim} != agent obs_dim {self._obs_dim}"
+            )
         env_params = PlantEnvParams(
             area_min=self._area_min,
             area_max=self._area_max,
@@ -436,11 +455,76 @@ class AdaptivePPOPolicy(PPOPolicy):
         network, _, obs_norm, _ = self._retrain["runner_state"][0]
         self._network = network
         self._obs_norm = obs_norm
+        self._retrain_count += 1
+        self._archive_retrain()
         logger.debug(
-            "Nightly retrain complete after %d PPO updates; new policy active",
+            "Nightly retrain complete after %d PPO updates; new policy active "
+            "(completed retrains: %d)",
             self._retrain["updates_done"],
+            self._retrain_count,
         )
         self._reset_retrain()
+
+    def _archive_retrain(self) -> None:
+        """Archive this night's retrain artifacts for offline inspection.
+
+        Writes the swapped-in policy, its obs normalizer and the updated world
+        model as orbax checkpoints — the same layout main.py saves, so the
+        training repo's tooling can load them directly — alongside the online
+        transitions that drove the retrain and a metadata JSON. Best-effort: a
+        failure here must never cost us the (already completed) retrain.
+        """
+        if self._retrain_archive_dir is None:
+            return
+        assert self._retrain is not None
+        try:
+            stamp = (
+                self._last_retrain_date.isoformat()
+                if self._last_retrain_date is not None
+                else "unknown-date"
+            )
+            out = os.path.join(
+                os.path.abspath(self._retrain_archive_dir),
+                f"{stamp}_retrain{self._retrain_count:04d}",
+            )
+            os.makedirs(out, exist_ok=True)
+
+            checkpointer = ocp.StandardCheckpointer()
+            for name, module in (
+                ("network", self._network),
+                ("obs_norm", self._obs_norm),
+                ("model", self._model),
+            ):
+                _, state = nnx.split(module)
+                checkpointer.save(os.path.join(out, name), state)
+            checkpointer.wait_until_finished()
+
+            n, p = self._offline_count, self._pointer
+            np.savez(
+                os.path.join(out, "online_transitions.npz"),
+                obs=self._buffer_obs[n:p],
+                action=self._buffer_action[n:p],
+                next_obs=self._buffer_next_obs[n:p],
+            )
+            with open(os.path.join(out, "metadata.json"), "w") as f:
+                json.dump(
+                    {
+                        "retrain_count": self._retrain_count,
+                        "date": stamp,
+                        "reward_mode": self._reward_mode,
+                        "obs_dim": self._obs_dim,
+                        "offline_transitions": n,
+                        "online_transitions": p - n,
+                        "ppo_updates": self._retrain["updates_done"],
+                        "model_update_steps": self._retrain["model_steps_done"],
+                        "policy_head": "ppo_explore (retrained)",
+                    },
+                    f,
+                    indent=1,
+                )
+            logger.debug("Archived retrain artifacts to %s", out)
+        except Exception:
+            logger.exception("Failed to archive retrain artifacts (policy is fine)")
 
     # -------------------
     # -- Checkpointing --
@@ -457,6 +541,7 @@ class AdaptivePPOPolicy(PPOPolicy):
         state["obs_norm_state"] = _numpy_state(self._obs_norm)
         state["model_state"] = _numpy_state(self._model)
         state["last_retrain_date"] = self._last_retrain_date
+        state["retrain_count"] = self._retrain_count
         state["prev_plants"] = self._prev_plants
         state["prev_action"] = self._prev_action
         state["prev_day"] = self._prev_day
@@ -480,6 +565,7 @@ class AdaptivePPOPolicy(PPOPolicy):
         self._buffer_next_obs[n : n + count] = online["next_obs"]
         self._pointer = n + count
         self._last_retrain_date = state["last_retrain_date"]
+        self._retrain_count = state.get("retrain_count", 0)
         self._prev_plants = state.get("prev_plants")
         self._prev_action = state["prev_action"]
         self._prev_day = state.get("prev_day", 0)

@@ -1,0 +1,32 @@
+{
+    "agent": "AdaptivePPOPolicy4",
+    "problem": "PlantGrowthChamber",
+    "total_steps": 40320,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": "alliance-zone04",
+            "timezone": "Etc/GMT-2",
+            "action": "intensity",
+            "observation": "log_area"
+        },
+        "timezone": "Etc/GMT-2",
+        "enforce_night": true,
+        "flash_photography": true,
+        "action_timestep": 720,
+        "action_dim": 1,
+        "hidden_dim": 64,
+        "activation": "tanh",
+        "action_min": 0.4,
+        "action_max": 1.3,
+        "checkpoint_path": "/app/checkpoints/E21/P1/masked_log/checkpoint",
+        "policy": "explore",
+        "action_selection": "sample",
+        "obs_dim": 2,
+        "reward_mode": "masked_log",
+        "dataset_npz": "/app/checkpoints/E21/P1/masked_log/offline_transitions.npz",
+        "retrain_after_hour": 21,
+        "retrain_deadline_hour": 8,
+        "retrain_archive_dir": "/data/plant-rl/online/E21/P1/AdaptivePPOPolicy4/alliance-zone04/retrain_archive"
+    }
+}
