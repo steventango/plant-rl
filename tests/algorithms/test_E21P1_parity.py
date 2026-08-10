@@ -55,6 +55,11 @@ def zone_params(zone: str) -> dict:
     params["checkpoint_path"] = str(CKPT_ROOT / mode / "checkpoint")
     if "dataset_npz" in params:
         params["dataset_npz"] = str(CKPT_ROOT / mode / "offline_transitions.npz")
+    # The real config points at the live /data/plant-rl archive tree. A test
+    # retrain must never write there: it would leave test-sized artifacts that
+    # collide with (and so suppress) that night's genuine archive. Tests that
+    # exercise archiving pass an explicit tmp_path instead.
+    params.pop("retrain_archive_dir", None)
     return params
 
 
@@ -267,13 +272,57 @@ class TestAdaptiveArms:
     def test_adaptive_configs_enable_archiving(self):
         """The deployed explore arms must archive; omitting the key disables it."""
         for zone in ADAPTIVE_ZONES.values():
-            params = zone_params(zone)
-            assert params["retrain_archive_dir"].startswith("/data/plant-rl/")
-            assert "E21/P1" in params["retrain_archive_dir"]
-        agent = make_agent(
-            ADAPTIVE_ZONES["analytic"], cls=AdaptivePPOPolicy, retrain_archive_dir=None
-        )
+            deployed = json.loads((CONFIG_DIR / f"{zone}.json").read_text())
+            archive = deployed["metaParameters"]["retrain_archive_dir"]
+            assert archive.startswith("/data/plant-rl/")
+            assert "E21/P1" in archive
+            # ...but the test harness must strip it, so no test ever writes into
+            # the live archive tree and shadows a real night's artifacts.
+            assert "retrain_archive_dir" not in zone_params(zone)
+        agent = make_agent(ADAPTIVE_ZONES["analytic"], cls=AdaptivePPOPolicy)
         assert agent._retrain_archive_dir is None
+
+    def test_archive_never_overwritten_by_a_stale_directory(self, tmp_path):
+        """A pre-existing archive dir must not cost us the real artifacts."""
+        from zoneinfo import ZoneInfo
+
+        archive = tmp_path / "retrain_archive"
+        # Simulate a stale directory squatting on the name this retrain will use
+        # (the agent stamps with today's date in the zone's timezone).
+        stamp = _datetime.datetime.now(ZoneInfo("Etc/GMT-2")).date().isoformat()
+        squatter = archive / f"{stamp}_retrain0001"
+        (squatter / "network").mkdir(parents=True)
+        (squatter / "metadata.json").write_text('{"stale": true}')
+
+        agent = make_agent(
+            ADAPTIVE_ZONES["analytic"],
+            cls=AdaptivePPOPolicy,
+            retrain_after_hour=0,
+            retrain_archive_dir=str(archive),
+            mbrl={
+                "model": {"update_steps": 20},
+                "model_steps_per_slice": 10,
+                "ppo": {"num_envs": 64, "total_timesteps": 64 * 10 * 2},
+                "chunk_updates": 1,
+            },
+        )
+        areas = np.full(12, 9.0)
+        agent.start(np.array([0.5], dtype=np.float32), plant_extra(areas))
+        agent.step(0.0, np.array([0.55], dtype=np.float32), plant_extra(areas * 1.04))
+        for _ in range(100):
+            agent.plan()
+            if agent._retrain_count == 1 and agent._phase == "idle":
+                break
+        assert agent._retrain_count == 1
+
+        # The stale dir is untouched and the real artifacts landed beside it.
+        assert json.loads((squatter / "metadata.json").read_text()) == {"stale": True}
+        written = sorted(p.name for p in archive.iterdir())
+        assert written == [f"{stamp}_retrain0001", f"{stamp}_retrain0001_1"]
+        real = archive / f"{stamp}_retrain0001_1"
+        assert json.loads((real / "metadata.json").read_text())["retrain_count"] == 1
+        for sub in ("network", "obs_norm", "model"):
+            assert (real / sub).is_dir()
 
     @pytest.mark.parametrize("mode", sorted(ADAPTIVE_ZONES))
     def test_reused_cv_frame_is_not_learned_from(self, mode):

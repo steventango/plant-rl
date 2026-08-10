@@ -498,10 +498,23 @@ class AdaptivePPOPolicy(PPOPolicy):
                 if self._last_retrain_date is not None
                 else "unknown-date"
             )
-            out = os.path.join(
-                os.path.abspath(self._retrain_archive_dir),
-                f"{stamp}_retrain{self._retrain_count:04d}",
-            )
+            # Never write into an existing archive: orbax refuses to overwrite,
+            # which would lose this night's artifacts entirely. Suffix instead so
+            # a stale directory (e.g. left by a test run, or a restart that reset
+            # the counter) can't cost us a real archive.
+            root = os.path.abspath(self._retrain_archive_dir)
+            base = os.path.join(root, f"{stamp}_retrain{self._retrain_count:04d}")
+            out = base
+            for suffix in range(1, 100):
+                if not os.path.exists(out):
+                    break
+                out = f"{base}_{suffix}"
+            else:
+                raise RuntimeError(f"no free archive directory under {base}")
+            if out != base:
+                logger.warning(
+                    "Archive %s already existed; writing to %s instead", base, out
+                )
             os.makedirs(out, exist_ok=True)
 
             checkpointer = ocp.StandardCheckpointer()
