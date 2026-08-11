@@ -28,6 +28,13 @@ import orbax.checkpoint as ocp
 from flax import nnx
 
 
+def _mtime(path: str) -> str:
+    from datetime import datetime, timezone
+
+    ts = os.path.getmtime(path)
+    return datetime.fromtimestamp(ts, timezone.utc).isoformat(timespec="seconds")
+
+
 def _find_agent(obj, depth: int = 0):
     """Locate the AdaptivePPOPolicy inside the pickled checkpoint storage."""
     if depth > 6 or obj is None:
@@ -100,13 +107,22 @@ def main():
                 "reward_mode": agent._reward_mode,
                 "obs_dim": agent._obs_dim,
                 "offline_transitions": n,
-                "online_transitions": p - n,
+                "online_transitions_at_checkpoint": p - n,
                 "policy_head": "ppo_explore (retrained)",
                 "salvaged_from": os.path.abspath(args.checkpoint),
                 "note": (
                     "Reconstructed from the agent state checkpoint after the "
-                    "live archive was skipped; ppo_updates/model_update_steps "
-                    "are not recorded in that checkpoint."
+                    "live archive was skipped. network/obs_norm/model ARE the "
+                    "artifacts of retrain {count}, which is the most recent one "
+                    "(nothing has overwritten them since). But the buffer is as "
+                    "of the checkpoint, not the retrain: "
+                    "online_transitions_at_checkpoint counts rows collected up "
+                    "to {ckpt_time}, which may exceed what actually drove that "
+                    "retrain. ppo_updates/model_update_steps are not recorded "
+                    "in the checkpoint."
+                ).format(
+                    count=count,
+                    ckpt_time=_mtime(args.checkpoint),
                 ),
             },
             f,
