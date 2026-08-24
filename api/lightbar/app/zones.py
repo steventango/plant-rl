@@ -9,7 +9,7 @@ ZONES = {
     "alliance-zone2": Zone(0x24, 0x26),
     "alliance-zone3": Zone(0x41, 0x42),
     "alliance-zone4": Zone(0x49, 0x54),
-    "alliance-zone5": Zone(0x38, 0x40),
+    "alliance-zone5": Zone(0x25, 0x33),
     "alliance-zone6": Zone(0x12, 0x13),
     "alliance-zone7": Zone(0x58, 0x67),
     "alliance-zone8": Zone(0x18, 0x19),
