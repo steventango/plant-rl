@@ -8,12 +8,12 @@
         "far_red": 32.807586499999985
     },
     "safe_maximum": {
-        "blue": 96,
-        "cool_white": 90,
+        "blue": 94,
+        "cool_white": 76,
         "warm_white": 65,
         "orange_red": 79.0,
         "red": 55.0,
-        "far_red": 21.636228499999987
+        "far_red": 25.13725199999998
     },
     "safe_minimum": {
         "blue": 5.0,

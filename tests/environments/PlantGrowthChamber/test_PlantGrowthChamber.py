@@ -36,6 +36,7 @@ async def _run_single_zone_test(
         light_intensities = [1.0]
 
     chamber = PlantGrowthChamber(zone=zone_id, timezone="America/Edmonton")
+    chamber.zone.calibration = None
 
     # Generate all actions: one-hot for each channel, then all-off
     actions = []

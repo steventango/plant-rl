@@ -32,7 +32,7 @@ def plot_spectral_data(
 
 # Load the calibration data
 calibration_file = (
-    "/workspaces/plant-rl/scripts/calibration/Plant Chamber Full Calibration.xlsx"
+    "scripts/calibration/Plant Chamber Full Calibration.xlsx"
 )
 
 # Create subplots
@@ -58,6 +58,6 @@ for zone in range(1, 13):
 # Adjust layout to prevent overlapping titles/labels
 plt.tight_layout(rect=(0.0, 0.03, 1.0, 0.95))
 
-plt.show()
+plt.savefig("scripts/calibration/FarRedSpectralData.png")
 
 # %%
