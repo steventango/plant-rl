@@ -104,7 +104,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         # Cleaning state
         self.cv_state = None
         self.last_cv_time = None
-        self.cv_interval = timedelta(minutes=5)
+        self.cv_interval = timedelta(hours=1)
 
         self.clean_areas = []
         # i.e. a mapping from datetime to the mean clean area
@@ -271,9 +271,9 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             logger.debug("CV pipeline disabled, skipping plant stats.")
             return
 
-        # Run on 5-minute clock boundaries or if the last run is overdue.
+        # Run on hourly clock boundaries or if the last run is overdue.
         now = self.get_time()
-        on_boundary = now.minute % 5 == 0
+        on_boundary = now.minute == 0
         overdue = (
             self.last_cv_time is None or (now - self.last_cv_time) > self.cv_interval
         )
