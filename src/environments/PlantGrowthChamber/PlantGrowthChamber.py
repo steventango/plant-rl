@@ -37,7 +37,10 @@ class ConnectionIssueTracker:
 import numpy as np
 from PIL import Image
 
-from environments.PlantGrowthChamber.specs.observations import RawObservation
+from environments.PlantGrowthChamber.specs.observations import (
+    RawObservation,
+    iqm_log_clean_area,
+)
 from environments.PlantGrowthChamber.utils import (
     ACTION_BUDGET_S,
     create_action_session,
@@ -308,9 +311,10 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             else:
                 self.df = new_df
                 logger.debug(
-                    "CV plant stats: n=%d, mean_clean_area=%.2f",
+                    "CV plant stats: n=%d, mean_clean_area=%.2f, iqm_log_clean_area=%.2f",
                     len(self.df),
                     mean_clean_area(self.df),
+                    iqm_log_clean_area(self.df),
                 )
 
             # Visualization
@@ -491,9 +495,11 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
                 )
         self.last_step_time = current_time
         area = mean_clean_area(observation.df)
+        iqm_area = iqm_log_clean_area(observation.df)
         logger.debug(
             f"Local time: {self.get_local_time()}. Step {self.n_step} completed. "
-            f"Reward: {reward}, Terminal: {terminal}, mean_clean_area: {area:.2f}"
+            f"Reward: {reward}, Terminal: {terminal}, "
+            f"mean_clean_area: {area:.2f}, iqm_log_clean_area: {iqm_area:.2f}"
         )
         self.n_step += 1
 
@@ -525,6 +531,7 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             info = {
                 "df": self.df,
                 "mean_clean_area": np.mean(self.clean_areas[-1]),
+                "iqm_log_clean_area": iqm_log_clean_area(self.df),
                 "env_time": self.time.timestamp(),
             }
         info.update(self.power_record)

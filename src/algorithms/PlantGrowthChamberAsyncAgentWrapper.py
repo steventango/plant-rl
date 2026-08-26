@@ -225,18 +225,21 @@ class PlantGrowthChamberAsyncAgentWrapper(AsyncAgentWrapper):
 
         return self.last_action_info
 
+    def _format_metric(self, extra: dict[str, Any], key: str) -> str:
+        value = extra.get(key)
+        if isinstance(value, (int, float)) and not np.isnan(value):
+            return f"{value:.2f}"
+        return "n/a"
+
     def _log_heartbeat(self, extra: dict[str, Any]) -> None:
-        area = extra.get("mean_clean_area")
-        area_str = (
-            f"{area:.2f}"
-            if isinstance(area, (int, float)) and not np.isnan(area)
-            else "n/a"
-        )
+        area_str = self._format_metric(extra, "mean_clean_area")
+        iqm_str = self._format_metric(extra, "iqm_log_clean_area")
         zone = getattr(self.env, "zone", None)
         logger.info(
             "Daily heartbeat\n"
             f"Zone: {zone.identifier if zone is not None else 'n/a'}, time={self.env_local_time}\n"
-            f"mean_clean_area={area_str}, agent_action={self.last_action_info[0]}"
+            f"mean_clean_area={area_str}, iqm_log_clean_area={iqm_str}, "
+            f"agent_action={self.last_action_info[0]}"
         )
 
     # -------------------
