@@ -19,6 +19,8 @@ class ENNModel(WorldModel):
         act_dim: int | None = None,
         eps: float = 1e-8,
         predict_reward_terminated: bool = True,
+        predict_terminated: bool | None = None,
+        dyn_dim: int | None = None,
     ):
         super().__init__(
             in_features=in_features,
@@ -26,6 +28,8 @@ class ENNModel(WorldModel):
             act_dim=act_dim,
             eps=eps,
             predict_reward_terminated=predict_reward_terminated,
+            predict_terminated=predict_terminated,
+            dyn_dim=dyn_dim,
         )
         self.enn = enn
 
@@ -60,17 +64,16 @@ def _loss_fn(model: ENNModel, batch, rngs: nnx.Rngs):
         delta_next_state_c, axis=-1, keepdims=True
     )
 
-    delta_next_state = batch.info["next_obs"] - batch.obs
-    delta_next_state = model.normalize_delta_obs(delta_next_state)
+    delta_next_state = model.normalize_delta_obs(model.dyn_target(batch))
     delta_next_state_target = delta_next_state + sigma * (delta_next_state_c * z).sum(
         axis=-1, keepdims=True
     )
     delta_next_state_loss = (
-        logits[..., : model.obs_dim] - delta_next_state_target
+        logits[..., : model.dyn_dim] - delta_next_state_target
     ) ** 2
     delta_next_state_loss = delta_next_state_loss.mean()
 
-    if model.predict_reward_terminated:
+    if model.predict_reward:
         reward_c = jax.random.normal(
             rngs(), shape=(batch.obs.shape[0], model.index_dim)
         )
@@ -78,9 +81,12 @@ def _loss_fn(model: ENNModel, batch, rngs: nnx.Rngs):
         reward_target = model.normalize_reward(batch.reward) + sigma * (
             reward_c * z
         ).sum(axis=-1)
-        reward_loss = (logits[..., -2] - reward_target) ** 2
+        reward_loss = (logits[..., model.reward_index] - reward_target) ** 2
         reward_loss = reward_loss.mean()
+    else:
+        reward_loss = jnp.zeros(())
 
+    if model.predict_terminated:
         terminated_c = jax.random.normal(
             rngs(), shape=(batch.obs.shape[0], model.index_dim)
         )
@@ -90,13 +96,12 @@ def _loss_fn(model: ENNModel, batch, rngs: nnx.Rngs):
         p = 0.5
         mask = ((terminated_c * z).sum(axis=-1) > norm.ppf(p)).astype(jnp.float32)
         terminated_target = batch.terminated.astype(jnp.float32)
-        terminated_pred = logits[..., -1]
+        terminated_pred = logits[..., model.terminated_index]
         terminated_loss = optax.sigmoid_binary_cross_entropy(
             terminated_pred, terminated_target
         )
         terminated_loss = (terminated_loss * mask).sum() / jnp.maximum(mask.sum(), 1.0)
     else:
-        reward_loss = jnp.zeros(())
         terminated_loss = jnp.zeros(())
 
     loss = delta_next_state_loss + reward_loss + terminated_loss
@@ -175,6 +180,8 @@ def _make_batched_model(
     act_dim,
     keys,
     predict_reward_terminated: bool = True,
+    predict_terminated: bool | None = None,
+    dyn_dim: int | None = None,
 ):
     @nnx.vmap
     def build(key):
@@ -194,6 +201,8 @@ def _make_batched_model(
             obs_dim,
             act_dim=act_dim,
             predict_reward_terminated=predict_reward_terminated,
+            predict_terminated=predict_terminated,
+            dyn_dim=dyn_dim,
         )
         tx = optax.adamw(model_config["LR"], weight_decay=1e-4)
         not_prior_params = nnx.All(nnx.Param, nnx.Not(nnx.PathContains("prior")))

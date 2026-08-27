@@ -101,6 +101,8 @@ class ModelEnvironment(environment.Environment[ModelEnvState, ModelEnvParams]):
         prediction_mode: Literal["mean", "sample"] = "mean",
         explore_bonus: Literal["std", "eig"] = "std",
         oracle_reward_terminated: bool = True,
+        oracle_terminated: bool | None = None,
+        uncertainty_dims: tuple[int, ...] | None = None,
         reset_source: ResetSource = "env",
         max_steps_in_episode: int | None = None,
         uncertainty_threshold: float | None = None,
@@ -122,7 +124,27 @@ class ModelEnvironment(environment.Environment[ModelEnvState, ModelEnvParams]):
         self.samples = samples
         self.prediction_mode = prediction_mode
         self.explore_bonus = explore_bonus
-        self.oracle_reward_terminated = oracle_reward_terminated
+        # ``oracle_reward_terminated`` sets both sources at once (the historical
+        # coupled flag); ``oracle_terminated`` overrides just the termination
+        # source. Splitting them is what lets an offline plant run take its
+        # reward from the model's reward head (fit to the dataset's own reward
+        # column) while keeping the oracle's deterministic day-count
+        # termination: the plant datasets label 7.4% of steps terminal (bolting),
+        # so a learned sigmoid termination head would cut rollouts short and
+        # change the return scale on top of the reward change under test.
+        self.oracle_reward = oracle_reward_terminated
+        self.oracle_terminated = (
+            oracle_reward_terminated if oracle_terminated is None else oracle_terminated
+        )
+        # Which model outputs the exploration bonus is allowed to look at. None
+        # means every output, which is only right when every output is a
+        # genuinely uncertain quantity. Restrict it to the stochastic dynamics
+        # dims for plant: a deterministic day channel or a termination logit
+        # contributes variance that has nothing to do with dynamics uncertainty,
+        # and with alpha=0/beta=1 the explore policy's whole reward is this bonus.
+        self._uncertainty_dims = (
+            None if uncertainty_dims is None else jnp.asarray(uncertainty_dims)
+        )
         self.reset_source = reset_source
         self._max_steps_override = max_steps_in_episode
         self.uncertainty_threshold = uncertainty_threshold
@@ -208,34 +230,67 @@ class ModelEnvironment(environment.Environment[ModelEnvState, ModelEnvParams]):
         # (logarithmic in variance). Consequently --beta is not directly
         # comparable across the two bonus types and must be retuned when
         # switching between them.
-        r_intrinsic = model.uncertainty(x, state.z, self.explore_bonus)
-
-        delta_obs = model.denormalize_delta_obs(y[..., : model.obs_dim])
-        obs = state.obs + delta_obs
-        # Deterministic clock: masked plant obs is [log_area, time]; force time
-        # so the dynamics model cannot drift the day index.
-        if getattr(self._real_env, "obs_includes_time", False):
-            obs = obs.at[..., 1].set(jnp.asarray(state.time + 1, dtype=obs.dtype))
-        obs = jnp.clip(
-            obs,
-            self._real_env.observation_space(params.env_params).low,
-            self._real_env.observation_space(params.env_params).high,
+        r_intrinsic = model.uncertainty(
+            x, state.z, self.explore_bonus, dims=self._uncertainty_dims
         )
-        if self.oracle_reward_terminated:
+
+        dyn_pred = model.denormalize_delta_obs(y[..., : model.dyn_dim])
+        env_obs_space = self._real_env.observation_space(params.env_params)
+        if hasattr(self._real_env, "compose_next_obs"):
+            # The env owns the mapping from the model's dynamics output to the
+            # next observation. It is not always "obs + delta": the plant
+            # differential setup predicts a growth *advantage* and the env adds
+            # the control's own growth back, and it sets the deterministic day
+            # itself rather than predicting it.
+            obs = self._real_env.compose_next_obs(state.obs, dyn_pred)
+        else:
+            obs = state.obs + dyn_pred
+        obs = jnp.clip(obs, env_obs_space.low, env_obs_space.high)
+        # Day-dependent envs carry their clock in the obs (see above), so an
+        # oracle call must be reconstructed at that day, not at the step counter.
+        oracle_time = (
+            state.obs[..., 1]
+            if getattr(self._real_env, "obs_includes_time", False)
+            else state.time
+        )
+        if self.oracle_reward:
             if hasattr(self._real_env, "obs_to_reward_terminated"):
-                r_exploit, terminated = self._real_env.obs_to_reward_terminated(
+                r_oracle, term_oracle = self._real_env.obs_to_reward_terminated(
                     state.obs, action, obs
                 )
             else:
                 reconstructed = self._real_env.get_state(
-                    state.obs, state.last_action, state.time, next_obs=obs
+                    state.obs, state.last_action, oracle_time, next_obs=obs
                 )
-                _, _, r_exploit, terminated, _ = self._real_env.step_env(
+                _, _, r_oracle, term_oracle, _ = self._real_env.step_env(
                     key, reconstructed, action, params.env_params
                 )
+            r_exploit = r_oracle
+        elif self.oracle_terminated:
+            # Termination only. Going through step_env would also evaluate the
+            # oracle reward, which for a learned-reward mode does not exist, so
+            # ask the terminal predicate about the *resulting* state directly —
+            # is_terminal(time >= horizon) on time+1 matches step_env's
+            # time + 1 >= horizon.
+            if hasattr(self._real_env, "obs_to_reward_terminated"):
+                _, term_oracle = self._real_env.obs_to_reward_terminated(
+                    state.obs, action, obs
+                )
+            else:
+                next_state = self._real_env.get_state(
+                    obs, action, oracle_time + 1, next_obs=obs
+                )
+                term_oracle = self._real_env.is_terminal(
+                    next_state, params.env_params
+                )
+            r_exploit = model.denormalize_reward(y[..., model.reward_index])
         else:
-            r_exploit = model.denormalize_reward(y[..., -2])
-            terminated = jax.nn.sigmoid(y[..., -1]) > 0.5
+            r_exploit = model.denormalize_reward(y[..., model.reward_index])
+        terminated = (
+            term_oracle
+            if self.oracle_terminated
+            else jax.nn.sigmoid(y[..., model.terminated_index]) > 0.5
+        )
         r = params.alpha * r_exploit + params.beta * r_intrinsic
         state = ModelEnvState(
             obs=obs,

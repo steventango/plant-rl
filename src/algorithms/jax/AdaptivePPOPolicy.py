@@ -143,6 +143,25 @@ class AdaptivePPOPolicy(PPOPolicy):
         self._buffer_action = alloc("action", (npz["action"].shape[1],))
         self._buffer_reward = alloc("reward")
         self._buffer_next_obs = alloc("next_obs", (obs_dim,))
+        # Dynamics-model regression target. For the differential setup this is
+        # the de-confounded growth advantage, NOT next_obs - obs, so it has to
+        # be carried (and recomputed for online rows) rather than derived.
+        #
+        # Buffers exported before the target existed (E20/P1, E21/P1) carry
+        # neither it nor the control tables, and their checkpoints were trained
+        # predicting the FULL observation delta. dyn_dim is a property of the
+        # trained checkpoint, so fall back to obs_dim there and derive the target
+        # from the obs pair — that reproduces the pre-advantage behaviour exactly
+        # and keeps those deployments restorable.
+        if "dyn_target" in npz.files:
+            self._dyn_dim = int(npz["dyn_target"].shape[1])
+            self._buffer_dyn_target = alloc("dyn_target", (self._dyn_dim,))
+        else:
+            self._dyn_dim = obs_dim
+            self._buffer_dyn_target = np.zeros(
+                (capacity, obs_dim), dtype=np.float32
+            )
+            self._buffer_dyn_target[:n] = npz["next_obs"] - npz["obs"]
         self._buffer_terminated = alloc("terminated")
         self._buffer_truncated = alloc("truncated")
         self._offline_count = n
@@ -153,6 +172,17 @@ class AdaptivePPOPolicy(PPOPolicy):
         self._act_low = np.asarray(npz["act_low"], dtype=np.float32)
         self._act_high = np.asarray(npz["act_high"], dtype=np.float32)
         self._max_ep_len = int(npz["max_ep_len"])
+        # Per-day control tables (constant-white Z11 growth and energy). Needed
+        # by analytic_diff to turn a predicted advantage back into an absolute
+        # area and to reference the energy cost.
+        if "ctl_growth" in npz.files:
+            self._ctl_growth = np.asarray(npz["ctl_growth"], dtype=np.float32)
+            self._ctl_energy = np.asarray(npz["ctl_energy"], dtype=np.float32)
+        else:
+            # Only analytic_diff reads these, and it is never paired with a
+            # legacy buffer; ones (not zeros) so an energy ratio can't divide by 0.
+            self._ctl_growth = np.zeros(15, dtype=np.float32)
+            self._ctl_energy = np.ones(15, dtype=np.float32)
 
     def _restore_model(self, checkpoint_path: str) -> None:
         action_dim = int(self._buffer_action.shape[1])
@@ -162,10 +192,11 @@ class AdaptivePPOPolicy(PPOPolicy):
             self._enn_config,
             in_features,
             self._obs_dim,
-            self._obs_dim,
+            self._dyn_dim,
             None,
             keys,
             predict_reward_terminated=False,
+            dyn_dim=self._dyn_dim,
         )
         model = _unstack(models, 0)
         graphdef, state = nnx.split(model)
@@ -185,7 +216,10 @@ class AdaptivePPOPolicy(PPOPolicy):
             reward=jnp.asarray(self._buffer_reward),
             log_prob=zeros,
             obs=jnp.asarray(self._buffer_obs),
-            info={"next_obs": jnp.asarray(self._buffer_next_obs)},
+            info={
+                "next_obs": jnp.asarray(self._buffer_next_obs),
+                "dyn_target": jnp.asarray(self._buffer_dyn_target),
+            },
         )
 
     # -------------------------
@@ -230,11 +264,37 @@ class AdaptivePPOPolicy(PPOPolicy):
         self._buffer_obs[i] = obs_vec
         self._buffer_action[i] = self._prev_action
         self._buffer_next_obs[i] = next_vec
+        self._buffer_dyn_target[i] = self._dyn_target_row(obs_vec, next_vec)
         self._buffer_reward[i] = 0.0  # oracle recomputes reward at retrain time
         self._buffer_terminated[i] = False
         self._buffer_truncated[i] = False
         self._pointer = i + 1
         return True
+
+    def _dyn_target_row(
+        self, obs_vec: np.ndarray, next_vec: np.ndarray
+    ) -> np.ndarray:
+        """Dynamics target for one online transition.
+
+        ``delta_obs`` modes regress the log-area delta. ``analytic_diff`` regresses
+        the growth advantage over the same-day control.
+
+        CAVEAT: the control here is the per-day table shipped with the offline
+        buffer, i.e. **another experiment's** control (E18/E21 for the v29
+        datasets). Online, this experiment has no control in the agent's view, so
+        the batch effect of the current run is NOT removed — the subtraction
+        degrades to a known per-day offset. Because it is constant in the action
+        it cannot distort the action ranking within a day, only the weighting
+        across days. Removing this caveat needs the agent to read its own batch's
+        constant-white control zone live; see the E22/P1 README.
+        """
+        if self._reward_mode != "analytic_diff":
+            # Legacy width: the whole observation delta (the day column included).
+            return np.asarray(next_vec - obs_vec, dtype=np.float32)[: self._dyn_dim]
+        growth = float(next_vec[0] - obs_vec[0])
+        day = int(obs_vec[1]) if self._obs_dim == 2 else 0
+        nd = min(day + 1, len(self._ctl_growth) - 1)
+        return np.array([growth - float(self._ctl_growth[nd])], dtype=np.float32)
 
     def _collect_transitions(self, curr_plants: dict) -> int:
         """Append one transition per pot seen on both the previous and this poll.
@@ -405,6 +465,9 @@ class AdaptivePPOPolicy(PPOPolicy):
             int(self._buffer_action.shape[1]),
             reward_mode=self._reward_mode,
             include_time=self._obs_dim == 2,
+            ctl_growth=jnp.asarray(self._ctl_growth),
+            ctl_energy=jnp.asarray(self._ctl_energy),
+            dyn_dim=self._dyn_dim,
         )
         if env.obs_dim != self._obs_dim:
             raise ValueError(
@@ -426,6 +489,9 @@ class AdaptivePPOPolicy(PPOPolicy):
                         prediction_mode="sample",
                         explore_bonus="eig",
                         oracle_reward_terminated=True,
+                        # The day is deterministic and termination is the day
+                        # count, so the bonus reads the dynamics outputs only.
+                        uncertainty_dims=tuple(range(self._dyn_dim)),
                         reset_source="init",
                         max_steps_in_episode=self._max_ep_len,
                     )
@@ -533,6 +599,7 @@ class AdaptivePPOPolicy(PPOPolicy):
                 obs=self._buffer_obs[n:p],
                 action=self._buffer_action[n:p],
                 next_obs=self._buffer_next_obs[n:p],
+                dyn_target=self._buffer_dyn_target[n:p],
             )
             with open(os.path.join(out, "metadata.json"), "w") as f:
                 json.dump(
@@ -591,6 +658,13 @@ class AdaptivePPOPolicy(PPOPolicy):
         self._buffer_obs[n : n + count] = online["obs"]
         self._buffer_action[n : n + count] = online["action"]
         self._buffer_next_obs[n : n + count] = online["next_obs"]
+        # Recompute rather than restore: keeps checkpoints written before the
+        # dynamics target existed loadable, and the target is a pure function of
+        # the obs pair (plus the shipped control table) so nothing is lost.
+        for i in range(n, n + count):
+            self._buffer_dyn_target[i] = self._dyn_target_row(
+                self._buffer_obs[i], self._buffer_next_obs[i]
+            )
         self._pointer = n + count
         self._last_retrain_date = state["last_retrain_date"]
         self._retrain_count = state.get("retrain_count", 0)

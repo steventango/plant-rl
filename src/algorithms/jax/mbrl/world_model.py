@@ -15,17 +15,61 @@ class WorldModel(nnx.Module):
         act_dim: int | None = None,
         eps: float = 1e-8,
         predict_reward_terminated: bool = True,
+        predict_terminated: bool | None = None,
+        dyn_dim: int | None = None,
     ):
         self.obs_dim = obs_dim
+        # Dynamics outputs. Defaults to obs_dim (predict the whole observation
+        # delta). Set it smaller when some observation dims are deterministic and
+        # supplied by the env rather than predicted — the plant day counter, for
+        # instance: predicting it wastes capacity and injects a deterministic
+        # quantity into the epistemic-uncertainty bonus.
+        self.dyn_dim = obs_dim if dyn_dim is None else dyn_dim
         self.act_dim = act_dim
         self.eps = eps
-        self.predict_reward_terminated = predict_reward_terminated
+        # Reward and termination heads are independent. Plant termination is
+        # purely "day >= horizon", supplied by the oracle, so plant runs predict
+        # neither; ``predict_reward_terminated`` sets both at once for the
+        # historical coupled case and ``predict_terminated`` overrides the second.
+        self.predict_reward = predict_reward_terminated
+        self.predict_terminated = (
+            predict_reward_terminated if predict_terminated is None else predict_terminated
+        )
         self.input_mean = nnx.Variable(jnp.zeros(in_features))
         self.input_std = nnx.Variable(jnp.ones(in_features))
-        self.delta_obs_mean = nnx.Variable(jnp.zeros(obs_dim))
-        self.delta_obs_std = nnx.Variable(jnp.ones(obs_dim))
+        self.delta_obs_mean = nnx.Variable(jnp.zeros(self.dyn_dim))
+        self.delta_obs_std = nnx.Variable(jnp.ones(self.dyn_dim))
         self.reward_mean = nnx.Variable(jnp.zeros(()))
         self.reward_std = nnx.Variable(jnp.ones(()))
+
+    @property
+    def predict_reward_terminated(self) -> bool:
+        """Legacy coupled flag: both extra heads present."""
+        return self.predict_reward and self.predict_terminated
+
+    @property
+    def reward_index(self) -> int:
+        """Output index of the reward head (absolute, not negative).
+
+        Negative indices break as soon as the two extra heads are independent.
+        """
+        return self.dyn_dim
+
+    @property
+    def terminated_index(self) -> int:
+        return self.dyn_dim + (1 if self.predict_reward else 0)
+
+    @staticmethod
+    def dyn_target(dataset) -> jax.Array:
+        """Dynamics-model regression target for a batch of transitions.
+
+        ``info["dyn_target"]`` when the loader supplied one (the plant
+        differential setup makes it the de-confounded growth advantage rather
+        than the raw observation delta); otherwise the observation delta.
+        """
+        if "dyn_target" in dataset.info:
+            return dataset.info["dyn_target"]
+        return dataset.info["next_obs"] - dataset.obs
 
     # --- Abstract per-model primitives ---
 
@@ -55,9 +99,18 @@ class WorldModel(nnx.Module):
         """x (N, in_features), index (S, index_dim) → (S, N, out_features). Maps over N inputs and S indices."""
         return jax.vmap(self.predict_samples, in_axes=(0, None), out_axes=1)(x, index)
 
-    def variance(self, x: jax.Array, z: jax.Array) -> jax.Array:
-        """Per-output empirical epistemic variance at a single x over S samples.  (out_features,)"""
+    def variance(
+        self, x: jax.Array, z: jax.Array, dims: jax.Array | None = None
+    ) -> jax.Array:
+        """Per-output empirical epistemic variance at a single x over S samples.
+
+        ``dims`` restricts which output heads count. Left as None the variance
+        covers every output, which is only right when every output is a genuinely
+        uncertain quantity.
+        """
         samples = self.predict_samples(x, z)
+        if dims is not None:
+            samples = samples[..., dims]
         return samples.var(axis=0)
 
     def uncertainty(
@@ -66,9 +119,10 @@ class WorldModel(nnx.Module):
         z: jax.Array,
         kind: Literal["std", "eig"] = "std",
         reduce_output: bool = True,
+        dims: jax.Array | None = None,
     ) -> jax.Array:
         """Epistemic uncertainty at a single x given S epistemic indices z."""
-        var = self.variance(x, z)
+        var = self.variance(x, z, dims)
         if kind == "eig":
             u = 0.5 * jnp.log(1.0 + var)
         else:
@@ -81,10 +135,11 @@ class WorldModel(nnx.Module):
         z: jax.Array,
         explore_bonus: Literal["std", "eig"] = "std",
         reduce_output: bool = True,
+        dims: jax.Array | None = None,
     ) -> jax.Array:
         """x (N, in_features) → (N,) or (N, out_features)."""
         return jax.vmap(
-            lambda xi: self.uncertainty(xi, z, explore_bonus, reduce_output)
+            lambda xi: self.uncertainty(xi, z, explore_bonus, reduce_output, dims)
         )(x)
 
     # --- Shared input/normalization helpers ---
@@ -112,7 +167,7 @@ class WorldModel(nnx.Module):
         mask = jnp.arange(n_samples) < pointer
         mask2d = mask[:, None]
 
-        delta_obs = dataset.info["next_obs"] - dataset.obs
+        delta_obs = self.dyn_target(dataset)
 
         self.input_mean[: self.obs_dim] = jnp.mean(dataset.obs, axis=0, where=mask2d)
         self.input_std[: self.obs_dim] = jnp.maximum(
@@ -142,14 +197,19 @@ class WorldModel(nnx.Module):
     def normalize_input(self, x):
         return (x - self.input_mean) / self.input_std
 
-    def build_targets(self, obs, next_obs, reward, terminated) -> jax.Array:
-        """Normalized output targets (N, out_features) from raw transition data."""
-        delta_obs_norm = self.normalize_delta_obs(next_obs - obs)
-        if self.predict_reward_terminated:
-            reward_norm = self.normalize_reward(reward)[:, None]
-            terminated_f = terminated[:, None].astype(jnp.float32)
-            return jnp.concatenate([delta_obs_norm, reward_norm, terminated_f], axis=-1)
-        return delta_obs_norm
+    def build_targets(self, delta_obs, reward, terminated) -> jax.Array:
+        """Normalized output targets (N, out_features).
+
+        ``delta_obs`` is the dynamics target (see :meth:`dyn_target`) — already a
+        delta, not a pair of observations, because the differential setup's target
+        is not any observation difference.
+        """
+        parts = [self.normalize_delta_obs(delta_obs)]
+        if self.predict_reward:
+            parts.append(self.normalize_reward(reward)[:, None])
+        if self.predict_terminated:
+            parts.append(terminated[:, None].astype(jnp.float32))
+        return jnp.concatenate(parts, axis=-1) if len(parts) > 1 else parts[0]
 
     def normalize_delta_obs(self, delta):
         return (delta - self.delta_obs_mean) / self.delta_obs_std
