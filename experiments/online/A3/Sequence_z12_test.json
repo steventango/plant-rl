@@ -7,12 +7,13 @@
         "environment": {
             "zone": "alliance-zone12",
             "timezone": "Etc/GMT+10",
-            "action": "blue_purple_red"
+            "action": "blue_purple_red",
+            "enable_cv_pipeline": false
         },
         "timezone": "Etc/GMT+10",
         "enforce_night": true,
         "flash_photography": true,
         "action_timestep": 720,
-        "actions": "[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]"
+        "actions": "[0.5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]"
     }
 }
