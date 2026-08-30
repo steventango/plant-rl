@@ -24,7 +24,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E22/P0/Constant1.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E22/P1/Z1.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -58,7 +58,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E22/P0/Constant2.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E22/P1/Z2.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -93,7 +93,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E22/P0/Constant3.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E22/P1/Z3.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -128,7 +128,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E22/P0/Constant4.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E22/P1/Z4.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -163,7 +163,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E22/P0/Constant5.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E22/P1/Z5.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -373,7 +373,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E22/P0/Constant11.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/E22/P1/Constant11.json -i 0 --deploy
     deploy:
       resources:
         reservations:
