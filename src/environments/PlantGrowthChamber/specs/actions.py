@@ -130,6 +130,25 @@ class ContinuousColorAction(ActionSpec):
         return (1.0 - a) * BALANCED_ACTION_105 + a * RED_ACTION
 
 
+@dataclass(frozen=True)
+class BluePurpleRed(ActionSpec):
+    """Scalar [-1, 1] color action: -1 = all-blue, +1 = all-red.
+
+    Maps linearly between BLUE_ACTION and RED_ACTION.
+    """
+
+    name: str = "blue_purple_red"
+    n_actions: int = 1
+    trace_dim: int = 6
+
+    def decode(self, action: Any) -> np.ndarray:
+        if isinstance(action, np.ndarray) and action.ndim > 0:
+            return np.asarray(action, dtype=np.float64)
+        a = float(action)
+        t = (a + 1.0) / 2.0
+        return (1.0 - t) * BLUE_ACTION + t * RED_ACTION
+
+
 ACTION_SPECS: dict[str, ActionSpec] = {
     "ppfd6": PPFD6Action(),
     "intensity": IntensityAction(),
@@ -137,4 +156,5 @@ ACTION_SPECS: dict[str, ActionSpec] = {
     "color": ColorAction(),
     "color_triangle": ColorTriangleAction(),
     "continuous_color": ContinuousColorAction(),
+    "blue_purple_red": BluePurpleRed(),
 }
