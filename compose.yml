@@ -198,7 +198,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E22/P0/Constant6.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/A3/Sequence_z06.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -233,7 +233,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E22/P0/Constant7.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/A3/Sequence_z07.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -268,7 +268,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E22/P0/Constant8.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/A3/Sequence_z08.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -303,7 +303,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E22/P0/Constant9.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/A3/Sequence_z09.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -338,7 +338,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/E22/P0/Constant10.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/A3/Sequence_z10.json -i 0 --deploy
     deploy:
       resources:
         reservations:
