@@ -1,7 +1,7 @@
 {
     "agent": "Constant12",
     "problem": "PlantGrowthChamber",
-    "total_steps": 40320,
+    "total_steps": -1,
     "episode_cutoff": -1,
     "metaParameters": {
         "environment": {
