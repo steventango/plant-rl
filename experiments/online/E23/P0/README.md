@@ -6,6 +6,8 @@ Post-transplant incubation across all 12 chambers (alliance-zone01 – alliance-
 
 This phase runs from **transplant date (2026-09-23, DAS 7)** to **agent start (2026-09-29, DAS 12)** — 6 days of incubation. All twelve zones use `total_steps: -1` so the constant-100 policy does not expire if the handoff is delayed.
 
+The pre-incubation phase was exposed to an extra 2 hours and 8 minutes of light due to `Reached total_steps=40320; ending run. (experiments-online-E22-P0-Constant12)`, until E22/P0 was manually restarted.
+
 ## Configs
 
 | Zone | Config | Agent | Wrapper settings |
