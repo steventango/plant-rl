@@ -1,18 +1,19 @@
 {
-    "agent": "Sequence_z09_r1",
+    "agent": "Sequence_z06_re2",
     "problem": "PlantGrowthChamber",
     "total_steps": 40320,
     "episode_cutoff": -1,
     "metaParameters": {
         "environment": {
-            "zone": "alliance-zone09",
+            "zone": "alliance-zone06",
             "timezone": "Etc/GMT-2",
-            "action": "blue_purple_red"
+            "action": "blue_purple_red",
+            "enable_cv_pipeline": false
         },
         "timezone": "Etc/GMT-2",
         "enforce_night": true,
         "flash_photography": true,
         "action_timestep": 720,
-        "actions": "[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -0.2022, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0]"
+        "actions": "[1.0, 1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, 1.0, 1.0]"
     }
 }

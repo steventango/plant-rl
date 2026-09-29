@@ -198,7 +198,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/A4/Sequence_z06_r2.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/A4/Sequence_z06_re2.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -233,7 +233,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/A4/Sequence_z07_r1.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/A4/Sequence_z07_re1.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -268,7 +268,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/A4/Sequence_z08_r3.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/A4/Sequence_z08_re3.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -303,7 +303,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/A4/Sequence_z09_r1.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/A4/Sequence_z09_re1.json -i 0 --deploy
     deploy:
       resources:
         reservations:
@@ -338,7 +338,7 @@ services:
       - ~/.netrc:/home/${USERNAME}/.netrc:cached
       - /data/plant-rl:/data/plant-rl:cached
     restart: unless-stopped
-    command: uv run python src/main_real.py -e experiments/online/A4/Sequence_z10_r2.json -i 0 --deploy
+    command: uv run python src/main_real.py -e experiments/online/A4/Sequence_z10_re2.json -i 0 --deploy
     deploy:
       resources:
         reservations:
