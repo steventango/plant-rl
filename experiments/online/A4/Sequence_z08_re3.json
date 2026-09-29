@@ -1,5 +1,5 @@
 {
-    "agent": "Sequence_z08_r3",
+    "agent": "Sequence_z08_re3",
     "problem": "PlantGrowthChamber",
     "total_steps": 40320,
     "episode_cutoff": -1,
@@ -14,6 +14,6 @@
         "enforce_night": true,
         "flash_photography": true,
         "action_timestep": 720,
-        "actions": "[-1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 0.1707, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0, 1.0]"
+        "actions": "[-1.0, -1.0, 1.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, 1.0]"
     }
 }
