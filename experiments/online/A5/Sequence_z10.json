@@ -1,0 +1,19 @@
+{
+    "agent": "Sequence_z10",
+    "problem": "PlantGrowthChamber",
+    "total_steps": 40320,
+    "episode_cutoff": -1,
+    "metaParameters": {
+        "environment": {
+            "zone": "alliance-zone10",
+            "timezone": "Etc/GMT-2",
+            "action": "blue_purple_red",
+            "enable_cv_pipeline": true
+        },
+        "timezone": "Etc/GMT-2",
+        "enforce_night": true,
+        "flash_photography": true,
+        "action_timestep": 720,
+        "actions": "[1.0, 0.6323, 0.4047, 0.2897, 0.2358, 0.2518, 0.342, 0.4466, 0.4596, 0.3503, 0.1355, -0.6597, -1.0, 1.0]"
+    }
+}
