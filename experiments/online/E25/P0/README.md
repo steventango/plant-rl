@@ -1,20 +1,31 @@
-# Experiment E25 / Phase P0 — Constant 100 PPFD incubation (Z12)
+# Experiment E25 / Phase P0 — Constant 100 PPFD incubation
 
 ## Overview
 
-Post-transplant incubation on alliance-zone12: constant 100 PPFD balanced-white on the same night-shifted photoperiod the following agent-controlled phase will use. This phase covers zone 12 only, so that chamber enters the next phase acclimated to 100 PPFD.
+Post-transplant incubation across all 12 chambers (alliance-zone01 – alliance-zone12): constant 100 PPFD balanced-white on the same night-shifted photoperiod the following agent-controlled phase will use. All twelve zones receive the identical policy so plants enter the next phase partially acclimated to 100 PPFD with no spectrum cross-contamination across treatment arms.
 
-This phase runs from **transplant date (2026-11-19, DAS 7)** to **agent start (2026-11-25, DAS 12)** — 6 days of incubation. `total_steps: -1` so the constant-100 policy does not expire if the handoff is delayed.
+Zone 12 has been on this policy since **transplant date (2026-11-19, DAS 7)**, with planned agent start **2026-11-25 (DAS 12)**. Zones 1–11 start the same policy on **2026-11-26 (DAS 7)**, with planned agent start **2026-12-02 (DAS 12)** — 6 days of incubation. All twelve zones use `total_steps: -1` so the constant-100 policy does not expire if the handoff is delayed.
 
-Follows **E24/P0** `Constant12.json` on the same zone and the same policy (`enable_cv_pipeline: false`).
+Follows **E24/P0** on zone 12 (`enable_cv_pipeline: false`). Zones 1–11 use that same policy.
 
 ## Configs
 
 | Zone | Config | Agent | Wrapper settings |
 |---|---|---|---|
-| Z12 (zone12) | `Constant12.json` | `ConstantAgent` (`constant_action: 1.0`) | `flash_photography: true`, `enforce_night: true`, `timezone: "Etc/GMT-2"`, `enable_cv_pipeline: false` |
+| Z1 (zone01) | `Constant1.json` | `ConstantAgent` (`constant_action: 1.0`) | `flash_photography: true`, `enforce_night: true`, `timezone: "Etc/GMT-2"`, `enable_cv_pipeline: false` |
+| Z2 (zone02) | `Constant2.json` | same | same |
+| Z3 (zone03) | `Constant3.json` | same | same |
+| Z4 (zone04) | `Constant4.json` | same | same |
+| Z5 (zone05) | `Constant5.json` | same | same |
+| Z6 (zone06) | `Constant6.json` | same | same |
+| Z7 (zone07) | `Constant7.json` | same | same |
+| Z8 (zone08) | `Constant8.json` | same | same |
+| Z9 (zone09) | `Constant9.json` | same | same |
+| Z10 (zone10) | `Constant10.json` | same | same |
+| Z11 (zone11) | `Constant11.json` | same | same |
+| Z12 (zone12) | `Constant12.json` | same | same |
 
-`Constant12` resolves through `algorithms/registry.py`'s `startswith("Constant")` rule to `ConstantAgent`. `constant_action: 1.0` multiplies by `BALANCED_ACTION_100` (the `PlantGrowthChamberIntensity` reference spectrum) to emit 100 PPFD across the balanced 5-channel spectrum.
+All twelve resolve through `algorithms/registry.py`'s `startswith("Constant")` rule to `ConstantAgent`. `constant_action: 1.0` multiplies by `BALANCED_ACTION_100` (the `PlantGrowthChamberIntensity` reference spectrum) to emit 100 PPFD across the balanced 5-channel spectrum.
 
 ## Photoperiod & flash
 
@@ -28,14 +39,25 @@ The flash gives the CV pipeline one daily standardized image during incubation t
 ## Deployment
 
 ```bash
+python src/main_real.py -e "experiments/online/E25/P0/Constant1.json" -i 0 --deploy
+python src/main_real.py -e "experiments/online/E25/P0/Constant2.json" -i 0 --deploy
+python src/main_real.py -e "experiments/online/E25/P0/Constant3.json" -i 0 --deploy
+python src/main_real.py -e "experiments/online/E25/P0/Constant4.json" -i 0 --deploy
+python src/main_real.py -e "experiments/online/E25/P0/Constant5.json" -i 0 --deploy
+python src/main_real.py -e "experiments/online/E25/P0/Constant6.json" -i 0 --deploy
+python src/main_real.py -e "experiments/online/E25/P0/Constant7.json" -i 0 --deploy
+python src/main_real.py -e "experiments/online/E25/P0/Constant8.json" -i 0 --deploy
+python src/main_real.py -e "experiments/online/E25/P0/Constant9.json" -i 0 --deploy
+python src/main_real.py -e "experiments/online/E25/P0/Constant10.json" -i 0 --deploy
+python src/main_real.py -e "experiments/online/E25/P0/Constant11.json" -i 0 --deploy
 python src/main_real.py -e "experiments/online/E25/P0/Constant12.json" -i 0 --deploy
 ```
 
-Zone 12 is deployed via `compose.yml` (`docker compose up -d zone12`). After the 6-day incubation completes (or earlier, if ready to hand off), stop the P0 run and start the corresponding P1 config once E25/P1 is created.
+Each zone is deployed independently via `compose.yml`. After the 6-day incubation completes (or earlier, if ready to hand off), stop the P0 runs and start the corresponding P1 configs once E25/P1 is created.
 
 ## Energy
 
-At constant 100 PPFD over the 12 h photoperiod, lights-on plug power ≈ 49.05 W (per `P(PPFD) = 9.71 + 0.164·PPFD^1.19`, the pooled fit from [E18/P0.1](../../E18/P0.1/README.md)). Daily energy ≈ 589 Wh; over the 6-day planned-incubation window that's ≈ 3534 Wh for zone 12.
+At constant 100 PPFD over the 12 h photoperiod, lights-on plug power ≈ 49.05 W (per `P(PPFD) = 9.71 + 0.164·PPFD^1.19`, the pooled fit from [E18/P0.1](../../E18/P0.1/README.md)). Per-zone daily energy ≈ 589 Wh; over the 6-day planned-incubation window that's ≈ 3534 Wh per zone. Same for all twelve zones.
 
 ## See also
 
