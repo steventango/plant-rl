@@ -264,8 +264,6 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
             logger.warning("%s; reusing last valid df (n=%d)", reason, len(self.df))
 
     async def get_plant_stats(self):
-        assert self.image is not None, "Image must be fetched before processing."
-
         if not self.is_daylight():
             logger.debug("Not daylight, skipping plant stats.")
             return
@@ -273,6 +271,8 @@ class PlantGrowthChamber(BaseAsyncEnvironment):
         if not self.enable_cv_pipeline:
             logger.debug("CV pipeline disabled, skipping plant stats.")
             return
+
+        assert self.image is not None, "Image must be fetched before processing."
 
         # Run on hourly clock boundaries or if the last run is overdue.
         now = self.get_time()

@@ -92,6 +92,28 @@ async def test_night_skip_keeps_last_df(chamber, monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_missing_image_skips_when_stats_unused(chamber, monkeypatch):
+    prior = chamber.df.copy()
+    chamber.image = None
+    _pin_daylight(chamber, monkeypatch, hour=22, minute=0)
+
+    await chamber.get_plant_stats()
+
+    pd.testing.assert_frame_equal(chamber.df, prior)
+
+    chamber.enable_cv_pipeline = False
+    _pin_daylight(chamber, monkeypatch, hour=12, minute=0)
+
+    await chamber.get_plant_stats()
+
+    pd.testing.assert_frame_equal(chamber.df, prior)
+
+    chamber.enable_cv_pipeline = True
+    with pytest.raises(AssertionError, match="Image must be fetched"):
+        await chamber.get_plant_stats()
+
+
+@pytest.mark.asyncio
 async def test_successful_cv_updates_df(chamber):
     chamber.cv_client.propagate = AsyncMock(
         return_value={
